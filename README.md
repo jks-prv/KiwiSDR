@@ -1,4 +1,4 @@
-[updated 10 July 2024]
+[updated 10 November 2024]
 
 [![KiwiSDR](http://www.kiwisdr.com/ks/kiwi2.780px.jpg)](http://www.kiwisdr.com/ks/kiwi2.1024px.jpg)
 
@@ -8,6 +8,9 @@ Click image for full size.
 
 KiwiSDR
 =======
+
+> [!IMPORTANT]
+> This is a continuation of the previous repo named "Beagle_SDR_GPS".
 
 Software-defined Radio (SDR) and GPS for the BeagleBone
 ----------------------------------------------------------------------
