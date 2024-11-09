@@ -44,8 +44,7 @@ include Makefile.comp.inc
 
 REPO_USER := jks-prv
 REPO_NAME := KiwiSDR
-REPO_NAME_OLD := Beagle_SDR_GPS
-REPO_DIR  := /root/$(REPO_NAME)
+REPO_DIR := $(if $(IS_DEVSYS),.,/root/$(REPO_NAME))
 REPO_GIT  := $(REPO_USER)/$(REPO_NAME).git
 REPO := https://github.com/$(REPO_GIT)
 
@@ -292,7 +291,7 @@ else
 	LIBS += -lfftw3f -lutil
 	LIBS_DEP += /usr/lib/$(LIB_ARCH)/libfftw3f.a
 	CMD_DEPS = $(CMD_DEPS_DEBIAN) /usr/sbin/avahi-autoipd /usr/bin/upnpc /usr/bin/dig /usr/bin/pgmtoppm /sbin/ethtool /usr/bin/sshpass
-	CMD_DEPS += /usr/bin/killall /usr/bin/dtc /usr/bin/curl /usr/bin/wget /usr/bin/htop /usr/bin/colordiff /usr/bin/file /bin/nc
+	CMD_DEPS += /usr/bin/killall /usr/bin/dtc /usr/bin/curl /usr/bin/wget /usr/bin/htop /usr/bin/colordiff /usr/bin/file /bin/nc /usr/bin/lftp
 	DIR_CFG = /root/kiwi.config
 	CFG_PREFIX =
 
@@ -663,7 +662,7 @@ pas: $(PASM_INCLUDES) $(PASM_SOURCE) Makefile
 	$(CC) -Wall -D_UNIX_ -I./pru/pasm $(PASM_SOURCE) -o pas
 
 pru/pru_realtime.bin: pas pru/pru_realtime.p pru/pru_realtime.h pru/pru_realtime.hp
-	(cd pru; ../pas -V3 -b -L -l -D_PASM_ -D$(SETUP) pru_realtime.p)
+	(cd $(REPO_DIR)/pru; ../pas -V3 -b -L -l -D_PASM_ -D$(SETUP) pru_realtime.p)
 
 
 ################################
@@ -679,17 +678,17 @@ else
 endif
 
 $(GEN_ASM): kiwi.config verilog/kiwi.inline.vh $(wildcard e_cpu/asm/*)
-	(cd e_cpu; make OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make OTHER_DIR="$(OTHER_DIR2)")
 $(GEN_OTHER_ASM): $(OTHER_CONFIG) e_cpu/other.config $(wildcard e_cpu/asm/*)
-	(cd e_cpu; make gen_other OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make gen_other OTHER_DIR="$(OTHER_DIR2)")
 $(OUT_ASM): $(wildcard e_cpu/*.asm)
-	(cd e_cpu; make no_gen OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make no_gen OTHER_DIR="$(OTHER_DIR2)")
 asm_binary:
-	(cd e_cpu; make binary OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make binary OTHER_DIR="$(OTHER_DIR2)")
 asm_debug:
-	(cd e_cpu; make debug OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make debug OTHER_DIR="$(OTHER_DIR2)")
 asm_stat:
-	(cd e_cpu; make stat OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make stat OTHER_DIR="$(OTHER_DIR2)")
 
 
 ################################
@@ -820,13 +819,13 @@ EDATA_ALWAYS = $(GEN_DIR)/edata_always.cpp
 EDATA_ALWAYS2 = $(GEN_DIR)/edata_always2.cpp
 
 $(EDATA_EMBED): $(EDATA_DEP) $(addprefix web/,$(FILES_EMBED_SORTED_NW))
-	(cd web; perl mkdata.pl edata_embed $(FILES_EMBED_SORTED_NW) >../$(EDATA_EMBED))
+	(cd $(REPO_DIR)/web; perl mkdata.pl edata_embed $(FILES_EMBED_SORTED_NW) >../$(EDATA_EMBED))
 
 $(EDATA_ALWAYS): $(EDATA_DEP) $(addprefix web/,$(FILES_ALWAYS_SORTED_NW))
-	(cd web; perl mkdata.pl edata_always $(FILES_ALWAYS_SORTED_NW) >../$(EDATA_ALWAYS))
+	(cd $(REPO_DIR)/web; perl mkdata.pl edata_always $(FILES_ALWAYS_SORTED_NW) >../$(EDATA_ALWAYS))
 
 $(EDATA_ALWAYS2): $(EDATA_DEP) $(addprefix web/,$(FILES_ALWAYS2_SORTED_NW))
-	(cd web; perl mkdata.pl edata_always2 $(FILES_ALWAYS2_SORTED_NW) >../$(EDATA_ALWAYS2))
+	(cd $(REPO_DIR)/web; perl mkdata.pl edata_always2 $(FILES_ALWAYS2_SORTED_NW) >../$(EDATA_ALWAYS2))
 
 
 ################################
@@ -1378,7 +1377,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 endif
 
 DIR_CFG_SRC := unix_env/kiwi.config
-DIR_FILE_SRC := $(if $(REBASE_DISTRO),~root/KiwiSDR.files,.)
+DIR_FILE_SRC := $(if $(REBASE_DISTRO),/root/KiwiSDR.files,.)
 
 EXISTS_BASHRC_LOCAL := $(shell test -f ~root/.bashrc.local && echo true)
 
@@ -1947,11 +1946,11 @@ clean_deprecated:
 	-rm -rf *.dSYM pas extensions/ext_init.cpp kiwi.gen.h kiwid kiwid.aout kiwid_realtime.bin .comp_ctr
 
 clean: clean_ext clean_deprecated
-	(cd e_cpu; make clean)
-	(cd verilog/rx; make clean)
-	(cd tools; make clean)
-	(cd pkgs/noip2; make clean)
-	(cd pkgs/EiBi; make clean)
+	(cd $(REPO_DIR)/e_cpu; make clean)
+	(cd $(REPO_DIR)/verilog/rx; make clean)
+	(cd $(REPO_DIR)/tools; make clean)
+	(cd $(REPO_DIR)/pkgs/noip2; make clean)
+	(cd $(REPO_DIR)/pkgs/EiBi; make clean)
 	-rm -rf $(addprefix pru/pru_realtime.,bin lst txt) $(TOOLS_DIR)/file_optim
 	# but not $(KEEP_DIR)
 	-rm -rf $(LOG_FILE) $(BUILD_DIR)/kiwi* $(GEN_DIR) $(OBJ_DIR) $(OBJ_DIR_O3)
@@ -2020,7 +2019,7 @@ BIN_EXISTS := $(foreach plat,$(BIN_PLATFORMS),$(shell test -f bin/kiwi_$(VER)_$(
     gitdiff_no_big:
 	    colordiff -br $(GITDIFF_EXCLUDE2) --exclude="*.json" --exclude=EiBi.h --exclude=sked-current.csv $(GITAPP)/$(REPO_NAME) . || true
     gitdiff2:
-	    colordiff -br $(GITDIFF_EXCLUDE2) ../../../sdr/KiwiSDR/$(REPO_NAME_OLD) . || true
+	    colordiff -br $(GITDIFF_EXCLUDE2) ../../../sdr/KiwiSDR/$(REPO_NAME) . || true
 endif
 
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
@@ -2105,9 +2104,9 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     backup:
         ifeq ($(DEBIAN_11_AND_LATER),true)
 	        cp /etc/beagle-flasher/$(PLAT_BACKUP)-emmc-to-microsd /etc/default/beagle-flasher
-	        (cd /root/$(REPO_NAME)/tools; bash ./$(PLAT_BACKUP)-flasher.sh)
+	        (cd $(REPO_DIR)/tools; bash ./$(PLAT_BACKUP)-flasher.sh)
         else
-	        (cd /root/$(REPO_NAME)/tools; bash ./kiwiSDR-make-microSD-flasher-from-eMMC.sh)
+	        (cd $(REPO_DIR)/tools; bash ./kiwiSDR-make-microSD-flasher-from-eMMC.sh)
         endif
 
     # copy to debian dir because scp from laptop can't login as root with a password
