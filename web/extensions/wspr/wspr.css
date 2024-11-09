@@ -1,0 +1,116 @@
+
+/* id-ext-data-container */
+
+.cl-wspr-mkr1
+{
+	position: absolute;
+	overflow: hidden;
+	border-width: 0px;
+	border-left-width: 2px;
+	border-style: solid;
+	border-color: black;
+}
+
+.cl-wspr-mkr1:hover
+{
+	overflow: visible;
+}
+
+.cl-wspr-mkr2
+{
+	position: relative;
+	float: left;
+	border-left-width: 0px;
+	border-right-width: 2px;
+	border-top-width: 0px;
+	border-bottom-width: 2px;
+	border-style: solid;
+	border-color: black;
+}
+
+.cl-wspr-mkr2:hover
+{
+	z-index: 98;
+}
+
+.cl-wspr-snr
+{
+	position: relative;
+	float: left;
+	white-space: nowrap;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #00BFFF;
+	background-color: #00BFFF;
+	color: black;
+	font-size: 12px;
+}
+
+.cl-wspr-line
+{
+	background-color: #00BFFF;
+	z-index: 101;
+}
+
+.cl-wspr-decoding
+{
+	border-color: pink;
+	background-color: pink;
+}
+
+.cl-wspr-image
+{
+	border-color: violet;
+	background-color: violet;
+}
+
+.cl-wspr-call
+{
+	border-color: #00ff55;
+	background-color: #00ff55;
+}
+
+.cl-upload-checkbox
+{
+	padding: 3px 4px;
+}
+
+.cl-viewer-label
+{
+	position: relative;
+	bottom: 0px;
+	overflow-y: visible;
+}
+
+
+/* id-ext-controls-container */
+
+.id-wspr-controls
+{
+	color: black;
+	width: auto;
+}
+
+.id-wspr-controls td
+{
+	/*border: 1px solid red;		/* debug */
+}
+
+.id-wspr-controls a
+{
+	color: hsl(212, 100%, 60%);
+}
+
+.cl-wspr-pie
+{
+	display: block;
+}
+
+.cl-wspr-text
+{
+	width: 100px;
+	margin-top: 5px;
+	margin-left: 5px;
+	text-align: center;
+	background-color: lightGray;
+}

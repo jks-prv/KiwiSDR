@@ -1,0 +1,46 @@
+
+# See HOWTO.update.database.txt
+
+include ../../Makefile.comp.inc
+
+PROG = eibi_proc
+
+ARCH = sitara
+PLATFORM = beaglebone_black
+PKGS = pkgs/mongoose pkgs/jsmn pkgs/parson pkgs/sha256
+GPS = gps gps/ka9q-fec gps/GNSS-SDRLIB
+DIRS = . pru $(PKGS) web extensions
+DIRS += platform/common platform/beaglebone platform/$(PLATFORM) $(EXT_DIRS) rx rx/CuteSDR rx/csdr $(GPS) cfg dx net ui support arch arch/$(ARCH)
+DIRS += ../build/gen
+
+VPATH = $(addprefix ../../,$(DIRS))
+I = $(addprefix -I../../,$(DIRS)) -I/usr/local/include
+
+all: $(PROG)
+
+$(PROG): $(PROG).o
+	$(CPP) $(CFLAGS) $(I) -o $@ $?
+
+%.o: %.cpp
+	$(CPP) $(CFLAGS) $(I) -c $<
+
+ABYY := b24
+fetch:
+	wget -O /tmp/eibi http://eibispace.de/dx/README.TXT       && iconv -f ISO-8859-1 -t UTF-8 /tmp/eibi > README.txt
+	wget -O /tmp/eibi http://eibispace.de/dx/sked-$(ABYY).csv && iconv -f ISO-8859-1 -t UTF-8 /tmp/eibi > eibi.csv
+	@echo "VERIFY: There should be matches for Rádio Clube do Pará below"
+	grep 'Rádio Clube do Pará' eibi.csv
+	cat eibi.csv ALE.kiwi.csv > sked-current.csv
+	cp ../../dx/EiBi.h EiBi.h.prev
+	@echo "EDIT: See HOWTO for sort instructions for sked-current.csv"
+
+# always reads from sked-current.csv
+# always writes file ../../dx/EiBi.h
+run: $(PROG)
+	./$(PROG) $(ABYY)
+	@echo "VERIFY: There should be matches for Rádio Clube do Pará below"
+	grep 'Rádio Clube do Pará' ../../dx/EiBi.h
+	wc ../../dx/EiBi.h EiBi.h.prev
+
+clean:
+	rm -f $(PROG) *.o *.d eibi.csv sked-current.csv EiBi.h.prev README.txt

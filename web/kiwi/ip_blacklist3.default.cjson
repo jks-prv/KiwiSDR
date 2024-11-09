@@ -1,0 +1,224 @@
+[
+
+// KiwiSDR IP address blacklist
+//
+// Double-slash comment sequence MUST start in column one!
+//
+// CAUTION:     kiwisdr.com 50.116.2.xxx    forum 45.79.102.xxx     jks 103.156.230.xxx 103.26.16.xxx
+//
+// Updates:
+//
+//  3 nov 24 124.205.145.0/24 (145.0:145.255) 124.205.145.240 Bejing Telecom
+//  3 nov 24 103.135.104.0/23 (104.0:105.255) 103.135.104.143 PPIP-HK
+// 20 aug 24 38.60.199.123/32 Cogent, per HB9TMC email (CIDR too big for any but /32)
+// 20 aug 24 185.126.80.0/24 Akile cloud London, per HB9TMC email
+// 15 jul 24 47.236.0.0/14 (236.0:239.255) and 47.235.0.0/16 (235.0:235.255) 47.237.73.39 alibaba, SND conn & GET_USERS
+//  3 jul 24 119.45.0.0/16 (0.0:255.255) 119.45.121.127 tencent, abusing fingerprint-2 HFDL
+//  2 Jul 24 49.51.128.0/17 (128.0:255.255) 49.51.187.11 tencent, abusing fingerprint-2 HFDL
+// 13 May 24 136.244.64.0/18 (64.0:127.255) 136.244.117.202 constant/vultr/choopa fast connects, old SET MARKER variants
+//  9 May 24 137.220.32.0/19 (32.0:63.255) 137.220.40.124 constant/vultr/choopa fast connects, old SET MARKER variants
+//  9 May 24 207.148.88.0/21 (88.0:95.255) 207.148.92.163 constant/vultr/choopa fast connects, old SET MARKER variants
+//  7 May 24 195.128.246.0/23 (246.0:247.255) Alliance Russia
+//  1 May 24 178.250.184.0/23 (184.0:185.255) MIN-IP Moscow 178.250.185.231 connects every 30 secs!
+// 11 Apr 24 80.87.192.0/23 (192.0:193.255) Khimki, Russia datacenter (80.87.192.7 per email, forum; NB Yuri's whitelist entry)
+// 10 Apr 24 45.79.58.146 linode/akamai hacker per email
+//  9 Apr 24 207.148.0.0/19 (0.0:31.255) constant/vultr/choopa
+//  3 Mar 24 104.152.52.0/22 (52.0:55.255) Rethem Hosting per Jim email
+// 13 Jan 24 added 47.244.0.0/15 47.246.0.0/16 47.252.0.0/15 47.254.0.0/16 Alibaba Cloud
+//  9 jan 24 47.250.0.0/15 (250.0.0:251:255.255) Alibaba Cloud
+// 23 nov 23 5.62.16.0/20 (16.0:31.255) + 5.62.32.0/19 (32.0:63.255) = (16.0:63.255) Avast VPN - Full Subnet - F4FPR / K5AW
+// 26 oct 23 45.63.0.0/17 (0.0:127.255) constant/vultr/choopa - Famous Offender 45.63.74.199 - Waterfall abuse (114.0/24 => 0.0/17)
+//  5 jun 23 removed 178.174.128.0/17 (Bahnhof) because it blocks a Kiwi user, i.e. IPs are a mix of hosting and ISP.
+// 13 may 23 51.15.0.0/16 (0.0:255.255) Hosting Scaleway
+// 13 may 23 167.86.96.0/19 (96.0:127.255) Hosting Contabo
+// 13 may 23 5.253.115.0/25 (115.0:115.127) Hosting Clouvider
+// 13 may 23 185.107.56.0/24 (56.0:56.255) Hosting NForce
+// 13 may 23 173.209.32.0/19 (32.0:63.255) Hosting GloboTech
+// 13 may 23 167.179.64.0/17 (0.0:127.255) constant/vultr/choopa widen from 11/04/22 blacklist - prefix 167.179.64.0/19 change to /17
+// 13 may 23 178.174.128.0/17 (128.0:255.255) Hosting Bahnhof
+// 13 may 23 185.77.216.0/23 (216.0:217.255) Hosting Creanova
+// 11 may 23 64.176.0.0/15 (176.0.0:177.255.255) constant/vultr/choopa Waterfall Scan
+// 11 may 23 8.215.0.0/16 (0.0:255.255) Alibaba VPN Proxy
+// 13 mar 23 139.84.128.0/17 (128.0:255.255) constant/vultr/choopa
+// 13 mar 23 forum: 103.68.194.0/24 (194.0:194.255) hkcloudx.com
+// 27 dec 22 github issue: 192.248.176.0/20 (176.0:191.255) constant/vultr/choopa
+// 14 sep 22 141.164.32.0/20 (32.0:47.255) constant/vultr/choopa
+// 14 sep 22 207.246.64.0/18 (64.0:127.255) widened from 207.246.104.0/23 (104.0:105.0) constant/vultr/choopa
+//  3 sep 22 149.248.0.0/18 (0.0:63.255) constant/vultr/choopa
+//  5 aug 22 78.129.128.0/17 (128.0:255.255) rapidswitch.com (UK), seen kiwirecorder camping on 11175 kHz for many hours
+//  6 jul 22 forum: 207.148.64.0/20 (64.0:79.255) constant/vultr/choopa
+//  6 jul 22 forum: 65.49.192.0/19 (192.0:223.255) 65.49.224.0/20 (224.0:239.255) Cluster Logic Inc
+// 19 jun 22 forum: 192.248.158.0/23 constant/vultr London
+// 12 jun 22 forum: 115.171.128.0/18 (128.0:191.255) Chinanet (115.171.170.4)
+//  7 jun 22 173.255.0.0/16 => 173.255.0.0/20 1U Web (from base version, overly broad catching Nortel ISP IPs)
+//  8 may 22 forum: 141.164.48.0/20 (48.0:63.255) constant/vultr/choopa
+//  7 may 22 forum: 104.238.128.0/18 constant/vultr
+//  3 may 22 forum: 199.247.0.0/19 constant/vultr
+// 17 apr 22 forum: 65.20.64.0/18 constant/vultr
+// 16 apr 22 forum: 108.61.0.0/16 constant/vultr
+// 11 apr 22 forum: 139.99.0.0/16 ovh hosting
+// 11 apr 22 forum: 158.247.192.0/18 140.82.0.0/18 (0.0:63.255) 167.179.64.0/19 45.32.0.0/16 139.180.128.0/18 constant/vultr/choopa
+//  8 apr 22 ip_blacklist3.cjson version now supports "+[ip]" whitelist notation
+// 19 mar 22 forum: 66.42.64.0/18 144.202.0.0/17 216.238.64.0/18 constant/vultr
+// 19 mar 22 forum: 149.28.8.0/21 149.28.16.0/20 149.28.32.0/19 149.28.64.0/18 149.28.128.0/17 (replaces 149.28.162.0/23) constant/vultr
+// 16 mar 22 forum: 192.248.144.0/23 173.199.64.0/18 constant/vultr
+//  8 mar 22 forum: 196.247.0.0/16 Fiber Grid
+//  7 mar 22 forum: 139.198.0.0/16 70.34.240.0/20 155.138.128.0/17 constant/vultr
+//  1 mar 22 forum: 114.249.0.0/18 China bots
+// 26 feb 22 forum: 208.85.16.0/21 constant/vultr
+// 16 feb 22 forum: 3.0.0.0/9 Amazon EC2
+// 15 feb 22 forum: 52.0.0.0/10 52.64.0.0/12 replaces 52.79.0.0/16 Amazon EC2
+// 14 feb 22 forum: 67.219.96.0/20 constant/vultr
+// 19 jan 22 forum: 130.211.0.0/16 Google cloud
+//  8 jan 22 proxy: added 146.148.0.0/17 Google cloud
+// 29 dec 21 forum: 47.56.0.0/15 (56.0.0:57.255.255)
+// 29 dec 21 collapse multiple to 47.88.0.0/14 (88.0.0:91.255.255)
+// 27 dec 21 forum: 23.251.128.0/19 104.154.0.0/15 104.196.0.0/14
+// 23 dec 21 see: groups.io/g/wsprdaemon/message/616
+// 23 dec 21 many added from main thread: forum.kiwisdr.com/index.php?p=/discussion/2352/call-for-ip-address-blacklist-contributions
+// 23 dec 21 120.36.244.0/22 forum.kiwisdr.com/index.php?p=/discussion/comment/12896/#Comment_12896 (and following)
+// 22 dec 21 forum: 34/8 35/8 see: forum.kiwisdr.com/index.php?p=/discussion/2438/kiwisdrs-being-restarted-attack-or-poorly-programmed-bot
+// 17 sep 21 forum: RZ3DVP suggests due to 39.105.90.102 activity 39.105/16 increase to 39.96/12
+// 29 aug 21 base version
+
+    "1.124.107.0/24",
+    "1.160.0.0/16",
+    "3.0.0.0/9",
+    "5.62.16.0/20",
+    "5.62.32.0/19",
+    "5.253.115.0/25",
+    "8.215.0.0/16",
+    "23.251.128.0/19",
+    "27.154.20.0/24",
+    "27.154.22.0/24",
+    "34.0.0.0/8",
+    "35.0.0.0/8",
+    "38.60.199.123",
+    "38.106.20.0/24",
+    "38.143.0.0/16",
+// Ham using Cogent as his ISP
+    "+38.143.189.66",
+    "39.96.0.0/12",
+    "45.32.0.0/16",
+    "45.43.0.0/16",
+    "45.63.0.0/17",
+    "45.76.0.0/16",
+    "45.77.0.0/16",
+    "45.79.58.146",
+    "46.165.245.0/24",
+    "47.56.0.0/15",
+    "47.74.0.0/16",
+    "47.88.0.0/14",
+    "47.235.0.0/16",
+    "47.236.0.0/14",
+    "47.240.0.0/14",
+    "47.244.0.0/15",
+    "47.246.0.0/16",
+    "47.250.0.0/15",
+    "47.252.0.0/15",
+    "47.254.0.0/16",
+    "49.51.128.0/17",
+    "51.15.0.0/16",
+    "52.0.0.0/10",
+    "52.64.0.0/12",
+    "54.180.1.0/24",
+    "64.176.0.0/15",
+    "65.20.64.0/18",
+    "65.49.192.0/19",
+    "65.49.224.0/20",
+    "66.42.64.0/18",
+    "67.219.96.0/20",
+    "69.251.12.0/24",
+    "70.34.192.0/19",
+    "70.34.240.0/20",
+    "78.129.128.0/17",
+
+    "80.87.192.0/23",
+// whitelist Yuri's VPS from this hosting provider (see email)
+    "+80.87.193.248",
+
+    "83.8.190.0/24",
+    "92.38.0.0/16",
+    "92.118.45.78/32",
+    "94.190.209.0/24",
+    "95.179.0.0/16",
+    "103.25.202.23/32",
+    "103.68.194.00/24",
+    "103.135.104.0/23",
+    "103.144.148.0/24",
+    "104.152.52.0/22",
+    "104.154.0.0/15",
+    "104.196.0.0/14",
+    "104.238.128.0/18",
+    "107.150.0.0/16",
+    "108.61.0.0/16",
+    "110.87.0.0/16",
+    "114.249.0.0/18",
+    "115.171.128.0/18",
+    "117.30.0.0/16",
+    "118.143.0.0/16",
+    "119.45.0.0/16",
+    "120.36.244.0/22",
+    "124.205.145.0/24",
+    "128.1.0.0/16",
+    "128.14.0.0/16",
+    "130.211.0.0/16",
+    "136.244.64.0/18",
+    "137.220.32.0/19",
+    "138.19.0.0/16",
+    "139.84.128.0/17",
+    "139.99.0.0/16",
+    "139.180.128.0/18",
+    "139.198.0.0/16",
+    "140.82.0.0/18",
+    "141.164.32.0/20",
+    "141.164.48.0/20",
+    "144.202.0.0/17",
+    "146.148.0.0/17",
+    "149.28.8.0/21",
+
+    "149.28.16.0/20",
+// see: https://forum.kiwisdr.com/index.php?p=/discussion/2566/not-showing-on-linkfanel/p1
+    "+149.28.25.218",
+
+    "149.28.32.0/19",
+    "149.28.64.0/18",
+    "149.28.128.0/17",
+    "149.129.0.0/16",
+    "149.248.0.0/18",
+    "152.32.0.0/16",
+    "155.138.128.0/17",
+    "158.247.192.0/18",
+    "161.117.0.0/16",
+    "162.211.0.0/16",
+    "167.86.96.0/19",
+    "167.179.0.0/17",
+    "172.245.187.0/24",
+    "173.199.64.0/18",
+    "173.209.32.0/19",
+    "173.255.0.0/20",
+    "178.250.184.0/23",
+    "180.242.213.14/32",
+    "185.77.216.0/23",
+    "185.107.56.0/24",
+    "185.126.80.0/24",
+    "185.220.101.0/24",
+    "185.237.0.0/16",
+    "192.248.144.0/23",
+    "192.248.158.0/23",
+    "192.248.176.0/20",
+    "193.38.0.0/16",
+    "195.128.246.0/23",
+    "196.247.0.0/16",
+    "199.247.0.0/19",
+    "207.148.0.0/19",
+    "207.148.64.0/20",
+    "207.148.88.0/21",
+    "207.246.64.0/18",
+    "208.85.16.0/21",
+    "210.152.84.111/32",
+    "216.128.128.0/18",
+    "216.238.64.0/18",
+
+    null
+]

@@ -1,0 +1,658 @@
+# For the benefit of Beagle_SDR_GPS non-tree builds like liquid-dsp that don't want
+# the default of "CC=gcc" but which is otherwise difficult to specify any other way.
+# Benefits platform-conditional parts of bashrc as well.
+#
+# DANGER: Can't use any "echo ..." in below otherwise scp's to the Kiwi will silently FAIL.
+# Do an "export xx=yy" and "pe xx" instead to see what's happening.
+
+BBG_BBB="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "AM335x" && echo "true" || echo "false")"
+BBAI_64="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleBone AI-64" && echo "true" || echo "false")"
+BBAI="$(test -e /proc/device-tree && cat /proc/device-tree/model | sed "s/\(.*\)./\1x/" | grep -q -s "BeagleBone AIx" && echo "true" || echo "false")"
+RPI="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "Raspberry Pi" && echo "true" || echo "false")"
+
+DEBIAN_7="$(cat /etc/debian_version | grep -q -s "7\." && echo "true" || echo "false")"
+DEBIAN_8="$(cat /etc/debian_version | grep -q -s "8\." && echo "true" || echo "false")"
+DEBIAN_9="$(cat /etc/debian_version | grep -q -s "9\." && echo "true" || echo "false")"
+DEBIAN_10="$(cat /etc/debian_version | grep -q -s "10\." && echo "true" || echo "false")"
+DEBIAN_11="$(cat /etc/debian_version | grep -q -s "11\." && echo "true" || echo "false")"
+
+APT_GET_FORCE=
+
+if [ "x${BBAI_64}" == "xtrue" ] ; then
+    export CPU="TDA4VM"
+    if [ "x${DEBIAN_11}" == "xtrue" ] ; then
+        export CC="clang-11"
+    else
+        export CC="clang"
+    fi
+elif [ "x${BBAI}" == "xtrue" ] ; then
+    export CPU="AM5729"
+    if [ "x${DEBIAN_9}" == "xtrue" ] ; then
+        export CC="clang-7"
+    else
+        export CC="clang"
+    fi
+elif [ "x${BBG_BBB}" == "xtrue" ] ; then
+    export CPU="AM3359"
+    if [ "x${DEBIAN_7}" == "xtrue" ] ; then
+        export CC="gcc"
+        APT_GET_FORCE="--force-yes"
+    elif [ "x${DEBIAN_8}" == "xtrue" ] ; then
+        export CC="clang-6.0"
+        APT_GET_FORCE="--force-yes"
+    elif [ "x${DEBIAN_10}" == "xtrue" ] ; then
+        export CC="clang-8"
+    elif [ "x${DEBIAN_11}" == "xtrue" ] ; then
+        export CC="clang-11"
+    else
+        export CC="clang"
+    fi
+elif [ "x${RPI}" == "xtrue" ] ; then
+    export CPU="BCM2837"
+    export CC="clang-7"
+else
+    export CC="clang"
+fi
+
+if [ -f ~/.bashrc.local ]; then
+    . ~/.bashrc.local
+fi
+
+export COLOR='--color=auto'
+export LS_OPTIONS='--color=auto'
+
+# prevent gclone curl from timing out on slow Internet connections
+# see: git-scm.com/docs/git-config
+export GIT_HTTP_LOW_SPEED_LIMIT=0
+export GIT_HTTP_LOW_SPEED_TIME=1000000
+
+_our_ip="$(/sbin/ip addr list eth0 |grep 'inet ' |cut -d' ' -f6|cut -d/ -f1)"
+
+alias bargs="function _bargs () { echo arg_one \$1 ; echo arg_two \$2 ; echo all_args \$* ; echo files_dirs * ; } ; _bargs"
+
+# shell
+alias al="alias"
+alias alg="alias | grep -i \$COLOR"
+alias soc="pd ~; source ~/.profile; popd"
+alias pe="printenv"
+alias se="export"
+alias un="unset"
+alias h="history"
+alias hc="history -c; history -w"
+alias z="suspend"
+alias x="exit"
+alias j="jobs -l"
+alias d="dirs"
+alias pd="pushd"
+alias 2="pushd +2"
+alias 3="pushd +3"
+alias 4="pushd +4"
+alias 5="pushd +5"
+alias 6="pushd +6"
+
+alias mo="more"
+alias syl="tail -n 1000 -f /var/log/syslog"
+alias ic="ifconfig"
+alias i="echo ==== interfaces; ic -a; echo ==== /etc/network/interfaces; cat /etc/network/interfaces; echo; echo ==== /etc/resolv.conf; cat /etc/resolv.conf"
+alias e="ethtool eth0"
+alias e10="ethtool -s eth0 speed 10 duplex full"
+alias e100="ethtool -s eth0 speed 100 duplex full"
+alias e1000="ethtool -s eth0 speed 1000 duplex full"
+alias ipa="ifconfig eth0 | grep 'eth0\|inet'"
+alias netc="networkctl status eth0"
+alias dhcp="grep dhcp -i /etc/systemd/network/eth*"
+alias mac='cat /sys/class/net/eth0/address'
+alias df="/bin/df -h"
+alias df.="/bin/df -h ."
+alias d.="/bin/df -h ."
+alias d.mb="/bin/df --block-size=1048576 . | tail -n 1 | awk '{print \$3}'"
+alias tr="traceroute"
+alias cdp="cd \${PROJ}"
+alias cd2="cd \${PROJ2}"
+alias cd3="cd \${PROJ3}"
+alias jctl="journalctl"
+alias log="jctl | tail -200"
+alias cl="df -h .; jctl --vacuum-size=10M; df -h ."
+alias pubip="curl icanhazip.com; echo"
+alias ident="curl icanhazip.com; echo"
+alias py="python"
+alias py2="python2"
+alias py3="python3"
+alias sshrm="function _sshrm () { sudo ssh-keygen -R \$* ; ssh-keygen -R \$* ; } ; _sshrm"
+alias d+="function _d+ () { dig +short +noedns \$* A ; dig +short \$* AAAA ; } ; _d+"
+alias cata="tail -vn +1 \`find . -maxdepth 1 -type f -print\`"
+alias catf="tail -vn +1 "
+alias catar="tail -vn +1 \`find . -type f -print\`"
+alias catav="tail -vn +1 */v"
+alias du="/usr/bin/du -sh * | sort -h"
+alias du.="/usr/bin/du -sh ."
+alias sha256sum="shasum -a 256"
+alias sha="sha256sum"
+alias sha256="sha256sum"
+alias col1="awk -- '{print \$1}'"
+alias json="echo \"jsonc <cmd>  jsonf <file>\""
+alias jsonc="function _json () { \$* | jq '.' ; } ; _json"
+alias jsonf="function _json () { cat \$* | jq '.' ; } ; _json"
+alias upn="jq '.update_check = false | .update_install = false' /root/kiwi.config/admin.json >/tmp/jq && mv /tmp/jq /root/kiwi.config/admin.json"
+alias upy="jq '.update_check = true | .update_install = true' /root/kiwi.config/admin.json >/tmp/jq && mv /tmp/jq /root/kiwi.config/admin.json"
+alias bln="jq '.ip_blacklist_auto_download = false | .ip_blacklist = \"\"' /root/kiwi.config/admin.json >/tmp/jq && mv /tmp/jq /root/kiwi.config/admin.json"
+alias bly="jq '.ip_blacklist_auto_download = true | .ip_blacklist = \"\"' /root/kiwi.config/admin.json >/tmp/jq && mv /tmp/jq /root/kiwi.config/admin.json"
+alias trunc="truncate -s 0"
+alias keys="cd /root; mkdir -p .ssh; cd .ssh; cat >authorized_keys"
+alias keys2="cp authorized_keys authorized_keys2"
+
+# debian acct
+alias chod="chown debian:debian"
+alias modn="stat -c '%a %n'"
+
+# antenna switch
+alias aah='echo "Antenna switch shell aliases:"; \
+           echo "cda: change to ant switch directory"; \
+           echo "abi: get backend info of currently selected switch"; \
+           echo "abe: emunerate all backend script names"; \
+           echo "abs: select switch backend script"; \
+           echo "aga: get switch IP address (if any)"; \
+           echo "asa: set switch IP address (if any)"; \
+           echo "as:  show current antenna selected"; \
+           echo "ag:  ground antennas (if switch supports this feature)"; \
+           echo "a1 - a9: select antenna 1 through 9 (some switches have fewer than 9)"; \
+           echo "aa 1-9: add antenna 1-9 if switch supports antenna mixing"; \
+           echo "ar 1-9: remove antenna 1-9 if switch supports antenna mixing"; \
+           echo "at 1-9: toggle antenna 1-9 if switch supports antenna mixing"; \
+           echo "ant <cmd>: run frontend script using <cmd> command"; \
+           echo "ah: show frontend script help"; \
+           echo "aah: show this list of aliases"'
+alias cda="cd ~/Beagle_SDR_GPS/pkgs/ant_switch"
+alias ant="./ant-switch-frontend"
+alias ah="./ant-switch-frontend h"
+alias abs="./ant-switch-frontend bs"
+alias abi="./ant-switch-frontend bi"
+alias abe="./ant-switch-frontend be"
+alias as="./ant-switch-frontend s"
+alias asa="./ant-switch-frontend sa"
+alias aga="./ant-switch-frontend ga"
+alias ag="./ant-switch-frontend g"
+alias a1="./ant-switch-frontend 1"
+alias a2="./ant-switch-frontend 2"
+alias a3="./ant-switch-frontend 3"
+alias a4="./ant-switch-frontend 4"
+alias a5="./ant-switch-frontend 5"
+alias a6="./ant-switch-frontend 6"
+alias a7="./ant-switch-frontend 7"
+alias a8="./ant-switch-frontend 8"
+alias a9="./ant-switch-frontend 9"
+alias aa="function _aa () { ./ant-switch-frontend +\$1 ; } ; _aa"
+alias ar="function _ar () { ./ant-switch-frontend -\$1 ; } ; _ar"
+alias at="function _at () { ./ant-switch-frontend t\$1 ; } ; _at"
+
+# pki colordiff
+p_diff_exclude="--exclude=.DS_Store --exclude=.git --exclude=.svn ${no_diff}"
+alias diff="colordiff"
+alias dif="echo ${no_diff}; colordiff -br ${p_diff_exclude}"
+alias difff="colordiff -qbr ${p_diff_exclude}"
+
+# ANSI color escapes
+alias red='printf "\033[1;31m"'
+alias grn='printf "\033[1;32m"'
+alias yel='printf "\033[1;33m"'
+alias blu='printf "\033[1;34m"'
+alias mag='printf "\033[1;35m"'
+alias cyn='printf "\033[1;36m"'
+alias lgy='printf "\033[1;37m"'
+alias dgy='printf "\033[1;38m"'
+alias def='printf "\033[0m"'
+alias clr='printf "\f"'
+# 8-bit color escapes
+alias ansi='for fgbg in 38 48 ; do for color in $(seq 0 255) ; do printf "\e[${fgbg};5;%sm %3s \e[0m" "$color" "$color" ; if [ $(( (color + 1) % 6)) == 4 ] ; then echo ; fi done ; echo ; done'
+alias ansi2='for color in $(seq 0 255) ; do printf "\e[48;5;%sm %3s \e[0m" "$color" "$color" ; if [ $(( (color + 1) % 6)) == 4 ] ; then echo ; fi done ; echo'
+alias ansi3='for c in $(seq 0 255) ; do printf "\e[48;5;%sm %3s \e[97m %3s \e[0m" "$c" "$c" "$c" ; done ; echo'
+# 2d console
+alias li='for l in $(seq -40 -2); do printf "%s\n" "$l" ; done'
+
+# make
+alias m="make"
+alias mf="make force"
+alias mfa="make force ASAN=1 OPT=1"
+alias mskip="make skip"
+alias masm="make ASM_OUT=1"
+alias mh="make help"
+alias m0="make OPT=0"
+alias mgdb="make debug GDB=1"
+alias ma="make ASAN=1 OPT=1"
+alias mia="make install ASAN=1 OPT=1"
+alias masan1="make ASAN=1 OPT=1"
+alias miasan="make install ASAN=1"
+alias miasan1="make install ASAN=1 OPT=1"
+alias leaks="export ASAN_OPTIONS='detect_leaks=1'; export LSAN_OPTIONS='verbosity=1:log_threads=1'"
+# show individual leaks from a common source to see alloc'd address and possibly different sizes
+alias indiv_leaks="export ASAN_OPTIONS='detect_leaks=1'; export LSAN_OPTIONS='verbosity=1:log_threads=1:report_objects=1'"
+# "noleaks" needed in some runs with gdb otherwise crash in leak detector at exit
+alias noleaks="export ASAN_OPTIONS='detect_leaks=0'; unset LSAN_OPTIONS"
+alias qleaks="printenv | grep -e SAN_OPTIONS"
+# NB: SAN is broken, not ASAN
+alias msan="echo (try now w/ clang-6.0) the clang 3.5.0 static analyzer (SAN) used by the Kiwi Debian 8 release gives false positives"
+alias mi="make install"
+alias mc="make clean"
+alias mcd="make clean_dist"
+alias mcl="make clean_logs"
+alias mpd="make prep_distro"
+alias mckd="make check_distro"
+alias md="make debug"
+alias mt="make test"
+alias me="make everything"
+alias ml="make log"
+alias msl="make slog"
+alias mtl="make tlog"
+alias ms="make status"
+alias mr="make run"
+alias muc="make update_check"
+alias mfu="make force_update"
+#alias mdu="make dump"
+alias mde="make dump_eeprom"
+alias mbu="make backup"
+alias mbuz="make backup_zero"
+alias mbuf="make backup_forum"
+alias mre="make restart"
+alias mst="make stop"
+alias msa="make start"
+alias men="make enable"
+alias mdi="make disable"
+alias msd="make stop_disable"
+alias mes="make enable_start"
+alias mn="make -n"
+alias mk="make -k"
+alias mw="make --dry-run --debug=b"
+alias mgit="make git"
+
+# compile
+alias predef="clang -x c /dev/null -dM -E"      # compiler pre-defines
+
+# ls
+alias ls="function _ls () { /bin/ls \$COLOR -h \$* ; } ; _ls"
+alias la="function _la () { /bin/ls \$COLOR -lah \$* ; } ; _la"
+alias lb="function _lb () { /bin/ls \$COLOR -la \$* ; } ; _lb"
+alias lda="function _lda () { /bin/ls \$COLOR -lda \$* ; } ; _lda"
+alias lr="function _lr () { /bin/ls \$COLOR -laRh \$* ; } ; _lr"
+alias lt="function _lt () { /bin/ls \$COLOR -lath \$* ; } ; _lt"
+alias ldt="function _ldt () { /bin/ls \$COLOR -ladth \$* ; } ; _ldt"
+
+# grep
+sp="[[:space:]]"
+# to grep with embedded spaces on Debian now need:
+#   g 'text1[[:space:]]text2'
+# or
+#   g text1${sp}text2
+#
+d_gr_exclude="--exclude-dir .git --exclude-dir .svn --exclude-dir ./web/pkgs_maps/leaflet ${no_grep}"
+alias grep="grep \$COLOR"
+alias gr="grep -i \$COLOR"
+alias grs="grep \$COLOR"
+alias grctx="grep -i -B3 -A3 \$COLOR"
+alias nogrep="echo ${no_grep}"
+alias g="function _g () { grep -riI ${d_gr_exclude} --exclude \*.min.\*  --exclude \*\ copy.\* \$* . ; } ; _g"
+alias gs="function _gs () { grep -rI ${d_gr_exclude} --exclude \*.min.\* --exclude \*\ copy.\* \$* . ; } ; _gs"
+alias gctx="function _g () { grep -riI -B3 -A3 ${d_gr_exclude} --exclude \*.min.\*  --exclude \*\ copy.\* \$* . ; } ; _g"
+alias gl="function _gl () { grep -riIl ${d_gr_exclude} --exclude \*.min.\*  --exclude \*\ copy.\* \$* . ; } ; _gl"
+alias gc="function _gc () { grep -riI ${d_gr_exclude} --exclude=\* --include=\*.c --include=\*.cpp \$* . ; } ; _gc"
+alias gh="function _gh () { grep -riI ${d_gr_exclude} --exclude=\* --include=\*.h --include=\*.hpp \$* . ; } ; _gh"
+alias gf="function _gf () { grep -riI ${d_gr_exclude} --exclude \*.min.\* --exclude \*\ copy.\* \[^a-zA-Z0-9_\]\$*\( . ; } ; _gf"
+alias gfs="function _gfs () { grep -rI ${d_gr_exclude} --exclude \*.min.\* --exclude \*\ copy.\* \[^a-zA-Z0-9_\]\$*\( . ; } ; _gfs"
+
+alias g.="function _gdot () { grep -iI \$* * ; } ; _gdot"
+alias gg="function _gfile () { grep -iI \$* ; } ; _gfile"
+alias gt="function _gtail () { tail -n 300 -f \$2 | grep -i --line-buffered \$1 ; } ; _gtail"
+# note that only $* is required here (not \$*) perhaps due to use in built-in commands?
+
+#find
+alias ff='function _ff () { export ffa=$* ; find . -name "*$ffa*" -print ; } ; _ff'
+alias f1m='find . -size +1M -exec ls -lah "{}" \;'
+
+# file times in epoch seconds
+alias lss="ls -lah --time-style=+%s"
+alias dsec="function _dsec () { date --date=@\$* ; } ; _dsec"
+alias dfsec="function _dfsec () { date --date=@\$* ; } ; _dfsec"
+
+# git
+# which branch are we on?
+alias gbr="git branch -a"
+alias gurl="git config --get remote.origin.url"
+alias gfo="git fetch origin"
+alias gcl="git clean -fd"
+alias gco="git checkout"
+alias gcomast="git checkout master"
+alias gcodevl="git checkout develop"
+alias gpu="git pull -v"
+alias gpuff="git pull -v --ff-only"
+alias gup="gcl; gco .; gpu"
+alias gdi="git diff"
+alias gst="git status"
+alias gsh="git show"
+alias grem="git remote -v"
+# get rid of all local changes
+# e.g. accidentally edited/deleted a file AND gup doesn't work for some reason
+alias greset="git reset --hard HEAD"
+git_user="jks-prv"
+alias gclone="function _gclone () { git clone https://github.com/${git_user}/\$1.git ; } ; _gclone"
+
+# git commits
+# current commit
+#alias gcom="gsh --oneline -s"
+alias gcom="git log --pretty=format:'%h %ad %s' --date=short | head -n 1"
+# list all commits <= current HEAD position
+alias gcoms="git log --pretty=format:'%h %ad %s' --date=short"
+# gco <sha>
+# gco master
+
+# git Kiwi
+alias gsom="git show origin:Makefile"
+alias kvers='git log --pretty=format:"%h %ad %s" --grep="^v[1-9]" --grep="^release v[1-9]" | grep -v "Merge pull request" | head'
+alias kver=kvers
+
+# systemctl
+alias sc="echo systemctl: sctl=systemctl ls=list_unit lsa=list_all_units scs=service_status sa,st=start,stop re=reload di,en=disable,enable"
+alias sctl="function _sys () { systemctl \$* ; } ; _sys"
+alias scls="function _syg () { systemctl list-units | gr -i \$* ; systemctl list-unit-files | gr -i \$* ; } ; _syg"
+alias sclsa="function _syg () { systemctl list-units ; systemctl list-unit-files ; } ; _syg"
+alias scs="function _sys () { systemctl --lines=100 status \${*}.service ; } ; _sys"
+alias scsa="function _sys () { systemctl --lines=100 start \${*}.service ; } ; _sys"
+alias scst="function _sys () { systemctl --lines=100 stop \${*}.service ; } ; _sys"
+alias scre="function _sys () { systemctl --lines=100 reload-or-restart \${*}.service ; } ; _sys"
+alias scdi="function _sys () { systemctl --lines=100 disable \${*}.service ; } ; _sys"
+alias scen="function _sys () { systemctl --lines=100 enable \${*}.service ; } ; _sys"
+alias sa="service --status-all"
+
+# packages
+alias pk="echo pk: s=search_available ls=list_installed ver,vers,sh,pol=versions i=install rm=remove ar=autoremove; echo pk: ch=allow-rel-info-chg up=update upp=single_pkg ug,ugn=dist-upgrade; echo pk: c=clean sz=sizes f,f2=which_pkg_has_file fu=file_update fi=files_installed co=cape_overlays"
+alias pks="echo available pkgs:; apt-cache search"
+alias pkls="echo installed pkgs:; dpkg -l | gr"
+alias pksh="apt show"
+alias pkver="apt-cache showpkg"
+alias pkvers="apt-cache madison"
+alias pkpol="apt-cache policy"
+alias pkch="apt-get update --allow-releaseinfo-change"
+alias pkup="apt-get -y ${APT_GET_FORCE} install debian-archive-keyring; apt-get update; apt-get -y ${APT_GET_FORCE} install ca-certificates; apt-get update"
+# update(upgrade) single package
+alias pki="apt-get -y ${APT_GET_FORCE} install"
+alias pkc="df; apt-get clean; echo; df"
+alias pksz="dpkg-query -W -f='\${Installed-Size;8}\t\${Status;1}\t\${Package}\n' | gr -v '\\sd\\s' | sort -n | cut -f1,3-"
+alias pkf="apt-file search"
+alias pkf2="dpkg -S"
+alias pkfu="apt-file update"
+alias pkfg="apt-file upgrade"
+alias pkfi="dpkg -L"
+alias pkrm="apt-get purge"
+#alias pkrm="apt-get remove"
+alias pkar="apt-get autoremove"
+alias pkco="apt-get upgrade bb-cape-overlays"
+
+#alias pkuug="apt-get -y ${APT_GET_FORCE} upgrade"
+#alias pkfug="apt-get full-upgrade"
+if [ "x${DEBIAN_8}" == "xtrue" ] ; then
+    alias pkupp="cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get install --only-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
+    alias pkug="cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get -y ${APT_GET_FORCE} dist-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
+    alias pkugn="cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get --dry-run ${APT_GET_FORCE} dist-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
+else
+    alias pkupp="apt-get install --only-upgrade"
+    alias pkug="apt-get -y dist-upgrade"
+    alias pkug="apt-get -y dist-upgrade"
+    alias pkugn="apt-get --dry-run dist-upgrade"
+fi
+
+
+# BBAI/BBAI-64 common
+# NB: /opt/source/dtb-* must match kernel version, hence based on "uname -r"
+d_sys=`uname -r`
+# following gives e.g. 4.19.94-ti-r42 => 4.19-ti
+d_ver=`uname -r | sed "s/\([0-9]*\.[0-9]*\)\..*/\1-ti/"`
+
+# BBAI-64
+if [ "x${BBAI_64}" == "xtrue" ] ; then
+    export PLATFORM="BBAI-64"
+    d_dt="/opt/source/dtb-${d_ver}"
+    d_dt2="/opt/source/dtb-${d_ver}/src/arm64"
+    alias cdpm="cd /sys/kernel/debug/pinctrl/11c000.pinctrl-pinctrl-single"
+    alias idt="echo BBAI-64; echo cd: cdbo cdbdt; echo dt: cddt cpdt m cpdt2 \(cpdtr2\); echo gpio: pmux wdt cdsdt cdpm"
+fi
+
+alias midt="make install_kiwi_device_tree"
+
+# BBAI
+if [ "x${BBAI}" == "xtrue" ] ; then
+    export PLATFORM="BBAI"
+    d_dt="/opt/source/dtb-${d_ver}"
+    d_dt2="/opt/source/dtb-${d_ver}/src/arm"
+    alias cdpm="echo no cdpm on BBAI"
+    alias idt="echo BBAI; echo cd: cdbo cdbdt; echo dt: cddt cpdt m cpdt2 \(cpdtr2\); echo gpio: pmux wdt cdsdt ver"
+fi
+
+# BBAI/BBAI-64 common
+# cd
+alias cdbo="cd /boot"
+alias cdbdt="cd /boot/dtbs/${d_sys}"
+# dt
+# procedure: cddt; cpdt; m; cpdt2; reboot
+d_ai="~/Beagle_SDR_GPS/platform/beaglebone_AI"
+f_dts="am5729-beagleboneai.dts"
+f_dtb="am5729-beagleboneai.dtb"
+f_cape="am5729-beagleboneai-kiwisdr-cape"
+alias cdov="cd /proc/device-tree/chosen/overlays"
+alias cddti="cd ${d_dt}/include/dt-bindings/board"
+#alias cpdt="pd ${d_ai}; echo *kiwisdr*[dts,dtsi] ; cp *kiwisdr*[dts,dtsi] ${d_dt2}; echo *allmem*; cp *allmem* ${d_dt2}/${f_dts}; popd"
+alias cpdt="pd ${d_ai}; echo *kiwisdr*[dts,dtsi] ; cp *kiwisdr*[dts,dtsi] ${d_dt2}; echo ${f_dts}; cp ${f_dts} ${d_dt2}; popd"
+alias cpdts="echo STANDARD DTB; cp ${d_dt2}/${f_dtb} /boot/dtbs/${d_sys}/${f_dtb}"
+alias cpdt2="cp ${d_dt2}/${f_cape}*.dtb /boot/dtbs/${d_sys}; cp ${d_dt2}/${f_cape}.dtb /boot/dtbs/${d_sys}/${f_dtb}; sum ${d_dt2}/${f_cape}*.dtb /boot/dtbs/${d_sys}/${f_cape}*.dtb /boot/dtbs/${d_sys}/${f_dtb}"
+alias cpdt3="cp ${d_dt2}/${f_dtb} /boot/dtbs/${d_sys}; sum ${d_dt2}/${f_dtb} /boot/dtbs/${d_sys}/${f_dtb}"
+#f_rcape=am5729-beagleboneai-roboticscape
+#alias cpdtr2="cp /boot/dtbs/${d_sys}/${f_rcape}.dtb /boot/dtbs/${d_sys}/${f_dtb}; sum /boot/dtbs/${d_sys}/${f_rcape}.dtb /boot/dtbs/${d_sys}/${f_dtb}"
+# gpio
+alias cdgpio="cd /sys/class/gpio"
+alias cdsdt="cd /sys/firmware/devicetree/base"
+alias cdfdt="cd /sys/firmware/devicetree/base"
+alias cdfw="cd /lib/firmware"
+alias cdpc="cd /sys/kernel/debug/pinctrl"
+alias wdt="strings /boot/dtbs/${d_sys}/${f_dtb} | grep '.dts'"
+alias cdi2c="cd /sys/bus/i2c/devices"
+alias ver="/opt/scripts/tools/version.sh"
+alias ht="htop"
+# disk i/o
+alias it="iotop"
+alias io="iotop -obtqqq"
+#alias kai="function _kai () { ../build/kiwi.bin -debian 8 -use_spidev 1 \$* ; } ; _kai"
+alias reb="shutdown -r now"
+# cpu
+alias ct="cat /sys/class/thermal/t*/temp"
+alias cf="cpufreq-info -p; cpufreq-info | grep -i 'current cpu'; cpufreq-info | grep -i 'cpufreq stats'"
+alias cfi="cpufreq-info"
+alias cfs="cpufreq-info -s"
+alias cfs2="tail -vn +1 /sys/devices/system/cpu/cpufreq/policy0/stats/t*"
+alias cfp="cpufreq-info -p; echo -n 'available: '; cpufreq-info -g; echo select with: cfpc cfpd cfpu cfps cfpp"
+export _cfp="cpufreq-set -g"
+alias cfpc="\$_cfp conservative; cfp"
+alias cfpd="\$_cfp ondemand; cfp"
+alias cfpu="\$_cfp userspace; cfp"
+alias cfps="\$_cfp powersave; cfp"
+alias cfpp="\$_cfp performance; cfp"
+export _cfs="cpufreq-set -f"
+alias cf5="\$_cfp userspace; \$_cfs 500MHz; cpufreq-info | grep -i 'current cpu'; cpufreq-info | grep -i 'cpufreq stats'"
+alias cf1="\$_cfp userspace; \$_cfs 1GHz; cpufreq-info | grep -i 'current cpu'; cpufreq-info | grep -i 'cpufreq stats'"
+alias cf11="\$_cfp userspace; \$_cfs 1.176GHz; cpufreq-info | grep -i 'current cpu'; cpufreq-info | grep -i 'cpufreq stats'"
+alias cf15="\$_cfp userspace; \$_cfs 1.5GHz; cpufreq-info | grep -i 'current cpu'; cpufreq-info | grep -i 'cpufreq stats'"
+alias cm="while true; do date; ct; cf; vmstat; sleep 2; done"
+alias opp="omapconf show opp"
+
+# BBG/BBB
+if [ "x${BBG_BBB}" == "xtrue" ] ; then
+    export PLATFORM="BBG_BBB"
+    d_dt="/opt/source/dtb-${d_ver}"
+    d_dt2="/opt/source/dtb-${d_ver}/src/arm"
+    alias cdpm="cd /sys/kernel/debug/pinctrl/4a003400.pinmux"
+    #alias pmux="more /sys/kernel/debug/pinctrl/44e10800.pinmux/pinmux-pins"
+    alias idt="echo BBG/BBB; echo gpio: pmux cdsdt"
+fi
+
+alias cddt="cd ${d_dt}"
+alias cddt2="cd ${d_dt2}"
+
+type lsb_release >/dev/null 2>&1 || { lsb_release() { :; } ; }
+alias dog="echo Debian `cat /etc/debian_version`; cat /etc/dogtag; uname -a; lsb_release -ds"
+alias tag=dog
+alias slots7="cat /sys/devices/bone_capemgr.*/slots"
+alias slots8="cat /sys/devices/platform/bone_capemgr/slots"
+alias slots="cat /sys/devices/platform/bone_capemgr/slots"
+alias unslot7="echo > /sys/devices/bone_capemgr.*/slots"
+alias unslot8="echo > /sys/devices/platform/bone_capemgr/slots"
+alias pins="more /sys/kernel/debug/pinctrl/44e10800.pinmux/pins"
+alias spi="lsmod | grep -i spidev; ls -la /dev/*spi*"
+alias db="systemctl reload-or-restart dropbear.socket"
+alias dk="diff -r . merge"
+led=/sys/class/leds/beaglebone\:green\:usr
+# cpu busy indication is not is the list of possibilities if you do a "cat ${led}0/trigger ?
+alias leds="echo heartbeat >${led}0/trigger; echo mmc0 >${led}1/trigger; echo none >${led}2/trigger; echo mmc1 >${led}3/trigger"
+alias hbeat="echo heartbeat >${led}0/trigger; echo heartbeat >${led}1/trigger; echo heartbeat >${led}2/trigger; echo heartbeat >${led}3/trigger"
+
+# BeagleBone common
+d_bb="~/Beagle_SDR_GPS/platform/beaglebone"
+alias pmux="${d_bb}/show-pins.pl"
+
+# BB USB-to-serial (outbound)
+# probably need "pki screen". In screen do "^A?" (ctrl-A ?) for help. "^A\" (ctrl-A \) to exit.
+# /dev/ttyUSB0 is created by plugging in a Keyspan USA-19H device to USB port.
+# Same for BB-specific FTDI FT232RL cables with 6-pin 3.3V serial interface headers
+#   e.g. successfully used one to connect one BB USB port to 6-pin serial console port of another
+alias bbser="screen -h 10240 /dev/ttyUSB0 115200"
+
+# MMC
+alias sdh="echo \"/media/sd_p1: msd0p1 msd1p1 cdsdp1(cdsd) usdp1(usd)\"; echo \"/media/sd_p2: msd0p2 msd1p2 cdsdp2 usdp2\""
+alias mmch=sdh
+
+alias mmc="lsblk"
+# shows UUID
+alias mmcfs="lsblk --fs"
+
+alias msd0p1="mkdir -p /media/sd_p1; mount /dev/mmcblk0p1 /media/sd_p1"
+alias msd1p1="mkdir -p /media/sd_p1; mount /dev/mmcblk1p1 /media/sd_p1"
+alias cdsdp1="cd /media/sd_p1"
+alias cdsd=cdsdp1
+alias usdp1="umount /media/sd_p1"
+alias usd=usdp1
+
+alias msd0p2="mkdir -p /media/sd_p2; mount /dev/mmcblk0p2 /media/sd_p2"
+alias msd1p2="mkdir -p /media/sd_p2; mount /dev/mmcblk1p2 /media/sd_p2"
+alias cdsdp2="cd /media/sd_p2"
+alias usdp2="umount /media/sd_p2"
+
+# KiwiSDR
+alias cdk="cd ~/kiwi.config"
+alias cdext="cd ~/extensions"
+alias kd="cdp; m stop; touch ~root/.kiwi_down; m start"
+alias ku="cdp; m stop; rm -f ~root/.kiwi_down; m start"
+alias kk="killall -r -s 9 kiwi"
+alias mu="make users"
+alias ja="jq '.' /root/kiwi.config/admin.json"
+alias jk="jq '.' /root/kiwi.config/kiwi.json"
+alias jd="jq '.' /root/kiwi.config/dx.json"
+alias jdc="jq '.' /root/kiwi.config/dx_config.json"
+alias jc="jq '.' /root/kiwi.config/dx_community.json"
+alias jcc="jq '.' /root/kiwi.config/dx_community_config.json"
+alias scD="git clone https://github.com/${git_user}/Beagle_SDR_GPS.git"
+alias urldecode='sed "s@+@ @g;s@%@\\\\x@g" | xargs -0 printf "%b"'
+alias wk="json_pp -t dumper < ~root/kiwi.config/kiwi.json | grep rx_name | urldecode"
+alias status="function _status () { curl --connect-timeout 5 \${*}:8073/status ; } ; _status"
+alias wstatus="function _wstatus () { while true; do curl \${*}:8073/status; curl -s \${*}:8073/users | jq '.'; curl -s \${*}:8073/snr; sleep 2; done ; } ; _wstatus"
+alias status80="function _status () { curl --connect-timeout 5 \${*}:80/status ; } ; _status"
+alias mdu="killall -q -s USR1 kiwid; killall -q -s USR1 kiwi.bin"
+alias kh="killall -q -s HUP kiwid; killall -q -s HUP kiwi.bin"
+alias whilek="while true; do ./k; done"
+alias whilekmm="while true; do ./k -mm; done"
+alias whiled="while true; do ./d; done"
+alias bbpp="ping -c 1 proxy.kiwisdr.com"
+alias bbfp="ping -c 1 forum.kiwisdr.com"
+alias mblog="tail -fn 100 ~/build.log"
+alias st="stty -a"
+alias adc="function _adc () { while true; do curl -s $_our_ip:8073/adc?level=\$1; sleep 0.5; done ; } ; _adc"
+alias adcov="function _adcov () { curl -s $_our_ip:8073/adc_ov } ; _adcov"
+alias adcovr="function _adcovr () { curl -s $_our_ip:8073/adc_ov?reset } ; _adcovr"
+
+
+# networking
+alias nt="iptraf"
+# after iftop starts use "tTL": "t" one line display, "L" log plot, "T" dsp cum totals, "B" toggle 2/10/40s avg (default 10s)
+# -m params is in b/s, so must x8 to get B/s, e.g. "-m 4M" will display 512KB max in byte mode
+# -f filter: 5353 is mDNS on multicast
+alias ift="iftop -nNBP -m 1G -f 'not port 22 and not port 80 and not port 5353 and not port 53 and not port 137'"
+# for linear display (without "L")
+alias iftl="iftop -nNBP -m 4M -f 'not port 22 and not port 80 and not port 5353 and not port 53 and not port 137'"
+alias ipt="function _ipt () { iptables -n -v -L \$* ; } ; _ipt"
+alias ips="ipset list"
+alias ipti="ipt INPUT"
+alias iptio="ipt INPUT; ipt OUTPUT"
+alias iptz="iptables -L -n -v -Z"
+alias iptc="iptables -L -n -v -Z"
+alias iptadd="iptables -N KIWI; iptables -F KIWI; iptables -A KIWI -j RETURN; iptables -A INPUT -j KIWI"
+alias iptrm="iptables -D KIWI -m set --match-set ipset-kiwi src,dst -j DROP; iptables -D INPUT -j KIWI; iptables -F KIWI; iptables -X KIWI"
+alias ipban="function _iptban () { iptables -I INPUT -s \$1 -j DROP ; } ; _iptban"
+alias ipunban="function _iptunban () { iptables -D INPUT -s \$1 -j DROP ; } ; _iptunban"
+alias iprtn="function _iprtn () { iptables -I INPUT -s \$1 -j RETURN ; } ; _iprtn"
+alias ipunrtn="function _ipunrtn () { iptables -D INPUT -s \$1 -j RETURN ; } ; _ipunrtn"
+alias tcpdhttp="tcpdump -vnlA 'tcp dst port 8073' | egrep -i 'POST /|GET /|Host:'"
+alias geoloc="curl -s https://ipapi.co/json | jq '.'"
+alias geoloc2="curl -s https://get.geojs.io/v1/ip/geo.json | jq '.'"
+alias geoloc3="curl -s http://ip-api.com/json | jq '.'"
+alias geolocip="function _geolocip () { curl -s http://ip-api.com/json/\$1 | jq '.' ; } ; _geolocip"
+
+# SSL
+alias certs="certbot certificates"
+alias renew="certbot renew"
+alias renew-force="certbot renew --force-renewal"
+
+# sharing KiwiSDR sources from a development machine to Beagle via NFS
+# download NFS with command: "pki nfs-common"
+alias nfs="mount -l -t nfs; showmount -a"
+# mount read-only so any changes don't flow backwards to development machine sources!
+#alias nfsup="mount -t nfs -o ro,proto=tcp,port=2049 dev_machine_name:path_to_Beagle_SDR_GPS /root/Beagle_SDR_GPS"
+alias nfsdn="cd ~; umount -a -f -t nfs"
+# on your development machine use commands like:
+#alias	nfs		'sudo nfsd checkexports; sudo nfsd status; showmount -e; showmount -a'
+#alias	nfsup	'sudo nfsd update; sudo nfsd enable; nfs'
+# and an entry in /etc/exports on the development machine like:
+#/path_to_kiwi_sources/Beagle_SDR_GPS -mapall=my_user_id -network 192.168.1.0 -mask 255.255.255.0
+
+# NFS reverse direction: sharing Beagle / (root fs) read-only with development machine to support cross compilation
+#   pki nfs-common nfs-kernel-server
+# edit resulting /etc/exports file and add: (adjust for subnet address)
+#   / 192.168.1.0/24(ro,sync,no_subtree_check)
+# might have to reboot beagle to get RPCd running
+# now on development machine: ("resvport" is necessary for MacOS)
+#   mkdir -p ${HOME}/mnt
+#   sudo mount -t nfs -o ro,resvport beagle_hostname:/ ${HOME}/mnt
+# later:
+#   sudo umount ${HOME}/mnt
+
+# NFS reverse direction: sharing Beagle /root dir read-write with development machine to support source file editing
+#   pki nfs-common nfs-kernel-server
+# edit resulting /etc/exports file and add: (adjust for subnet address)
+#   /root 192.168.1.0/24(rw,sync,no_subtree_check,all_squash,anonuid=0,anongid=0)
+# note how all uid/gid from dev machine is mapped to root/wheel on Beagle
+
+# KiwiSDR with gdb
+alias gk="gdb ../build/kiwi.bin"
+# aliases added to ~/.gdbinit
+# gdb> asan // sets ASAN breakpoint
+# gdb> {ng,ng7} // no gps, leds
+# gdb> {k,k7}   // normal run
+#
+# to detect leaks type "leaks" or "indiv_leaks"
+# can't use gdb
+# use admin > control > restart to trigger leak report
+
+# KiwiSDR valgrind with gdb (deprecated, use clang ASAN)
+#   'vgh' alias below is a reminder of the sequence of commands
+#	start valgrind with a "--vgdb-error=0" variant below, e.g. vggdb
+#   it will wait for gdb to connect
+#   start gdb; bload; vg; the "target remote | vgdb" from the vg will auto-connect to the valgrind pid
+alias vgh="echo 'cdp; vggdb/vggdball [-gps etc]; in another window: cdp; gk, bload, vg, c'"
+alias vg="valgrind -v --track-origins=yes --leak-check=full ../build/kiwi.bin"
+alias vgd="valgrind -v --track-origins=yes --leak-check=full ../build/kiwi.bin -gps -leds"
+alias vgall="valgrind -v --track-origins=yes --leak-check=full --show-leak-kinds=all ../build/kiwi.bin"
+alias vggdb="valgrind -v --track-origins=yes --leak-check=full --vgdb-error=0 ../build/kiwi.bin"
+alias vggdball="valgrind -v --track-origins=yes --leak-check=full --show-leak-kinds=all --vgdb-error=0 ../build/kiwi.bin"

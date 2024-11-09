@@ -1,0 +1,79 @@
+#id-tdoa-map-kiwi {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+#id-tdoa-map-result {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.cl-tdoa-gmap-host-label {
+    color: white;
+    background-color: blue;
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 12px;
+    /*font-weight: bold;*/
+    text-align: center;
+    border: 1px solid black;
+    white-space: nowrap;
+}
+
+.cl-tdoa-gmap-selected-label {
+    color: black;
+    background-color: yellow;
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 12px;
+    /*font-weight: bold;*/
+    text-align: center;
+    border: 1px solid black;
+    white-space: nowrap;
+}
+
+.cl-tdoa-gmap-ref-label {
+    color: black;
+    background-color: white;
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 12px;
+    /*font-weight: bold;*/
+    text-align: center;
+    border: 1px solid black;
+    white-space: nowrap;
+}
+
+.id-tdoa-marker-cluster-refs div {
+	background-color: rgba(181, 226, 140, 0.8);
+}
+
+/*
+    Qualified with .leaflet-tooltip because with dynload TDoA.css is now loaded
+    before Leaflet/MarkerCluster css. So needed for proper override.
+*/
+
+.leaflet-tooltip.id-tdoa-ref {
+    background-color: lime;
+    color: black;
+    padding: 0 2px;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 9000;
+}
+
+.id-tdoa-marker-cluster-hosts div {
+	background-color: hsla(220, 85%, 80%, 0.8);
+}
+
+.leaflet-tooltip.id-tdoa-host {
+    background-color: blue;
+    color: white;
+    padding: 0 2px;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 9000;
+}

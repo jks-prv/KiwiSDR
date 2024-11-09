@@ -1,0 +1,18 @@
+[Unit]
+Description=kiwi daemon
+Wants=network-online.target
+After=network-online.target
+Wants=ntp.service
+After=ntp.service
+Wants=capemgr.service
+After=capemgr.service
+
+[Service]
+Type=forking
+ExecStart=/etc/init.d/kiwid start
+ExecStop=/etc/init.d/kiwid stop
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,46 @@
+/* HFDL.css */
+
+#id-hfdl-map-kiwi {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.id-hfdl-AFT {
+    height: auto !important;
+    width: 17px !important;
+    background-color: cyan;
+    color: black;
+    padding-left: 1px;
+    padding-right: 1px;
+    border: 1px solid grey;
+    border-radius: 3px;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 9000;
+}
+
+/*
+    Qualified with .leaflet-tooltip because with dynload HFDL.css is now loaded
+    before Leaflet/MarkerCluster css. So needed for proper override.
+*/
+
+.leaflet-tooltip.id-hfdl-gs {
+    background-color: lime;
+    color: black;
+    padding: 0 2px;
+    /* cursor: pointer;
+    pointer-events: auto; */
+    z-index: 9000;
+}
+
+.leaflet-tooltip.id-hfdl-flight {
+    background-color: blue;
+    color: white;
+    padding: 0 2px;
+    /* cursor: pointer;
+    pointer-events: auto; */
+    z-index: 9000;
+}

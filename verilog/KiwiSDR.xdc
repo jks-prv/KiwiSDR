@@ -1,0 +1,1 @@
+KiwiSDR.xc7a35t.xdc

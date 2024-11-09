@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# The MIT License (MIT)
+#	
+# ant-switch-backend-arduino-netshield - arduino backend to antenna switch
+#
+# This is part of KiwiSDR antenna switch extension
+#
+# Copyright (c) 2017 Kari Karvonen
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+N_CH=8
+VERSION=2.0
+ADDR_FILE="/etc/default/netshield"
+
+if [ -e $ADDR_FILE ]; then
+	. $ADDR_FILE
+else
+    NETSHIELD_IP="192.168.0.19"
+fi
+
+AntSW_ShowBackend() {
+    echo "arduino-netshield v$VERSION 8ch mix $NETSHIELD_IP"
+    echo "More info: https://github.com/OH1KK/KiwiSDR-antenna-switch-extension/blob/master/docs/ant-switch-backend-arduino-netshield.txt"
+}
+
+AntSW_GetAddress() {
+    echo $NETSHIELD_IP
+}
+
+AntSW_SetAddress() {
+    if [[ -z "${1// }" ]]; then
+        echo -n "Enter IP address (currently $NETSHIELD_IP): "
+        read ip
+    else
+        ip=$1
+    fi
+    if [ "x$ip" != "x" ]; then
+        echo "NETSHIELD_IP=\"$ip\"" >$ADDR_FILE
+    fi
+}
+
+AntSW_Initialize() {
+  	ARDUINOURL="http://"$NETSHIELD_IP
+	CURLEXEC=`which curl`
+	CURLOPTS=" --silent --connect-timeout 4"
+}
+
+AntSW_GroundAll() {
+	ignore=`$CURLEXEC $CURLOPTS $ARDUINOURL/?cmd=g`
+}
+
+AntSW_SelectAntenna() {
+	ignore=`$CURLEXEC $CURLOPTS $ARDUINOURL/?cmd=$1`
+}
+
+AntSW_AddAntenna() {
+	ignore=`$CURLEXEC $CURLOPTS $ARDUINOURL/?cmd=+$1`
+}
+
+AntSW_RemoveAntenna() {
+	ignore=`$CURLEXEC $CURLOPTS $ARDUINOURL/?cmd=-$1`
+}
+
+AntSW_ToggleAntenna() {
+	ignore=`$CURLEXEC $CURLOPTS $ARDUINOURL/?cmd=t$1`
+}
+
+AntSW_ShowSelected() {
+    AntSW_ReportSelected
+}
+
+AntSW_ReportSelected() {
+	selectedantennas=`$CURLEXEC $CURLOPTS $ARDUINOURL/?cmd=q`
+    echo -n "Selected antennas: "
+	echo $selectedantennas
+}
