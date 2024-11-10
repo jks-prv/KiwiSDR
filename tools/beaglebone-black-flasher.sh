@@ -367,7 +367,7 @@ copy_rootfs () {
 	mount ${destination}p${media_rootfs} /tmp/rootfs/ -o async,noatime
 
     tr="/usr/bin/tr '\\r' '\\n'"
-    throttle="/root/Beagle_SDR_GPS/tools/throttle 3"
+    throttle="/root/KiwiSDR/tools/throttle 3"
 
 	message="INFO: /usr/bin/rsync: (-aHAXx) [/ -> /tmp/rootfs/]"                               ; broadcast
 	message="INFO: rsync: note the % column is useless..."                                     ; broadcast

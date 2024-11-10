@@ -41,10 +41,10 @@ echo "--- date:" `date`
 echo "--- install git"
 apt-get -y install git
 
-# Beagle_SDR_GPS sources need to be a git clone so autoupdate scheme works
+# KiwiSDR sources need to be a git clone so autoupdate scheme works
 echo "--- clone KiwiSDR from github"
 echo -n "hit enter when ready: "; read not_used
-git clone https://github.com/jks-prv/Beagle_SDR_GPS.git || true
+git clone https://github.com/jks-prv/KiwiSDR.git || true
 
 # in addition to what Kiwi "make install" will get
 echo "--- install tools"
@@ -58,8 +58,8 @@ apt-get -y install gdb
 
 echo "--- build KiwiSDR"
 echo -n "hit enter when ready: "; read not_used
-(cd Beagle_SDR_GPS; make)
-(cd Beagle_SDR_GPS; make install)
+(cd KiwiSDR; make)
+(cd KiwiSDR; make install)
 
 # Starting with Debian 8.4 BB-SPIDEV0 must be loaded via /boot/uEnv.txt
 echo "--- add load of SPIDEV0 overlay to /boot/uEnv.txt"
@@ -74,7 +74,7 @@ rm -f kiwiSDR*.sh kiwiSDR*.gen
 echo "--- some upgraded packages require reboot to finish installation"
 echo "--- eMMC image will not be ready for copy to micro-SD before then"
 echo "--- after reboot insert micro-SD card to be written"
-echo "--- run ./Beagle_SDR_GPS/tools/kiwiSDR-make-microSD-flasher-from-eMMC.sh"
+echo "--- run ./KiwiSDR/tools/kiwiSDR-make-microSD-flasher-from-eMMC.sh"
 echo "--- then remove micro-SD card as it is now a flasher"
 echo -n "hit ^C to skip reboot, else enter when ready to reboot: "; read not_used
 reboot

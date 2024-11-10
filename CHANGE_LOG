@@ -1,6 +1,7 @@
 CHANGE_LOG
 
-For the Github commit log see here: github.com/jks-prv/Beagle_SDR_GPS/commits/master
+For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
+    Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
 v1.800  November ?, 2024
     Rebase Kiwi Github repository. Moved from "Beagle_SDR_GPS" to "KiwiSDR". This was necessary

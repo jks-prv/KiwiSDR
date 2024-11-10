@@ -1568,8 +1568,10 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 
 
         ifeq ($(REBASE_DISTRO),true)
-	        lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first . $(DIR_FILE_SRC) && exit'
+	        -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first . $(DIR_FILE_SRC) && exit'
 	        rsync -av --delete $(DIR_FILE_SRC)/samples/ $(DIR_CFG)/samples
+	        -sed -e 's/Beagle_SDR_GPS/KiwiSDR/' < /root/.bashrc.local >/tmp/bashrc.local
+	        -mv /tmp/bashrc.local /root/.bashrc.local
         else
 	        rsync -av --delete $(DIR_CFG_SRC)/samples/ $(DIR_CFG)/samples
         endif

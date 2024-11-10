@@ -64,7 +64,7 @@ SND -> GPIO26, pin 37
 1. clone the bits and build/install
     >sudo su
     >cd /root
-    >git clone https://github.com/jks-prv/Beagle_SDR_GPS.git
+    >git clone https://github.com/jks-prv/KiwiSDR.git
     >make
     >make install
 

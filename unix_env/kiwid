@@ -14,7 +14,7 @@
 DEV=kiwi
 KIWID=kiwid
 KIWID_EXEC=/usr/local/bin/${KIWID}
-KIWI_MAKEFILE=/root/Beagle_SDR_GPS/Makefile
+KIWI_MAKEFILE=/root/KiwiSDR/Makefile
 
 if test \( -f ${KIWI_MAKEFILE} \) ; then
     VERSION_MAJ=$(awk 'NR==1 {print $0}' ${KIWI_MAKEFILE} | cut -d ' ' -f 3)

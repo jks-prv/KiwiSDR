@@ -63,7 +63,7 @@ if ! id | grep -q root; then
 	emsg="must be run as root" ; err=10 ; error_exit
 fi
 
-SOC_sh="/root/Beagle_SDR_GPS/tools/kiwiSDR-SOC.sh"
+SOC_sh="/root/KiwiSDR/tools/kiwiSDR-SOC.sh"
 
 if [ -f ${SOC_sh} ] ; then
 	message="include ${SOC_sh}" ; broadcast
@@ -73,7 +73,7 @@ fi
 
 # use our version
 mkdir -p /opt/scripts/tools/eMMC/
-cp -v /root/Beagle_SDR_GPS/tools/kiwiSDR-init-eMMC-flasher-v3.sh /opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh
+cp -v /root/KiwiSDR/tools/kiwiSDR-init-eMMC-flasher-v3.sh /opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh
 chmod +x /opt/scripts/tools/eMMC/init-eMMC-flasher-v3.sh
 message="-----------------------------" ; broadcast
 
@@ -357,7 +357,7 @@ copy_boot () {
 }
 
 tr="/usr/bin/tr '\\r' '\\n'"
-throttle="/root/Beagle_SDR_GPS/tools/throttle 3"
+throttle="/root/KiwiSDR/tools/throttle 3"
 
 copy_rootfs () {
 	message="Copying: ${source}p${media_rootfs} -> ${destination}p${media_rootfs}" ; broadcast

@@ -27,7 +27,7 @@
 
 VERSION=2.0
 BACKEND_FILE=/root/kiwi.config/ant-switch-backend
-BACKEND_DIR=/root/Beagle_SDR_GPS/pkgs/ant_switch/backends
+BACKEND_DIR=/root/KiwiSDR/pkgs/ant_switch/backends
 BACKEND_PREFIX=${BACKEND_DIR}/ant-switch-backend-
 BACKEND_DIR2=/root/kiwi.config
 BACKEND_PREFIX2=${BACKEND_DIR2}/ant-switch-backend-

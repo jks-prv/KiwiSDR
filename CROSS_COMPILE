@@ -12,12 +12,12 @@ the new DRM code.
 How it works:
 
 Recall that on both the Beagle and the development machine all Kiwi source code is
-contained in a directory called Beagle_SDR_GPS. And that all derived files from the build
+contained in a directory called KiwiSDR. And that all derived files from the build
 (e.g. object files, the final kiwi.bin executable, other generated files) are stored in
-the directory ../build relative to Beagle_SDR_GPS. Thus the source files and compiled
+the directory ../build relative to KiwiSDR. Thus the source files and compiled
 binaries are strictly separated. This is for the benefit of the auto update mechanism
 which uses git which needs to not be confused by the presence of object files in the
-Beagle_SDR_GPS directory.
+KiwiSDR directory.
 
 The current Kiwi development cycle is to edit and test compile the sources on a
 development machine. Then, after any compilation problems are resolved, to transfer (or
@@ -27,7 +27,7 @@ compile of all source files incremental compiles can be done when only a small s
 the source files have changed. This helps to reduce compile times.
 
 Also note that sources on the development machine should always be from a copy or clone
-of the KiwiSDR project sources on GitHub: https://github.com/jks-prv/Beagle_SDR_GPS
+of the KiwiSDR project sources on GitHub: https://github.com/jks-prv/KiwiSDR
 rather than trying to copy them from the Kiwi Beagle.
 
 With the cross-compile option it is now possible to create the ARM architecture object
@@ -44,7 +44,7 @@ The only difference is that they have been generated and copied from the develop
 machine as opposed to being compiled on the Beagle.
 
 Since the object files are being copied it may also make sense to copy all the source
-files from the Beagle_SDR_GPS tree as well. This can be accomplished by setting the
+files from the KiwiSDR tree as well. This can be accomplished by setting the
 environment variable KIWI_XC_COPY_SOURCES to "true". This variable is checked when the
 "make install_xc" is done. If you are already sharing source files via a file sharing
 mechanism (e.g. sshfs, nfs) this copying would not be needed.
@@ -92,7 +92,7 @@ Setup instructions:
     
 4. Now test and deploy by entering these commands on the Kiwi:
     Test on Kiwi by doing:
-        cdp     // change to project directory ~root/Beagle_SDR_GPS
+        cdp     // change to project directory ~root/KiwiSDR
         mst     // optional: stop normal Kiwi server from running
         ./d     // run newly installed server in debug mode
                 // (use "./k" for non-debug mode which includes enabling GPS)

@@ -1,4 +1,4 @@
-export PROJ=~/Beagle_SDR_GPS
+export PROJ=~/KiwiSDR
 #export PATH=$PROJ:$PATH
 
 if [ -f ~/.bashrc.local.common ]; then

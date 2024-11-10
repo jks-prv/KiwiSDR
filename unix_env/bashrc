@@ -1,4 +1,4 @@
-# For the benefit of Beagle_SDR_GPS non-tree builds like liquid-dsp that don't want
+# For the benefit of KiwiSDR non-tree builds like liquid-dsp that don't want
 # the default of "CC=gcc" but which is otherwise difficult to specify any other way.
 # Benefits platform-conditional parts of bashrc as well.
 #
@@ -162,7 +162,7 @@ alias aah='echo "Antenna switch shell aliases:"; \
            echo "ant <cmd>: run frontend script using <cmd> command"; \
            echo "ah: show frontend script help"; \
            echo "aah: show this list of aliases"'
-alias cda="cd ~/Beagle_SDR_GPS/pkgs/ant_switch"
+alias cda="cd ~/KiwiSDR/pkgs/ant_switch"
 alias ant="./ant-switch-frontend"
 alias ah="./ant-switch-frontend h"
 alias abs="./ant-switch-frontend bs"
@@ -431,7 +431,7 @@ alias cdbo="cd /boot"
 alias cdbdt="cd /boot/dtbs/${d_sys}"
 # dt
 # procedure: cddt; cpdt; m; cpdt2; reboot
-d_ai="~/Beagle_SDR_GPS/platform/beaglebone_AI"
+d_ai="~/KiwiSDR/platform/beaglebone_AI"
 f_dts="am5729-beagleboneai.dts"
 f_dtb="am5729-beagleboneai.dtb"
 f_cape="am5729-beagleboneai-kiwisdr-cape"
@@ -511,7 +511,7 @@ alias leds="echo heartbeat >${led}0/trigger; echo mmc0 >${led}1/trigger; echo no
 alias hbeat="echo heartbeat >${led}0/trigger; echo heartbeat >${led}1/trigger; echo heartbeat >${led}2/trigger; echo heartbeat >${led}3/trigger"
 
 # BeagleBone common
-d_bb="~/Beagle_SDR_GPS/platform/beaglebone"
+d_bb="~/KiwiSDR/platform/beaglebone"
 alias pmux="${d_bb}/show-pins.pl"
 
 # BB USB-to-serial (outbound)
@@ -554,7 +554,7 @@ alias jd="jq '.' /root/kiwi.config/dx.json"
 alias jdc="jq '.' /root/kiwi.config/dx_config.json"
 alias jc="jq '.' /root/kiwi.config/dx_community.json"
 alias jcc="jq '.' /root/kiwi.config/dx_community_config.json"
-alias scD="git clone https://github.com/${git_user}/Beagle_SDR_GPS.git"
+alias scD="git clone https://github.com/${git_user}/KiwiSDR.git"
 alias urldecode='sed "s@+@ @g;s@%@\\\\x@g" | xargs -0 printf "%b"'
 alias wk="json_pp -t dumper < ~root/kiwi.config/kiwi.json | grep rx_name | urldecode"
 alias status="function _status () { curl --connect-timeout 5 \${*}:8073/status ; } ; _status"
@@ -609,13 +609,13 @@ alias renew-force="certbot renew --force-renewal"
 # download NFS with command: "pki nfs-common"
 alias nfs="mount -l -t nfs; showmount -a"
 # mount read-only so any changes don't flow backwards to development machine sources!
-#alias nfsup="mount -t nfs -o ro,proto=tcp,port=2049 dev_machine_name:path_to_Beagle_SDR_GPS /root/Beagle_SDR_GPS"
+#alias nfsup="mount -t nfs -o ro,proto=tcp,port=2049 dev_machine_name:path_to_KiwiSDR /root/KiwiSDR"
 alias nfsdn="cd ~; umount -a -f -t nfs"
 # on your development machine use commands like:
 #alias	nfs		'sudo nfsd checkexports; sudo nfsd status; showmount -e; showmount -a'
 #alias	nfsup	'sudo nfsd update; sudo nfsd enable; nfs'
 # and an entry in /etc/exports on the development machine like:
-#/path_to_kiwi_sources/Beagle_SDR_GPS -mapall=my_user_id -network 192.168.1.0 -mask 255.255.255.0
+#/path_to_kiwi_sources/KiwiSDR -mapall=my_user_id -network 192.168.1.0 -mask 255.255.255.0
 
 # NFS reverse direction: sharing Beagle / (root fs) read-only with development machine to support cross compilation
 #   pki nfs-common nfs-kernel-server
