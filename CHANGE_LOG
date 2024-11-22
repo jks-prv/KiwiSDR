@@ -3,7 +3,7 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
-v1.800  November ?, 2024
+v1.800  November 23, 2024
     Rebase Kiwi Github repository. Moved from "Beagle_SDR_GPS" to "KiwiSDR". This was necessary
     to reduce the accumulated size of the repo including unwanted retention of the recent
     binary release files. Large static files are now stored and fetched from distro.kiwisdr.com
@@ -12,6 +12,7 @@ v1.800  November ?, 2024
     Fix for SWBC database lookup (www.short-wave.info) when using Firefox. (thanks VK4018SWL)
     Fix for FT8 PSKReporter fragmentation that can cause upload data loss. (thanks dchristle)
     EiBi database: update from A24 to B24.
+    IP blacklist update. (thanks ArturPL, WA2ZKD)
 
 v1.703,704,705,706,707  November 2, 2024
     The binary install mechanism now covers a greater range of Debian minor releases numbers.

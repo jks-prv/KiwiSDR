@@ -6,10 +6,6 @@ VERSION_MIN = 800
 # use new binary distro mechanism
 BINARY_DISTRO := true
 
-# maintain large files out-of-git-tree
-REBASE_DISTRO := $(if $(IS_DEVSYS),,true)
-DIR_FILE_SRC := $(if $(REBASE_DISTRO),/root/KiwiSDR.files,.)
-
 #
 # Makefile for KiwiSDR project
 #
@@ -42,6 +38,10 @@ include Makefile.comp.inc
 
 # for any config-specific options/dependencies
 -include ../kiwi.config/Makefile.kiwi.inc
+
+# maintain large files out-of-git-tree
+REBASE_DISTRO := $(if $(IS_DEVSYS),,true)
+DIR_FILE_SRC := $(if $(REBASE_DISTRO),/root/KiwiSDR.files,.)
 
 REPO_USER := jks-prv
 REPO_NAME := KiwiSDR
@@ -1948,7 +1948,13 @@ clean_deprecated:
 	-rm -rf obj obj_O3 obj_keep kiwi.bin kiwid.bin *.dSYM web/edata*
 	-rm -rf *.dSYM pas extensions/ext_init.cpp kiwi.gen.h kiwid kiwid.aout kiwid_realtime.bin .comp_ctr
 
-clean: clean_ext clean_deprecated
+ifeq ($(REBASE_DISTRO),true)
+     DEP_LFTP := /usr/bin/lftp
+else
+     DEP_LFTP :=
+endif
+
+clean: clean_ext clean_deprecated $(DEP_LFTP)
 	(cd $(REPO_DIR)/e_cpu; make clean)
 	(cd $(REPO_DIR)/verilog/rx; make clean)
 	(cd $(REPO_DIR)/tools; make clean)
