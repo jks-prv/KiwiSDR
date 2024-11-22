@@ -4,10 +4,11 @@ VERSION_MIN = 800
 # Caution: software update mechanism depends on format of first two lines in this file
 
 # use new binary distro mechanism
-#BINARY_DISTRO := true
+BINARY_DISTRO := true
 
 # maintain large files out-of-git-tree
-REBASE_DISTRO := true
+REBASE_DISTRO := $(if $(IS_DEVSYS),,true)
+DIR_FILE_SRC := $(if $(REBASE_DISTRO),/root/KiwiSDR.files,.)
 
 #
 # Makefile for KiwiSDR project
@@ -553,7 +554,7 @@ else ifeq ($(DEBIAN_VERSION),11)
     endif
 endif
 
-PLAT_KIWI_BIN := bin/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
+PLAT_KIWI_BIN := $(DIR_FILE_SRC)/bin/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
 HAS_KIWI_BIN := $(shell test -x $(PLAT_KIWI_BIN) && echo true)
 
 .PHONY: make_binary
@@ -622,6 +623,7 @@ build_makefile_inc:
 	@echo PLAT = $(PLAT)
 	@echo PLATFORMS = $(PLATFORMS)
 	@echo BINARY_DISTRO = $(BINARY_DISTRO)
+	@echo REBASE_DISTRO = $(REBASE_DISTRO)
 	@echo DEBUG = $(DEBUG)
 	@echo GDB = $(GDB)
 	@echo XC = $(XC)
@@ -1377,7 +1379,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 endif
 
 DIR_CFG_SRC := unix_env/kiwi.config
-DIR_FILE_SRC := $(if $(REBASE_DISTRO),/root/KiwiSDR.files,.)
 
 EXISTS_BASHRC_LOCAL := $(shell test -f ~root/.bashrc.local && echo true)
 
@@ -1460,7 +1461,7 @@ endif
 ################################
 # BINARY_DISTRO
 ################################
-PLAT_KIWID_BIN := bin/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
+PLAT_KIWID_BIN := $(DIR_FILE_SRC)/bin/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
 HAS_KIWID_BIN := $(shell test -x $(PLAT_KIWID_BIN) && echo true)
 
 .PHONY: make_install_binary
@@ -1957,6 +1958,11 @@ clean: clean_ext clean_deprecated
 	# but not $(KEEP_DIR)
 	-rm -rf $(LOG_FILE) $(BUILD_DIR)/kiwi* $(GEN_DIR) $(OBJ_DIR) $(OBJ_DIR_O3)
 	-rm -f Makefile.1
+    ifeq ($(REBASE_DISTRO),true)
+	    @echo
+	    @echo "update $(DIR_FILE_SRC) for BINARY_INSTALL"
+	    -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first . $(DIR_FILE_SRC) && exit'
+    endif
 
 clean_dist: clean
 	-rm -rf $(BUILD_DIR)
