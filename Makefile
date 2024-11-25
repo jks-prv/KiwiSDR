@@ -1948,11 +1948,7 @@ clean_deprecated:
 	-rm -rf obj obj_O3 obj_keep kiwi.bin kiwid.bin *.dSYM web/edata*
 	-rm -rf *.dSYM pas extensions/ext_init.cpp kiwi.gen.h kiwid kiwid.aout kiwid_realtime.bin .comp_ctr
 
-ifeq ($(REBASE_DISTRO),true)
-     DEP_LFTP := /usr/bin/lftp
-else
-     DEP_LFTP :=
-endif
+DEP_LFTP := $(if $(REBASE_DISTRO),/usr/bin/lftp,)
 
 clean: clean_ext clean_deprecated $(DEP_LFTP)
 	(cd $(REPO_DIR)/e_cpu; make clean)
