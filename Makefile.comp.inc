@@ -203,6 +203,18 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
             CPP_FLAGS += -std=gnu++11
+        else ifeq ($(DEBIAN_VERSION),9)
+            # some people upgraded to D9 on their BBG/BBB based Kiwis and the
+            # v1.800 install of lftp breaks which clang is used without adding this case
+            CC = clang-6.0
+            CPP = clang++-6.0
+            #CC = clang
+            #CPP = clang++
+            CMD_DEPS_DEBIAN := /usr/bin/clang-6.0
+            VIS_OPT = -Ofast
+            # needed for iq_display.cpp et al
+            CPP_FLAGS += -std=gnu++11
+            APT_GET_FORCE = --force-yes
         else ifeq ($(DEBIAN_VERSION),8)
             CC = clang-6.0
             CPP = clang++-6.0
