@@ -1553,6 +1553,7 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 	    install -o root -g root unix_env/kiwid /etc/init.d
 	    install -o root -g root -m 0644 unix_env/kiwid.service /etc/systemd/system
 
+	    install -D -o root -g root pkgs/noip2/$(ARCH_DIR)/noip2 $(GEN_DIR)/noip2
 	    install -D -o root -g root pkgs/noip2/$(ARCH_DIR)/noip2 /usr/local/bin/noip2
 
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/frpc.template.ini $(DIR_CFG)/frpc.template.ini
@@ -2040,7 +2041,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    (cd $(DIR_CFG); jq '.sdr_hu_dom_sel = 2 | .server_url = ""' kiwi.json > /tmp/jq && mv /tmp/jq kiwi.json)
 	    (cd $(DIR_CFG); rm -f .do_once.dep .keyring4.dep frpc.ini seq_serno)
 	    -rm -f /tmp/.kiwi* /root/.ssh/auth* /root/.ssh/known*
-	    -rm -f build.log
+	    -rm -f .bashrc.local.common build.log _FLASHED_FROM_SD_
 	    -touch unix_env/reflash_delay_update
 	    -cp unix_env/shadow /etc/shadow
 	    sum *.bit
@@ -2067,7 +2068,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    @(cd $(DIR_CFG); $(JA) | grep onetime)
 	    @echo "want: update_check, update_install = true"
 	    @(cd $(DIR_CFG); $(JA) | grep update_)
-	    @echo 'want: rev_auto = false, rev_{user,host} = ""'
+	    @echo 'want: rev_auto = false, rev_auto_{user,host} = ""'
 	    @(cd $(DIR_CFG); $(JA) | grep rev_auto)
 	    @echo 'want: admin_password = ""'
 	    @(cd $(DIR_CFG); $(JA) | grep admin_pa)
@@ -2099,7 +2100,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     else ifeq ($(BBG_BBB),true)
         SD_CARD_MMC_COPY := 0
         SD_CARD_MMC_PART := p1
-        DISTRO_DEBIAN_VER := 11.9
+        DISTRO_DEBIAN_VER := 11.11
         DD_SIZE := 3000M
     endif
 
