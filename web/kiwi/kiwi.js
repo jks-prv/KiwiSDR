@@ -54,6 +54,7 @@ var kiwi = {
    conn_tstamp: 0,
    isOffset: false,
    loaded_files: {},
+   gps_chans: 0,
    GPS_auto_grid: '',
    GPS_fixes: 0,
    wf_fps: 0,
@@ -2274,7 +2275,7 @@ function kiwi_output_msg(id, id_scroll, p)
 
 function gps_stats_cb(acquiring, tracking, good, fixes, adc_clock, adc_gps_clk_corrections)
 {
-   var s = (acquiring? 'yes':'pause') +', track '+ tracking +', good '+ good +', fixes '+ fixes.toUnits();
+   var s = (acquiring? 'yes':'pause') +', ch '+ kiwi.gps_chans +', track '+ tracking +', good '+ good +', fixes '+ fixes.toUnits();
 	w3_innerHTML('id-msg-gps', 'GPS: acquire '+ s);
 	w3_innerHTML('id-status-gps',
 	   w3_text('w3-text-css-orange', 'GPS'),
@@ -2509,7 +2510,8 @@ function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
 
 function config_str_update(rx_chans, gps_chans, vmaj, vmin)
 {
-	kiwi_config_str = 'v'+ vmaj +'.'+ vmin +', ch: '+ rx_chans +' SDR '+ gps_chans +' GPS';
+	kiwi_config_str = 'v'+ vmaj +'.'+ vmin +', D'+ kiwi.debian_maj +'.'+ kiwi.debian_min;
+	   ', SDR '+ rx_chans +' GPS '+ gps_chans;
 	w3_innerHTML('id-status-config', kiwi_config_str);
 	kiwi_config_str_long = 'KiwiSDR '+ kiwi.model +', v'+ vmaj +'.'+ vmin +', '+ rx_chans +' SDR channels, '+ gps_chans +' GPS channels';
 	w3_innerHTML('id-msg-config', kiwi_config_str);
@@ -2520,10 +2522,11 @@ var config_net = {};
 function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm, mac, vmaj, vmin, dmaj, dmin)
 {
 	var s;
-	config_str_update(rx_chans, gps_chans, vmaj, vmin);
-	w3_innerHTML('id-msg-debian', 'Debian '+ dmaj +'.'+ dmin);
 	kiwi.debian_maj = dmaj;
 	kiwi.debian_min = dmin;
+	kiwi.gps_chans = gps_chans;
+	config_str_update(rx_chans, gps_chans, vmaj, vmin);
+	w3_innerHTML('id-msg-debian', 'Debian '+ dmaj +'.'+ dmin);
 
 	var net_config = w3_el("id-net-config");
 	if (net_config) {
