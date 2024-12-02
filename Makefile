@@ -456,7 +456,7 @@ skip_cert_check:
 	-apt-get -y $(APT_GET_FORCE) install netcat
 
 /usr/bin/lftp:
-	-apt-get -y $(APT_GET_FORCE) install lftp
+	(DEBIAN_FRONTEND=noninteractive -apt-get -y $(APT_GET_FORCE) install lftp)
 
 ifeq ($(DEBIAN_VERSION),10)
     /usr/bin/connmanctl:
