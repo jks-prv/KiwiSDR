@@ -71,13 +71,13 @@ Boston, MA  02110-1301, USA.
 
 #include <algorithm>
 
-void rx_sound_set_freq(conn_t *conn, double freq, bool spectral_inversion)
+void rx_sound_set_freq(conn_t *conn, double freq_kHz, bool spectral_inversion)
 {
     int ch = conn? conn->rx_channel : RX_CHAN0;
-    double freq_kHz = freq * kHz;
-    double freq_inv_kHz = ui_srate - freq_kHz;
+    double freq_Hz = freq_kHz * kHz;
+    double freq_inv_Hz = ui_srate_Hz - freq_Hz;
     double adc_clock_corrected = conn? conn->adc_clock_corrected : clk.adc_clock_corrected;
-    double f_phase = (spectral_inversion? freq_inv_kHz : freq_kHz) / adc_clock_corrected;
+    double f_phase = (spectral_inversion? freq_inv_Hz : freq_Hz) / adc_clock_corrected;
     u64_t i_phase = (u64_t) round(f_phase * pow(2,48));
     //printf("SND UPD rx%d freq %.3f kHz i_phase 0x%08x|%08x clk %.6f(%d)\n", ch,
     //    freq, PRINTF_U64_ARG(i_phase), adc_clock_corrected, clk.adc_clk_corrections);
@@ -89,7 +89,7 @@ void rx_sound_set_freq(conn_t *conn, double freq, bool spectral_inversion)
 
 static void rx_gen_disable(snd_t *s)
 {
-    g_genampl = s->genattn = 0;
+    s->genattn = 0;
     s->gen_enable = false;
     if (do_sdr) {
         spi_set3(CmdSetGenFreq, 0, 0, 0);
@@ -102,16 +102,16 @@ void rx_gen_set_freq(conn_t *conn, snd_t *s)
 {
     int rx_chan = conn->rx_channel;
     if (rx_chan != 0 || !s->gen_enable) return;
-    u4_t self_test = (s->gen < 0 && !kiwi.ext_clk)? CTRL_STEN : 0;
-    double gen_freq = fabs(s->gen);
-    double f_phase = gen_freq * kHz / conn->adc_clock_corrected;
+    u4_t self_test = (s->gen_kHz < 0 && !kiwi.ext_clk)? CTRL_STEN : 0;
+    double gen_freq_kHz = fabs(s->gen_kHz);
+    double gen_freq_Hz = gen_freq_kHz * kHz;
+    double f_phase = gen_freq_Hz / conn->adc_clock_corrected;
     u64_t i_phase = (u64_t) round(f_phase * pow(2,48));
-    //cprintf(conn, "%s %.3f kHz phase %.3f 0x%012llx self_test=%d\n", gen_freq? "GEN_ON":"GEN_OFF", gen_freq, f_phase, i_phase, self_test? 1:0);
+    //cprintf(conn, "%s %.3f kHz phase %.3f 0x%012llx self_test=%d\n", gen_freq_kHz? "GEN_ON":"GEN_OFF", gen_freq_kHz, f_phase, i_phase, self_test? 1:0);
     if (do_sdr) {
         spi_set3(CmdSetGenFreq, rx_chan, (u4_t) ((i_phase >> 16) & 0xffffffff), (u2_t) (i_phase & 0xffff));
-        ctrl_clr_set(CTRL_USE_GEN | CTRL_STEN, gen_freq? (CTRL_USE_GEN | self_test) : 0);
+        ctrl_clr_set(CTRL_USE_GEN | CTRL_STEN, gen_freq_kHz? (CTRL_USE_GEN | self_test) : 0);
     }
-    g_genfreq = gen_freq * kHz / ui_srate;
 }
 
 void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
@@ -173,9 +173,9 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
             //cprintf(conn, "SND f=%.3f lo=%.3f hi=%.3f mode=%s\n", _freq, _locut, _hicut, mode_m);
 
             bool new_freq = false;
-            if (s->freq != _freq) {
-                s->freq = _freq;
-                rx_sound_set_freq(conn, s->freq, s->spectral_inversion);
+            if (_freq >= 0 && _freq <= ui_srate_kHz && s->freq_kHz != _freq) {
+                s->freq_kHz = _freq;
+                rx_sound_set_freq(conn, s->freq_kHz, s->spectral_inversion);
                 if (do_sdr) {
                     #ifdef SND_FREQ_SET_IQ_ROTATION_BUG_WORKAROUND
                         if (first_freq_trig) {
@@ -293,9 +293,9 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
                 s->change_LPF = s->check_masked = true;
             }
         
-            double nomfreq = s->freq;
+            double nomfreq = s->freq_kHz;
             if (!no_pb_change && (s->hicut - s->locut) < 1000) nomfreq += (s->hicut + s->locut)/2/kHz;	// cw filter correction
-            nomfreq = round(nomfreq*kHz);
+            nomfreq = round(nomfreq * kHz);
             if (!no_mode_change) conn->mode = s->mode;
         
             // if freq change result of a scan don't let this reset inactivity timeout
@@ -394,17 +394,17 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
         break;
 
     case CMD_GEN_FREQ:
-        n = sscanf(cmd, "SET gen=%lf", &s->gen);
+        n = sscanf(cmd, "SET gen=%lf", &s->gen_kHz);
         if (n == 1) {
             did_cmd = true;
             if (rx_chan == 0) {
-                //cprintf(conn, "SET gen=%lf\n", &s->gen);
-                if (s->gen == 0 && s->genattn == 0) {
+                //cprintf(conn, "SET gen=%lf\n", &s->gen_kHz);
+                if (s->gen_kHz == 0 && s->genattn == 0) {
                     rx_gen_disable(s);
                 } else {
-                    if (s->gen != 0 && !s->gen_enable) s->gen_enable = true;
+                    if (s->gen_kHz != 0 && !s->gen_enable) s->gen_enable = true;
                     rx_gen_set_freq(conn, s);
-                    if (s->gen == 0 && s->gen_enable) s->gen_enable = false;
+                    if (s->gen_kHz == 0 && s->gen_enable) s->gen_enable = false;
                 }
             }
         }
@@ -416,14 +416,13 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
         if (n == 1) {
             did_cmd = true;
             if (rx_chan == 0) {
-                if (s->gen == 0 && _genattn == 0) {
+                if (s->gen_kHz == 0 && _genattn == 0) {
                     rx_gen_disable(s);
                 } else
                 if (s->genattn != _genattn) {
                     s->genattn = _genattn;
                     if (do_sdr) spi_set(CmdSetGenAttn, 0, (u4_t) s->genattn);
                     //cprintf(conn, "GEN_ATTN %d 0x%x\n", s->genattn, s->genattn);
-                    g_genampl = s->genattn / (float) ((1 << 17) - 1);
                 }
             }
         }

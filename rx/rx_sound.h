@@ -124,7 +124,7 @@ typedef struct {
 
 	ext_receive_FFT_samps_t rsid_FFT;
 
-	double freq, gen, locut, hicut;
+	double freq_kHz, gen_kHz, locut, hicut;
 	int mode, genattn, mute, test, deemp, deemp_nfm;
 	bool gen_enable;
 	u4_t mparam, SAM_mparam;
