@@ -11,6 +11,7 @@
 // "lsb" as the second element of the frequency array selects LSB mode for all entries.
 //
 // Updates:
+//  5 dec 24 Mark W Added KFOR milcom.
 // 16 sep 24 Mark W Added Moroccan milcom.
 //  9 sep 24 M0HGK  Added UN MINURSO.
 //  4 mar 22 Bob W  FEMA, US Govt updates.
@@ -96,6 +97,9 @@
         "TWN NV":   [0, "lsb", 5433, 6659, 6747, 7137,7216, 7508, 7841, 8173, 8251, 9169, 9292, 10180, 11218, 12026, 12288],
         "UK RAF":   [0, 4722, 6733, 9019, 4706, 6691, 6706, 9019, 9021, 9022, 11217],
         "UN_MINURSO": [0, 3338, 5835, 5852, 6678, 7616],
+
+// Mark W email 12/5/24
+        "KFOR":     [0, 4700, 6550, 8401.2, 8815, 8850, 8905, 8935, 8965, 9005, 9038, 13315],
 
 // Mark W email 9/16/24
         "Morocco_AF":    [0, 4471, 5120, 5250, 5258, 5541, 5838, 6559, 6562, 7692, 7814, 8857, 8875, 10185, 11130, 11474, 12160, 14550, 14570, 14890, 17137, 18100, 20550, 21145, 22860, 25120],
