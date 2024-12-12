@@ -645,7 +645,7 @@ int main(int argc, char *argv[])
         notes_size += dp2->sl + SPACE_FOR_NULL;
     }
     printf("notes_dict_n=%d notes_size=%d\n\n", notes_dict_n, notes_size);
-    fprintf(fo, "};\n
+    fprintf(fo, "};\n");
 #endif
 
     

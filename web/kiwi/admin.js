@@ -2236,7 +2236,7 @@ function network_port_open_init()
    
    w3_do_when_cond(
       function() {
-         if (isEmptyString(config_net.pvt_ip)) {
+         if (isEmptyString(config_net.pub_ip)) {
             msg_send('SET GET_CONFIG');
             return false;
          }
@@ -2244,7 +2244,7 @@ function network_port_open_init()
       },
       function() {
          w3_innerHTML('id-net-check-port-ip-q',
-            'http://'+ config_net.pvt_ip +':'+ adm.port_ext);
+            'http://'+ config_net.pub_ip +':'+ adm.port_ext);
       }
    );
    // REMINDER: w3_do_when_cond() returns immediately

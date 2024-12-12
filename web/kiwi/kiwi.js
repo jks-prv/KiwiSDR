@@ -2544,7 +2544,7 @@ function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm,
 			);
 		config_net.pub_ip = pub;
 		config_net.pub_port = port_ext;
-		config_net.pvt_ip = pub;
+		config_net.pvt_ip = pvt;
 		config_net.pvt_port = port_int;
 		config_net.mac = mac;
 		config_net.serno = serno;
