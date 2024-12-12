@@ -45,6 +45,7 @@
 [28.00, "CW", "3SB/3SQ? CHN", "MSK", {"T8":1}],
 [29.70, "CWN", "Negev ISR", "FSK", {"T8":1}],
 [31.50, "CWN", "? FSK", "", {"T8":1}],
+[31.70, "CWN", "HFGCS L.Superior", "FSK", {"T8":1, "p":"fsk,*"}],
 [37.50, "CWN", "TFK ISL", "", {"T8":1}],
 [38.00, "CWN", "SRC/SHR SWE", "FSK", {"T8":1}],
 [40.00, "CWN", "JJY JPN", "time signal\nID @ xx:15&45:40", {"T5":1, "p":"time,jjy-40"}],
