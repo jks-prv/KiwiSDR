@@ -204,7 +204,7 @@ bool ft8_msgs(char *msg, int rx_chan)
 		e->last_freq_kHz = conn->freqHz/1e3;
         ft8_conf.freq_offset_Hz = freq.offset_Hz;
 		//rcprintf(rx_chan, "FT8 start %s\n", proto? "FT4" : "FT8");
-		decode_ft8_init(rx_chan, proto? 1:0);
+		decode_ft8_init(rx_chan, proto? 1:0, (int) e->debug);
 
 		if (ft8_conf.tsamps != 0) {
             ext_register_receive_real_samps(ft8_file_data, rx_chan);
@@ -245,6 +245,12 @@ bool ft8_msgs(char *msg, int rx_chan)
 	if (strcmp(msg, "SET ft8_close") == 0) {
 		//rcprintf(rx_chan, "FT8 close\n");
 		ft8_close(rx_chan);
+		return true;
+	}
+	
+	if (strcmp(msg, "SET ft8_clear") == 0) {
+		//rcprintf(rx_chan, "FT8 clear\n");
+		decode_ft8_clear(rx_chan);
 		return true;
 	}
 	

@@ -232,7 +232,7 @@ function ft8_controls_setup()
                w3_div('',
 				      w3_div('w3-medium w3-text-aqua', '<b>FT8/FT4 decoder</b>')
 				   ), 40,
-					w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib/tree/update_to_0_2" target="_blank">ft8_lib</a></b> Karlis Goba &copy; 2018'), 45
+					w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b> Karlis Goba &copy; 2018'), 45
 				),
 				w3_div('id-ft8-err w3-margin-T-10 w3-padding-small w3-css-yellow w3-width-fit w3-hide'),
 				w3_inline('id-ft8-container w3-margin-T-6/w3-margin-between-8',
@@ -350,6 +350,7 @@ function ft8_clear_button_cb(path, idx, first)
    ft8.console_status_msg_p.s = '\f';
    kiwi_output_msg('id-ft8-console-msgs', 'id-ft8-console-msg', ft8.console_status_msg_p);
    ft8.log_txt = '';
+   ext_send('SET ft8_clear');
 }
 
 function ft8_test_cb()

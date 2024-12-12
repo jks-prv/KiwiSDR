@@ -34,7 +34,8 @@
     #define CALLSIGN_AGE_MAX 3
 #endif
 
-const int kMin_score = 10; // Minimum sync score threshold for candidates
+//const int kMin_score = 10; // Minimum sync score threshold for candidates
+const int kMin_score = 0; // Minimum sync score threshold for candidates
 const int kMax_candidates = 140;
 const int kLDPC_iterations = 25;
 
@@ -71,6 +72,7 @@ typedef struct {
     int in_pos;
     int frame_pos;
     u4_t slot;
+    int total_decoded;
 
     callsign_hashtable_t *callsign_hashtable;
     int callsign_hashtable_size;
@@ -207,6 +209,7 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
     const ftx_waterfall_t* wf = &mon->wf;
     // Find top candidates by Costas sync score and localize them in time and frequency
     int num_candidates = ftx_find_candidates(wf, kMax_candidates, ft8->candidate_list, kMin_score);
+    //LOG(LOG_WARN, "FT8 rx%d min_score=%d num_candidates=%d\n", rx_chan, kMin_score, num_candidates);
 
     // Hash table for decoded messages (to check for duplicates)
     int num_decoded = 0, num_spots = 0;
@@ -456,10 +459,11 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
     }
     LOG(LOG_INFO, "Decoded %d messages, callsign hashtable size %d\n", num_decoded, ft8->callsign_hashtable_size);
     if (num_decoded > 0) {
+        ft8->total_decoded += num_decoded;
         char *ks = NULL;
-        ks = kstr_asprintf(ks, "%02d:%02d:%02d %s decoded %d, ",
+        ks = kstr_asprintf(ks, "%02d:%02d:%02d %s decoded %d/%d, ",
             ft8->tm_slot_start.tm_hour, ft8->tm_slot_start.tm_min, ft8->tm_slot_start.tm_sec,
-            ft8->protocol_s, num_decoded);
+            ft8->protocol_s, num_decoded, ft8->total_decoded);
         if (num_spots != 0) {
             ks = kstr_asprintf(ks, "new spots %d, ", num_spots);
         }
@@ -496,6 +500,7 @@ void decode_ft8_setup(int rx_chan, int debug)
     decode_ft8_t *ft8 = &decode_ft8[rx_chan];
     TaskSetUserParam(TO_VOID_PARAM(rx_chan));
     ft8->debug = debug;
+    //LOG(LOG_WARN, "FT8 rx%d debug = %d\n", rx_chan, ft8->debug);
     int have_call_and_grid = PSKReporter_setup(rx_chan);
     if (have_call_and_grid != 0) ft8->have_call_and_grid = have_call_and_grid;
 }
@@ -557,10 +562,11 @@ void decode_ft8_samples(int rx_chan, TYPEMONO16 *samps, int nsamps, int _freqHz,
     ft8->tsync = false;
 }
 
-void decode_ft8_init(int rx_chan, int proto)
+void decode_ft8_init(int rx_chan, int proto, int debug)
 {
     decode_ft8_t *ft8 = &decode_ft8[rx_chan];
     memset(ft8, 0, sizeof(decode_ft8_t));
+    ft8->debug = debug;
     ft8->magic = 0xbeefcafe;
     ft8->rx_chan = rx_chan;
     ftx_protocol_t protocol = proto? FTX_PROTOCOL_FT4 : FTX_PROTOCOL_FT8;
@@ -609,8 +615,14 @@ void decode_ft8_protocol(int rx_chan, u64_t _freqHz, int proto)
 {
     decode_ft8_t *ft8 = &decode_ft8[rx_chan];
     decode_ft8_free(rx_chan);
-    decode_ft8_init(rx_chan, proto);
+    decode_ft8_init(rx_chan, proto, ft8->debug);
     ext_send_msg_encoded(rx_chan, false, "EXT", "chars",
         "-------------------------------------------------------  new freq %.2f mode %s\n",
         (double) _freqHz / 1e3, ft8->protocol_s);
+}
+
+void decode_ft8_clear(int rx_chan)
+{
+    decode_ft8_t *ft8 = &decode_ft8[rx_chan];
+    ft8->total_decoded = 0;
 }
