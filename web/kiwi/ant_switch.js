@@ -240,7 +240,6 @@ function ant_switch_user_init()
       w3_div('id-antsw-controls w3-margin-right w3-text-white',
          w3_inline('w3-gap-12/',
             w3_div('w3-text-aqua', '<b>Antenna switch</b>'),
-            w3_div('w3-text-white', 'by Kari Karvonen'),
             w3_button('id-antsw-help-btn w3-btn-right w3-green w3-small w3-padding-small', 'help', 'ant_switch_help')
          ),
          w3_div('w3-margin-LR-8',
