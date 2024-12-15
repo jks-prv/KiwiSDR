@@ -1018,6 +1018,11 @@ input[type=range]::-moz-range-thumb {
 }
 
 
+/* grid */
+
+.w3-grid { display: grid }
+
+
 .w3-tspace-2:not(:first-child)
 {
 	margin-top: 2px !important

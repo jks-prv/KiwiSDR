@@ -8253,6 +8253,7 @@ var dx = {
    // stored DB
    legacy_stored_types: [ 'active', 'watch-list', 'sub-band', 'DGPS', 'special event', 'interference' ],
    legacy_stored_colors: [ 'cyan', 'lightPink', 'aquamarine', 'lavender', 'violet', 'violet', 'lightGrey' ],
+   stored_colors: [],            // setup by dx_color_init()
    stored_colors_light: [],      // setup by dx_color_init()
    stored_lightness: 0.95,
    filter_tod: [1,1,1],
@@ -8496,10 +8497,10 @@ function dx_color_init()
       for (i = 0; i < _dxcfg.dx_type.length; i++) {
          var o = _dxcfg.dx_type[i];
          var color = (o.color == '')? 'white' : o.color;
+         dx.stored_colors[i] = color;
          var colorObj = w3color(color);
          if (colorObj.valid) {   // only if the color name is valid
-            if (dx.db == dx.DB_STORED)
-               colorObj.lightness = dx.stored_lightness;
+            colorObj.lightness = dx.stored_lightness;
             dx.stored_colors_light[i] = colorObj.toHslString();
          }
       }
@@ -8578,6 +8579,7 @@ function dx_update()
 
 	// refresh every 5 minutes to catch schedule changes
    kiwi_clearTimeout(dx.dx_refresh_timeout);
+   //console_log_dbgUs('dx.filter_tod db['+ dx.db +']='+ dx.filter_tod[dx.db]);
 	if (dx.filter_tod[dx.db]) {
 	//if (1) {    // so can observe change from dashed/lighter to solid/darker when not filtered
 	   var _5_min_ms = 5*60*1e3;
@@ -8678,11 +8680,13 @@ function dx_label_render_cb(arr)
 	dx_ibp_server_time_ms = hdr.s * 1000 + (+hdr.m);
 	dx_ibp_local_time_epoch_ms = Date.now();
 	
+	// update EiBi category counts
 	if (eibi && isDefined(hdr.ec)) for (i = 0; i < dx.DX_N_EiBi; i++) {
 	   if (isDefined(hdr.ec[i]))
 	      w3_innerHTML('eibi-cbox'+ i +'-label', dx.eibi_svc_s[i] +' ('+ hdr.ec[i] +')');
 	}
 	
+	// update community category counts
 	if (community && isDefined(hdr.tc)) for (i = 0; i <= dx.DX_N_COMM; i++) {
 	   if (isDefined(hdr.tc[i]))
 	      w3_innerHTML('id-dxcomm'+ i +'-label', dxcomm_cfg.dx_type[i].name +' ('+ hdr.tc[i] +')');
@@ -8832,6 +8836,7 @@ function dx_label_render_cb(arr)
          var c = _dxcfg.dx_type[color_idx].color;
          if (c == '') c = 'white';
          color = filtered? dx.stored_colors_light[color_idx] : c;
+         //if (community) console.log(ident +' color='+ color +' idx='+ color_idx +' light='+ dx.stored_colors_light[color_idx] +' c='+ c);
       }
 
       // for backward compatibility, IBP color is fixed to aquamarine
@@ -9288,7 +9293,7 @@ function dx_show_edit_panel(ev, gid, from_shortcut)
 
 function dx_show_edit_panel2()
 {
-   var cbox, cbox_container, label;
+   var cbox, label;
    dx_color_init();
 
    if (dx.db != dx.DB_COMMUNITY) {
@@ -9447,7 +9452,6 @@ function dx_show_edit_panel2()
    
    if (dx.db == dx.DB_EiBi) {
       //console_log_dbgUs('dx_show_edit_panel2 DB_EiBi');
-      cbox_container = 'w3-halign-space-around/|flex-basis:130px';
       cbox = '/w3-label-inline w3-label-not-bold w3-round w3-padding-small/';
       var checkbox = function(type) {
          var idx = dx_type2idx(type);
@@ -9465,34 +9469,28 @@ function dx_show_edit_panel2()
                'filter by time/day-of-week', dx.DB_EiBi.toString() +'-filter-tod', dx.filter_tod[dx.DB_EiBi], 'dx_time_dow_cb')
          ) +
          
-         w3_div('w3-valign-col w3-round w3-padding-TB-10 w3-gap-10|background:whiteSmoke',
-            w3_inline(cbox_container,
+         w3_div('w3-valign-col w3-round w3-padding-TB-10 cl-dx-type-container',
                checkbox(dx.DX_BCAST),
                checkbox(dx.DX_UTIL),
-               checkbox(dx.DX_TIME)
-            ),
-            w3_inline(cbox_container,
+               checkbox(dx.DX_TIME),
+
                checkbox(dx.DX_ALE),
                checkbox(dx.DX_HFDL),
-               checkbox(dx.DX_MILCOM)
-            ),
-            w3_inline(cbox_container,
+               checkbox(dx.DX_MILCOM),
+
                checkbox(dx.DX_CW),
                checkbox(dx.DX_FSK),
-               checkbox(dx.DX_FAX)
-            ),
-            w3_inline(cbox_container,
+               checkbox(dx.DX_FAX),
+
                checkbox(dx.DX_AERO),
                checkbox(dx.DX_MARINE),
                checkbox(dx.DX_SPY)
-            )
          );
    } else
    
    // DB_COMMUNITY
    {
       //console_log_dbgUs('dx_show_edit_panel2 DB_COMMUNITY');
-      cbox_container = 'w3-margin-L-32 w3-halign-space-around/|flex-basis:130px';
       cbox = 'w3-round w3-padding-small';
       label = function(idx) {
          var dx_type = dxcomm_cfg.dx_type[idx];
@@ -9507,32 +9505,26 @@ function dx_show_edit_panel2()
 
       if (!dx.dxcomm_cfg_parse_error)
          s2 +=
-            w3_div('w3-valign-col w3-round w3-padding-TB-15 w3-gap-15|background:whiteSmoke',
-               w3_inline(cbox_container,
+            w3_div('w3-valign-col w3-round w3-padding-TB-10 cl-dx-type-container',
                   label(dx.T3_BCAST),
                   label(dx.T4_UTIL),
-                  label(dx.T5_TIME)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T5_TIME),
+                  
                   label(dx.T6_ALE),
                   label(dx.T7_HFDL),
-                  label(dx.T8_MILCOM)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T8_MILCOM),
+                  
                   label(dx.T9_CW),
                   label(dx.T10_FSK),
-                  label(dx.T11_FAX)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T11_FAX),
+                  
                   label(dx.T12_AERO),
                   label(dx.T13_MARINE),
-                  label(dx.T14_SPY)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T14_SPY),
+
                   label(dx.T2_HAM),
                   label(dx.T1_CHANNEL),
                   label(dx.T0_RESERVED)
-               )
             );
    }
 	
@@ -9557,8 +9549,8 @@ function dx_show_edit_panel2()
             }
          } else {    // DB_COMMUNITY
             for (i = 0; i <= dx.DX_N_COMM; i++) {
-               w3_color('id-dxcomm'+ i +'-label', 'black', dx.stored_colors_light[i]);
-               //console.log('dxcomm'+ i +' '+ dx.stored_colors_light[i]);
+               w3_color('id-dxcomm'+ i +'-label', 'black', dx.stored_colors[i]);
+               //console.log('dxcomm'+ i +' '+ dx.stored_colors[i]);
             }
          }
          if (dx.help) {
