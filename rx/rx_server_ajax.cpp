@@ -454,7 +454,7 @@ fail:
                     asprintf(&sb, "/snr: measuring..\n");
                 }
             } else {
-                asprintf(&sb, "/snr: NON_LOCAL MESURE ATTEMPT from %s\n", ip_unforwarded);
+                asprintf(&sb, "/snr: NON_LOCAL MEASURE ATTEMPT from %s\n", ip_unforwarded);
             }
             printf("%s", sb);
             break;
