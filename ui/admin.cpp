@@ -600,10 +600,7 @@ void c2s_admin(void *param)
                     // So the non_blocking_cmd() will hang.
 		            lprintf("PROXY: starting frpc\n");
                     system("killall -q frpc; sleep 1");
-                    if (background_mode)
-                        system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
-                    else
-                        system("./pkgs/frp/" ARCH_DIR "/frpc -c " DIR_CFG "/frpc.ini &");
+                    system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
                 }
             
                 kiwi_asfree(cmd_p);

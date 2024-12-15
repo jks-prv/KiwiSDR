@@ -298,10 +298,7 @@ static void misc_NET(void *param)
 	    
 		lprintf("PROXY: starting frpc\n");
 		rev_enable_start = true;
-    	if (background_mode)
-			system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
-		else
-			system("sleep 1; ./pkgs/frp/" ARCH_DIR "/frpc -c " DIR_CFG "/frpc.ini &");
+		system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
 	}
 
     // find and remove known viruses, mostly as a result of Debian root/debian accounts
