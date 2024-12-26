@@ -173,7 +173,8 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
             //cprintf(conn, "SND f=%.3f lo=%.3f hi=%.3f mode=%s\n", _freq, _locut, _hicut, mode_m);
 
             bool new_freq = false;
-            if (_freq >= 0 && _freq <= ui_srate_kHz && s->freq_kHz != _freq) {
+            _freq = CLAMP(_freq, 0, ui_srate_kHz);
+            if (s->freq_kHz != _freq) {
                 s->freq_kHz = _freq;
                 rx_sound_set_freq(conn, s->freq_kHz, s->spectral_inversion);
                 if (do_sdr) {
