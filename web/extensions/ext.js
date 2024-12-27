@@ -1001,7 +1001,7 @@ function extint_panel_hide(skip_calling_hide_spec)
 	
 	resize_waterfall_container(true);	// necessary if an ext was present so wf canvas size stays correct
 
-   extint.displayed = false;     // NB: must occur before freqset_select() below so closed_ext_input_still_holding_focus logic works
+   extint.displayed = false;     // NB: must occur before freqset_select()
    freqset_select();
 }
 

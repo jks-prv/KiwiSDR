@@ -918,6 +918,14 @@ function w3_field_select(el_id, opts)
    }
    if (!el) return;
    
+   // If ext_set_scanning() has set extint.scanning then don't perform a field select
+   // if this element specifies the "scanning:1" option.
+   //
+   // The ALE_2G extension currently does this so its control panel UI items can be used
+   // without being interrupted by the frequency entry field taking focus away during
+   // each scan frequency tune.
+   if (opts['scanning'] && extint.scanning) return;
+   
    var focus=0, select=0, blur=0;
    if (opts['mobile'] && kiwi_isMobile()) blur = 1; else focus = select = 1;
    if (opts['blur']) blur = 1;

@@ -6606,15 +6606,10 @@ function popup_keyboard_touchstart(event)
    owrx.popup_keyboard_active = true;
 }
 
-function retain_input_focus()
-{
-   return w3_retain_input_focus({ext:extint.displayed, scan:extint.scanning});
-}
-
 function freqset_select()
 {
    //console.log('$freqset_select');
-	w3_field_select('id-freq-input', {mobile:1, log:1});
+	w3_field_select('id-freq-input', {mobile:1, log:1, scanning:1});
 }
 
 function modeset_update_ui(mode)
