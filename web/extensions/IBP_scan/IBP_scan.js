@@ -85,9 +85,9 @@ function ibp_controls_setup()
          ),
          
          w3_inline('w3-halign-space-between w3-margin-T-8|width:90%;/',
-            w3_select('id-IBP-menu w3-left w3-margin-right w3-show-inline', '', '', '', 0, select, 'IBP_set'),
-            w3_checkbox('w3-label-inline w3-label-not-bold', 'Annotate Waterfall', 'ibp.annotate', true, 'w3_bool_cb'),
-            w3_checkbox('w3-label-inline w3-label-not-bold', 'Autosave PNG', 'ibp.autosave', false, 'IBP_Autosave')
+            w3_select('id-IBP-menu w3-left w3-margin-right w3-show-inline', '', '', '', 0, select, 'IBP_menu_cb'),
+            w3_checkbox('id-IBP-annotate w3-label-inline w3-label-not-bold', 'Annotate Waterfall', 'ibp.annotate', true, 'w3_bool_cb'),
+            w3_checkbox('id-IBP-autosave w3-label-inline w3-label-not-bold', 'Autosave PNG', 'ibp.autosave', false, 'IBP_Autosave')
          )
       );
    
@@ -97,28 +97,61 @@ function ibp_controls_setup()
    time_display_setup('IBP_scan');
 	IBP_environment_changed( {resize:1} );
    
-   // use extension parameter as beacon station call (or 'cycle' for cycle mode)
-   // e.g. kiwisdr.local:8073/?ext=ibp,4u1un (upper or lowercase)
-   var call = ext_param();
-   if (call)  {
-      call = call.toLowerCase();
-      var idx = -1;
-      w3_obj_enum(dx_ibp_stations, function(key, i, o) {
-         if (key.toLowerCase() == call)
-            idx = i;
-      });
-      var cycle;
-      if (idx != -1 && ((cycle = (idx >= ibp.SLOTS && call == 'cycle')) || idx < ibp.SLOTS)) {
-         if (cycle) idx = ibp.ALL;
-         //console.log('IBP: URL set '+ call);
-         //console.log('IBP URL_param='+ idx);
-         IBP_set('', idx);
-      }
-   }
-
    ibp.autosave = kiwi_storeRead('IBP_PNG_Autosave');
    if (ibp.autosave != 'true') ibp.autosave = false;
-   w3_checkbox_set('id-IBP-Autosave', ibp.autosave);
+
+   // Use extension parameter as beacon station call.
+   // Or 'cycle' or 'all' for cycle mode.
+   // Or band name/freq, e.g. '15m', '21'
+   // e.g. kiwisdr.local:8073/?ext=ibp,4u1un (upper or lowercase)
+   var p = ext_param();
+	if (p) {
+      p = p.split(',');
+      p.forEach(function(a, i) {
+         //console.log('IBP param1 <'+ a +'>');
+         if (i == 0) {
+            var call = a.toLowerCase();
+            var idx = -1;
+            w3_obj_enum(dx_ibp_stations, function(key, i, o) {
+               if (key.toLowerCase() == call)
+                  idx = i;
+            });
+            if (idx == -1) {
+               if (call == 'cycle' || call == 'all') {
+                  idx = ibp.ALL;
+               } else {
+                  ibp.bands_s.forEach(function(s, i) {
+                     if (s.includes(call))
+                        idx = ibp.BANDS + i;
+                  });
+                  if (idx == -1) ibp.freqs.forEach(function(s, i) {
+                     if (s.includes(call))
+                        idx = ibp.BANDS + i;
+                  });
+               }
+            }
+            if (idx != -1) {
+               console.log('IBP: URL set '+ call);
+               console.log('IBP URL_param='+ idx);
+               IBP_menu_cb('', idx);
+            }
+         } else {
+            var r;
+            if ((r = w3_ext_param('annotate', a)).match) {
+               ibp.annotate = (r.num == 0)? false : true;
+            } else
+            if ((r = w3_ext_param('autosave', a)).match) {
+               ibp.autosave = (r.num == 0)? false : true;
+            } else
+            if (w3_ext_param('help', a).match) {
+               ext_help_click();
+            }
+         }
+      });
+   }
+
+   w3_checkbox_set('id-IBP-annotate', ibp.annotate);
+   w3_checkbox_set('id-IBP-autosave', ibp.autosave);
       
    var canv = w3_el('id-IBP-canvas');
    var label = '';
@@ -161,7 +194,7 @@ function IBP_environment_changed(changed)
 function IBP_scan_blur()
 {
    //console.log('IBP_scan_blur');
-   IBP_set('', -1);
+   IBP_menu_cb('', -1);
    ibp.run = false;
 }
 
@@ -174,11 +207,11 @@ function IBP_Autosave(path, checked)
 // If menu has ever been selected then we restore band to 20m on blur,
 // else leave alone so e.g. zoom won't change.
 
-function IBP_set(path, v, first)    // called by IBP selector with beacon value
+function IBP_menu_cb(path, v, first)    // called by IBP selector with beacon value
 {
    if (first) return;
    v = +v;
-   //console.log('IBP_set v='+ v);
+   //console.log('IBP_menu_cb v='+ v);
    w3_el('id-IBP-menu').value = v;     // for benefit of direct callers
    var selected = (v >= 0);
    ibp.band = 0;
@@ -186,19 +219,19 @@ function IBP_set(path, v, first)    // called by IBP selector with beacon value
 
    if (v >= ibp.BANDS) {
       ibp.band = v-ibp.BANDS;
-      //console.log('IBP_set MENU band='+ ibp.band);
+      //console.log('IBP_menu_cb MENU band='+ ibp.band);
    } else
 
    if (v < 0) {    // menu = "off"
       w3_el('id-IBP-menu').selectedIndex = 0;
       if (selected) {
          ibp.band = 0;
-         //console.log('IBP_set MENU=off ibp.band=0');
+         //console.log('IBP_menu_cb MENU=off ibp.band=0');
       }
    }
 
    select_band(ibp.bands_s[ibp.band]);
-   //console.log('IBP_set ibp.band='+ ibp.band +' ibp.monitorBeacon='+ ibp.monitorBeacon);
+   //console.log('IBP_menu_cb ibp.band='+ ibp.band +' ibp.monitorBeacon='+ ibp.monitorBeacon);
 }
 
    
@@ -316,7 +349,7 @@ function IBP_scan_plot(oneline_image)
    if (ibp.oldSlot != slot) {
       if (kiwi.muted && (ibp.monitorBeacon == beaconN)) {
          toggle_or_set_mute();
-         setTimeout(function() { toggle_or_set_mute()}, 50000);
+         setTimeout(function() { toggle_or_set_mute(); }, 50000);
       }
       ctx.fillStyle = "#000055";
       ctx.fillRect(plot_x,plot_y,50,35);
@@ -335,4 +368,27 @@ function IBP_scan_plot(oneline_image)
    }
 
    ibp.oldSlot = slot;
+}
+
+function IBP_scan_help(show)
+{
+   if (show) {
+      var s = 
+         w3_text('w3-medium w3-bold w3-text-aqua', 'IBP scanner help') +
+         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
+            w3_div('w3-margin-R-8',
+               '<br>URL parameters: <br>' +
+               'First parameter can be an entry from the IBP menu: One of the station callsigns. <br>' +
+               'Or a band or frequency (MHz) entry, e.g. "20m", "28". Or "all" or "cycle" to scan all bands. <br>' +
+               'The two checkbox values can also be set. Use a num value of "1" to set the checkbox. <br>' +
+               w3_text('|color:orange', 'annotate:<i>num</i> &nbsp; autosave:<i>num</i>') +
+               '<br>Keywords are case-insensitive and can be abbreviated (except for callsigns). <br>' +
+               'So for example these are valid: <i>ext=ibp,all</i> &nbsp; <i>ext=ibp,zl6b,auto:1</i> &nbsp; <i>ext=ibp,15m</i>  &nbsp; <i>ext=ibp,28</i> <br>' +
+               ''
+            )
+         );
+      confirmation_show_content(s, 630, 200);
+      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+   }
+   return true;
 }
