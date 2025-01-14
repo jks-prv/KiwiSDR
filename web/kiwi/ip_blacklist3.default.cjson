@@ -8,6 +8,7 @@
 //
 // Updates:
 //
+// 14 jan 25 remove 35.0.0.0/8 because it's allocated to multiple entities one of which is Charter that has a Kiwi customer
 // 13 jan 25 80.240.22.0/23 (22.0:23.255) 80.240.22.250 vultr via email
 // 19 nov 24 198.11.128.0/18 (128.0:191.255) 198.11.168.156 alibaba via forum
 //  3 nov 24 124.205.145.0/24 (145.0:145.255) 124.205.145.240 Bejing Telecom
@@ -94,7 +95,6 @@
     "27.154.20.0/24",
     "27.154.22.0/24",
     "34.0.0.0/8",
-    "35.0.0.0/8",
     "38.60.199.123",
     "38.106.20.0/24",
     "38.143.0.0/16",
