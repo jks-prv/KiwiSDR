@@ -66,6 +66,7 @@ typedef struct {
     bool spectral_inversion, spectral_inversion_lockout;
     bool require_id;
     bool test_marine_mobile;
+    u4_t vr, vc;        // virus detection info
     
     float rf_attn_dB;
     

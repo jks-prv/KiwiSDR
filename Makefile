@@ -1566,6 +1566,7 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 	    install -D -o root -g root -m 0644 unix_env/gdb_valgrind ~root/.gdb_valgrind
 
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/v.sed $(DIR_CFG)/v.sed
+	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/vd.sed $(DIR_CFG)/vd.sed
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/rsyslog.sed $(DIR_CFG)/rsyslog.sed
 
 
