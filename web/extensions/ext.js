@@ -287,7 +287,7 @@ function ext_tune(freq_dial_kHz, mode, zoom, zlevel, low_cut, high_cut, opt) {
       if (pb_specified) ext_set_passband(low_cut, high_cut);
       
       if (isArg(zoom)) {
-         zoom_step(zoom, zlevel);
+         zoom_step(zoom, Math.round(+zlevel));
       } else {
          zoom_step(ext_zoom.TO_BAND);
       }

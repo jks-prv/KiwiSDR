@@ -4,6 +4,8 @@ var iframe = {
    ext_name: 'iframe',    // NB: must match iframe.cpp:iframe_ext.name
    first_time: true,
    menu: null,
+   allow_tune: false,
+   msg_handler: null,
    
    SRC_IFRAME: 0,
    SRC_HTML: 1,
@@ -93,12 +95,68 @@ function iframe_controls_setup()
    } else {
       w3_attribute('id-iframe-src', 'srcdoc', iframe.html);
    }
+      
+   iframe.msg_handler = function(ev) {
+      if (cfg.iframe.allow_tune) {
+         console.log('IFRAME tune:');
+         var p = parse_freq_pb_mode_zoom(ev.data);
+         console.log(p);
+         var fdsp, mode, zoom;
+         if (p[1]) fdsp = +p[1];
+         if (p[3]) mode = p[3].toLowerCase();
+         if (p[4]) zoom = +p[4];
+         ext_tune(fdsp, mode, ext_zoom.ABS, zoom);
+      } else {
+         console.log('IFRAME tune not allowed');
+      }
+   }
+
+   window.addEventListener("message", iframe.msg_handler);
+
+   /*
+      // example of sending message to iframe
+      setTimeout(function() {
+         var el = w3_el('id-iframe-src');
+         el.contentWindow.postMessage('msg to iframe', '*');
+      }, 1000);
+   */
+   
+   /*
+      // example of iframe source HTML section:
+      
+      <style>
+         a.freq {
+            color: yellow;
+            cursor: pointer;
+         }
+      </style>
+      
+      <script type="text/javascript">
+         //window.addEventListener("message",
+         //   function(ev) {
+         //      console.log('from parent msg: '+ ev.data);
+         //      console.log('from parent origin: '+ ev.origin);
+         //   }
+         //);
+         
+         function tune(msg) { parent.postMessage(msg, '*'); }
+      </script>
+      
+      <a class="freq" onclick="tune('7020 cw')">7020 cw</a><br>
+      <a class="freq" onclick="tune('10136 usb')">10136 usb</a><br>
+      <a class="freq" onclick="tune('14106 usb')">14106 usb</a><br>
+   */
 }
 
 function iframe_blur()
 {
    // remove iframe content so e.g. it closes web sockets etc.
    w3_innerHTML('id-iframe-container', '');
+   
+   if (iframe.msg_handler) {
+      window.removeEventListener("message", iframe.msg_handler);
+      iframe.msg_handler = null;
+   }
 }
 
 // called to display HTML for configuration parameters in admin interface
@@ -113,7 +171,8 @@ function iframe_config_html()
             '<li>An arbitrary URL</li>' +
             '<li>The specified HTML/Javascript</li>' +
          '</ul>' +
-         'Both sources are wrapped in a browser iframe for better isolation from the Kiwi user interface.'
+         'Both sources are wrapped in a browser iframe for better isolation from the Kiwi user interface. <br>' +
+         'If enabled by the checkbox below it\'s possible for the iframe content to set the Kiwi frequency, mode and zoom.'
       ) +
       '<hr>' +
 
@@ -126,7 +185,7 @@ function iframe_config_html()
                   w3_text('w3-bold w3-text-teal w3-show-block', 'HTML/Javascript'),
                   w3_button('w3-margin-left w3-aqua', 'Save', 'iframe_src_save_cb')
                ),
-               'iframe.html', 10, 50, 'w3_string_set_cfg_cb', ''
+               'iframe.html', 30, 50, 'w3_string_set_cfg_cb', ''
             )
          ), 65,
          '', 5,
@@ -137,6 +196,8 @@ function iframe_config_html()
             w3_input_get('', 'Window width',  'iframe.width',   'w3_num_set_cfg_cb', 0),
             w3_input_get('', 'Window height', 'iframe.height',  'w3_num_set_cfg_cb', 0),
             w3_input_get('', 'Help text',     'iframe.help',    'w3_string_set_cfg_cb', ''),
+            w3_checkbox_get_param('/w3-label-inline', 'Allow iframe to tune Kiwi',
+               'iframe.allow_tune', 'w3_bool_set_cfg_cb', iframe.allow_tune),
             w3_div('w3-right w3-text-black', 'iframe by Kari Karvonen, OH1KK')
          )
       );

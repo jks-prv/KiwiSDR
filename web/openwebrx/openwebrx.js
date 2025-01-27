@@ -406,7 +406,7 @@ function kiwi_main_ready()
 	var s = 'f'; if (q[s]) {
 		var p = parse_freq_pb_mode_zoom(q[s]);
       // 'k' suffix is simply ignored since default frequencies are in kHz
-      if (p[1]) override_freq = p[1].replace(',', '.').parseFloatWithUnits('M', 1e-3);
+      if (p[1]) override_freq = p[1];
       if (p[1]) console.log('p='+ p[1] +' override_freq='+ override_freq);
       if (p[2]) console.log('override_pbw/pbc='+ p[2]);
 		if (p[2] && p[2].charAt(0) == '/') override_pbw = p[2].substr(1);     // remove leading '/'
@@ -3942,7 +3942,7 @@ function zoom_step(dir, arg2)
 	var f, znew;
 	
 	if (dir == ext_zoom.WHEEL) {
-	   if (arg2 == undefined) return;
+	   if (!isNumber(arg2)) return;
 	   update_zoom_f = false;
 	   znew = Math.round(zoom_level_f);
 	   if (znew == ozoom) return;
@@ -4011,7 +4011,7 @@ function zoom_step(dir, arg2)
 		} else
 		
 		if (dir == ext_zoom.ABS) {
-			if (arg2 == undefined) { zoom_finally(); return; }		// no abs zoom value specified
+			if (!isNumber(arg2)) { zoom_finally(); return; }      // no abs zoom value specified
 			znew = arg2;
 			//console.log('zoom_step ABS znew='+ znew +' zmax='+ zoom_levels_max +' zcur='+ zoom_level +' zoom_center='+ zoom_center);
 			if ((znew < 0 || znew > zoom_levels_max || znew == zoom_level) && zoom_center == 0.5) {
@@ -4029,7 +4029,7 @@ function zoom_step(dir, arg2)
 		if (dir == ext_zoom.NOM_IN || dir == ext_zoom.MAX_IN) {
 			
 			// zoom max-in button toggle hack
-			if (dir == ext_zoom.NOM_IN && arg2 != undefined && arg2 == 1 && zoom_level >= zoom_nom) {
+			if (dir == ext_zoom.NOM_IN && isNumber(arg2) && arg2 == 1 && zoom_level >= zoom_nom) {
 				if (zoom_level == zoom_levels_max)
 					zoom_level = zoom_nom;		// if at max toggle back to nom
 				else
@@ -7901,7 +7901,11 @@ function mk_bands_scale()
 
 function parse_freq_pb_mode_zoom(s)
 {
-	return new RegExp('([0-9.,kM]*)([\/:][-0-9.,k]*)?([^z]*)?z?([0-9]*)').exec(s);
+   // freq[pb][mode][zoom]
+   s = s.replace(/ /g,'');    // allow spaces
+	var p = new RegExp('([0-9.,kM]*)([\/:][-0-9.,k]*)?([^z]*)?z?([0-9]*)').exec(s);
+   if (p[1]) p[1] = p[1].replace(',', '.').parseFloatWithUnits('M', 1e-3);
+	return p;
 }
 
 // scroll to next/prev band menu entry, skipping null title entries
