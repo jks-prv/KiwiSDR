@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -71,6 +71,7 @@ typedef struct conn_st {
 	bool ident, arrived;
 	char *ident_user;
 	bool isUserIP, require_id;
+	bool tdoa_antsw_early;
 
 	// set only in STREAM_SOUND
 	bool snd_cmd_recv_ok;

@@ -22,6 +22,8 @@
     SOFTWARE.
 */
 
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
+
 var ant_sw = {
    
    // set on both sides

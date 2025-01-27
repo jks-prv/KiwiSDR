@@ -88,3 +88,4 @@ void ant_switch_init();
 bool ant_switch_msgs(char *msg, int rx_chan);
 bool ant_switch_admin_msgs(conn_t *conn, char *cmd);
 void ant_switch_poll_10s();
+void ant_switch_check_set_default();

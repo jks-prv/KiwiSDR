@@ -1,7 +1,7 @@
 /*
     The MIT License (MIT)
 
-    Copyright (c) 2016-2024 Kari Karvonen
+    Copyright (c) 2016-2025 Kari Karvonen
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,8 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 */
+
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
 
 #include "ext.h"
 #include "kiwi.h"
@@ -410,6 +412,12 @@ void ant_switch(void *param)    // task
     }
 }
 
+void ant_switch_check_set_default()
+{
+    if (antsw.using_ground)
+        ant_switch_find_default_ant(false);
+}
+
 // called from rx_common_cmd():CMD_ANT_SWITCH
 bool ant_switch_msgs(char *msg, int rx_chan)
 {
@@ -505,8 +513,7 @@ bool ant_switch_msgs(char *msg, int rx_chan)
     }
         
     if (strcmp(msg, "SET antsw_check_set_default") == 0) {
-        if (antsw.using_ground)
-            ant_switch_find_default_ant(false);
+        ant_switch_check_set_default();
         return true;
     }
         
