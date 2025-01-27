@@ -1,4 +1,5 @@
-// Copyright (c) 2020 Kari Karvonen, OH1KK
+// Copyright (c) 2020-2025 Kari Karvonen, OH1KK
+// Copyright (c) 2020-2025 John Seamons, ZL4VO/KF6VO
 
 var iframe = {
    ext_name: 'iframe',    // NB: must match iframe.cpp:iframe_ext.name
@@ -58,13 +59,14 @@ function iframe_recv(data)
 
 function iframe_controls_setup()
 {
-   iframe.src        = ext_get_cfg_param('iframe.src', 0, EXT_NO_SAVE);
+   iframe.src        = ext_get_cfg_param('iframe.src',             0, EXT_NO_SAVE);
    iframe.title      = ext_get_cfg_param_string('iframe.title',   '', EXT_NO_SAVE);
    iframe.helptext   = ext_get_cfg_param_string('iframe.help',    '', EXT_NO_SAVE);
    iframe.url        = ext_get_cfg_param_string('iframe.url',     '', EXT_NO_SAVE);
    iframe.html       = ext_get_cfg_param_string('iframe.html',    '', EXT_NO_SAVE);
-   iframe.width      = ext_get_cfg_param('iframe.width',   0, EXT_NO_SAVE);
-   iframe.height     = ext_get_cfg_param('iframe.height',  0, EXT_NO_SAVE);
+   iframe.width      = ext_get_cfg_param('iframe.width',           0, EXT_NO_SAVE);
+   iframe.height     = ext_get_cfg_param('iframe.height',          0, EXT_NO_SAVE);
+   iframe.allow_tune = ext_get_cfg_param('iframe.allow_tune',      0, EXT_SAVE);
 
    /* sanity checks */
    iframe.width = parseInt(iframe.width);
@@ -97,7 +99,7 @@ function iframe_controls_setup()
    }
       
    iframe.msg_handler = function(ev) {
-      if (cfg.iframe.allow_tune) {
+      if (iframe.allow_tune) {
          console.log('IFRAME tune:');
          var p = parse_freq_pb_mode_zoom(ev.data);
          console.log(p);
@@ -124,27 +126,32 @@ function iframe_controls_setup()
    /*
       // example of iframe source HTML section:
       
-      <style>
-         a.freq {
-            color: yellow;
-            cursor: pointer;
-         }
-      </style>
-      
-      <script type="text/javascript">
-         //window.addEventListener("message",
-         //   function(ev) {
-         //      console.log('from parent msg: '+ ev.data);
-         //      console.log('from parent origin: '+ ev.origin);
-         //   }
-         //);
-         
-         function tune(msg) { parent.postMessage(msg, '*'); }
-      </script>
-      
-      <a class="freq" onclick="tune('7020 cw')">7020 cw</a><br>
-      <a class="freq" onclick="tune('10136 usb')">10136 usb</a><br>
-      <a class="freq" onclick="tune('14106 usb')">14106 usb</a><br>
+      <!DOCTYPE html>
+      <html>
+      <body>
+            <style>
+               a.freq {
+                  color: yellow;
+                  cursor: pointer;
+               }
+            </style>
+            
+            <script type="text/javascript">
+               //window.addEventListener("message",
+               //   function(ev) {
+               //      console.log('from parent msg: '+ ev.data);
+               //      console.log('from parent origin: '+ ev.origin);
+               //   }
+               //);
+               
+               function tune(msg) { parent.postMessage(msg, '*'); }
+            </script>
+            
+            <a class="freq" onclick="tune('7020 cw')">7020 cw</a><br>
+            <a class="freq" onclick="tune('10136 usb')">10136 usb</a><br>
+            <a class="freq" onclick="tune('14106 usb')">14106 usb</a><br>
+      </body>
+      </html>
    */
 }
 
