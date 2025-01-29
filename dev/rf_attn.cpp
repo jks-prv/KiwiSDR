@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2023-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "kiwi.h"
@@ -41,7 +41,7 @@ void rf_attn_set(float attn_dB)
 {
     if (kiwi.model == KiwiSDR_1) return;
     attn_dB = rf_attn_validate(attn_dB);
-    lprintf("rf_attn %.1f\n", attn_dB);
+    lprintf("rf_attn internal %.1f\n", attn_dB);
     bool debug = false;
     
     #define CTRL_ATTN_CLK   CTRL_SER_CLK

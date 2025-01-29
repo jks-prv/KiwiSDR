@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2021 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -331,7 +331,6 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("test_webserver_prio", false, &up_cfg);
     cfg_default_bool("test_deadline_update", false, &up_cfg);
     cfg_default_bool("disable_recent_changes", false, &up_cfg);
-    cfg_default_int("rf_attn_allow", 1, &up_cfg);
     cfg_default_int("S_meter_OV_counts", 10, &up_cfg);
     cfg_default_bool("webserver_caching", true, &up_cfg);
     max_thr = (float) cfg_default_int("overload_mute", -15, &up_cfg);
@@ -356,6 +355,10 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("init.setup", 0, &up_cfg);
     cfg_default_int("init.tab", 0, &up_cfg);
     cfg_default_float("init.rf_attn", 0, &up_cfg);
+
+    cfg_default_int("rf_attn_allow", 1, &up_cfg);
+    cfg_default_bool("rf_attn_alt", false, &up_cfg);
+    cfg_default_string("rf_attn_cmd", "", &up_cfg);
 
     cfg_default_object("ant_switch", "{}", &up_cfg);
     if (ant_switch_cfg(called_at_init)) update_cfg = cfg_gdb_break(true);

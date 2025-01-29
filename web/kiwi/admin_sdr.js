@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
 
 // TODO
 //		input range validation
@@ -109,9 +109,9 @@ var clone_files_s = [ 'complete config', 'dx label config only' ];
 
 function config_init()
 {
-   if (kiwi.model == kiwi.KiwiSDR_1) {
-      w3_disable('id-rf-attn', true);
-      w3_title('id-rf-attn', 'no RF attenuator on KiwiSDR 1');
+   if (kiwi.model == kiwi.KiwiSDR_1 && !cfg.rf_attn_alt) {
+      w3_disable_multi('id-rf-attn', true);
+      w3_title_multi('id-rf-attn', 'no RF attenuator on KiwiSDR 1');
    }
 }
 
@@ -126,7 +126,7 @@ function config_html()
 	var init_colormap = ext_get_cfg_param('init.colormap', 0);
 	var init_aperture = ext_get_cfg_param('init.aperture', 1);
 	var init_AM_BCB_chan = ext_get_cfg_param('init.AM_BCB_chan', 0);
-	var init_rf_attn = (kiwi.model == kiwi.KiwiSDR_1)? 0 : ext_get_cfg_param('init.rf_attn', 0);
+	var init_rf_attn = (kiwi.model == kiwi.KiwiSDR_1 && !cfg.rf_attn_alt)? 0 : ext_get_cfg_param('init.rf_attn', 0);
 	var init_ITU_region = ext_get_cfg_param('init.ITU_region', 0);
 	var max_freq = ext_get_cfg_param('max_freq', 0);
 
@@ -300,17 +300,34 @@ function config_html()
                w3_div('w3-text-black',
                   'Attach an optional USB/serial adapter to the Kiwi <br> for CAT interface reporting of frequency tuning.'
                )
+            )
+         )
+		) +
+
+		w3_third('w3-container w3-margin-bottom w3-margin-T-8 w3-text-teal', '',
+         w3_divs('/w3-center w3-tspace-8',
+            w3_select_get_param('w3-width-auto', 'Allow RF attenuator switching by:', '',
+               'cfg.rf_attn_allow', admin_sdr.rf_attn_allow_s, 'admin_select_cb', 0
             ),
-         
-            w3_divs('/w3-center w3-tspace-8',
-               w3_select_get_param('w3-width-auto', 'Allow RF attenuator switching by:', '',
-                  'cfg.rf_attn_allow', admin_sdr.rf_attn_allow_s, 'admin_select_cb', 0
-               ),
-               w3_div('w3-text-black',
-                  'Determines who can adjust the RF attenuator control. <br>' +
-                  'Password is the time limit exemption password on the <br>' +
-                  'admin page control tab, not the user login password. <br>'
-               )
+            w3_div('w3-text-black',
+               'Determines who can adjust the RF attenuator control. <br>' +
+               'Password is the time limit exemption password on the <br>' +
+               'admin page control tab, not the user login password. <br>'
+            )
+         ),
+
+         w3_divs('/w3-center w3-tspace-8',
+            w3_checkbox_get_param('w3-hcenter/w3-label-inline/', 'Alternatively, RF attenuator runs command:',
+               'rf_attn_alt', 'admin_bool_cb', false),
+            w3_input_get('', '', 'rf_attn_cmd', 'w3_string_set_cfg_cb', ''),
+            w3_div('w3-text-black',
+               'Allows RF attenuator slider/buttons to send a shell command <br>' +
+               'instead of adjusting the internal attenuator. <br>' +
+               'The strings "attn_NN" and "attn_NN.N" in above command <br>' +
+               'will be replaced with the current attenuator setting. <br>' +
+               'Example: <x1>curl "1.2.3.4/?cmd=Aattn_NN.N"</x1> <br>' +
+               //' <br>' +
+               ''
             )
          )
 		);

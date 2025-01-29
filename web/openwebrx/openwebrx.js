@@ -19,7 +19,7 @@ This file is part of OpenWebRX.
 
 */
 
-// Copyright (c) 2015-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 /*
    searchable contents:
@@ -11103,10 +11103,9 @@ function panels_setup()
 
    // rf opt-rf
    fmt = 'id-rf-attn-disable w3-btn w3-padding-tiny w3-margin-R-8 ';
-   //kiwi.rf_attn = (kiwi.model == kiwi.KiwiSDR_1)? 0 : +kiwi_storeInit('last_rf_attn', cfg.init.rf_attn);
-   var rf_attn = +kiwi_storeInit('last_rf_attn', 0);
-   //console.log('INIT rf_attn='+ rf_attn +' kiwi.model='+ kiwi.model);
-   kiwi.rf_attn = (kiwi.model == kiwi.KiwiSDR_1)? 0 : rf_attn;
+   var rf_attn = (kiwi.model == kiwi.KiwiSDR_1 && !cfg.rf_attn_alt)? 0 : +kiwi_storeInit('last_rf_attn', cfg.init.rf_attn);
+   //console.log('INIT rf_attn='+ rf_attn +' kiwi.model='+ kiwi.model +' rf_attn_alt='+ cfg.rf_attn_alt);
+   kiwi.rf_attn = rf_attn;
 	w3_innerHTML('id-optbar-rf',
 	   w3_div('',
          w3_col_percent('w3-valign/class-slider',
@@ -11130,14 +11129,13 @@ function panels_setup()
       w3_div('id-optbar-rf-antsw')
    );
    
-   var no_attn = (kiwi.model == kiwi.KiwiSDR_1);
+   var no_attn = (kiwi.model == kiwi.KiwiSDR_1) && !cfg.rf_attn_alt;
    var deny_not_local = false, deny_not_local_or_pwd = false;
    if (cfg.rf_attn_allow == kiwi.RF_ATTN_ALLOW_LOCAL_ONLY && ext_auth() != kiwi.AUTH_LOCAL) deny_not_local = true;
    if (cfg.rf_attn_allow == kiwi.RF_ATTN_ALLOW_LOCAL_OR_PASSWORD_ONLY && ext_auth() == kiwi.AUTH_USER) deny_not_local_or_pwd = true;
 
    if (no_attn || deny_not_local || deny_not_local_or_pwd) {
       kiwi.rf_attn_disabled = true;
-      var el = w3_el('id-rf-attn');
       w3_disable_multi('id-rf-attn-disable', true);
       var title;
       if (no_attn) title = 'no RF attenuator on KiwiSDR 1';
@@ -11145,7 +11143,7 @@ function panels_setup()
       if (deny_not_local) title = 'only available to local connections';
       else
       if (deny_not_local_or_pwd) title = 'only available to local connections or with password';
-      w3_els('id-rf-attn-disable', function(el, i) { el.title = title; } );
+      w3_title_multi('id-rf-attn-disable', title);
    }
 
 
@@ -11542,9 +11540,14 @@ function rf_attn_cb(path, val, done, first, ui_only)
    if (ui_only == true) return;
 
    //console.log('SET rf_attn='+ attn.toFixed(1));
-   snd_send('SET rf_attn='+ attn.toFixed(1));
+   if (!cfg.rf_attn_alt)
+      snd_send('SET rf_attn='+ attn.toFixed(1));
 
    if (done) {
+      // if alt (send cmd instead of setting internal attn)
+      // only adjust at end of slider travel
+      if (cfg.rf_attn_alt)
+         snd_send('SET rf_attn='+ attn.toFixed(1));
       kiwi_storeWrite('last_rf_attn', val);
       freqset_select();
    }

@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "options.h"
@@ -332,7 +332,28 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
             if (!deny) {
                 // update s->rf_attn_dB here so we don't send UI update to ourselves
                 kiwi.rf_attn_dB = s->rf_attn_dB = rf_attn_dB;
-                rf_attn_set(rf_attn_dB);
+                
+                // sometimes UI update can be in-flight from sound proc loop, so send again
+                send_msg(conn, false, "MSG rf_attn=%.1f", kiwi.rf_attn_dB);
+
+                if (cfg_true("rf_attn_alt")) {
+                    rf_attn_set(0);     // make sure internal attn is off
+                    char *cmd = (char *) cfg_string("rf_attn_cmd", NULL, CFG_OPTIONAL);
+                    clprintf(conn, "rf_attn_cmd PRE <%s>\n", cmd);
+                    if (kiwi_nonEmptyStr(cmd)) {
+                        if (strstr(cmd, "attn_NN.N")) {
+                            kiwi_str_replace(cmd, "attn_NN.N", stprintf("%.1f", rf_attn_dB));
+                        } else
+                        if (strstr(cmd, "attn_NN")) {
+                            kiwi_str_replace(cmd, "attn_NN", stprintf("%.0f", floorf(rf_attn_dB)));
+                        }
+                        clprintf(conn, "rf_attn_cmd POST <%s>\n", cmd);
+                        non_blocking_cmd_system_child("attn.cmd", cmd, 200);
+                    }
+                    cfg_string_free(cmd);
+                } else {
+                    rf_attn_set(rf_attn_dB);
+                }
             } else {
                 clprintf(conn, "rf_attn DENY\n");
             }
