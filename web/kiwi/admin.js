@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
 
 // TODO
 //		input range validation
@@ -530,6 +530,7 @@ function reason_cb(path, val)
 
 var connect = {
    focus: 0,
+   focus_query: false,
    NOT_IP:0, IS_IP:1, LOCAL_IP:-1, 
    timeout: null
 };
@@ -795,8 +796,11 @@ function connect_focus()
    ext_send('SET DUC_status_query');
 	
    w3_hide('id-proxy-menu');
-	if (cfg.sdr_hu_dom_sel == kiwi.REV)
+	if (cfg.sdr_hu_dom_sel == kiwi.REV) {
+	   console.log('connect_focus rev_status_query');
+	   connect.focus_query = true;
 	   ext_send('SET rev_status_query');
+	}
 	
 	connect_auto_proxy_cb('adm.rev_auto', w3_switch_val2idx(adm.rev_auto));
 }
@@ -1156,7 +1160,7 @@ function connect_rev_register_cb(id, idx)
    kiwi_clearTimeout(connect.timeout);
 	w3_innerHTML('id-connect-rev-status', w3_icon('', 'fa-refresh fa-spin', 24) + '&nbsp; Getting status from proxy server...');
 	var s = 'user='+ user +' host='+ host +' auto='+ auto;
-	console.log('start rev: '+ s);
+	console.log('rev register: '+ s);
 	ext_send('SET rev_register reg=1 '+ s);
 }
 
@@ -1192,7 +1196,7 @@ function connect_rev_status_cb(status)
    if (!connect.focus) return;
 	status = +status;
 	console.log('rev_status='+ status);
-	var s;
+	var s, error = false;
 	
 	var auto = adm.rev_auto? 1:0;
    var user = auto? adm.rev_auto_user : adm.rev_user;
@@ -1208,6 +1212,7 @@ function connect_rev_status_cb(status)
    } else
    
 	if (!(status >= 200 && status <= 299)) {     // error
+	   error = true;
 	   console.log('$error');
       ext_set_cfg_param('cfg.server_url', '', EXT_SAVE);
    }
@@ -1253,23 +1258,30 @@ function connect_rev_status_cb(status)
    var change = (a[0] != host);
 	var reload_auto = ( auto && change &&  status == 0);
 	var reload_man  = (!auto && change && (status >= 0 && status <= 2));
-	var proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');
+	var admin_is_proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');
    console.log('connect_rev_status_cb: auto='+ auto +' user='+ user +' host='+ host +'|'+ a[0] +
-      ' reload_auto_man='+ reload_auto +'|'+ reload_man +' proxy_conn='+ proxy_conn);
+      ' reload_auto|man='+ reload_auto +'|'+ reload_man +' focus_query='+ connect.focus_query +' error='+ error +' admin_is_proxy_conn='+ admin_is_proxy_conn);
 
-	if ((reload_auto || reload_man) && proxy_conn) {
-	   console.log('connect_rev_status_cb: RELOAD ADMIN CONN');
-      a[0] = host;
-      kiwi.reload_url = kiwi_SSL() + a.join('.') +'/admin';
-	   ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
-      wait_then_reload_page(10, 'You changed the Kiwi\'s host name. <br>' +
-         'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
-	}
-	
-	// don't keep restarting frpc if user key invalid (status == 101)
-	if (!proxy_conn && cfg.sdr_hu_dom_sel == kiwi.REV && status != 101) {
-      ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+   if (admin_is_proxy_conn) {
+      if (reload_auto || reload_man) {
+         console_nv('$connect_rev_status_cb RELOAD ADMIN CONN', {reload_auto}, {reload_man});
+         a[0] = host;
+         kiwi.reload_url = kiwi_SSL() + a.join('.') +'/admin';
+         ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+         wait_then_reload_page(10, 'You changed the Kiwi\'s host name. <br>' +
+            'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
+      }
+	} else {
+	   // !admin_is_proxy_conn
+	   
+      // don't keep restarting frpc if user key invalid (status == 101)
+      if (cfg.sdr_hu_dom_sel == kiwi.REV && !connect.focus_query && error && status != 101) {
+         console_nv('$connect_rev_status_cb RESTART frpc', {status});
+         ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+      }
    }
+   
+   connect.focus_query = false;
 }
 
 function connect_proxy_server_cb(path, val)
