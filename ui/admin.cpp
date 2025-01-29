@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015-2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -553,6 +553,7 @@ void c2s_admin(void *param)
             i = strcmp(cmd, "SET rev_status_query");
             if (i == 0) {
                 net.proxy_status = rev_enable_start? 200:201;
+                printf("rev_status_query: rev_status=%d\n", net.proxy_status);
                 send_msg(conn, SM_NO_DEBUG, "ADM rev_status=%d", net.proxy_status);
                 continue;
             }
@@ -592,7 +593,7 @@ void c2s_admin(void *param)
                 } else {
                     asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
                         proxy_server, user_m, host_m, net.port_ext, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
-                    printf("proxy register: %s\n", cmd_p);
+                    printf("frpc setup: %s\n", cmd_p);
                     system(cmd_p);
 
                     // NB: can't use e.g. non_blocking_cmd() here to get the authorization status
