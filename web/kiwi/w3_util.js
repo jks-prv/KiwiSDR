@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
 
 /*
 
@@ -2120,6 +2120,11 @@ function w3_title(id, text)
    if (!el) return null;
    w3_attribute(el, 'title', text);
    return el;
+}
+
+function w3_title_multi(id, text)
+{
+   w3_els(id, function(el, i) { el.title = text; } );
 }
 
 
