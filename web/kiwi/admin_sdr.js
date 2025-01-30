@@ -602,7 +602,7 @@ function config_pb_val(path, val, first, cb, no_save)
    var min = -half_srate, max = half_srate;
    var pbl, pbh, pbc, pbw, hbw;
    var locked = admin_sdr.pbc_lock;
-   var ok;
+   var ok, delta_l, delta_h;
    
    // reset error indicators
    w3_show_hide('id-pbl-error', false);
@@ -657,8 +657,8 @@ function config_pb_val(path, val, first, cb, no_save)
    case 'pbc':
       pbc = val;
       if (locked) {  // if locked maintain possible pbl/pbh asymmetry
-         var delta_l = admin_sdr.pbc - admin_sdr.pbl;
-         var delta_h = admin_sdr.pbh - admin_sdr.pbc;
+         delta_l = admin_sdr.pbc - admin_sdr.pbl;
+         delta_h = admin_sdr.pbh - admin_sdr.pbc;
          console.log('delta_l='+ delta_l +' delta_h='+ delta_h);
          pbl = pbc - delta_l;
          pbh = pbc + delta_h;
@@ -685,8 +685,8 @@ function config_pb_val(path, val, first, cb, no_save)
       if (locked) {     // if locked apply change in pbw to possible pbl/pbh asymmetry
          var delta_w = pbw - admin_sdr.pbw;
          var ratio_pbh = (admin_sdr.pbh - admin_sdr.pbc) / admin_sdr.pbw;
-         var delta_l = Math.round(delta_w * (1 - ratio_pbh));
-         var delta_h = Math.round(delta_w * ratio_pbh);
+         delta_l = Math.round(delta_w * (1 - ratio_pbh));
+         delta_h = Math.round(delta_w * ratio_pbh);
          console.log('delta_w='+ delta_w +' ratio_pbh='+ ratio_pbh.toFixed(4) +' delta_l='+ delta_l +' delta_h='+ delta_h);
          pbl = admin_sdr.pbl - delta_l;
          pbh = admin_sdr.pbh + delta_h;
@@ -2177,7 +2177,7 @@ function dx_search_notes_cb(path, val, first, cb_a)
 // callback from "SET MARKER idx= search_xxx=" above
 function dx_search_pos_cb(p)
 {
-   var p = p.split(',');
+   p = p.split(',');
    var which = +p[0];
    var idx = +p[1];
 
@@ -2238,37 +2238,40 @@ function dx_export(idx1)
 // called from dx_export_cb() via dx_render() when dx.export_active is true
 function dx_export_cb2(obj)
 {
+   var j, s;
+   var gid, mode, type, lo, hi, off, sig_bw, dow, begin, end, ident, notes, ext;
    var last = false;
    var len = obj.length - 1;
    //console.log('dx_export_cb2 n='+ obj[0].n +' len='+ len +'('+ obj[1].g +','+ obj[len].g +')');
    //console.log(obj);
    //console.log(JSON.stringify(obj));
    var dx_dq = function(s) { return dq(kiwi_str_decode_selective_inplace(s, true)); };
-   var dx_dq2 = function(s) { var s = kiwi_str_decode_selective_inplace(s, true); return (s.includes(',')? dq(s) : s); };
+   var dx_dq2 = function(s) { s = kiwi_str_decode_selective_inplace(s, true); return (s.includes(',')? dq(s) : s); };
    
    // create a JSON format file that exactly matches what server-side dx_save_as_json() produces
    if (dx.export_which == dx.DX_JSON) {
 
       obj.forEach(function(o, i) {
          if (i == 0) return;
-         var gid = o.g;
+         gid = o.g;
          if (gid == dx.o.len - 1) last = true;
          var comma = last? '' : ',';
          var freq = o.f.toFixed(2);
          var mode = dq(kiwi.modes_uc[dx_decode_mode(o.fl)]);
-         var ident = dx_dq(o.i);
-         var notes = o.n? dx_dq(o.n) : '""';
+         ident = dx_dq(o.i);
+         notes = o.n? dx_dq(o.n) : '""';
          
          var opt = '';
-         var type = (o.fl & dx.DX_TYPE) >> dx.DX_TYPE_SFT;
+         type = (o.fl & dx.DX_TYPE) >> dx.DX_TYPE_SFT;
          type = type? (dq('T'+ type) +':1') : '';
          var pb = (o.lo != 0 || o.hi != 0)? (dqc('lo') + o.lo +', '+  dqc('hi') + o.hi) : '';
-         var off = o.o? (dqc('o') + o.o) : '';
-         var sig_bw = o.s? (dqc('s') + o.s) : '';
-         var ext = (o.p && o.p != '')? (dqc('p') + dx_dq(o.p)) : '';
-         var dow = (o.fl & dx.DX_DOW);
+         off = o.o? (dqc('o') + o.o) : '';
+         sig_bw = o.s? (dqc('s') + o.s) : '';
+         ext = (o.p && o.p != '')? (dqc('p') + dx_dq(o.p)) : '';
+         dow = (o.fl & dx.DX_DOW);
          dow = (dow != 0 && dow != dx.DX_DOW)? (dqc('d0') + (dow >> dx.DX_DOW_SFT)) : '';
-         var begin = o.b, end = o.e;
+         begin = o.b;
+         end = o.e;
          var time = (begin != 0 || end != 2400)? (dqc('b0') + begin +', '+ dqc('e0') + end) : '';
 
          opt = w3_sbc(', ', type, pb, off, dow, time, ext, sig_bw);
@@ -2286,25 +2289,27 @@ function dx_export_cb2(obj)
                dx.export_s_a[0] = 'Freq kHz;"Mode";"Ident";"Notes";"Extension";"Type";PB low;PB high;Offset;"DOW";Begin;End;Sig bw\n';
                return;
             }
-            var gid = o.g;
+            gid = o.g;
             if (gid == dx.o.len - 1) last = true;
-            var mode = dq(kiwi.modes_uc[dx_decode_mode(o.fl)]);
-            var type = (o.fl & dx.DX_TYPE) >> dx.DX_TYPE_SFT;
+            mode = dq(kiwi.modes_uc[dx_decode_mode(o.fl)]);
+            type = (o.fl & dx.DX_TYPE) >> dx.DX_TYPE_SFT;
             type = type? dq('T'+ type) : '';
-            var lo = o.lo, hi = o.hi;
+            lo = o.lo;
+            hi = o.hi;
             if (lo == 0 && hi == 0) lo = hi = '';
-            var off = o.o? o.o : '';
-            var sig_bw = o.s? o.s : '';
+            off = o.o? o.o : '';
+            sig_bw = o.s? o.s : '';
          
-            var dow = (o.fl & dx.DX_DOW) >> dx.DX_DOW_SFT;
+            dow = (o.fl & dx.DX_DOW) >> dx.DX_DOW_SFT;
             dow_s = '';
             if (dow != 0 && dow != dx.DX_DOW_BASE) {
-               for (var j = 0; j < 7; j++) {
+               for (j = 0; j < 7; j++) {
                   if (dow & (1 << (6-j))) dow_s += 'MTWTFSS'[j]; else dow_s += '_';
                }
                dow_s = dq(dow_s);
             }
-            var begin = o.b, end = o.e;
+            begin = o.b;
+            end = o.e;
             if (begin == 0 && end == 2400) {
                begin = end = '';
             } else {
@@ -2313,11 +2318,11 @@ function dx_export_cb2(obj)
                end = "'"+ end.toFixed(0).leadingZeros(4);
             }
 
-            var ident = (o.i != '')? dx_dq(o.i) : '';
-            var notes = o.n? dx_dq(o.n) : '';
-            var ext = o.p? dx_dq(o.p) : '';
+            ident = (o.i != '')? dx_dq(o.i) : '';
+            notes = o.n? dx_dq(o.n) : '';
+            ext = o.p? dx_dq(o.p) : '';
 
-            var s = [ o.f, mode, ident, notes, ext, type, lo, hi, off, dow_s, begin, end, sig_bw ];
+            s = [ o.f, mode, ident, notes, ext, type, lo, hi, off, dow_s, begin, end, sig_bw ];
             dx.export_s_a[gid+1] = s.join(';') +'\n';    // gid+1 because export_s_a[0] has CSV column legend
          } else {
             // test exporting CSV files with comma delimiters and non-quoted string fields (unless they contain delimiter)
@@ -2325,24 +2330,26 @@ function dx_export_cb2(obj)
                dx.export_s_a[0] = 'Freq kHz,"Mode","Ident","Notes","Extension","Type",PB low,PB high,Offset,"DOW",Begin,End,Sig bw\n';
                return;
             }
-            var gid = o.g;
+            gid = o.g;
             if (gid == dx.o.len - 1) last = true;
-            var mode = (kiwi.modes_uc[dx_decode_mode(o.fl)]).toString();
-            var type = (o.fl & dx.DX_TYPE) >> dx.DX_TYPE_SFT;
+            mode = (kiwi.modes_uc[dx_decode_mode(o.fl)]).toString();
+            type = (o.fl & dx.DX_TYPE) >> dx.DX_TYPE_SFT;
             type = type? ('T'+ type) : '';
-            var lo = o.lo, hi = o.hi;
+            lo = o.lo;
+            hi = o.hi;
             if (lo == 0 && hi == 0) lo = hi = '';
-            var off = o.o? o.o : '';
-            var sig_bw = o.s? o.s : '';
+            off = o.o? o.o : '';
+            sig_bw = o.s? o.s : '';
          
-            var dow = (o.fl & dx.DX_DOW) >> dx.DX_DOW_SFT;
+            dow = (o.fl & dx.DX_DOW) >> dx.DX_DOW_SFT;
             dow_s = '';
             if (dow != 0 && dow != dx.DX_DOW_BASE) {
-               for (var j = 0; j < 7; j++) {
+               for (j = 0; j < 7; j++) {
                   if (dow & (1 << (6-j))) dow_s += 'MTWTFSS'[j]; else dow_s += '_';
                }
             }
-            var begin = o.b, end = o.e;
+            begin = o.b;
+            end = o.e;
             if (begin == 0 && end == 2400) {
                begin = end = '';
             } else {
@@ -2351,11 +2358,11 @@ function dx_export_cb2(obj)
                end = "'"+ end.toFixed(0).leadingZeros(4);
             }
 
-            var ident = (o.i != '')? dx_dq2(o.i) : '';
-            var notes = o.n? dx_dq2(o.n) : '';
-            var ext = o.p? dx_dq2(o.p) : '';
+            ident = (o.i != '')? dx_dq2(o.i) : '';
+            notes = o.n? dx_dq2(o.n) : '';
+            ext = o.p? dx_dq2(o.p) : '';
 
-            var s = [ o.f, mode, ident, notes, ext, type, lo, hi, off, dow_s, begin, end, sig_bw ];
+            s = [ o.f, mode, ident, notes, ext, type, lo, hi, off, dow_s, begin, end, sig_bw ];
             dx.export_s_a[gid+1] = s.join(',') +'\n';    // gid+1 because export_s_a[0] has CSV column legend
          }
       });
@@ -2398,6 +2405,7 @@ function dx_export_cb2(obj)
 
 function dx_import_cb(path, which)
 {
+   var el;
    dx.current_import = which;
    
    // Don't show spinner, because if the user cancels out of file dialog no event is ever generated.
@@ -2406,14 +2414,14 @@ function dx_import_cb(path, which)
 
    if (which == dx.DX_JSON) {
       //console.log('dx_import_cb JSON');
-      var el = w3_el('id-dx-import-form');
+      el = w3_el('id-dx-import-form');
 	   el.setAttribute('accept', '.json,application/json');
       el.click();
    }
 
    if (which == dx.DX_CSV) {
       //console.log('dx_import_cb CSV');
-      var el = w3_el('id-dx-import-form');
+      el = w3_el('id-dx-import-form');
 	   el.setAttribute('accept', '.csv,text/csv');
       el.click();
    }
@@ -2545,7 +2553,7 @@ function dx_type_render()
    var test_i = 'How the colors of the labels with\nthis type value should appear.';
    var test_l = 'Test '+ w3_icon(icon +'||title='+ dq(test_i), 'fa-info-circle', 20);
 
-   for (var i = -1; i < dxcfg.dx_type.length; i++) {
+   for (i = -1; i < dxcfg.dx_type.length; i++) {
       var legend = (i == dx.LEGEND);
       type = legend? {} : dxcfg.dx_type[i];
 
@@ -2586,7 +2594,7 @@ function dx_type_render()
    w3_innerHTML('id-dx-type-list', s_a.join(''));
 
    dx_color_init();
-   for (var i = 0; i < (dxcfg.dx_type.length - 1); i++) {     // length -1 to skip DX_MASKED
+   for (i = 0; i < (dxcfg.dx_type.length - 1); i++) {     // length -1 to skip DX_MASKED
       dx_type_bar_test(i);
    }
 }
@@ -2598,7 +2606,7 @@ function dx_type_bar_test(i)
    if (!el) return;
    el.innerHTML = type.name;
    el.style.background = dxcfg.dx_type[i].color;
-   var el = w3_el(i +'_type.exf');
+   el = w3_el(i +'_type.exf');
    el.innerHTML = type.name;
    el.style.background = dx.stored_colors_light[i];
 }
@@ -2823,7 +2831,7 @@ function band_svc_render()
    var test_i = 'Example of how band bar will look.';
    var test_l = '&nbsp;Test '+ w3_icon(icon +'||title='+ dq(test_i), 'fa-info-circle', 20);
 
-   for (var i = -1; i < dxcfg.band_svc.length; i++) {
+   for (i = -1; i < dxcfg.band_svc.length; i++) {
       svc = (i != dx.LEGEND)? dxcfg.band_svc[i] : {};
 
       // done this way so all the s_new code can be reused to construct the legend
@@ -2855,7 +2863,7 @@ function band_svc_render()
 
    w3_innerHTML('id-band-svc-list', s_a.join(''));
 
-   for (var i = 0; i < dxcfg.band_svc.length; i++) {
+   for (i = 0; i < dxcfg.band_svc.length; i++) {
       band_svc_bar_test(i);
    }
 }

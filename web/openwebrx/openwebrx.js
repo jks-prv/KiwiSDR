@@ -3013,6 +3013,7 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
                }
             }
          } else {
+            var dbins;
             if (isMobileOptNew) {  
                if (1) {
                   // #mobile-ui waterfall: scroll tuning in WF margins instead of stopping at WF end
@@ -3028,7 +3029,7 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
                      } else {
                         // PB is in margin: also scroll waterfall
                         var dx = deltaX;
-                        var dbins = norm_to_bins(deltaX / waterfall_width);
+                        dbins = norm_to_bins(deltaX / waterfall_width);
                         waterfall_pan_canvases(-dbins);
                         owrx.canvas.drag_all_x = x;
                         update_x = false;
@@ -3039,7 +3040,7 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
                }
             } else {
                // desktop: only drag the waterfall -- leave the tuning/passband alone
-               var dbins = norm_to_bins(deltaX / waterfall_width);
+               dbins = norm_to_bins(deltaX / waterfall_width);
                waterfall_pan_canvases(dbins);
             }
          }
@@ -8626,6 +8627,7 @@ var dx_ibp_stations = {
 function dx_label_render_cb(arr)
 {
 	var i, j, k;
+   var el;
 	var hdr = arr[0];
 	dx.last_hdr = hdr;
 	
@@ -8667,7 +8669,7 @@ function dx_label_render_cb(arr)
 	
 	var errors = hdr.pe + hdr.fe;
 	if (errors) {
-	   var el = w3_el('id-dxcfg-err');
+	   el = w3_el('id-dxcfg-err');
 	   if (el && !el.innerHTML.startsWith('Warning')) {   // don't override dx_config.json corruption warning
          el.innerHTML = 'Warning: dx.json file has '+ errors +' label'+ plural(errors, ' error');
          w3_add(el, 'w3-text-css-orange');
@@ -8708,7 +8710,8 @@ function dx_label_render_cb(arr)
    var center_x1 = Math.floor(wf_container.clientWidth/2) - 1;
    var center_x2 = center_x1 + 2;
 	var s_a = [];
-	var gid;
+	var gid, flags, top;
+	var ident, notes, freq;
 
 	var optimize_label_layout = function(x, z, f) {
 	   var i, j, k;
@@ -8768,9 +8771,9 @@ function dx_label_render_cb(arr)
 	for (i = 1; i < arr.length; i++) {
 		dx_idx = i-1;
 		obj = arr[i];
-      var freq = obj.f;
+      freq = obj.f;
       //if (freq == 10000) console_log_dbgUs(obj);
-		var flags = obj.fl;
+		flags = obj.fl;
 
 		var type = flags & dx.DX_TYPE;
 		
@@ -8778,7 +8781,7 @@ function dx_label_render_cb(arr)
       var color_idx = dx_type2idx(type);
 
 		var filtered = flags & dx.DX_FILTERED;
-		var ident = obj.i;
+		ident = obj.i;
 		if (eibi && ident == dx.last_ident && freq == dx.last_freq) {
          console_log_lbl('1111 dx_idx='+ dx_idx +' '+ freq +' SAME AS LAST filtered='+ (filtered? 1:0) +' '+ ident);
          if (filtered == 0) dx.color_fixup[dx.last_idx] = dx.eibi_colors[color_idx];
@@ -8793,7 +8796,7 @@ function dx_label_render_cb(arr)
 		gid = obj.g;
 		var f_base = freq - kiwi.freq_offset_kHz;
 		var mkr_off = obj.o;
-		var notes = isDefined(obj.n)? obj.n : '';
+		notes = isDefined(obj.n)? obj.n : '';
 		var params = isDefined(obj.p)? obj.p : '';
 		
 		if (eibi && (flags & dx.DX_HAS_EXT)) {
@@ -8824,7 +8827,7 @@ function dx_label_render_cb(arr)
             lock_z = 0;
          }
 		}
-		var top = dx_label_top + (gap * (dx_idx & 1));    // stagger the labels vertically
+		top = dx_label_top + (gap * (dx_idx & 1));    // stagger the labels vertically
       dx.post_render[dx_idx] = { top: top, ltop: top, x: x /* , f: f_base_label_Hz/1e3, ident: ident */ };
 		dx.last_f_base = f_base_label_Hz;
 
@@ -8988,8 +8991,9 @@ function dx_label_render_cb(arr)
 	      el.title = title;
       }
 
+      var sparse;
       if (dx_idx < dx.post_render.length) {
-         var sparse = dx.post_render[dx_idx];
+         sparse = dx.post_render[dx_idx];
          if (sparse) {
             top = sparse.top;
             var left = sparse.x - 10;
@@ -9292,11 +9296,11 @@ function dx_show_edit_panel(ev, gid, from_shortcut)
 
 function dx_show_edit_panel2()
 {
-   var cbox, label;
+   var i, cbox, label, gid;
    dx_color_init();
 
    if (dx.db != dx.DB_COMMUNITY) {
-      var gid = dx.o.gid;
+      gid = dx.o.gid;
       var mode = isArg(cur_mode)? cur_mode : 'am';
       var freq_kHz_str = isArg(freq_displayed_kHz_str)? freq_displayed_kHz_str : '10000';
       //console_log_dbgUs('dx_show_edit_panel2 gid='+ gid +' db='+ dx.db);
@@ -9379,7 +9383,7 @@ function dx_show_edit_panel2()
       var dow = dx.o.fd;
       if (dow == 0) dow = dx.o.fd = dx.DX_DOW_BASE;
       console.log('DX g='+ gid +' dow='+ dow +'|'+ dow.toHex(2) +' f='+ (+dx.o.fr).toFixed(2) +' b='+ dx.o.begin +' e='+ dx.o.end +' '+ dx.o.i);
-	   for (var i = 0; i < 7; i++) {
+	   for (i = 0; i < 7; i++) {
 	      var day = dow & (1 << (6-i));
 	      var fg = day? 'black' : 'white';
 	      var bg = day? dx.dow_colors[i] : 'darkGrey';
@@ -9543,7 +9547,7 @@ function dx_show_edit_panel2()
             //w3_field_select(el, {mobile:1});
          } else
          if (dx.db == dx.DB_EiBi) {
-            for (var i = 0; i < dx.DX_N_EiBi; i++) {
+            for (i = 0; i < dx.DX_N_EiBi; i++) {
                w3_color('eibi-cbox'+ i +'-label', 'black', dx.eibi_colors[i]);
             }
          } else {    // DB_COMMUNITY
@@ -10822,8 +10826,9 @@ function test_audio_suspended()
          );
       w3_create_appendElement('id-kiwi-body', 'div', s2);
 
+      var el;
       if (input) {
-         var el = w3_el('id-ident-input3');
+         el = w3_el('id-ident-input3');
          w3_attribute(el, 'maxlength', Math.max(cfg.ident_len, kiwi.ident_min));
          w3_field_select(el, {mobile:1});
       }
@@ -13136,14 +13141,15 @@ function mode_button(evt, el, dir)
       //console.log('#### mode_button: last_mode_col UNDEF set to '+ owrx.last_mode_col);
    }
    
+   var c_iq_or_stereo, m_iq_or_stereo;
    if (owrx.last_mode_col != col) {
       //console.log('#### mode_button1: col '+ owrx.last_mode_col +'>'+ col +' '+ mode);
 
       // Prevent going between mono and stereo modes while recording
       // FIXME: do something better like disable ineligible mode buttons and show reason in mouseover tooltip 
       if (recording) {
-         var c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
-         var m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
+         c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
+         m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
          //console.log('#### mode_button1: c_iq_or_stereo='+ c_iq_or_stereo +' m_iq_or_stereo='+ m_iq_or_stereo +' rtn='+ (c_iq_or_stereo ^ m_iq_or_stereo));
          if (c_iq_or_stereo ^ m_iq_or_stereo || mode == 'drm')
             return;
@@ -13161,8 +13167,8 @@ function mode_button(evt, el, dir)
       //console.log('#### mode_button2: col '+ col +' '+ mode);
 
       if (recording) {
-         var c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
-         var m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
+         c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
+         m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
          //console.log('#### mode_button2: c_iq_or_stereo='+ c_iq_or_stereo +' m_iq_or_stereo='+ m_iq_or_stereo +' rtn='+ (c_iq_or_stereo ^ m_iq_or_stereo));
          if (c_iq_or_stereo ^ m_iq_or_stereo || mode == 'drm')
 		      return;
@@ -13402,6 +13408,7 @@ var zoom_server = 0;
 // Not called if MSG handled first by kiwi.js:kiwi_msg()
 function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 {
+   var p;
    //console.log('$$ owrx_msg_cb '+ (ws? ws.stream : '[ws?]') +' MSG '+ param[0] +'='+ param[1]);
    
 	switch (param[0]) {
@@ -13470,7 +13477,7 @@ function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "audio_camp":
-         var p = param[1].split(',');
+         p = param[1].split(',');
 			audio_camp(+p[0], +p[1], false, false);
 			break;
 
@@ -13479,12 +13486,12 @@ function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "audio_adpcm_state":
-         var p = param[1].split(',');
+         p = param[1].split(',');
 			audio_adpcm_state(+p[0], +p[1]);
 			break;
 
 		case "audio_passband":
-         var p = param[1].split(',');
+         p = param[1].split(',');
 			audio_recompute_LPF(1, +p[0], +p[1]);
 			break;
 
