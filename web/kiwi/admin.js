@@ -382,15 +382,12 @@ function control_html()
 
 	var s2 =
 		'<hr>' +
-		w3_third('w3-container w3-valign', '',
-         w3_divs('',
-            w3_inline('w3-halign-space-around/',
-               w3_switch_label('w3-center', 'Enable user<br>connections?', 'Yes', 'No', 'adm.server_enabled', adm.server_enabled, 'server_enabled_cb'),
-         
-               w3_divs('w3-center/w3-margin-T-8',
-                  w3_div('', '<b>Close all active<br>user connections</b>'),
-                  w3_button('w3-red', 'Kick', 'control_user_kick_cb')
-               )
+		w3_third('w3-container', '',
+         w3_inline('w3-halign-space-around/',
+            w3_switch_label('w3-center', 'Enable user<br>connections?', 'Yes', 'No', 'adm.server_enabled', adm.server_enabled, 'server_enabled_cb'),
+            w3_divs('w3-center/w3-margin-T-8',
+               w3_div('', '<b>Close all active<br>user connections</b>'),
+               w3_button('w3-red', 'Kick', 'control_user_kick_cb')
             )
          ),
 
@@ -731,7 +728,7 @@ function connect_html()
 			),
 		
 			w3_half('w3-text-teal', 'w3-container',
-			   w3_half('', '',
+            w3_inline('w3-halign-space-around/',
                w3_div('w3-center w3-tspace-8',
                   w3_button('w3-aqua', 'Click to (re)register', 'connect_rev_register_cb'),
                   w3_div('w3-text-black',
@@ -3464,7 +3461,8 @@ function log_resize()
 {
 	var el = w3_el('id-log-msg');
 	if (!el) return;
-	var log_height = window.innerHeight - w3_el("id-admin-hdr").clientHeight - 80;
+	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
+	var log_height = window.innerHeight - hdr_height - 80;
 	el.style.height = px(log_height);
 }
 
@@ -3554,39 +3552,41 @@ function console_html()
 			   '<pre><code id="id-console-msgs"></code></pre>'
 			),
 			
-			admin.console.always_char_oriented?
-            w3_text('id-console-debug w3-text-black w3-margin-T-8',
-               kiwi_isWindows()?
-                  'Windows: Type <x1>control-v</x1> twice (quickly) for clipboard paste. Once to get a normal <x1>control-v</x1>. ' +
-                  'Control-w alternatives: nano <x1>fn-f6</x1>, bash <x1>esc</x1> <x1>control-h</x1> (see ' +
-                  w3_link('w3-link-darker-color',
-                     'https://forum.kiwisdr.com/index.php?p=/discussion/2927/windows-and-running-nano-text-editor-in-admin-console#p1',
-                     'forum') +')'
-               :
-                  'Mac: Type <x1>command-v</x1> for clipboard paste.'
-            )
-			:
-            w3_div('id-console-line',
-               admin.console.isMobile?
-                  w3_inline('w3-margin-T-8 w3-halign-space-between/',
-                     w3_input('w3-width-half//id-console-line-input w3-input-any-key', '', 'console_input', '',
-                        'console_input_cb|console_key_cb', 'enter shell command'),
-                     w3_inline('w3-margin-R-16/',
-                        w3_button('w3-yellow', 'Send ^C', 'console_ctrl_button_cb', 'c'),
-                        w3_button('w3-blue|margin-left:10px', 'Send ^D', 'console_ctrl_button_cb', 'd'),
-                        w3_button('w3-red|margin-left:10px', 'Send ^\\', 'console_ctrl_button_cb', '\x3c'),
-                        w3_button('w3-blue|margin-left:10px', 'Send ^P', 'console_ctrl_button_cb', 'p'),
-                        w3_button('w3-blue|margin-left:10px', 'Send ^N', 'console_ctrl_button_cb', 'n')
+			w3_div('',
+            admin.console.always_char_oriented?
+               w3_text('id-console-debug w3-text-black w3-margin-T-8',
+                  kiwi_isWindows()?
+                     'Windows: Type <x1>control-v</x1> twice (quickly) for clipboard paste. Once to get a normal <x1>control-v</x1>. ' +
+                     'Control-w alternatives: nano <x1>fn-f6</x1>, bash <x1>esc</x1> <x1>control-h</x1> (see ' +
+                     w3_link('w3-link-darker-color',
+                        'https://forum.kiwisdr.com/index.php?p=/discussion/2927/windows-and-running-nano-text-editor-in-admin-console#p1',
+                        'forum') +')'
+                  :
+                     'Mac: Type <x1>command-v</x1> for clipboard paste.'
+               )
+            :
+               w3_div('id-console-line',
+                  admin.console.isMobile?
+                     w3_inline('w3-margin-T-8 w3-halign-space-between/',
+                        w3_input('w3-width-half//id-console-line-input w3-input-any-key', '', 'console_input', '',
+                           'console_input_cb|console_key_cb', 'enter shell command'),
+                        w3_inline('w3-margin-R-16/',
+                           w3_button('w3-yellow', 'Send ^C', 'console_ctrl_button_cb', 'c'),
+                           w3_button('w3-blue|margin-left:10px', 'Send ^D', 'console_ctrl_button_cb', 'd'),
+                           w3_button('w3-red|margin-left:10px', 'Send ^\\', 'console_ctrl_button_cb', '\x3c'),
+                           w3_button('w3-blue|margin-left:10px', 'Send ^P', 'console_ctrl_button_cb', 'p'),
+                           w3_button('w3-blue|margin-left:10px', 'Send ^N', 'console_ctrl_button_cb', 'n')
+                        )
                      )
-                  )
-               :
-                  w3_div('w3-margin-T-8',
-                     w3_input('id-console-line-input w3-input-any-key', '', 'console_input', '',
-                        'console_input_cb|console_key_cb', 'enter shell command'),
-                     w3_text('id-console-debug w3-text-black w3-margin-T-8',
-                        'Control characters (^C, ^D, ^\\) and empty lines may now be typed directly into shell command field.')
-                  )
-            )
+                  :
+                     w3_div('w3-margin-T-8',
+                        w3_input('id-console-line-input w3-input-any-key', '', 'console_input', '',
+                           'console_input_cb|console_key_cb', 'enter shell command'),
+                        w3_text('id-console-debug w3-text-black w3-margin-T-8',
+                           'Control characters (^C, ^D, ^\\) and empty lines may now be typed directly into shell command field.')
+                     )
+               )
+         )
 		)
 	);
 	return s;
@@ -3883,12 +3883,13 @@ function console_resize()
 {
 	var el = w3_el('id-console-msg');
 	if (!el) return;
-	var console_height = window.innerHeight - w3_el("id-admin-hdr").clientHeight -
+	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
+	var console_height = window.innerHeight - hdr_height -
 	   (admin.console.always_char_oriented? 110 : (admin.console.isMobile? 120 : 150));
 	el.style.height = px(console_height);
 	var console_width = window.innerWidth - 65;
 	el.style.width = px(console_width);
-	//w3_innerHTML('id-console-debug', window.innerHeight +' '+ w3_el("id-admin-hdr").clientHeight +' '+ console_height);
+	//w3_innerHTML('id-console-debug', window.innerHeight +' '+ hdr_height +' '+ console_height);
 
    console_calc_rows_cols(0);
 }
@@ -4138,65 +4139,54 @@ function admin_main()
 	window.addEventListener('resize', admin_resize);
 }
 
-var arseq = 0;
+//var arseq = 0;
 function admin_resize()
 {
    var adm = w3_el("id-admin");
-      var con1 = w3_el("id-admin-con1");
-         var hdr = w3_el("id-admin-hdr"); var hdr_height = hdr.clientHeight + 16;
-         var con2 = w3_el('id-admin-con2');
-            // ...
+      var top = w3_el("id-admin-top");
+      var scr = w3_el("id-admin-scr");
+         var con1 = w3_el("id-admin-con1");
+            var nav = w3_el("id-admin-nav");
+            var hdr_height = top.clientHeight + nav.clientHeight;
+            hdr_height += /* margin bottom */ 16 + /* x_scrollbar_height */ kiwi_scrollbar_width() + /* slop */ 3;
+            var con2 = w3_el('id-admin-con2');
+               // ...
    
-   if (0) {
-      // previous: non-header content Y-scroll
-      w3_add(con2, 'w3-scroll');
-      con2.style.height = 'calc(100vh - '+ px(hdr_height) +')';
-	   //mdev_log('con2 scrollW|H='+ con2.scrollWidth +'|'+ con2.scrollHeight +' clientW|H='+ con2.clientWidth +'|'+ con2.clientHeight);
-   }
-   if (0) {
-      // new: same behavior as above
-      w3_add(con2, 'w3-scroll');
-      con2.style.height = 'calc(100vh - '+ px(hdr_height) +')';
-   }
-   if (0) {
-      // scale xscr  xbar  yscr  ybar
-      // y     n     n     y     d
-      w3_add(con1, 'w3-scroll');
-      con1.style.minWidth = px(1465);
-      con1.style.height = '100vh';
-   }
-   if (1) {
-      // scale xscr  xbar  yscr  ybar
-      // n     n     n     y, but not full height
-      w3_add(adm, 'w3-scroll-x-only');
-      hdr.style.minWidth = px(1465);
-      w3_add(con2, 'w3-scroll');
-      con2.style.minWidth = px(1465);
-      //con2.style.height = '100vh';
-      con2.style.height = 'calc(100vh - '+ px(hdr_height) +')';
-   }
-   if (0) {
-      // new:
-      w3_add(con1, 'w3-scroll');
-      con1.style.width = '100vw';
-      con1.style.height = '100vh';
-      //con1.style.minWidth = px(1465);
-      //con1.style.width = '100vw';
-      //con2.style.minWidth = px(1465);
-      //w3_add(con2, 'w3-scroll-x');
-      //w3_add(con2, 'w3-scroll-x-only');
-   }
+   // top bar is fixed at the width of the screen so the "user page" button is always visible
+   top.style.width = px(window.innerWidth - /* L/R margins */ 32);
+   
+   // There are a couple of bits of magic here:
+   
+   // The X scroll for screen widths less-than-laptop only works when the w3-scroll is
+   // one div level above where the div minWidth is set.
+   w3_add(scr, 'w3-scroll');
+   con1.style.minWidth = '1465px';     // 1496px (development laptop width) - 31px = 1465px
 
+   // The Y scroll only works when the height is set in the *same* div as the w3-scroll
+   // and based on 100% of the viewport height (100vh) minus the full header height.
+   w3_add(con2, 'w3-scroll');
+   var vh = kiwi_is_iPhone()? 90 : (kiwi_isMobile()? 95 : 100);   // empirically determined
+   con2.style.height = 'calc('+ vh +'vh - '+ px(hdr_height) +')';
+
+	//mdev_log('#'+ arseq +' wh='+ window.innerWidth +'|'+ window.innerHeight +' hh|ch='+ hdr_height +'|'+ w3_el("id-admin-con2").clientHeight);
+
+   /*
    mdev_log('#'+ arseq +
       ' CON1 sc h='+ con1.scrollHeight +'|'+ con1.clientHeight +' w='+ con1.scrollWidth +'|'+ con1.clientWidth +
-      ' HDR sc h='+ hdr.scrollHeight +'|'+ hdr.clientHeight +' w='+ hdr.scrollWidth +'|'+ hdr.clientWidth +
+      ' NAV sc h='+ nav.scrollHeight +'|'+ nav.clientHeight +' w='+ nav.scrollWidth +'|'+ nav.clientWidth +
       ' CON2 sc h='+ con2.scrollHeight +'|'+ con2.clientHeight +' w='+ con2.scrollWidth +'|'+ con2.clientWidth
    );
-   arseq++;
-	console.log('admin_resize: adm h='+ adm.clientHeight +' w='+ adm.clientWidth);
-	console.log('admin_resize: hdr h='+ hdr_height +' w='+ hdr.clientWidth);
-	//mdev_log('w='+ window.innerWidth +' h='+ window.innerHeight +' hh='+ hdr_height);
+   */
+   
+   /*
+	console.log('admin_resize('+ arseq +'): ADM h='+ adm.scrollHeight +'|'+ adm.clientHeight +' w='+ adm.scrollWidth +'|'+ adm.clientWidth);
+	console.log('admin_resize('+ arseq +'): CON1 h='+ con1.scrollHeight +'|'+ con1.clientHeight +' w='+ con1.scrollWidth +'|'+ con1.clientWidth);
+	console.log('admin_resize('+ arseq +'): NAV h='+ nav.scrollHeight +'|'+ nav.clientHeight +' w='+ nav.scrollWidth +'|'+ nav.clientWidth);
+	console.log('admin_resize('+ arseq +'): CON2 h='+ con2.scrollHeight +'|'+ con2.clientHeight +' w='+ con2.scrollWidth +'|'+ con2.clientWidth);
+   console.log('admin_resize hh='+ hdr_height);
+   */
 
+   //arseq++;
 	log_resize();
 	console_resize();
 }
@@ -4235,12 +4225,7 @@ function admin_draw(sdr_mode)
    );
 
 	var hdr =
-		w3_div('id-admin-hdr w3-margin-B-16 w3-margin-R-16',
-		   w3_inline_percent('',
-			   w3_header('w3-container w3-teal/id-mdev-msg', 5, 'Admin interface'), 95,
-			   w3_button('w3-aqua w3-margin-left', 'User page', 'admin_user_page_cb')
-			) +
-			
+		w3_div('id-admin-nav w3-margin-B-16 w3-margin-R-16',
 			w3_navbar('id-navbar-admin w3-border w3-light-grey', s) +
 	
 			w3_divs('id-confirm w3-hide/w3-valign',
@@ -4304,15 +4289,22 @@ function admin_draw(sdr_mode)
 
 	w3_innerHTML('id-kiwi-container',
 	   w3_div('id-admin w3-margin-L-16',
-	      w3_div('id-admin-con1',
-	         hdr,
-	         w3_div('id-admin-con2', s)
-	      )
+		   w3_inline_percent('id-admin-top/',
+			   w3_header('w3-container w3-teal/id-mdev-msg', 5, 'Admin interface'), 95,
+			   w3_button('w3-aqua w3-margin-left', 'User page', 'admin_user_page_cb')
+			),
+			
+			w3_div('id-admin-scr',
+            w3_div('id-admin-con1',
+               hdr,
+               w3_div('id-admin-con2', s)
+            )
+         )
 	   )
 	);
 
    admin_resize();
-   //setTimeout(function() { admin_resize(); }, 1000);
+   setTimeout(function() { admin_resize(); }, 500);
 	log_setup();
 	stats_init();
 

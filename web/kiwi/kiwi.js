@@ -222,6 +222,7 @@ function kiwi_bodyonload(error)
 		
       w3int_init();
 
+      /*
       if (!kiwi.skip_small_screen_check && conn_type == 'admin' && ext_mobile_info().iPad) {
          s = 'Admin interface not intended for small screens. <br>' +
              'Please use a desktop browser instead. <br><br>' +
@@ -229,6 +230,7 @@ function kiwi_bodyonload(error)
          kiwi_serious_error(s);
          return;
       }
+      */
 
 		if (conn_type == 'kiwi') {
 		
@@ -249,12 +251,14 @@ function kiwi_bodyonload(error)
 	}
 }
 
+/*
 function kiwi_small_screen_continue_cb()
 {
    kiwi.skip_small_screen_check = true;
    seriousError = false;
    kiwi_bodyonload('');
 }
+*/
 
 function kiwi_open_ws_cb(p)
 {
