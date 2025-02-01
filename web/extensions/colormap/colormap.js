@@ -134,21 +134,21 @@ function colormap_controls_setup()
 
             w3_divs('',
                w3_col_percent('w3-valign/',
-                  w3_radio_button('id-cmap-btn-red w3-btn w3-round-xlarge w3-padding-small', 'red', cmap.button, w3_SELECTED, 'colormap_color_button_cb', 0), 17,
+                  w3_radio_button('id-cmap-btn-red w3-btn w3-round-xlarge w3-padding-small', 'red', 'cmap.button', w3_SELECTED, 'colormap_color_button_cb', 0), 17,
                   w3_select('w3-text-red', '', 'draw', 'cmap.draw_r', cmap.draw_r, cmap.draw_s, 'colormap_draw_mode_cb', 0), 20,
                   w3_slider('id-cmap-gain-red-slider', '', 'cmap.gain_red', cmap.gain_red, -1.04, 1.04, 0.01, 'colormap_color_gain_cb', 0), 40,
                   '&nbsp;', 3, w3_div('id-cmap-gain-red-field')
                ),
                
                w3_col_percent('w3-valign w3-margin-T-8/',
-                  w3_radio_button('id-cmap-btn-green w3-btn w3-round-xlarge w3-padding-small', 'green', cmap.button, w3_NOT_SELECTED, 'colormap_color_button_cb', 1), 17,
+                  w3_radio_button('id-cmap-btn-green w3-btn w3-round-xlarge w3-padding-small', 'green', 'cmap.button', w3_NOT_SELECTED, 'colormap_color_button_cb', 1), 17,
                   w3_select('w3-text-red', '', 'draw', 'cmap.draw_g', cmap.draw_g, cmap.draw_s, 'colormap_draw_mode_cb', 1), 20,
                   w3_slider('id-cmap-gain-red-slider', '', 'cmap.gain_green', cmap.gain_green, -1.04, 1.04, 0.01, 'colormap_color_gain_cb', 1), 40,
                   '&nbsp;', 3, w3_div('id-cmap-gain-green-field')
                ),
                
                w3_col_percent('w3-valign w3-margin-T-8 w3-margin-B-16/',
-                  w3_radio_button('id-cmap-btn-blue w3-btn w3-round-xlarge w3-padding-small', 'blue', cmap.button, w3_NOT_SELECTED, 'colormap_color_button_cb', 2), 17,
+                  w3_radio_button('id-cmap-btn-blue w3-btn w3-round-xlarge w3-padding-small', 'blue', 'cmap.button', w3_NOT_SELECTED, 'colormap_color_button_cb', 2), 17,
                   w3_select('w3-text-red', '', 'draw', 'cmap.draw_b', cmap.draw_b, cmap.draw_s, 'colormap_draw_mode_cb', 2), 20,
                   w3_slider('id-cmap-gain-red-slider', '', 'cmap.gain_blue', cmap.gain_blue, -1.04, 1.04, 0.01, 'colormap_color_gain_cb', 2), 40,
                   '&nbsp;', 3, w3_div('id-cmap-gain-blue-field')
@@ -312,6 +312,7 @@ function colormap_aper()
 
 function colormap_color_button_cb(path, idx, first, param)
 {
+   //console.log('colormap_color_button_cb path='+ path +' idx='+ idx +' param='+ param);
    cmap.rgb = +param;
    cmap.draw = cmap['draw_'+ 'rgb'[cmap.rgb]];
    //console.log('# draw='+ cmap.draw);
