@@ -279,6 +279,12 @@ function paren(s)
    return '('+ s +')';
 }
 
+function pct(s)
+{
+   if (!isString(s)) s = s.toString();
+   return s.includes('%')? s : (s +'%');
+}
+
 function TF(cond)
 {
    return (cond? 'T':'F');

@@ -1007,6 +1007,7 @@ input[type=range]::-moz-range-thumb {
 .w3-ialign-baseline { align-self: baseline }
 .w3-ialign-right { margin-left: auto }      /* medium.com/@iamryanyu/how-to-align-last-flex-item-to-right-73512e4e5912 */
 .w3-ialign-bottom { margin-top: auto }
+.w3-ialign-top { margin-bottom: auto }
 
 
 .w3-hcenter, .w3-halign
@@ -1217,6 +1218,11 @@ input[type=range]::-moz-range-thumb {
 {
 	overflow-x: auto;
 	overflow-y: hidden;
+}
+
+.w3-scroll-x-only
+{
+	overflow-x: auto;
 }
 
 .w3-scroll-y

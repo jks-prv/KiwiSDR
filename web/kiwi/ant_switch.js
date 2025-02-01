@@ -723,7 +723,7 @@ function ant_switch_config_html2(n_ch)
          ) +
 
          w3_inline_percent('w3-margin-T-16 w3-valign-center/',
-            '', 53,
+            '&nbsp;', 53,
             w3_input_get('w3-defer//', 'cURL command arguments', 'ant_switch.ant'+ i +'cmd', 'ant_switch_cmd_cb', '')
          );
    }

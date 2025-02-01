@@ -125,18 +125,18 @@ function fft_clear()
 	c.fillStyle = '#575757';
 	c.fillRect(0, 0, 256, 280);
 	
-	var left = w3_el('fft-controls-left');
-	var right = w3_el('fft-controls-right');
+	var left = w3_el('id-fft-controls-left');
+	var right = w3_el('id-fft-controls-right');
 
 	if (fft.pre == fft.pre_ALPHA) {
 		ext_set_controls_width_height(525, 300);
-		left.style.width = '49.9%';
-		right.style.width = '49.9%';
+		w3_inline_percent_set(left, 49.9);
+		w3_inline_percent_set(right, 49.9);
 		fft_alpha();
 	} else {
 		ext_set_controls_width_height(275, 275);
-		left.style.width = '0%';
-		right.style.width = '100%';
+		w3_inline_percent_set(left, 0);
+		w3_inline_percent_set(right, 100);
 		var f = ext_get_freq();
 		fft_marker((f/1e3).toFixed(2), false, f);
 	}
@@ -343,7 +343,7 @@ function fft_controls_setup()
 
 	var controls_html =
 		w3_div('id-fft-controls w3-text-white',
-			w3_half('', '',
+			w3_half('', '0:id-fft-controls-left 1:id-fft-controls-right',
 				info_html,
 				w3_divs('',
 					w3_div('w3-medium w3-text-aqua', '<b>Audio FFT</b>'),
@@ -358,7 +358,7 @@ function fft_controls_setup()
                ),
                w3_text('id-fft-msg-spec  w3-margin-T-8 w3-hide', 'Spectrum uses main control panel<br>WF tab sliders and settings'),
 					w3_button('w3-margin-T-8 w3-padding-small', 'Clear', 'fft_clear_cb')
-				), 'id-fft-controls-left', 'id-fft-controls-right'
+				)
 			)
 		);
 

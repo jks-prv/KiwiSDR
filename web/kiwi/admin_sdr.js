@@ -196,9 +196,9 @@ function config_html()
 				   'for CW/CWN modes (typ 500, 800 or 1000 Hz).'
 				)
 			),
-			w3_half('w3-valign', '',
+			w3_half('w3-valign w3-halign-center', '',
 			   w3_input('', 'Passband center', 'admin_sdr.pbc', admin_sdr.pbc, 'config_pb_val'),
-            w3_checkbox('w3-halign-center//w3-label-inline', 'Lock', 'admin_sdr.pbc_lock', admin_sdr.pbc_lock, 'config_pbc_lock')
+            w3_checkbox('//w3-label-inline', 'Lock', 'admin_sdr.pbc_lock', admin_sdr.pbc_lock, 'config_pbc_lock')
 			),
 			w3_input('', 'Passband width', 'admin_sdr.pbw', admin_sdr.pbw, 'config_pb_val')
 		) +
@@ -212,7 +212,7 @@ function config_html()
 
    var s3 =
 		'<hr>' +
-		w3_third('w3-margin-bottom w3-text-teal', 'w3-container',
+		w3_third('w3-margin-bottom w3-text-teal', 'w3-container w3-ialign-top',
 			w3_div('',
 				w3_input_get('', 'Frequency scale offset (kHz, 1 Hz resolution)', 'freq_offset', 'config_freq_offset_cb'),
 				w3_div('w3-text-black',
@@ -239,7 +239,7 @@ function config_html()
 		) +
 
 		'<hr>' +
-		w3_third('w3-margin-bottom w3-text-teal', 'w3-container',
+		w3_third('w3-margin-bottom w3-text-teal', 'w3-container w3-ialign-top',
 			w3_input_get('', 'S-meter calibration (dB)', 'S_meter_cal', 'admin_int_cb'),
 			w3_divs('/w3-center',
             w3_slider('', 'S-meter OV', 'cfg.S_meter_OV_counts', cfg.S_meter_OV_counts, 0, 15, 1, 'config_OV_counts_cb'),
@@ -257,7 +257,7 @@ function config_html()
             )
          )
 		) +
-		w3_third('w3-margin-bottom w3-text-teal', 'w3-container',
+		w3_third('w3-margin-bottom w3-text-teal', 'w3-container w3-ialign-top',
 		   w3_div('',
 			   w3_input_get('', 'Waterfall calibration (dB)', 'waterfall_cal', 'admin_int_cb'),
             w3_checkbox_get_param('w3-margin-T-8/w3-label-inline/', 'Disable WF-min zoom correction', 'no_zoom_corr', 'admin_bool_cb', false),
@@ -304,7 +304,7 @@ function config_html()
          )
 		) +
 
-		w3_third('w3-container w3-margin-bottom w3-margin-T-8 w3-text-teal', '',
+		w3_third('w3-margin-bottom w3-margin-T-8 w3-text-teal', 'w3-container w3-ialign-top',
          w3_divs('/w3-center w3-tspace-8',
             w3_select_get_param('w3-width-auto', 'Allow RF attenuator switching by:', '',
                'cfg.rf_attn_allow', admin_sdr.rf_attn_allow_s, 'admin_select_cb', 0
@@ -321,8 +321,8 @@ function config_html()
                'rf_attn_alt', 'admin_bool_cb', false),
             w3_input_get('', '', 'rf_attn_cmd', 'w3_string_set_cfg_cb', ''),
             w3_div('w3-text-black',
-               'Allows RF attenuator slider/buttons to send a shell command <br>' +
-               'instead of adjusting the internal attenuator. <br>' +
+               'Allows RF attenuator slider/buttons to send a shell <br>' +
+               'command instead of adjusting the internal attenuator. <br>' +
                'The strings "attn_NN" and "attn_NN.N" in above command <br>' +
                'will be replaced with the current attenuator setting. <br>' +
                'Example: <x1>curl "1.2.3.4/?cmd=Aattn_NN.N"</x1> <br>' +
@@ -1383,7 +1383,7 @@ function kiwi_reg_html()
 			w3_input('', 'Location (name)', 'rx_location', '', 'w3_string_set_cfg_cb')
 		) +
 
-		w3_half('w3-margin-bottom', 'w3-container',
+		w3_half('w3-margin-bottom', 'w3-container w3-ialign-top',
 		   w3_div('',
             w3_input_get('', 'Coverage frequency low (kHz)', 'sdr_hu_lo_kHz', 'admin_int_cb'),
 				w3_div('w3-text-black',
