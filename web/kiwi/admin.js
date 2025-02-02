@@ -3462,7 +3462,7 @@ function log_resize()
 	var el = w3_el('id-log-msg');
 	if (!el) return;
 	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
-	var log_height = window.innerHeight - hdr_height - 80;
+	var log_height = window.innerHeight - hdr_height - (kiwi_isMobile()? 100 : 80);
 	el.style.height = px(log_height);
 }
 
@@ -3507,7 +3507,6 @@ function console_html()
    admin.console.isMobile = kiwi_isMobile();
    //admin.console.isMobile = true;
    admin.console.always_char_oriented = admin.console.isMobile? false : true;
-   //admin.console.always_char_oriented = false;
    
    var dbg = (0 && dbgUs);
 
@@ -3568,7 +3567,7 @@ function console_html()
                w3_div('id-console-line',
                   admin.console.isMobile?
                      w3_inline('w3-margin-T-8 w3-halign-space-between/',
-                        w3_input('w3-width-half//id-console-line-input w3-input-any-key', '', 'console_input', '',
+                        w3_input('w3-width-half//id-console-line-input w3-input-any-change||autocomplete="off" autocorrect="off" autocapitalize="off"', '', 'console_input', '',
                            'console_input_cb|console_key_cb', 'enter shell command'),
                         w3_inline('w3-margin-R-16/',
                            w3_button('w3-yellow', 'Send ^C', 'console_ctrl_button_cb', 'c'),
@@ -3646,7 +3645,7 @@ function console_key_cb(ev, called_from_w3_input)
    var k = ev.key;
    var ord_k = ord(k);
    var ctrl_k = ord_k & 0x1f;
-   var ok;
+   var ok, ctrl_or_arrow;
    
    // NB: send SS3 versions of cursor keys (e.g. \x1bOA) instead of
    // CSI version (e.g. \x1b[A) since htop requires it
@@ -3657,15 +3656,15 @@ function console_key_cb(ev, called_from_w3_input)
       // line-oriented
       if (!called_from_w3_input) return;     // ignore the global keydown events
       var ctrl_s = k.toUpperCase();
-      ok = true;
+      ctrl_or_arrow = true;
       if (ev.ctrlKey && 'CDPN\\'.includes(ctrl_s)) ; else
-      if (k == 'ArrowUp') k = '\x1bOA'; else
-      if (k == 'ArrowDown') k = '\x1bOB'; else
+      if (k == 'ArrowUp')    k = '\x1bOA'; else
+      if (k == 'ArrowDown')  k = '\x1bOB'; else
       if (k == 'ArrowRight') k = '\x1bOC'; else
-      if (k == 'ArrowLeft') k = '\x1bOD'; else
-         ok = false;
+      if (k == 'ArrowLeft')  k = '\x1bOD'; else
+         ctrl_or_arrow = false;
 
-      if (ok) {
+      if (ctrl_or_arrow) {
          if (ev.ctrlKey) {
             //console.log('console_key_cb LINE: CTRL ^'+ ctrl_s +'('+ ctrl_k +') w3_input='+ called_from_w3_input);
             if (ctrl_k <= 0xff)
@@ -3809,13 +3808,14 @@ function console_ctrl_button_cb(id, ch)
 
 function console_calc_rows_cols(init)
 {
-   var h_msgs = parseInt(w3_el('id-console-msg').style.height) - /* margins +5 */ 25;
+	var el = w3_el('id-console-msg');
+   var h_msgs = parseInt(el.style.height) - /* margins +5 */ 25;
    var h_msg = 15.6;
    var h_ratio = h_msgs / h_msg;
    var rows = Math.floor(h_ratio);
    if (rows < 1) rows = 1;
 
-   var w_msgs = parseInt(w3_el('id-console-msg').style.width) - /* margins +5 */ 25;
+   var w_msgs = parseInt(el.style.width) - /* margins +5 */ 25;
    var w_msg = 7.4;
    var w_ratio = w_msgs / w_msg;
    var cols = w3_clamp(Math.floor(w_ratio), 1, 256);
@@ -3885,10 +3885,14 @@ function console_resize()
 	if (!el) return;
 	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
 	var console_height = window.innerHeight - hdr_height -
-	   (admin.console.always_char_oriented? 110 : (admin.console.isMobile? 120 : 150));
+	   (admin.console.always_char_oriented? 110 : (admin.console.isMobile? 140 : 150));
 	el.style.height = px(console_height);
-	var console_width = window.innerWidth - 65;
-	el.style.width = px(console_width);
+	
+	if (!kiwi_isMobile()) {
+	   var console_width = window.innerWidth - 65;
+	   el.style.width = px(console_width);
+	}
+	
 	//w3_innerHTML('id-console-debug', window.innerHeight +' '+ hdr_height +' '+ console_height);
 
    console_calc_rows_cols(0);

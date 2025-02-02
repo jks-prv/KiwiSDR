@@ -1485,8 +1485,10 @@ function dx_html()
 {
    var i, s = '';
 
+   /*
 	if (kiwi_isMobile())
 	   return w3_div('id-dx w3-hide', w3_div('w3-container w3-margin-top', 'Not available on mobile devices.'));
+	*/
 	
    var s2 =
       w3_inline('',
