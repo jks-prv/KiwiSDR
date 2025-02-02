@@ -164,7 +164,7 @@ void update_vars_from_config(bool called_at_init)
 	bool update_cfg = false;
 	bool up_cfg = false;
 	bool update_admcfg = false;
-	const char *s;
+	const char *s, *s2;
     bool err;
 
     // When called by client-side "SET save_cfg/save_adm=":
@@ -263,6 +263,25 @@ void update_vars_from_config(bool called_at_init)
 	} else {
         cfg_default_string("tdoa.server", "http://tdoa.kiwisdr.com", &update_admcfg);
     }
+    
+    
+    // iframe extension related
+    // enable sk6aw dx spots if no prior configuration
+    cfg_default_object("iframe", "{}", &up_cfg);
+    s = cfg_string("iframe.url", NULL, CFG_OPTIONAL);
+    s2 = cfg_string("iframe.html", NULL, CFG_OPTIONAL);
+    bool enabled = cfg_default_bool("iframe.enable", true, &up_cfg);
+    if (!kiwi_nonEmptyStr(s) && !kiwi_nonEmptyStr(s2) && enabled) {
+        cfg_set_int("iframe.src", 0);
+	    cfg_set_string("iframe.url", "https://spots.kiwisdr.com");
+	    cfg_set_string("iframe.title", "<span style=\\\"color:cyan\\\">Spots by <a href=\\\"http://www.sk6aw.net/cluster\\\" target=\\\"_blank\\\">SK6AW.NET</a></span>");
+        cfg_set_string("iframe.menu", "DX spots");
+        cfg_set_string("iframe.help", "Clicking on a spot frequency will tune the Kiwi.");
+        cfg_set_bool("iframe.allow_tune", true);
+	    update_cfg = cfg_gdb_break(true);
+    }
+    cfg_string_free(s);
+    cfg_string_free(s2);
 
 
     // fix any broken UTF-8 sequences via cfg_default_string()

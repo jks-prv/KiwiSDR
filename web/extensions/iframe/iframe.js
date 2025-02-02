@@ -235,7 +235,7 @@ function iframe_src_cb(path, idx, first)
 function iframe_help(show)
 {
    if (show) {
-      var s =  w3_text('w3-medium w3-bold w3-text-aqua', iframe.title +' help') + '<br>'+ iframe.helptext+ '';
+      var s =  w3_text('w3-medium w3-bold w3-text-aqua', iframe.title +' help') + '<br><br>'+ iframe.helptext+ '';
       confirmation_show_content(s, 610, 125);
    }
    return true;
