@@ -692,8 +692,11 @@ function connect_html()
                   )
             );
       } else {
-         auto_s = 'The automatic proxy configuration for this Kiwi seems to be missing. ' +
-            'Please contact support@kiwisdr.com <br><br> Manual proxy setup is shown.';
+         auto_s =
+            w3_div('w3-text-black',
+               'The automatic proxy configuration <br> for this Kiwi seems to be missing. <br>' +
+               'Please contact support@kiwisdr.com <br><br> Manual proxy setup is shown.'
+            );
          connect_auto_proxy_cb('adm.rev_auto', w3_switch_val2idx(false));
          
       }
