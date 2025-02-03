@@ -26,6 +26,7 @@ var kiwi = {
    
    WIN_WIDTH_MIN: 1400,
    
+   force_mobile: false,
    mdev: false,
    mdev_s: '',
    mnew: false,
@@ -204,6 +205,9 @@ function kiwi_bodyonload(error)
 	
 	{
 	   if (kiwi_storeInit('ident', "").endsWith('KF6VO')) dbgUs = true;
+	   
+	   kiwi.force_mobile = kiwi_url_param(['m', 'mobile']);
+	   if (kiwi.force_mobile) console.log('url: force_mobile');
 	   
 	   // for testing a clean webpage, e.g. kiwi:8073/test
 	   /*
@@ -820,6 +824,13 @@ function time_display_html(ext_name, top)
 ////////////////////////////////
 // #ANSI #console output
 ////////////////////////////////
+
+// FIXME known problems:
+//
+// Diff-style output with singlet ">" & "<" confuses HTML handler code.
+// Overlayed lines using "\r" (e.g. file transfer) aren't quite right.
+//    Including those that overflow end-of-line.
+// Support numlock keypad? (there is an ANSI seq to enable this mode)
 
 var ansi = {
    colors:  [

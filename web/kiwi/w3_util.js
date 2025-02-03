@@ -2763,7 +2763,12 @@ function w3int_input_keydown(ev, path, cb)
             (el.selectionStart == el.selectionEnd && el.selectionStart == el.textLength) ||
             
             // all text is selected
-            (el.selectionStart == 0 && el.selectionEnd == el.textLength)) {
+            (el.selectionStart == 0 && el.selectionEnd == el.textLength) ||
+            
+            // cause empty input lines followed by Enter to send empty command to shell
+            (el.value == '')
+            
+            ) {
             if (trace) console.log('w3_input_change...');
             //console.log('el.value='+ JSON.stringify(w3_el('id-ale_2g-user-textarea').value));
             //console.log(el);

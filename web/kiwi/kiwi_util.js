@@ -195,7 +195,7 @@ function kiwi_isSmartTV() { return kiwi_smartTV; }
 
 function kiwi_isTouch() { return kiwi_touch; }
 
-function kiwi_isMobile() { return (force_mobile || kiwi_isTouch() || kiwi_is_iOS() || kiwi_isAndroid() || (kiwi_isSmartTV() == 'Samsung') || mobile_laptop_test); }
+function kiwi_isMobile() { return (kiwi.force_mobile || kiwi_isTouch() || kiwi_is_iOS() || kiwi_isAndroid() || (kiwi_isSmartTV() == 'Samsung') || mobile_laptop_test); }
 
 // returns the version number or NaN (later of which will evaluate false in numeric comparisons)
 function kiwi_isSafari() { return (kiwi_safari? kiwi_safari[1] : NaN); }
@@ -1429,7 +1429,7 @@ function kiwi_add_end(s, end)
    return s;
 }
 
-// pnames can be: 'string' or [ 'string1', 'string2', ... ]
+// pnames can be: 'string' or [ 'string1', 'string2', ... ] or a parameter position index
 function kiwi_url_param(pnames, default_val, not_found_val)
 {
    var pn_isArray = isArray(pnames);

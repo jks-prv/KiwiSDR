@@ -276,7 +276,6 @@ var override_pbw = '';
 var override_pbc = '';
 var nb_click = false;
 var no_geoloc = false;
-var force_mobile = false;
 var mobile_laptop_test = false;
 var show_activeElement = false;
 var force_need_autoscale = false;
@@ -444,8 +443,6 @@ function kiwi_main_ready()
 	s = 'keys'; if (q[s]) shortcut.keys = isNonEmptyString(q[s])? q[s].split('') : null;
 	s = 'user'; if (q[s]) user_url = q[s];
 	s = 'u'; if (q[s]) user_url = q[s];
-	s = 'm'; if (q[s]) force_mobile = true;
-	s = 'mobile'; if (q[s]) force_mobile = true;
 	s = 'mem'; if (q[s]) owrx.override_fmem = q[s];
 	s = '1hz'; if (q[s] || q['1Hz']) override_1Hz = true;
 	// 'no_wf' is handled in kiwi_util.js

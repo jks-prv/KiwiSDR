@@ -3504,6 +3504,7 @@ function console_html()
       paste_state: 0
    };
    
+   // reminder: use "&m" to simulate mobile on desktop
    admin.console.isMobile = kiwi_isMobile();
    //admin.console.isMobile = true;
    admin.console.always_char_oriented = admin.console.isMobile? false : true;
@@ -3566,15 +3567,15 @@ function console_html()
             :
                w3_div('id-console-line',
                   admin.console.isMobile?
-                     w3_inline('w3-margin-T-8 w3-halign-space-between/',
-                        w3_input('w3-width-half//id-console-line-input w3-input-any-change||autocomplete="off" autocorrect="off" autocapitalize="off"', '', 'console_input', '',
-                           'console_input_cb|console_key_cb', 'enter shell command'),
-                        w3_inline('w3-margin-R-16/',
-                           w3_button('w3-yellow', 'Send ^C', 'console_ctrl_button_cb', 'c'),
-                           w3_button('w3-blue|margin-left:10px', 'Send ^D', 'console_ctrl_button_cb', 'd'),
-                           w3_button('w3-red|margin-left:10px', 'Send ^\\', 'console_ctrl_button_cb', '\x3c'),
-                           w3_button('w3-blue|margin-left:10px', 'Send ^P', 'console_ctrl_button_cb', 'p'),
-                           w3_button('w3-blue|margin-left:10px', 'Send ^N', 'console_ctrl_button_cb', 'n')
+                     w3_inline('w3-margin-T-8/',
+                        w3_input('//id-console-line-input w3-input-any-change||autocomplete="off" autocorrect="off" autocapitalize="off"',
+                           '', 'console_input', '', 'console_input_cb|console_key_cb', 'enter shell command'),
+                        w3_inline('w3-margin-L-16/',
+                           w3_button('w3-yellow', '^C', 'console_ctrl_button_cb', 'c'),
+                           w3_button('w3-blue|margin-left:10px', '^D', 'console_ctrl_button_cb', 'd'),
+                           w3_button('w3-red|margin-left:10px', '^\\', 'console_ctrl_button_cb', '\x3c'),
+                           w3_button('w3-blue|margin-left:10px', '^P', 'console_ctrl_button_cb', 'p'),
+                           w3_button('w3-blue|margin-left:10px', '^N', 'console_ctrl_button_cb', 'n')
                         )
                      )
                   :
@@ -3607,23 +3608,11 @@ function console_is_char_oriented(is_char_oriented)
 {
    is_char_oriented = isDefined(is_char_oriented)? is_char_oriented : admin.console.always_char_oriented;
    admin.console.is_char_oriented = is_char_oriented;
-   
-   if (admin.console.always_char_oriented) {
-      return;
-   }
-   
-   w3_disable('id-console-line', is_char_oriented);
-   var el_input = w3_el('id-console-line-input');
-   //console.log('console_is_char_oriented is_char_oriented='+ is_char_oriented);
-   if (is_char_oriented) {
-      el_input.blur();
-   } else {
-      el_input.focus();
-   }
 }
 
 function console_input_cb(path, val)
 {
+   //console.log('console_input_cb val='+ val);
    if (admin.console.is_char_oriented) {
 	   //console.log('console_input_cb IGNORED due to admin.console.is_char_oriented');
 	   return;
@@ -3631,6 +3620,7 @@ function console_input_cb(path, val)
    
 	//console.log('console_input_cb '+ val.length +' <'+ val +'>');
 	ext_send('SET console_w2c='+ encodeURIComponent(val +'\n'));
+   //alert('console_input_cb (LINE): '+ val);
    w3_set_value(path, '');    // erase input field
    w3_scrollDown('id-console-msg');    // scroll to bottom on input
 }
@@ -3667,11 +3657,14 @@ function console_key_cb(ev, called_from_w3_input)
       if (ctrl_or_arrow) {
          if (ev.ctrlKey) {
             //console.log('console_key_cb LINE: CTRL ^'+ ctrl_s +'('+ ctrl_k +') w3_input='+ called_from_w3_input);
-            if (ctrl_k <= 0xff)
+            if (ctrl_k <= 0xff) {
                ext_send('SET console_oob_key='+ ctrl_k);
+            //alert('console_key_cb LINE: '+ ctrl_k);
+            }
          } else {
             //console.log('console_key_cb LINE: k='+ JSON.stringify(k) +' w3_input='+ called_from_w3_input);
 	         ext_send('SET console_w2c='+ encodeURIComponent(k));
+            //alert('console_key_cb LINE: '+ k);
          }
          w3_scrollDown('id-console-msg');    // scroll to bottom on input
       }
@@ -3743,12 +3736,15 @@ function console_key_cb(ev, called_from_w3_input)
 
       if (ok) {
          if (ctrl) {
-            if (ctrl_k <= 0xff)
+            if (ctrl_k <= 0xff) {
                ext_send('SET console_oob_key='+ ctrl_k);
+               //alert('console_key_cb CHAR: '+ ctrl_k);
+            }
          } else {
             // htop requires multi-char sequences (e.g. arrow keys) to be written to server-side pty together
             // so use console_w2c= instead of repeated console_oob_key=
 	         ext_send('SET console_w2c='+ encodeURIComponent(k2));
+            //alert('console_key_cb CHAR: '+ k2);
          }
          admin.console.must_scroll_down = true;
       }
@@ -3804,18 +3800,19 @@ function console_ctrl_button_cb(id, ch)
 {
    console.log('console_ctrl_button_cb ch='+ ord(ch));
    ext_send('SET console_oob_key='+ (ord(ch) & 0x1f));
+   //alert('console_ctrl_button_cb: '+ ch);
 }
 
 function console_calc_rows_cols(init)
 {
 	var el = w3_el('id-console-msg');
-   var h_msgs = parseInt(el.style.height) - /* margins +5 */ 25;
+   var h_msgs = el.clientHeight - /* margins +5 */ 25;
    var h_msg = 15.6;
    var h_ratio = h_msgs / h_msg;
    var rows = Math.floor(h_ratio);
    if (rows < 1) rows = 1;
 
-   var w_msgs = parseInt(el.style.width) - /* margins +5 */ 25;
+   var w_msgs = el.clientWidth - /* margins +5 */ 25;
    var w_msg = 7.4;
    var w_ratio = w_msgs / w_msg;
    var cols = w3_clamp(Math.floor(w_ratio), 1, 256);
@@ -3884,11 +3881,20 @@ function console_resize()
 	var el = w3_el('id-console-msg');
 	if (!el) return;
 	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
-	var console_height = window.innerHeight - hdr_height -
-	   (admin.console.always_char_oriented? 110 : (admin.console.isMobile? 140 : 150));
+	var adj = admin.console.always_char_oriented? 110 : (admin.console.isMobile? 140 : 150);
+	var console_height = window.innerHeight - hdr_height - adj;
+   //if (kiwi_isMobile()) alert('cr '+ console_height +'='+ window.innerHeight +'-'+ hdr_height +'-'+ adj);
 	el.style.height = px(console_height);
 	
-	if (!kiwi_isMobile()) {
+	if (kiwi_isMobile()) {
+	   // mobile: leave at laptop width, but scale input bar
+	   
+	   var m = ext_mobile_info();
+	   var input_field_size = m.phone? 32 : (m.iPad? 48 : 64);
+	   //alert('ifs='+ input_field_size);
+	   w3_el('id-console_input').size = input_field_size;
+	} else {
+	   // desktop: full width
 	   var console_width = window.innerWidth - 65;
 	   el.style.width = px(console_width);
 	}
@@ -4152,25 +4158,25 @@ function admin_resize()
          var con1 = w3_el("id-admin-con1");
             var nav = w3_el("id-admin-nav");
             var hdr_height = top.clientHeight + nav.clientHeight;
-            hdr_height += /* margin bottom */ 16 + /* x_scrollbar_height */ kiwi_scrollbar_width() + /* slop */ 3;
             var con2 = w3_el('id-admin-con2');
                // ...
-   
+
    // top bar is fixed at the width of the screen so the "user page" button is always visible
    top.style.width = px(window.innerWidth - /* L/R margins */ 32);
    
-   // There are a couple of bits of magic here:
+   // There are a couple bits of magic here:
    
    // The X scroll for screen widths less-than-laptop only works when the w3-scroll is
    // one div level above where the div minWidth is set.
    w3_add(scr, 'w3-scroll');
    con1.style.minWidth = '1465px';     // 1496px (development laptop width) - 31px = 1465px
 
-   // The Y scroll only works when the height is set in the *same* div as the w3-scroll
-   // and based on 100% of the viewport height (100vh) minus the full header height.
+   // The Y scroll only works when the height is set in the *same* div as the w3-scroll.
+   // "footer slop" is a compromise between iPhone/iPad devices.
    w3_add(con2, 'w3-scroll');
-   var vh = kiwi_is_iPhone()? 90 : (kiwi_isMobile()? 95 : 100);   // empirically determined
-   con2.style.height = 'calc('+ vh +'vh - '+ px(hdr_height) +')';
+   var adj = /* header margin bottom */ 16 + /* x_scrollbar_height */ kiwi_scrollbar_width() + /* footer slop */ 16;
+   //if (kiwi_isMobile()) alert('ar wh='+ window.innerHeight +' hh='+ hdr_height +' adj='+ adj);
+   con2.style.height = px(window.innerHeight - hdr_height - adj);
 
 	//mdev_log('#'+ arseq +' wh='+ window.innerWidth +'|'+ window.innerHeight +' hh|ch='+ hdr_height +'|'+ w3_el("id-admin-con2").clientHeight);
 
