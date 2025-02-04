@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 800
+VERSION_MIN = 801
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -1577,6 +1577,7 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 
         ifeq ($(REBASE_DISTRO),true)
 	        -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first . $(DIR_FILE_SRC) && exit'
+	        -chmod +x $(DIR_FILE_SRC)/bin/kiwi*
 	        rsync -av --delete $(DIR_FILE_SRC)/samples/ $(DIR_CFG)/samples
 	        -sed -e 's/Beagle_SDR_GPS/KiwiSDR/' < /root/.bashrc.local >/tmp/bashrc.local
 	        -mv /tmp/bashrc.local /root/.bashrc.local
@@ -1971,6 +1972,7 @@ clean: clean_ext clean_deprecated $(DEP_LFTP)
 	    @echo
 	    @echo "update $(DIR_FILE_SRC) for BINARY_INSTALL"
 	    -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first . $(DIR_FILE_SRC) && exit'
+	    -chmod +x $(DIR_FILE_SRC)/bin/kiwi*
     endif
 
 clean_dist: clean
