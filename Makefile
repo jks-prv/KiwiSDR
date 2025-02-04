@@ -584,8 +584,8 @@ make_binary:
 
 
 # NB: in KiwiSDR/bin/, NOT KiwiSDR.files/bin/
-PLAT_KIWI_BIN_NEW := bin/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
-PLAT_KIWID_BIN_NEW := bin/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
+PLAT_KIWI_BIN_NEW := $(BUILD_DIR)/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
+PLAT_KIWID_BIN_NEW := $(BUILD_DIR)/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
 
 .PHONY: force
 force: make_prereq
