@@ -582,21 +582,26 @@ make_binary:
     endif
 	@echo "make_binary DONE"
 
+
+# NB: in KiwiSDR/bin/, NOT KiwiSDR.files/bin/
+PLAT_KIWI_BIN_NEW := bin/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
+PLAT_KIWID_BIN_NEW := bin/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
+
 .PHONY: force
 force: make_prereq
-	rm -f $(PLAT_KIWI_BIN) $(PLAT_KIWID_BIN)
+	rm -f $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
 	@make $(MAKE_ARGS) build_makefile_inc
 	@echo "================"
 	@echo "make force"
 	@make $(MAKE_ARGS) make_binary
-	@echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN)"
+	@echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
 	@echo "================"
-	@cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN)
+	@cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
 	@make make_install_binary
-	@echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN)"
+	@echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)"
 	@echo "================"
-	@cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN)
-	@sum $(PLAT_KIWI_BIN) $(PLAT_KIWID_BIN)
+	@cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
+	@sum $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
 	@echo "make force DONE"
 
 
