@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -297,12 +297,21 @@ static void called_every_second()
             c->ext_api_determined = true;
 		    web_served_clear_cache(c);
 		    //cprintf(c, "API: connection is exempt\n");
+            cprintf(c, "API: calling ant_switch_check_set_default() for local conn\n");
+            ant_switch_check_set_default();
             continue;
 		}
 
         // can't be too short because of slow network connections delaying the served counter
 		#define EXT_API_DECISION_SECS 10
-		if ((now - c->arrival) < EXT_API_DECISION_SECS) continue;
+		if ((now - c->arrival) < EXT_API_DECISION_SECS) {
+            if (!c->tdoa_antsw_early && kiwi_str_begins_with(c->ident_user, "TDoA_service")) {
+                cprintf(c, "API: calling ant_switch_check_set_default() early for TDoA_service\n");
+                c->tdoa_antsw_early = true;
+                ant_switch_check_set_default();
+            }
+		    continue;
+		}
 
         // can't be too many due to browser caching (lowest limit currently seen with iOS caching)
 		#define EXT_API_DECISION_SERVED 3
@@ -312,6 +321,8 @@ static void called_every_second()
 		    web_served_clear_cache(c);
 		    cprintf(c, "API: decided connection is OKAY (served=%d) %s\n",
 		        served, c->browser? c->browser : "");
+            cprintf(c, "API: calling ant_switch_check_set_default() for API okay\n");
+            ant_switch_check_set_default();
 		    continue;
 		}
 		
@@ -326,10 +337,11 @@ static void called_every_second()
             int ext_api_ch = cfg_int("ext_api_nchans", NULL, CFG_REQUIRED);
             if (ext_api_ch == -1) ext_api_ch = rx_chans;      // has never been set
             int ext_api_users = rx_count_server_conns(EXT_API_USERS);
+            bool not_ok = (ext_api_users > ext_api_ch);
             cprintf(c, "API: ext_api_users=%d >? ext_api_ch=%d %s\n", ext_api_users, ext_api_ch,
-                (ext_api_users > ext_api_ch)? "T(DENY)":"F(OKAY)");
+                not_ok? "T(DENY)":"F(OKAY)");
             bool kick = false;
-            if (ext_api_users > ext_api_ch) {
+            if (not_ok) {
                 clprintf(c, "API: non-Kiwi app was denied connection: %d/%d %s \"%s\"\n",
                     ext_api_users, ext_api_ch, c->remote_ip, kiwi_nonEmptyStr(c->ident_user)? c->ident_user : "(no identity)");
                 kick = true;
@@ -389,11 +401,17 @@ static void called_every_second()
             int tdoa_ch = cfg_int("tdoa_nchans", NULL, CFG_REQUIRED);
             if (tdoa_ch == -1) tdoa_ch = rx_chans;      // has never been set
             int tdoa_users = rx_count_server_conns(TDOA_USERS);
-            cprintf(c, "TDoA_service tdoa_users=%d >? tdoa_ch=%d %s\n", tdoa_users, tdoa_ch, (tdoa_users > tdoa_ch)? "T(DENY)":"F(OKAY)");
-            if (tdoa_users > tdoa_ch) {
+            bool not_ok = (tdoa_users > tdoa_ch);
+            cprintf(c, "TDoA_service tdoa_users=%d >? tdoa_ch=%d %s\n", tdoa_users, tdoa_ch, not_ok? "T(DENY)":"F(OKAY)");
+            if (not_ok) {
                 send_msg(c, SM_NO_DEBUG, "MSG too_busy=%d", tdoa_ch);
                 c->kick = true;
             }
+        }
+        
+        if (!c->kick && !c->tdoa_antsw_early) {
+		    cprintf(c, "API: calling ant_switch_check_set_default() for non-Kiwi app\n");
+            ant_switch_check_set_default();
         }
 	}
 }

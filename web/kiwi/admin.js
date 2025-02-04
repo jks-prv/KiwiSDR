@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
 
 // TODO
 //		input range validation
@@ -126,6 +126,7 @@ function status_blur()
 
 function status_xfer_cb(audio_dropped, underruns, seq_errors, dp_resets, dp_in_hist_resets, dp_hist_cnt, dp_hist, in_hist_cnt, in_hist)
 {
+   var i, s;
    if (audio_dropped == undefined) return;
    
 	var el = w3_el('id-msg-errors');
@@ -138,8 +139,8 @@ function status_xfer_cb(audio_dropped, underruns, seq_errors, dp_resets, dp_in_h
 
 	el = w3_el('id-status-dp-hist');
 	if (el) {
-	   var s = 'Datapump: ';
-		for (var i = 0; i < dp_hist_cnt; i++) {
+	   s = 'Datapump: ';
+		for (i = 0; i < dp_hist_cnt; i++) {
 		   s += (i? ' ':'') + dp_hist[i].toUnits();
 		}
       el.innerHTML = s;
@@ -147,8 +148,8 @@ function status_xfer_cb(audio_dropped, underruns, seq_errors, dp_resets, dp_in_h
 
 	el = w3_el('id-status-in-hist');
 	if (el) {
-	   var s = 'SoundInQ: ';
-		for (var i = 0; i < in_hist_cnt; i++) {
+	   s = 'SoundInQ: ';
+		for (i = 0; i < in_hist_cnt; i++) {
 		   s += (i? ' ':'') + in_hist[i].toUnits();
 		}
       el.innerHTML = s;
@@ -342,13 +343,15 @@ var daily_restart_u = { 0: 'no', 1: 'restart server', 2: 'reboot Beagle' };
 
 function control_html()
 {
+   var i;
+   
    // Let cfg.ext_api_nchans retain values > rx_chans if it was set when another configuration
    // was used. Just clamp the menu value to the current rx_chans;
 	var ext_api_ch = ext_get_cfg_param('ext_api_nchans', -1);
 	if (ext_api_ch == -1) ext_api_ch = rx_chans;      // has never been set
 	var ext_api_nchans = Math.min(ext_api_ch, rx_chans);
    var ext_api_chans_u = { 0:'none' };
-   for (var i = 1; i <= rx_chans; i++)
+   for (i = 1; i <= rx_chans; i++)
       ext_api_chans_u[i] = i.toFixed(0);
 
 	var s1 =
@@ -379,15 +382,12 @@ function control_html()
 
 	var s2 =
 		'<hr>' +
-		w3_third('w3-container w3-valign', '',
-         w3_divs('',
-            w3_inline('w3-halign-space-around/',
-               w3_switch_label('w3-center', 'Enable user<br>connections?', 'Yes', 'No', 'adm.server_enabled', adm.server_enabled, 'server_enabled_cb'),
-         
-               w3_divs('w3-center/w3-margin-T-8',
-                  w3_div('', '<b>Close all active<br>user connections</b>'),
-                  w3_button('w3-red', 'Kick', 'control_user_kick_cb')
-               )
+		w3_third('w3-container', '',
+         w3_inline('w3-halign-space-around/',
+            w3_switch_label('w3-center', 'Enable user<br>connections?', 'Yes', 'No', 'adm.server_enabled', adm.server_enabled, 'server_enabled_cb'),
+            w3_divs('w3-center/w3-margin-T-8',
+               w3_div('', '<b>Close all active<br>user connections</b>'),
+               w3_button('w3-red', 'Kick', 'control_user_kick_cb')
             )
          ),
 
@@ -426,7 +426,7 @@ function control_html()
 	var n_camp = ext_get_cfg_param('n_camp', -1);
 	console.log('rx_chans='+ rx_chans +' n_camp='+ n_camp +' max_camp='+ max_camp);
    var n_camp_u = [ 'disable camping' ];
-   for (var i = 1; i <= max_camp; i++)
+   for (i = 1; i <= max_camp; i++)
       n_camp_u[i] = i.toFixed(0);
    var snr_interval_u = [ 'disable', 'hourly', '4 hours', '6 hours', '24 hours' ];
    var snr_interval = [ 0, 1, 4, 6, 24 ];
@@ -530,6 +530,7 @@ function reason_cb(path, val)
 
 var connect = {
    focus: 0,
+   focus_query: false,
    NOT_IP:0, IS_IP:1, LOCAL_IP:-1, 
    timeout: null
 };
@@ -691,8 +692,11 @@ function connect_html()
                   )
             );
       } else {
-         auto_s = 'The automatic proxy configuration for this Kiwi seems to be missing. ' +
-            'Please contact support@kiwisdr.com <br><br> Manual proxy setup is shown.';
+         auto_s =
+            w3_div('w3-text-black',
+               'The automatic proxy configuration <br> for this Kiwi seems to be missing. <br>' +
+               'Please contact support@kiwisdr.com <br><br> Manual proxy setup is shown.'
+            );
          connect_auto_proxy_cb('adm.rev_auto', w3_switch_val2idx(false));
          
       }
@@ -727,7 +731,7 @@ function connect_html()
 			),
 		
 			w3_half('w3-text-teal', 'w3-container',
-			   w3_half('', '',
+            w3_inline('w3-halign-space-around/',
                w3_div('w3-center w3-tspace-8',
                   w3_button('w3-aqua', 'Click to (re)register', 'connect_rev_register_cb'),
                   w3_div('w3-text-black',
@@ -795,8 +799,11 @@ function connect_focus()
    ext_send('SET DUC_status_query');
 	
    w3_hide('id-proxy-menu');
-	if (cfg.sdr_hu_dom_sel == kiwi.REV)
+	if (cfg.sdr_hu_dom_sel == kiwi.REV) {
+	   console.log('connect_focus rev_status_query');
+	   connect.focus_query = true;
 	   ext_send('SET rev_status_query');
+	}
 	
 	connect_auto_proxy_cb('adm.rev_auto', w3_switch_val2idx(adm.rev_auto));
 }
@@ -1156,7 +1163,7 @@ function connect_rev_register_cb(id, idx)
    kiwi_clearTimeout(connect.timeout);
 	w3_innerHTML('id-connect-rev-status', w3_icon('', 'fa-refresh fa-spin', 24) + '&nbsp; Getting status from proxy server...');
 	var s = 'user='+ user +' host='+ host +' auto='+ auto;
-	console.log('start rev: '+ s);
+	console.log('rev register: '+ s);
 	ext_send('SET rev_register reg=1 '+ s);
 }
 
@@ -1192,7 +1199,7 @@ function connect_rev_status_cb(status)
    if (!connect.focus) return;
 	status = +status;
 	console.log('rev_status='+ status);
-	var s;
+	var s, error = false;
 	
 	var auto = adm.rev_auto? 1:0;
    var user = auto? adm.rev_auto_user : adm.rev_user;
@@ -1208,6 +1215,7 @@ function connect_rev_status_cb(status)
    } else
    
 	if (!(status >= 200 && status <= 299)) {     // error
+	   error = true;
 	   console.log('$error');
       ext_set_cfg_param('cfg.server_url', '', EXT_SAVE);
    }
@@ -1253,23 +1261,30 @@ function connect_rev_status_cb(status)
    var change = (a[0] != host);
 	var reload_auto = ( auto && change &&  status == 0);
 	var reload_man  = (!auto && change && (status >= 0 && status <= 2));
-	var proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');
+	var admin_is_proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');
    console.log('connect_rev_status_cb: auto='+ auto +' user='+ user +' host='+ host +'|'+ a[0] +
-      ' reload_auto_man='+ reload_auto +'|'+ reload_man +' proxy_conn='+ proxy_conn);
+      ' reload_auto|man='+ reload_auto +'|'+ reload_man +' focus_query='+ connect.focus_query +' error='+ error +' admin_is_proxy_conn='+ admin_is_proxy_conn);
 
-	if ((reload_auto || reload_man) && proxy_conn) {
-	   console.log('connect_rev_status_cb: RELOAD ADMIN CONN');
-      a[0] = host;
-      kiwi.reload_url = kiwi_SSL() + a.join('.') +'/admin';
-	   ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
-      wait_then_reload_page(10, 'You changed the Kiwi\'s host name. <br>' +
-         'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
-	}
-	
-	// don't keep restarting frpc if user key invalid (status == 101)
-	if (!proxy_conn && cfg.sdr_hu_dom_sel == kiwi.REV && status != 101) {
-      ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+   if (admin_is_proxy_conn) {
+      if (reload_auto || reload_man) {
+         console_nv('$connect_rev_status_cb RELOAD ADMIN CONN', {reload_auto}, {reload_man});
+         a[0] = host;
+         kiwi.reload_url = kiwi_SSL() + a.join('.') +'/admin';
+         ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+         wait_then_reload_page(10, 'You changed the Kiwi\'s host name. <br>' +
+            'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
+      }
+	} else {
+	   // !admin_is_proxy_conn
+	   
+      // don't keep restarting frpc if user key invalid (status == 101)
+      if (cfg.sdr_hu_dom_sel == kiwi.REV && !connect.focus_query && error && status != 101) {
+         console_nv('$connect_rev_status_cb RESTART frpc', {status});
+         ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+      }
    }
+   
+   connect.focus_query = false;
 }
 
 function connect_proxy_server_cb(path, val)
@@ -2236,7 +2251,7 @@ function network_port_open_init()
    
    w3_do_when_cond(
       function() {
-         if (isEmptyString(config_net.pvt_ip)) {
+         if (isEmptyString(config_net.pub_ip)) {
             msg_send('SET GET_CONFIG');
             return false;
          }
@@ -2244,7 +2259,7 @@ function network_port_open_init()
       },
       function() {
          w3_innerHTML('id-net-check-port-ip-q',
-            'http://'+ config_net.pvt_ip +':'+ adm.port_ext);
+            'http://'+ config_net.pub_ip +':'+ adm.port_ext);
       }
    );
    // REMINDER: w3_do_when_cond() returns immediately
@@ -2757,20 +2772,21 @@ function gps_az_el_history_cb(obj)
    gps_az = new Array(gps_nsamp*gps_nsats); gps_az.fill(0);
    gps_el = new Array(gps_nsamp*gps_nsats); gps_el.fill(0);
    
+   var sat_i, sat;
    var n_sat = obj.sat_seen.length;
    //console.log('gps_nsamp='+ gps_nsamp +' n_sat='+ n_sat +' alen='+ gps_az.length);
-   for (var sat_i = 0; sat_i < n_sat; sat_i++) {
-      var sat = obj.sat_seen[sat_i];
+   for (sat_i = 0; sat_i < n_sat; sat_i++) {
+      sat = obj.sat_seen[sat_i];
       gps_prn[sat] = obj.prn_seen[sat_i];
    }
 
    for (var samp = 0; samp < gps_nsamp; samp++) {
-      for (var sat_i = 0; sat_i < n_sat; sat_i++) {
+      for (sat_i = 0; sat_i < n_sat; sat_i++) {
          var obj_i = samp*n_sat + sat_i;
-         var az = obj.az[obj_i];
-         var el = obj.el[obj_i];
+         az = obj.az[obj_i];
+         el = obj.el[obj_i];
 
-         var sat = obj.sat_seen[sat_i];
+         sat = obj.sat_seen[sat_i];
          var azel_i = samp*gps_nsats + sat;
          gps_az[azel_i] = az;
          gps_el[azel_i] = el;
@@ -2782,7 +2798,7 @@ function gps_az_el_history_cb(obj)
    gps_qzs3_az = obj.qzs3.az;
    gps_qzs3_el = obj.qzs3.el;
    gps_shadow_map = kiwi_dup_array(obj.shadow_map);
-   //for (var az=0; az<90; az++) gps_shadow_map[az] = (az < 45)? 0x0000ffff:0xffff0000;
+   //for (az=0; az<90; az++) gps_shadow_map[az] = (az < 45)? 0x0000ffff:0xffff0000;
    gps_update_azel();
 }
 
@@ -2801,7 +2817,7 @@ function gps_update_admin_cb()
 {
    if (!gps) return;
 
-	var s;
+	var i, el, x, y, z, zw, s, cn, az, axis, scale, len, color;
 	
 	s =
 		w3_table_row('',
@@ -2815,7 +2831,7 @@ function gps_update_admin_cb()
             )
 		);
 	
-      for (var cn=0; cn < gps.ch.length; cn++) {
+      for (cn=0; cn < gps.ch.length; cn++) {
          s += w3_table_row('id-gps-ch-'+ cn, '');
       }
 
@@ -2825,7 +2841,7 @@ function gps_update_admin_cb()
 	
 	var soln_color = (gps.stype == 0)? 'w3-green' : ((gps.stype == 1)? 'w3-yellow':'w3-red');
 
-	for (var cn=0; cn < gps.ch.length; cn++) {
+	for (cn=0; cn < gps.ch.length; cn++) {
 		var ch = gps.ch[cn];
 
 		if (ch.rssi > max_rssi)
@@ -2866,7 +2882,7 @@ function gps_update_admin_cb()
 	
 		var sub = '';
 		var has_subframes = false;
-		for (var i = SUBFRAMES-1; i >= 0; i--) {
+		for (i = SUBFRAMES-1; i >= 0; i--) {
 			var sub_color;
 			if (ch.sub_renew & (1<<i)) {
 				sub_color = 'w3-grey';
@@ -2890,7 +2906,7 @@ function gps_update_admin_cb()
 
 	   if (adm.rssi_azel_iq == _gps.RSSI) {
          var pct = ((ch.rssi / max_rssi) * 100).toFixed(0);
-         var color = has_subframes? 'w3-light-green' : 'w3-red';
+         color = has_subframes? 'w3-light-green' : 'w3-red';
          cells +=
             w3_table_cells('',
                w3_div('w3-progress-container w3-round-xlarge w3-white',
@@ -2963,6 +2979,7 @@ function gps_update_admin_cb()
    // MAP
    ////////////////////////////////
 
+   var latlon;
    if (adm.rssi_azel_iq == _gps.MAP) {
 
       if (!_gps.map_init && !_gps.map_needs_height) {
@@ -3039,7 +3056,7 @@ function gps_update_admin_cb()
             }
 
          } else {
-            var latlon = new google.maps.LatLng(0, 0);
+            latlon = new google.maps.LatLng(0, 0);
             var map_div = w3_el('id-gps-map');
             _gps.map = new google.maps.Map(map_div,
                {
@@ -3062,7 +3079,7 @@ function gps_update_admin_cb()
          if (_gps.leaflet) {
             _gps.map.setView([_gps.MAP_data.ref_lat, _gps.MAP_data.ref_lon], 15, { duration: 0, animate: false });
          } else {
-            var latlon = new google.maps.LatLng(_gps.MAP_data.ref_lat, _gps.MAP_data.ref_lon);
+            latlon = new google.maps.LatLng(_gps.MAP_data.ref_lat, _gps.MAP_data.ref_lon);
             _gps.map.panTo(latlon);
             _gps.map.setZoom(18);
          }
@@ -3074,7 +3091,8 @@ function gps_update_admin_cb()
       for (var j=0; j < mlen; j++) {
          var mp = _gps.MAP_data.MAP[j];
          //console.log(mp);
-         var color = (mp.nmap == 0)? (_gps.leaflet? 'lime':'green') : ((mp.nmap == 1)? 'red':'yellow');
+         color = (mp.nmap == 0)? (_gps.leaflet? 'lime':'green') : ((mp.nmap == 1)? 'red':'yellow');
+         var mkr;
          if (_gps.leaflet) {
             var icon =
                L.divIcon({
@@ -3084,15 +3102,15 @@ function gps_update_admin_cb()
                   popupAnchor: [0, -36],
                   html: '<span class="cl-leaflet-marker" style="background-color:'+ color +';"/>',
                });
-            var mkr = L.marker([mp.lat, mp.lon], { 'icon':icon, 'opacity':1.0 });
+            mkr = L.marker([mp.lat, mp.lon], { 'icon':icon, 'opacity':1.0 });
             mkr.addTo(_gps.map);
             _gps.map_mkr.push(mkr);
             while (_gps.map_mkr.length > 12) {
                _gps.map_mkr.shift().remove();
             }
          } else {
-            var latlon = new google.maps.LatLng(mp.lat, mp.lon);
-            var mkr = new google.maps.Marker({
+            latlon = new google.maps.LatLng(mp.lat, mp.lon);
+            mkr = new google.maps.Marker({
                position:latlon,
                //label: mp.nmap? 'G':'N',
                icon: 'http://maps.google.com/mapfiles/ms/icons/'+ color +'-dot.png',
@@ -3115,7 +3133,7 @@ function gps_update_admin_cb()
    ////////////////////////////////
 
    if (adm.rssi_azel_iq == _gps.IQ) {
-      var axis = 400;
+      axis = 400;
       ctx.fillStyle = 'hsl(0, 0%, 90%)';
       ctx.fillRect(0,0, axis, axis);
       
@@ -3127,15 +3145,15 @@ function gps_update_admin_cb()
       if (!_gps.IQ_data) return;
       ctx.fillStyle = 'black';
       var magnify = 8;
-      var scale = (axis/2) / 32768.0 * magnify;
-      var len = _gps.IQ_data.IQ.length;
+      scale = (axis/2) / 32768.0 * magnify;
+      len = _gps.IQ_data.IQ.length;
 
-      for (var i=0; i < len; i += 2) {
+      for (i=0; i < len; i += 2) {
          var I = _gps.IQ_data.IQ[i];
          var Q = _gps.IQ_data.IQ[i+1];
          if (I == 0 && Q == 0) continue;
-         var x = Math.round(I*scale + axis/2);
-         var y = Math.round(Q*scale + axis/2);
+         x = Math.round(I*scale + axis/2);
+         y = Math.round(Q*scale + axis/2);
          if (x < 0 || x >= axis) {
             x = (x < 0)? 0 : axis-1;
          }
@@ -3153,24 +3171,25 @@ function gps_update_admin_cb()
    // POS
    ////////////////////////////////
 
+   var clamp;
    if (adm.rssi_azel_iq == _gps.POS) {
-      var axis = 400;
+      axis = 400;
       ctx.fillStyle = 'hsl(0, 0%, 90%)';
       ctx.fillRect(0,0, axis, axis);
       
       if (!_gps.POS_data) return;
       ctx.fillStyle = 'black';
       var fs = 0.001000 * _gps.pos_scale;
-      var scale = (axis/2) / fs;
-      var len = _gps.POS_data.POS.length;
-      var clamp = 0;
+      scale = (axis/2) / fs;
+      len = _gps.POS_data.POS.length;
+      clamp = 0;
 
       //ctx.globalAlpha = 0.5;
       ctx.globalAlpha = 1;
       var x0min, x0max, y0min, y0max, x1min, x1max, y1min, y1max;
       x0min = y0min = x1min = y1min = Number.MAX_VALUE;
       x0max = y0max = x1max = y1max = Number.MIN_VALUE;
-      for (var i=0; i < len; i += 2) {
+      for (i=0; i < len; i += 2) {
          if (!adm.plot_E1B && i >= len/2) break;
          ctx.fillStyle = (i < len/2)? "DeepSkyBlue":"black";
          var lat = _gps.POS_data.POS[i];
@@ -3178,8 +3197,8 @@ function gps_update_admin_cb()
          var lon = _gps.POS_data.POS[i+1];
          lat -= _gps.POS_data.ref_lat;
          lon -= _gps.POS_data.ref_lon;
-         var x = Math.round(lon*scale + axis/2);
-         var y = Math.round(-lat*scale + axis/2);
+         x = Math.round(lon*scale + axis/2);
+         y = Math.round(-lat*scale + axis/2);
          if (x < 0 || x >= axis) {
             x = (x < 0)? 0 : axis-1;
             clamp++;
@@ -3224,9 +3243,9 @@ function gps_update_admin_cb()
       }
       
       // text
-      var x = 16;
+      x = 16;
       var xi = 12;
-      var y = axis - 16*2;
+      y = axis - 16*2;
       var yi = 18;
       var yf = 4;
       var fontsize = 15;
@@ -3268,6 +3287,7 @@ function gps_update_azel()
    if (gps_azel_canvas == null) return;
    gps_azel_canvas.ctx = gps_azel_canvas.getContext("2d");
    var ctx = gps_azel_canvas.ctx;
+   var az_rad, r;
 
    var gW = 400;
    var gD = 360;
@@ -3279,18 +3299,18 @@ function gps_update_azel()
    if (adm.rssi_azel_iq == _gps.AZEL && gps_shadow_map) {
       ctx.fillStyle = "cyan";
       ctx.globalAlpha = 0.1;
-      var z = 4;
-      var zw = z*2 + 1;
+      z = 4;
+      zw = z*2 + 1;
       
-      for (var az = 0; az < 360; az++) {
-         var az_rad = az * Math.PI / gHD;
+      for (az = 0; az < 360; az++) {
+         az_rad = az * Math.PI / gHD;
          var elm = gps_shadow_map[az];
          for (var n = 0, b = 1; n < 32; n++, b <<= 1) {
             if (elm & b) {
-               var el = n/31 * 90;
-               var r = (90 - el)/90 * gHD;
-               var x = Math.round(r * Math.sin(az_rad));
-               var y = Math.round(r * Math.cos(az_rad));
+               el = n/31 * 90;
+               r = (90 - el)/90 * gHD;
+               x = Math.round(r * Math.sin(az_rad));
+               y = Math.round(r * Math.cos(az_rad));
                ctx.fillRect(x+gO-z-1, gO-y-z-1, zw+2, zw+2);
             }
          }
@@ -3304,10 +3324,10 @@ function gps_update_azel()
    ctx.font = "13px Verdana";
 
    if (gps_qzs3_el > 0) {
-      var az_rad = gps_qzs3_az * Math.PI / gHD;
-      var r = (90 - gps_qzs3_el)/90 * gHD;
-      var x = Math.round(r * Math.sin(az_rad));
-      var y = Math.round(r * Math.cos(az_rad));
+      az_rad = gps_qzs3_az * Math.PI / gHD;
+      r = (90 - gps_qzs3_el)/90 * gHD;
+      x = Math.round(r * Math.sin(az_rad));
+      y = Math.round(r * Math.cos(az_rad));
       x += gO;
       y = gO - y;
       //console.log('QZS-3 az='+ gps_qzs3_az +' el='+ gps_qzs3_el +' x='+ x +' y='+ y);
@@ -3339,21 +3359,21 @@ function gps_update_azel()
    for (var sat = 0; sat < gps_nsats; sat++) gps_last_good_el[sat] = -1;
    
    for (var off = gps_nsamp-10; off >= -1; off--) {
-      for (var sat = 0; sat < gps_nsats; sat++) {
+      for (sat = 0; sat < gps_nsats; sat++) {
          var loff = (off == -1)? gps_last_good_el[sat] : off;
          if (off == -1 && loff == -1) continue;
          var m = gps_now - loff;
          if (m < 0) m += gps_nsamp;
          i = m*gps_nsats + sat;
-         var az = gps_az[i];
-         var el = gps_el[i];
+         az = gps_az[i];
+         el = gps_el[i];
          if (el == 0) continue;
          gps_last_good_el[sat] = off;
          
-         var az_rad = az * Math.PI / gHD;
-         var r = (90 - el)/90 * gHD;
-         var x = Math.round(r * Math.sin(az_rad));
-         var y = Math.round(r * Math.cos(az_rad));
+         az_rad = az * Math.PI / gHD;
+         r = (90 - el)/90 * gHD;
+         x = Math.round(r * Math.sin(az_rad));
+         y = Math.round(r * Math.cos(az_rad));
 
          if (off == -1) {
             var prn = gps_prn[sat];
@@ -3367,8 +3387,8 @@ function gps_update_azel()
             ctx.lineWidth = 1;
             ctx.fillText(prn, x+toff+gO, gO-y+ty);
 
-            var z = 3;
-            var zw = z*2 + 1;
+            z = 3;
+            zw = z*2 + 1;
             ctx.fillStyle = "black";
             ctx.fillRect(x+gO-z-1, gO-y-z-1, zw+2, zw+2);
             ctx.fillStyle = (loff > 1)? "red" : "yellow";
@@ -3444,7 +3464,8 @@ function log_resize()
 {
 	var el = w3_el('id-log-msg');
 	if (!el) return;
-	var log_height = window.innerHeight - w3_el("id-admin-header-container").clientHeight - 80;
+	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
+	var log_height = window.innerHeight - hdr_height - (kiwi_isMobile()? 100 : 80);
 	el.style.height = px(log_height);
 }
 
@@ -3486,10 +3507,10 @@ function console_html()
       paste_state: 0
    };
    
+   // reminder: use "&m" to simulate mobile on desktop
    admin.console.isMobile = kiwi_isMobile();
    //admin.console.isMobile = true;
    admin.console.always_char_oriented = admin.console.isMobile? false : true;
-   //admin.console.always_char_oriented = false;
    
    var dbg = (0 && dbgUs);
 
@@ -3534,39 +3555,41 @@ function console_html()
 			   '<pre><code id="id-console-msgs"></code></pre>'
 			),
 			
-			admin.console.always_char_oriented?
-            w3_text('id-console-debug w3-text-black w3-margin-T-8',
-               kiwi_isWindows()?
-                  'Windows: Type <x1>control-v</x1> twice (quickly) for clipboard paste. Once to get a normal <x1>control-v</x1>. ' +
-                  'Control-w alternatives: nano <x1>fn-f6</x1>, bash <x1>esc</x1> <x1>control-h</x1> (see ' +
-                  w3_link('w3-link-darker-color',
-                     'https://forum.kiwisdr.com/index.php?p=/discussion/2927/windows-and-running-nano-text-editor-in-admin-console#p1',
-                     'forum') +')'
-               :
-                  'Mac: Type <x1>command-v</x1> for clipboard paste.'
-            )
-			:
-            w3_div('id-console-line',
-               admin.console.isMobile?
-                  w3_inline('w3-margin-T-8 w3-halign-space-between/',
-                     w3_input('w3-width-half//id-console-line-input w3-input-any-key', '', 'console_input', '',
-                        'console_input_cb|console_key_cb', 'enter shell command'),
-                     w3_inline('w3-margin-R-16/',
-                        w3_button('w3-yellow', 'Send ^C', 'console_ctrl_button_cb', 'c'),
-                        w3_button('w3-blue|margin-left:10px', 'Send ^D', 'console_ctrl_button_cb', 'd'),
-                        w3_button('w3-red|margin-left:10px', 'Send ^\\', 'console_ctrl_button_cb', '\x3c'),
-                        w3_button('w3-blue|margin-left:10px', 'Send ^P', 'console_ctrl_button_cb', 'p'),
-                        w3_button('w3-blue|margin-left:10px', 'Send ^N', 'console_ctrl_button_cb', 'n')
+			w3_div('',
+            admin.console.always_char_oriented?
+               w3_text('id-console-debug w3-text-black w3-margin-T-8',
+                  kiwi_isWindows()?
+                     'Windows: Type <x1>control-v</x1> twice (quickly) for clipboard paste. Once to get a normal <x1>control-v</x1>. ' +
+                     'Control-w alternatives: nano <x1>fn-f6</x1>, bash <x1>esc</x1> <x1>control-h</x1> (see ' +
+                     w3_link('w3-link-darker-color',
+                        'https://forum.kiwisdr.com/index.php?p=/discussion/2927/windows-and-running-nano-text-editor-in-admin-console#p1',
+                        'forum') +')'
+                  :
+                     'Mac: Type <x1>command-v</x1> for clipboard paste.'
+               )
+            :
+               w3_div('id-console-line',
+                  admin.console.isMobile?
+                     w3_inline('w3-margin-T-8/',
+                        w3_input('//id-console-line-input w3-input-any-change||autocomplete="off" autocorrect="off" autocapitalize="off"',
+                           '', 'console_input', '', 'console_input_cb|console_key_cb', 'enter shell command'),
+                        w3_inline('w3-margin-L-16/',
+                           w3_button('w3-yellow', '^C', 'console_ctrl_button_cb', 'c'),
+                           w3_button('w3-blue|margin-left:10px', '^D', 'console_ctrl_button_cb', 'd'),
+                           w3_button('w3-red|margin-left:10px', '^\\', 'console_ctrl_button_cb', '\x3c'),
+                           w3_button('w3-blue|margin-left:10px', '^P', 'console_ctrl_button_cb', 'p'),
+                           w3_button('w3-blue|margin-left:10px', '^N', 'console_ctrl_button_cb', 'n')
+                        )
                      )
-                  )
-               :
-                  w3_div('w3-margin-T-8',
-                     w3_input('id-console-line-input w3-input-any-key', '', 'console_input', '',
-                        'console_input_cb|console_key_cb', 'enter shell command'),
-                     w3_text('id-console-debug w3-text-black w3-margin-T-8',
-                        'Control characters (^C, ^D, ^\\) and empty lines may now be typed directly into shell command field.')
-                  )
-            )
+                  :
+                     w3_div('w3-margin-T-8',
+                        w3_input('id-console-line-input w3-input-any-key', '', 'console_input', '',
+                           'console_input_cb|console_key_cb', 'enter shell command'),
+                        w3_text('id-console-debug w3-text-black w3-margin-T-8',
+                           'Control characters (^C, ^D, ^\\) and empty lines may now be typed directly into shell command field.')
+                     )
+               )
+         )
 		)
 	);
 	return s;
@@ -3588,23 +3611,11 @@ function console_is_char_oriented(is_char_oriented)
 {
    is_char_oriented = isDefined(is_char_oriented)? is_char_oriented : admin.console.always_char_oriented;
    admin.console.is_char_oriented = is_char_oriented;
-   
-   if (admin.console.always_char_oriented) {
-      return;
-   }
-   
-   w3_disable('id-console-line', is_char_oriented);
-   var el_input = w3_el('id-console-line-input');
-   //console.log('console_is_char_oriented is_char_oriented='+ is_char_oriented);
-   if (is_char_oriented) {
-      el_input.blur();
-   } else {
-      el_input.focus();
-   }
 }
 
 function console_input_cb(path, val)
 {
+   //console.log('console_input_cb val='+ val);
    if (admin.console.is_char_oriented) {
 	   //console.log('console_input_cb IGNORED due to admin.console.is_char_oriented');
 	   return;
@@ -3612,6 +3623,7 @@ function console_input_cb(path, val)
    
 	//console.log('console_input_cb '+ val.length +' <'+ val +'>');
 	ext_send('SET console_w2c='+ encodeURIComponent(val +'\n'));
+   //alert('console_input_cb (LINE): '+ val);
    w3_set_value(path, '');    // erase input field
    w3_scrollDown('id-console-msg');    // scroll to bottom on input
 }
@@ -3626,6 +3638,7 @@ function console_key_cb(ev, called_from_w3_input)
    var k = ev.key;
    var ord_k = ord(k);
    var ctrl_k = ord_k & 0x1f;
+   var ok, ctrl_or_arrow;
    
    // NB: send SS3 versions of cursor keys (e.g. \x1bOA) instead of
    // CSI version (e.g. \x1b[A) since htop requires it
@@ -3636,22 +3649,25 @@ function console_key_cb(ev, called_from_w3_input)
       // line-oriented
       if (!called_from_w3_input) return;     // ignore the global keydown events
       var ctrl_s = k.toUpperCase();
-      var ok = true;
+      ctrl_or_arrow = true;
       if (ev.ctrlKey && 'CDPN\\'.includes(ctrl_s)) ; else
-      if (k == 'ArrowUp') k = '\x1bOA'; else
-      if (k == 'ArrowDown') k = '\x1bOB'; else
+      if (k == 'ArrowUp')    k = '\x1bOA'; else
+      if (k == 'ArrowDown')  k = '\x1bOB'; else
       if (k == 'ArrowRight') k = '\x1bOC'; else
-      if (k == 'ArrowLeft') k = '\x1bOD'; else
-         ok = false;
+      if (k == 'ArrowLeft')  k = '\x1bOD'; else
+         ctrl_or_arrow = false;
 
-      if (ok) {
+      if (ctrl_or_arrow) {
          if (ev.ctrlKey) {
             //console.log('console_key_cb LINE: CTRL ^'+ ctrl_s +'('+ ctrl_k +') w3_input='+ called_from_w3_input);
-            if (ctrl_k <= 0xff)
+            if (ctrl_k <= 0xff) {
                ext_send('SET console_oob_key='+ ctrl_k);
+            //alert('console_key_cb LINE: '+ ctrl_k);
+            }
          } else {
             //console.log('console_key_cb LINE: k='+ JSON.stringify(k) +' w3_input='+ called_from_w3_input);
 	         ext_send('SET console_w2c='+ encodeURIComponent(k));
+            //alert('console_key_cb LINE: '+ k);
          }
          w3_scrollDown('id-console-msg');    // scroll to bottom on input
       }
@@ -3662,7 +3678,8 @@ function console_key_cb(ev, called_from_w3_input)
       // character-oriented
       if (called_from_w3_input) return;      // ignore the w3_input keydown events
 	   //event_dump(ev, 'CHAR:', 1);
-      var k2 = k, ok = true, redo = false;
+      var k2 = k, redo = false;
+      ok = true;
 
       if (k.length == 1)      { k2 = k; } else
       if (k == 'Enter')       { k2 = '\r';   redo = true; } else
@@ -3722,12 +3739,15 @@ function console_key_cb(ev, called_from_w3_input)
 
       if (ok) {
          if (ctrl) {
-            if (ctrl_k <= 0xff)
+            if (ctrl_k <= 0xff) {
                ext_send('SET console_oob_key='+ ctrl_k);
+               //alert('console_key_cb CHAR: '+ ctrl_k);
+            }
          } else {
             // htop requires multi-char sequences (e.g. arrow keys) to be written to server-side pty together
             // so use console_w2c= instead of repeated console_oob_key=
 	         ext_send('SET console_w2c='+ encodeURIComponent(k2));
+            //alert('console_key_cb CHAR: '+ k2);
          }
          admin.console.must_scroll_down = true;
       }
@@ -3783,17 +3803,19 @@ function console_ctrl_button_cb(id, ch)
 {
    console.log('console_ctrl_button_cb ch='+ ord(ch));
    ext_send('SET console_oob_key='+ (ord(ch) & 0x1f));
+   //alert('console_ctrl_button_cb: '+ ch);
 }
 
 function console_calc_rows_cols(init)
 {
-   var h_msgs = parseInt(w3_el('id-console-msg').style.height) - /* margins +5 */ 25;
+	var el = w3_el('id-console-msg');
+   var h_msgs = el.clientHeight - /* margins +5 */ 25;
    var h_msg = 15.6;
    var h_ratio = h_msgs / h_msg;
    var rows = Math.floor(h_ratio);
    if (rows < 1) rows = 1;
 
-   var w_msgs = parseInt(w3_el('id-console-msg').style.width) - /* margins +5 */ 25;
+   var w_msgs = el.clientWidth - /* margins +5 */ 25;
    var w_msg = 7.4;
    var w_ratio = w_msgs / w_msg;
    var cols = w3_clamp(Math.floor(w_ratio), 1, 256);
@@ -3861,12 +3883,26 @@ function console_resize()
 {
 	var el = w3_el('id-console-msg');
 	if (!el) return;
-	var console_height = window.innerHeight - w3_el("id-admin-header-container").clientHeight -
-	   (admin.console.always_char_oriented? 110 : (admin.console.isMobile? 120 : 150));
+	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
+	var adj = admin.console.always_char_oriented? 110 : (admin.console.isMobile? 140 : 150);
+	var console_height = window.innerHeight - hdr_height - adj;
+   //if (kiwi_isMobile()) alert('cr '+ console_height +'='+ window.innerHeight +'-'+ hdr_height +'-'+ adj);
 	el.style.height = px(console_height);
-	var console_width = window.innerWidth - 65;
-	el.style.width = px(console_width);
-	//w3_innerHTML('id-console-debug', window.innerHeight +' '+ w3_el("id-admin-header-container").clientHeight +' '+ console_height);
+	
+	if (kiwi_isMobile()) {
+	   // mobile: leave at laptop width, but scale input bar
+	   
+	   var m = ext_mobile_info();
+	   var input_field_size = m.phone? 32 : (m.iPad? 48 : 64);
+	   //alert('ifs='+ input_field_size);
+	   w3_el('id-console_input').size = input_field_size;
+	} else {
+	   // desktop: full width
+	   var console_width = window.innerWidth - 65;
+	   el.style.width = px(console_width);
+	}
+	
+	//w3_innerHTML('id-console-debug', window.innerHeight +' '+ hdr_height +' '+ console_height);
 
    console_calc_rows_cols(0);
 }
@@ -4116,13 +4152,54 @@ function admin_main()
 	window.addEventListener('resize', admin_resize);
 }
 
+//var arseq = 0;
 function admin_resize()
 {
-	var header_height = w3_el("id-admin-header-container").clientHeight + 16;
-	//console.log('admin_resize: header_height='+ header_height);
-	//mdev_log('w='+ window.innerWidth +' h='+ window.innerHeight +' hh='+ header_height);
-	w3_el('id-admin-scroll').style.height = 'calc(100vh - '+ px(header_height) +')';
+   var adm = w3_el("id-admin");
+      var top = w3_el("id-admin-top");
+      var scr = w3_el("id-admin-scr");
+         var con1 = w3_el("id-admin-con1");
+            var nav = w3_el("id-admin-nav");
+            var hdr_height = top.clientHeight + nav.clientHeight;
+            var con2 = w3_el('id-admin-con2');
+               // ...
 
+   // top bar is fixed at the width of the screen so the "user page" button is always visible
+   top.style.width = px(window.innerWidth - /* L/R margins */ 32);
+   
+   // There are a couple bits of magic here:
+   
+   // The X scroll for screen widths less-than-laptop only works when the w3-scroll is
+   // one div level above where the div minWidth is set.
+   w3_add(scr, 'w3-scroll');
+   con1.style.minWidth = '1465px';     // 1496px (development laptop width) - 31px = 1465px
+
+   // The Y scroll only works when the height is set in the *same* div as the w3-scroll.
+   // "footer slop" is a compromise between iPhone/iPad devices.
+   w3_add(con2, 'w3-scroll');
+   var adj = /* header margin bottom */ 16 + /* x_scrollbar_height */ kiwi_scrollbar_width() + /* footer slop */ 16;
+   //if (kiwi_isMobile()) alert('ar wh='+ window.innerHeight +' hh='+ hdr_height +' adj='+ adj);
+   con2.style.height = px(window.innerHeight - hdr_height - adj);
+
+	//mdev_log('#'+ arseq +' wh='+ window.innerWidth +'|'+ window.innerHeight +' hh|ch='+ hdr_height +'|'+ w3_el("id-admin-con2").clientHeight);
+
+   /*
+   mdev_log('#'+ arseq +
+      ' CON1 sc h='+ con1.scrollHeight +'|'+ con1.clientHeight +' w='+ con1.scrollWidth +'|'+ con1.clientWidth +
+      ' NAV sc h='+ nav.scrollHeight +'|'+ nav.clientHeight +' w='+ nav.scrollWidth +'|'+ nav.clientWidth +
+      ' CON2 sc h='+ con2.scrollHeight +'|'+ con2.clientHeight +' w='+ con2.scrollWidth +'|'+ con2.clientWidth
+   );
+   */
+   
+   /*
+	console.log('admin_resize('+ arseq +'): ADM h='+ adm.scrollHeight +'|'+ adm.clientHeight +' w='+ adm.scrollWidth +'|'+ adm.clientWidth);
+	console.log('admin_resize('+ arseq +'): CON1 h='+ con1.scrollHeight +'|'+ con1.clientHeight +' w='+ con1.scrollWidth +'|'+ con1.clientWidth);
+	console.log('admin_resize('+ arseq +'): NAV h='+ nav.scrollHeight +'|'+ nav.clientHeight +' w='+ nav.scrollWidth +'|'+ nav.clientWidth);
+	console.log('admin_resize('+ arseq +'): CON2 h='+ con2.scrollHeight +'|'+ con2.clientHeight +' w='+ con2.scrollWidth +'|'+ con2.clientWidth);
+   console.log('admin_resize hh='+ hdr_height);
+   */
+
+   //arseq++;
 	log_resize();
 	console_resize();
 }
@@ -4160,13 +4237,8 @@ function admin_draw(sdr_mode)
       }
    );
 
-	var s1 =
-		w3_div('id-admin-header-container w3-margin-B-16 w3-margin-R-16',
-		   w3_inline_percent('',
-			   w3_header('w3-container w3-teal/id-mdev-msg', 5, 'Admin interface'), 95,
-			   w3_button('w3-aqua w3-margin-left', 'User page', 'admin_user_page_cb')
-			) +
-			
+	var hdr =
+		w3_div('id-admin-nav w3-margin-B-16 w3-margin-R-16',
 			w3_navbar('id-navbar-admin w3-border w3-light-grey', s) +
 	
 			w3_divs('id-confirm w3-hide/w3-valign',
@@ -4230,11 +4302,22 @@ function admin_draw(sdr_mode)
 
 	w3_innerHTML('id-kiwi-container',
 	   w3_div('id-admin w3-margin-L-16',
-	      s1 + w3_div('id-admin-scroll w3-scroll', s)
+		   w3_inline_percent('id-admin-top/',
+			   w3_header('w3-container w3-teal/id-mdev-msg', 5, 'Admin interface'), 95,
+			   w3_button('w3-aqua w3-margin-left', 'User page', 'admin_user_page_cb')
+			),
+			
+			w3_div('id-admin-scr',
+            w3_div('id-admin-con1',
+               hdr,
+               w3_div('id-admin-con2', s)
+            )
+         )
 	   )
 	);
 
    admin_resize();
+   setTimeout(function() { admin_resize(); }, 500);
 	log_setup();
 	stats_init();
 
@@ -4430,13 +4513,14 @@ var admin_sdr_mode = 1;
 // after calling admin_main(), server will download cfg and adm state to us, then send 'init' message
 function admin_recv(data)
 {
+   var param, el, s;
 	var stringData = arrayBufferToString(data);
 	var params = stringData.substring(4).split(" ");
 
 	//console.log('admin_recv: '+ stringData);
 
 	for (var i=0; i < params.length; i++) {
-		var param = params[i].split("=");
+		param = params[i].split("=");
 
 		//console.log('admin_recv: '+ param[0]);
 		switch (param[0]) {     // #msg-proc
@@ -4446,7 +4530,7 @@ function admin_recv(data)
 				break;
 			
 			case "proxy_url":
-			   var s = kiwi_remove_protocol(decodeURIComponent(param[1])).split(':');
+			   s = kiwi_remove_protocol(decodeURIComponent(param[1])).split(':');
 			   admin.proxy_host = s[0];
 			   admin.proxy_port = s[1];
 			   console.log('PROXY '+ admin.proxy_host +':'+ admin.proxy_port);
@@ -4475,7 +4559,7 @@ function admin_recv(data)
 				break;
 
 			case "get_gps_info_cb":
-				var param = decodeURIComponent(param[1]);
+				param = decodeURIComponent(param[1]);
 				//console.log('get_gps_info_cb: func='+ func +' param='+ param);
             var gps_info = kiwi_JSON_parse('get_gps_info_cb', param);
 				//console.log(gps_info);
@@ -4504,7 +4588,7 @@ function admin_recv(data)
 			case "auto_nat":
 				var p = +param[1];
 				//console.log('auto_nat='+ p);
-				var el = w3_el('id-net-auto-nat-msg');
+				el = w3_el('id-net-auto-nat-msg');
 				var msg, color, type = 'add', stop = true, err = false;
 				
 				switch (p) {
@@ -4540,7 +4624,7 @@ function admin_recv(data)
 			case "log_msg_not_shown":
 				log_msg_not_shown = parseInt(param[1]);
 				if (log_msg_not_shown) {
-					var el = w3_el('id-log-not-shown');
+					el = w3_el('id-log-not-shown');
 					el.innerHTML = '---- '+ log_msg_not_shown.toString() +' lines not shown ----\n';
 				}
 				break;
@@ -4550,11 +4634,11 @@ function admin_recv(data)
 				break;
 
 			case "log_msg_save":
-				var el = w3_el('id-log-'+ log_msg_idx);
+				el = w3_el('id-log-'+ log_msg_idx);
 				if (!el) break;
 				var el2 = w3_el('id-log-msg');
 				var wasScrolledDown = w3_isScrolledDown(el2);
-				var s = kiwi_decodeURIComponent('log_msg_save', param[1]).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+				s = kiwi_decodeURIComponent('log_msg_save', param[1]).replace(/</g, '&lt;').replace(/>/g, '&gt;');
 				el.innerHTML = s;
 
 				// only jump to bottom of updated list if it was already sitting at the bottom

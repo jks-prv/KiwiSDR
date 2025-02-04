@@ -84,16 +84,16 @@ SATELLITE Sats[] = {
 */
 
     // QZSS (Japan) prn(saif) = 183++, prn(std) = 193++
-    // last checked: 14-Sep-2023
+    // last checked: 3-Fep-2025
     // sys.qzss.go.jp/dod/en/constellation.html [PNT L1 C/A entries]
-//  {193, 339, 01050, QZSS},   // SVN1, QZS-1, outage 2022 059
+//  {193, 339, 01050, QZSS},   // SVN1, QZS-1, terminated 15-Sep-2023
     {194, 208, 01607, QZSS},   // SVN2, QZS-2
     {195, 711, 01747, QZSS},   // SVN4, QZS-4
     {196, 189, 01305, QZSS},   // SVN5, QZS-1R
 //  {197, 263, 00540, QZSS},   //
 //  {198, 537, 01363, QZSS},   //
     {199, 663, 00727, QZSS},   // SVN3, QZS-3
-//  {200, 942, 00147},
+    {200, 942, 00147, QZSS},   // SVN7, QZS-6
 //  {201, 173, 01206},
 //  {202, 900, 01045},
 

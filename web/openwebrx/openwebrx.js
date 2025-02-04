@@ -19,7 +19,7 @@ This file is part of OpenWebRX.
 
 */
 
-// Copyright (c) 2015-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 /*
    searchable contents:
@@ -276,7 +276,6 @@ var override_pbw = '';
 var override_pbc = '';
 var nb_click = false;
 var no_geoloc = false;
-var force_mobile = false;
 var mobile_laptop_test = false;
 var show_activeElement = false;
 var force_need_autoscale = false;
@@ -406,7 +405,7 @@ function kiwi_main_ready()
 	var s = 'f'; if (q[s]) {
 		var p = parse_freq_pb_mode_zoom(q[s]);
       // 'k' suffix is simply ignored since default frequencies are in kHz
-      if (p[1]) override_freq = p[1].replace(',', '.').parseFloatWithUnits('M', 1e-3);
+      if (p[1]) override_freq = p[1];
       if (p[1]) console.log('p='+ p[1] +' override_freq='+ override_freq);
       if (p[2]) console.log('override_pbw/pbc='+ p[2]);
 		if (p[2] && p[2].charAt(0) == '/') override_pbw = p[2].substr(1);     // remove leading '/'
@@ -444,8 +443,6 @@ function kiwi_main_ready()
 	s = 'keys'; if (q[s]) shortcut.keys = isNonEmptyString(q[s])? q[s].split('') : null;
 	s = 'user'; if (q[s]) user_url = q[s];
 	s = 'u'; if (q[s]) user_url = q[s];
-	s = 'm'; if (q[s]) force_mobile = true;
-	s = 'mobile'; if (q[s]) force_mobile = true;
 	s = 'mem'; if (q[s]) owrx.override_fmem = q[s];
 	s = '1hz'; if (q[s] || q['1Hz']) override_1Hz = true;
 	// 'no_wf' is handled in kiwi_util.js
@@ -3013,6 +3010,7 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
                }
             }
          } else {
+            var dbins;
             if (isMobileOptNew) {  
                if (1) {
                   // #mobile-ui waterfall: scroll tuning in WF margins instead of stopping at WF end
@@ -3028,7 +3026,7 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
                      } else {
                         // PB is in margin: also scroll waterfall
                         var dx = deltaX;
-                        var dbins = norm_to_bins(deltaX / waterfall_width);
+                        dbins = norm_to_bins(deltaX / waterfall_width);
                         waterfall_pan_canvases(-dbins);
                         owrx.canvas.drag_all_x = x;
                         update_x = false;
@@ -3039,7 +3037,7 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
                }
             } else {
                // desktop: only drag the waterfall -- leave the tuning/passband alone
-               var dbins = norm_to_bins(deltaX / waterfall_width);
+               dbins = norm_to_bins(deltaX / waterfall_width);
                waterfall_pan_canvases(dbins);
             }
          }
@@ -3780,7 +3778,7 @@ function freq_database_lookup(Hz, utility)
          // HF: short-wave.info is only >= 2 MHz
          // NB: Firefox gives redirect error loop if http:// prefix not specified.
          f = Math.round(kHz_r1k/5) * 5;	// 5kHz windows on 5 kHz boundaries -- intended for SWBC
-         url += "http://www.short-wave.info/index.php?freq="+ f.toFixed(0) +"&timbus=NOW&ip="+ client_public_ip +"&porm=4";
+         url = "http://www.short-wave.info/index.php?freq="+ f.toFixed(0) +"&timbus=NOW&ip="+ client_public_ip +"&porm=4";
       }
    } else
    if (utility == owrx.rcm_cluster) {
@@ -3942,7 +3940,7 @@ function zoom_step(dir, arg2)
 	var f, znew;
 	
 	if (dir == ext_zoom.WHEEL) {
-	   if (arg2 == undefined) return;
+	   if (!isNumber(arg2)) return;
 	   update_zoom_f = false;
 	   znew = Math.round(zoom_level_f);
 	   if (znew == ozoom) return;
@@ -4011,7 +4009,7 @@ function zoom_step(dir, arg2)
 		} else
 		
 		if (dir == ext_zoom.ABS) {
-			if (arg2 == undefined) { zoom_finally(); return; }		// no abs zoom value specified
+			if (!isNumber(arg2)) { zoom_finally(); return; }      // no abs zoom value specified
 			znew = arg2;
 			//console.log('zoom_step ABS znew='+ znew +' zmax='+ zoom_levels_max +' zcur='+ zoom_level +' zoom_center='+ zoom_center);
 			if ((znew < 0 || znew > zoom_levels_max || znew == zoom_level) && zoom_center == 0.5) {
@@ -4029,7 +4027,7 @@ function zoom_step(dir, arg2)
 		if (dir == ext_zoom.NOM_IN || dir == ext_zoom.MAX_IN) {
 			
 			// zoom max-in button toggle hack
-			if (dir == ext_zoom.NOM_IN && arg2 != undefined && arg2 == 1 && zoom_level >= zoom_nom) {
+			if (dir == ext_zoom.NOM_IN && isNumber(arg2) && arg2 == 1 && zoom_level >= zoom_nom) {
 				if (zoom_level == zoom_levels_max)
 					zoom_level = zoom_nom;		// if at max toggle back to nom
 				else
@@ -6606,15 +6604,10 @@ function popup_keyboard_touchstart(event)
    owrx.popup_keyboard_active = true;
 }
 
-function retain_input_focus()
-{
-   return w3_retain_input_focus({ext:extint.displayed, scan:extint.scanning});
-}
-
 function freqset_select()
 {
    //console.log('$freqset_select');
-	w3_field_select('id-freq-input', {mobile:1, log:1});
+	w3_field_select('id-freq-input', {mobile:1, log:1, scanning:1});
 }
 
 function modeset_update_ui(mode)
@@ -7906,7 +7899,11 @@ function mk_bands_scale()
 
 function parse_freq_pb_mode_zoom(s)
 {
-	return new RegExp('([0-9.,kM]*)([\/:][-0-9.,k]*)?([^z]*)?z?([0-9]*)').exec(s);
+   // freq[pb][mode][zoom]
+   s = s.replace(/ /g,'');    // allow spaces
+	var p = new RegExp('([0-9.,kM]*)([\/:][-0-9.,k]*)?([^z]*)?z?([0-9]*)').exec(s);
+   if (p[1]) p[1] = p[1].replace(',', '.').parseFloatWithUnits('M', 1e-3);
+	return p;
 }
 
 // scroll to next/prev band menu entry, skipping null title entries
@@ -8253,6 +8250,7 @@ var dx = {
    // stored DB
    legacy_stored_types: [ 'active', 'watch-list', 'sub-band', 'DGPS', 'special event', 'interference' ],
    legacy_stored_colors: [ 'cyan', 'lightPink', 'aquamarine', 'lavender', 'violet', 'violet', 'lightGrey' ],
+   stored_colors: [],            // setup by dx_color_init()
    stored_colors_light: [],      // setup by dx_color_init()
    stored_lightness: 0.95,
    filter_tod: [1,1,1],
@@ -8496,10 +8494,10 @@ function dx_color_init()
       for (i = 0; i < _dxcfg.dx_type.length; i++) {
          var o = _dxcfg.dx_type[i];
          var color = (o.color == '')? 'white' : o.color;
+         dx.stored_colors[i] = color;
          var colorObj = w3color(color);
          if (colorObj.valid) {   // only if the color name is valid
-            if (dx.db == dx.DB_STORED)
-               colorObj.lightness = dx.stored_lightness;
+            colorObj.lightness = dx.stored_lightness;
             dx.stored_colors_light[i] = colorObj.toHslString();
          }
       }
@@ -8578,6 +8576,7 @@ function dx_update()
 
 	// refresh every 5 minutes to catch schedule changes
    kiwi_clearTimeout(dx.dx_refresh_timeout);
+   //console_log_dbgUs('dx.filter_tod db['+ dx.db +']='+ dx.filter_tod[dx.db]);
 	if (dx.filter_tod[dx.db]) {
 	//if (1) {    // so can observe change from dashed/lighter to solid/darker when not filtered
 	   var _5_min_ms = 5*60*1e3;
@@ -8625,6 +8624,7 @@ var dx_ibp_stations = {
 function dx_label_render_cb(arr)
 {
 	var i, j, k;
+   var el;
 	var hdr = arr[0];
 	dx.last_hdr = hdr;
 	
@@ -8666,7 +8666,7 @@ function dx_label_render_cb(arr)
 	
 	var errors = hdr.pe + hdr.fe;
 	if (errors) {
-	   var el = w3_el('id-dxcfg-err');
+	   el = w3_el('id-dxcfg-err');
 	   if (el && !el.innerHTML.startsWith('Warning')) {   // don't override dx_config.json corruption warning
          el.innerHTML = 'Warning: dx.json file has '+ errors +' label'+ plural(errors, ' error');
          w3_add(el, 'w3-text-css-orange');
@@ -8678,11 +8678,13 @@ function dx_label_render_cb(arr)
 	dx_ibp_server_time_ms = hdr.s * 1000 + (+hdr.m);
 	dx_ibp_local_time_epoch_ms = Date.now();
 	
+	// update EiBi category counts
 	if (eibi && isDefined(hdr.ec)) for (i = 0; i < dx.DX_N_EiBi; i++) {
 	   if (isDefined(hdr.ec[i]))
 	      w3_innerHTML('eibi-cbox'+ i +'-label', dx.eibi_svc_s[i] +' ('+ hdr.ec[i] +')');
 	}
 	
+	// update community category counts
 	if (community && isDefined(hdr.tc)) for (i = 0; i <= dx.DX_N_COMM; i++) {
 	   if (isDefined(hdr.tc[i]))
 	      w3_innerHTML('id-dxcomm'+ i +'-label', dxcomm_cfg.dx_type[i].name +' ('+ hdr.tc[i] +')');
@@ -8705,7 +8707,8 @@ function dx_label_render_cb(arr)
    var center_x1 = Math.floor(wf_container.clientWidth/2) - 1;
    var center_x2 = center_x1 + 2;
 	var s_a = [];
-	var gid;
+	var gid, flags, top;
+	var ident, notes, freq;
 
 	var optimize_label_layout = function(x, z, f) {
 	   var i, j, k;
@@ -8765,9 +8768,9 @@ function dx_label_render_cb(arr)
 	for (i = 1; i < arr.length; i++) {
 		dx_idx = i-1;
 		obj = arr[i];
-      var freq = obj.f;
+      freq = obj.f;
       //if (freq == 10000) console_log_dbgUs(obj);
-		var flags = obj.fl;
+		flags = obj.fl;
 
 		var type = flags & dx.DX_TYPE;
 		
@@ -8775,7 +8778,7 @@ function dx_label_render_cb(arr)
       var color_idx = dx_type2idx(type);
 
 		var filtered = flags & dx.DX_FILTERED;
-		var ident = obj.i;
+		ident = obj.i;
 		if (eibi && ident == dx.last_ident && freq == dx.last_freq) {
          console_log_lbl('1111 dx_idx='+ dx_idx +' '+ freq +' SAME AS LAST filtered='+ (filtered? 1:0) +' '+ ident);
          if (filtered == 0) dx.color_fixup[dx.last_idx] = dx.eibi_colors[color_idx];
@@ -8790,7 +8793,7 @@ function dx_label_render_cb(arr)
 		gid = obj.g;
 		var f_base = freq - kiwi.freq_offset_kHz;
 		var mkr_off = obj.o;
-		var notes = isDefined(obj.n)? obj.n : '';
+		notes = isDefined(obj.n)? obj.n : '';
 		var params = isDefined(obj.p)? obj.p : '';
 		
 		if (eibi && (flags & dx.DX_HAS_EXT)) {
@@ -8821,7 +8824,7 @@ function dx_label_render_cb(arr)
             lock_z = 0;
          }
 		}
-		var top = dx_label_top + (gap * (dx_idx & 1));    // stagger the labels vertically
+		top = dx_label_top + (gap * (dx_idx & 1));    // stagger the labels vertically
       dx.post_render[dx_idx] = { top: top, ltop: top, x: x /* , f: f_base_label_Hz/1e3, ident: ident */ };
 		dx.last_f_base = f_base_label_Hz;
 
@@ -8832,6 +8835,7 @@ function dx_label_render_cb(arr)
          var c = _dxcfg.dx_type[color_idx].color;
          if (c == '') c = 'white';
          color = filtered? dx.stored_colors_light[color_idx] : c;
+         //if (community) console.log(ident +' color='+ color +' idx='+ color_idx +' light='+ dx.stored_colors_light[color_idx] +' c='+ c);
       }
 
       // for backward compatibility, IBP color is fixed to aquamarine
@@ -8984,8 +8988,9 @@ function dx_label_render_cb(arr)
 	      el.title = title;
       }
 
+      var sparse;
       if (dx_idx < dx.post_render.length) {
-         var sparse = dx.post_render[dx_idx];
+         sparse = dx.post_render[dx_idx];
          if (sparse) {
             top = sparse.top;
             var left = sparse.x - 10;
@@ -9288,11 +9293,11 @@ function dx_show_edit_panel(ev, gid, from_shortcut)
 
 function dx_show_edit_panel2()
 {
-   var cbox, cbox_container, label;
+   var i, cbox, label, gid;
    dx_color_init();
 
    if (dx.db != dx.DB_COMMUNITY) {
-      var gid = dx.o.gid;
+      gid = dx.o.gid;
       var mode = isArg(cur_mode)? cur_mode : 'am';
       var freq_kHz_str = isArg(freq_displayed_kHz_str)? freq_displayed_kHz_str : '10000';
       //console_log_dbgUs('dx_show_edit_panel2 gid='+ gid +' db='+ dx.db);
@@ -9375,7 +9380,7 @@ function dx_show_edit_panel2()
       var dow = dx.o.fd;
       if (dow == 0) dow = dx.o.fd = dx.DX_DOW_BASE;
       console.log('DX g='+ gid +' dow='+ dow +'|'+ dow.toHex(2) +' f='+ (+dx.o.fr).toFixed(2) +' b='+ dx.o.begin +' e='+ dx.o.end +' '+ dx.o.i);
-	   for (var i = 0; i < 7; i++) {
+	   for (i = 0; i < 7; i++) {
 	      var day = dow & (1 << (6-i));
 	      var fg = day? 'black' : 'white';
 	      var bg = day? dx.dow_colors[i] : 'darkGrey';
@@ -9447,7 +9452,6 @@ function dx_show_edit_panel2()
    
    if (dx.db == dx.DB_EiBi) {
       //console_log_dbgUs('dx_show_edit_panel2 DB_EiBi');
-      cbox_container = 'w3-halign-space-around/|flex-basis:130px';
       cbox = '/w3-label-inline w3-label-not-bold w3-round w3-padding-small/';
       var checkbox = function(type) {
          var idx = dx_type2idx(type);
@@ -9465,34 +9469,28 @@ function dx_show_edit_panel2()
                'filter by time/day-of-week', dx.DB_EiBi.toString() +'-filter-tod', dx.filter_tod[dx.DB_EiBi], 'dx_time_dow_cb')
          ) +
          
-         w3_div('w3-valign-col w3-round w3-padding-TB-10 w3-gap-10|background:whiteSmoke',
-            w3_inline(cbox_container,
+         w3_div('w3-valign-col w3-round w3-padding-TB-10 cl-dx-type-container',
                checkbox(dx.DX_BCAST),
                checkbox(dx.DX_UTIL),
-               checkbox(dx.DX_TIME)
-            ),
-            w3_inline(cbox_container,
+               checkbox(dx.DX_TIME),
+
                checkbox(dx.DX_ALE),
                checkbox(dx.DX_HFDL),
-               checkbox(dx.DX_MILCOM)
-            ),
-            w3_inline(cbox_container,
+               checkbox(dx.DX_MILCOM),
+
                checkbox(dx.DX_CW),
                checkbox(dx.DX_FSK),
-               checkbox(dx.DX_FAX)
-            ),
-            w3_inline(cbox_container,
+               checkbox(dx.DX_FAX),
+
                checkbox(dx.DX_AERO),
                checkbox(dx.DX_MARINE),
                checkbox(dx.DX_SPY)
-            )
          );
    } else
    
    // DB_COMMUNITY
    {
       //console_log_dbgUs('dx_show_edit_panel2 DB_COMMUNITY');
-      cbox_container = 'w3-margin-L-32 w3-halign-space-around/|flex-basis:130px';
       cbox = 'w3-round w3-padding-small';
       label = function(idx) {
          var dx_type = dxcomm_cfg.dx_type[idx];
@@ -9507,32 +9505,26 @@ function dx_show_edit_panel2()
 
       if (!dx.dxcomm_cfg_parse_error)
          s2 +=
-            w3_div('w3-valign-col w3-round w3-padding-TB-15 w3-gap-15|background:whiteSmoke',
-               w3_inline(cbox_container,
+            w3_div('w3-valign-col w3-round w3-padding-TB-10 cl-dx-type-container',
                   label(dx.T3_BCAST),
                   label(dx.T4_UTIL),
-                  label(dx.T5_TIME)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T5_TIME),
+                  
                   label(dx.T6_ALE),
                   label(dx.T7_HFDL),
-                  label(dx.T8_MILCOM)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T8_MILCOM),
+                  
                   label(dx.T9_CW),
                   label(dx.T10_FSK),
-                  label(dx.T11_FAX)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T11_FAX),
+                  
                   label(dx.T12_AERO),
                   label(dx.T13_MARINE),
-                  label(dx.T14_SPY)
-               ),
-               w3_inline(cbox_container,
+                  label(dx.T14_SPY),
+
                   label(dx.T2_HAM),
                   label(dx.T1_CHANNEL),
                   label(dx.T0_RESERVED)
-               )
             );
    }
 	
@@ -9552,13 +9544,13 @@ function dx_show_edit_panel2()
             //w3_field_select(el, {mobile:1});
          } else
          if (dx.db == dx.DB_EiBi) {
-            for (var i = 0; i < dx.DX_N_EiBi; i++) {
+            for (i = 0; i < dx.DX_N_EiBi; i++) {
                w3_color('eibi-cbox'+ i +'-label', 'black', dx.eibi_colors[i]);
             }
          } else {    // DB_COMMUNITY
             for (i = 0; i <= dx.DX_N_COMM; i++) {
-               w3_color('id-dxcomm'+ i +'-label', 'black', dx.stored_colors_light[i]);
-               //console.log('dxcomm'+ i +' '+ dx.stored_colors_light[i]);
+               w3_color('id-dxcomm'+ i +'-label', 'black', dx.stored_colors[i]);
+               //console.log('dxcomm'+ i +' '+ dx.stored_colors[i]);
             }
          }
          if (dx.help) {
@@ -10831,8 +10823,9 @@ function test_audio_suspended()
          );
       w3_create_appendElement('id-kiwi-body', 'div', s2);
 
+      var el;
       if (input) {
-         var el = w3_el('id-ident-input3');
+         el = w3_el('id-ident-input3');
          w3_attribute(el, 'maxlength', Math.max(cfg.ident_len, kiwi.ident_min));
          w3_field_select(el, {mobile:1});
       }
@@ -11112,10 +11105,9 @@ function panels_setup()
 
    // rf opt-rf
    fmt = 'id-rf-attn-disable w3-btn w3-padding-tiny w3-margin-R-8 ';
-   //kiwi.rf_attn = (kiwi.model == kiwi.KiwiSDR_1)? 0 : +kiwi_storeInit('last_rf_attn', cfg.init.rf_attn);
-   var rf_attn = +kiwi_storeInit('last_rf_attn', 0);
-   //console.log('INIT rf_attn='+ rf_attn +' kiwi.model='+ kiwi.model);
-   kiwi.rf_attn = (kiwi.model == kiwi.KiwiSDR_1)? 0 : rf_attn;
+   var rf_attn = (kiwi.model == kiwi.KiwiSDR_1 && !cfg.rf_attn_alt)? 0 : +kiwi_storeInit('last_rf_attn', cfg.init.rf_attn);
+   //console.log('INIT rf_attn='+ rf_attn +' kiwi.model='+ kiwi.model +' rf_attn_alt='+ cfg.rf_attn_alt);
+   kiwi.rf_attn = rf_attn;
 	w3_innerHTML('id-optbar-rf',
 	   w3_div('',
          w3_col_percent('w3-valign/class-slider',
@@ -11139,14 +11131,13 @@ function panels_setup()
       w3_div('id-optbar-rf-antsw')
    );
    
-   var no_attn = (kiwi.model == kiwi.KiwiSDR_1);
+   var no_attn = (kiwi.model == kiwi.KiwiSDR_1) && !cfg.rf_attn_alt;
    var deny_not_local = false, deny_not_local_or_pwd = false;
    if (cfg.rf_attn_allow == kiwi.RF_ATTN_ALLOW_LOCAL_ONLY && ext_auth() != kiwi.AUTH_LOCAL) deny_not_local = true;
    if (cfg.rf_attn_allow == kiwi.RF_ATTN_ALLOW_LOCAL_OR_PASSWORD_ONLY && ext_auth() == kiwi.AUTH_USER) deny_not_local_or_pwd = true;
 
    if (no_attn || deny_not_local || deny_not_local_or_pwd) {
       kiwi.rf_attn_disabled = true;
-      var el = w3_el('id-rf-attn');
       w3_disable_multi('id-rf-attn-disable', true);
       var title;
       if (no_attn) title = 'no RF attenuator on KiwiSDR 1';
@@ -11154,7 +11145,7 @@ function panels_setup()
       if (deny_not_local) title = 'only available to local connections';
       else
       if (deny_not_local_or_pwd) title = 'only available to local connections or with password';
-      w3_els('id-rf-attn-disable', function(el, i) { el.title = title; } );
+      w3_title_multi('id-rf-attn-disable', title);
    }
 
 
@@ -11551,9 +11542,14 @@ function rf_attn_cb(path, val, done, first, ui_only)
    if (ui_only == true) return;
 
    //console.log('SET rf_attn='+ attn.toFixed(1));
-   snd_send('SET rf_attn='+ attn.toFixed(1));
+   if (!cfg.rf_attn_alt)
+      snd_send('SET rf_attn='+ attn.toFixed(1));
 
    if (done) {
+      // if alt (send cmd instead of setting internal attn)
+      // only adjust at end of slider travel
+      if (cfg.rf_attn_alt)
+         snd_send('SET rf_attn='+ attn.toFixed(1));
       kiwi_storeWrite('last_rf_attn', val);
       freqset_select();
    }
@@ -13142,14 +13138,15 @@ function mode_button(evt, el, dir)
       //console.log('#### mode_button: last_mode_col UNDEF set to '+ owrx.last_mode_col);
    }
    
+   var c_iq_or_stereo, m_iq_or_stereo;
    if (owrx.last_mode_col != col) {
       //console.log('#### mode_button1: col '+ owrx.last_mode_col +'>'+ col +' '+ mode);
 
       // Prevent going between mono and stereo modes while recording
       // FIXME: do something better like disable ineligible mode buttons and show reason in mouseover tooltip 
       if (recording) {
-         var c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
-         var m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
+         c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
+         m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
          //console.log('#### mode_button1: c_iq_or_stereo='+ c_iq_or_stereo +' m_iq_or_stereo='+ m_iq_or_stereo +' rtn='+ (c_iq_or_stereo ^ m_iq_or_stereo));
          if (c_iq_or_stereo ^ m_iq_or_stereo || mode == 'drm')
             return;
@@ -13167,8 +13164,8 @@ function mode_button(evt, el, dir)
       //console.log('#### mode_button2: col '+ col +' '+ mode);
 
       if (recording) {
-         var c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
-         var m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
+         c_iq_or_stereo = ext_is_IQ_or_stereo_curmode()? 1:0;
+         m_iq_or_stereo = ext_is_IQ_or_stereo_mode(mode)? 1:0;
          //console.log('#### mode_button2: c_iq_or_stereo='+ c_iq_or_stereo +' m_iq_or_stereo='+ m_iq_or_stereo +' rtn='+ (c_iq_or_stereo ^ m_iq_or_stereo));
          if (c_iq_or_stereo ^ m_iq_or_stereo || mode == 'drm')
 		      return;
@@ -13408,6 +13405,7 @@ var zoom_server = 0;
 // Not called if MSG handled first by kiwi.js:kiwi_msg()
 function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 {
+   var p;
    //console.log('$$ owrx_msg_cb '+ (ws? ws.stream : '[ws?]') +' MSG '+ param[0] +'='+ param[1]);
    
 	switch (param[0]) {
@@ -13476,7 +13474,7 @@ function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "audio_camp":
-         var p = param[1].split(',');
+         p = param[1].split(',');
 			audio_camp(+p[0], +p[1], false, false);
 			break;
 
@@ -13485,12 +13483,12 @@ function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "audio_adpcm_state":
-         var p = param[1].split(',');
+         p = param[1].split(',');
 			audio_adpcm_state(+p[0], +p[1]);
 			break;
 
 		case "audio_passband":
-         var p = param[1].split(',');
+         p = param[1].split(',');
 			audio_recompute_LPF(1, +p[0], +p[1]);
 			break;
 

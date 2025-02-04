@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 800
+VERSION_MIN = 801
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -582,21 +582,26 @@ make_binary:
     endif
 	@echo "make_binary DONE"
 
+
+# NB: in KiwiSDR/bin/, NOT KiwiSDR.files/bin/
+PLAT_KIWI_BIN_NEW := $(BUILD_DIR)/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
+PLAT_KIWID_BIN_NEW := $(BUILD_DIR)/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
+
 .PHONY: force
 force: make_prereq
-	rm -f $(PLAT_KIWI_BIN) $(PLAT_KIWID_BIN)
+	rm -f $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
 	@make $(MAKE_ARGS) build_makefile_inc
 	@echo "================"
 	@echo "make force"
 	@make $(MAKE_ARGS) make_binary
-	@echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN)"
+	@echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
 	@echo "================"
-	@cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN)
+	@cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
 	@make make_install_binary
-	@echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN)"
+	@echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)"
 	@echo "================"
-	@cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN)
-	@sum $(PLAT_KIWI_BIN) $(PLAT_KIWID_BIN)
+	@cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
+	@sum $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
 	@echo "make force DONE"
 
 
@@ -1553,6 +1558,7 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 	    install -o root -g root unix_env/kiwid /etc/init.d
 	    install -o root -g root -m 0644 unix_env/kiwid.service /etc/systemd/system
 
+	    install -D -o root -g root pkgs/noip2/$(ARCH_DIR)/noip2 $(GEN_DIR)/noip2
 	    install -D -o root -g root pkgs/noip2/$(ARCH_DIR)/noip2 /usr/local/bin/noip2
 
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/frpc.template.ini $(DIR_CFG)/frpc.template.ini
@@ -1565,6 +1571,7 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 	    install -D -o root -g root -m 0644 unix_env/gdb_valgrind ~root/.gdb_valgrind
 
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/v.sed $(DIR_CFG)/v.sed
+	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/vd.sed $(DIR_CFG)/vd.sed
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/rsyslog.sed $(DIR_CFG)/rsyslog.sed
 
 
@@ -2036,11 +2043,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     prep_distro: clean_logs
 	    -systemctl --full --lines=250 stop kiwid.service || true
 	    -systemctl --full --lines=250 enable kiwid.service || true
-	    (cd $(DIR_CFG); jq '.onetime_password_check = false | .rev_auto = false | .rev_auto_user = "" | .rev_auto_host = "" | .update_check = true | .update_install = true' admin.json > /tmp/jq && mv /tmp/jq admin.json)
+	    (cd $(DIR_CFG); jq '.onetime_password_check = false | .rev_auto = false | .rev_auto_user = "" | .rev_auto_host = "" | .rev_user = "" | .rev_host = "" | .update_check = true | .update_install = true' admin.json > /tmp/jq && mv /tmp/jq admin.json)
 	    (cd $(DIR_CFG); jq '.sdr_hu_dom_sel = 2 | .server_url = ""' kiwi.json > /tmp/jq && mv /tmp/jq kiwi.json)
 	    (cd $(DIR_CFG); rm -f .do_once.dep .keyring4.dep frpc.ini seq_serno)
 	    -rm -f /tmp/.kiwi* /root/.ssh/auth* /root/.ssh/known*
-	    -rm -f build.log
+	    -rm -f .bashrc.local.common build.log _FLASHED_FROM_SD_
 	    -touch unix_env/reflash_delay_update
 	    -cp unix_env/shadow /etc/shadow
 	    sum *.bit
@@ -2067,8 +2074,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    @(cd $(DIR_CFG); $(JA) | grep onetime)
 	    @echo "want: update_check, update_install = true"
 	    @(cd $(DIR_CFG); $(JA) | grep update_)
-	    @echo 'want: rev_auto = false, rev_{user,host} = ""'
-	    @(cd $(DIR_CFG); $(JA) | grep rev_auto)
+	    @echo 'want: rev_auto = false, rev_auto_{user,host} = "", rev_{user,host} = ""'
+	    @(cd $(DIR_CFG); $(JA) | grep rev_)
 	    @echo 'want: admin_password = ""'
 	    @(cd $(DIR_CFG); $(JA) | grep admin_pa)
 	    @echo "want: file to be found"
@@ -2099,7 +2106,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     else ifeq ($(BBG_BBB),true)
         SD_CARD_MMC_COPY := 0
         SD_CARD_MMC_PART := p1
-        DISTRO_DEBIAN_VER := 11.9
+        DISTRO_DEBIAN_VER := 11.11
         DD_SIZE := 3000M
     endif
 

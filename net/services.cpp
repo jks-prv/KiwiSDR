@@ -232,7 +232,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         "pub=%s&pvt=%s&"
         "port=%d&jq=%d&"
         "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
-        "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&up=%d"
+        "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&vr=%x&up=%d"
         "%s\"",
         kiwisdr_com,
         server_url, server_port, net.mac, add_nat,
@@ -240,7 +240,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         net.use_ssl? net.port_http_local : net.port, kiwi_file_exists("/usr/bin/jq"),
         email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
         dom_sel, dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
-        net.serno, kiwisdr_com_reg? 1:0, timer_sec(),
+        net.serno, kiwisdr_com_reg? 1:0, kiwi.vr, timer_sec(),
         kstr_sp(cmd_p2));
     cfg_string_free(server_url);
     kiwi_ifree(email, "email");
@@ -298,34 +298,34 @@ static void misc_NET(void *param)
 	    
 		lprintf("PROXY: starting frpc\n");
 		rev_enable_start = true;
-    	if (background_mode)
-			system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
-		else
-			system("sleep 1; ./pkgs/frp/" ARCH_DIR "/frpc -c " DIR_CFG "/frpc.ini &");
+		system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
 	}
 
     // find and remove known viruses, mostly as a result of Debian root/debian accounts
     // without passwords on networks with ssh open to the Internet
-    u4_t vr = 0, vc = 0;
+    kiwi.vr = 0, kiwi.vc = 0;
     struct stat st;
 
-	#define VR_DOT_KOWORKER 1
-	#define VR_DOT_CRON 2
-	#define VR_CRONTAB_ROOT 4
-	#define VR_DOT_PROFILES 8
+	#define VR_DOT_KOWORKER     0x001
+	#define VR_DOT_CRON         0x002
+	#define VR_DOT_PROFILES     0x004
+    #define VR_IRQ0             0x008
+    #define VR_IRQ1             0x010
+    #define VR_IRQ2             0x020
+    #define VR_PTY              0x040
 
     #define CK(f, r, ...) \
         err = stat(f, &st); \
         if (err == 0) { \
-            vr |= r; \
+            kiwi.vr |= r; \
             if (strlen(STRINGIFY(__VA_ARGS__)) == 0) { \
                 /*printf("CK vr|=%d unlink: %s\n", r, f);*/ \
                 scalle(f, unlink(f)); \
+                kiwi.vc = st.st_ctime; \
             } else { \
                 /*printf("CK vr|=%d cmd: \"%s\"\n", r, STRINGIFY(__VA_ARGS__));*/ \
                 __VA_ARGS__ ; \
             } \
-            if (r != VR_CRONTAB_ROOT) vc = st.st_ctime; \
         } else { \
             if (errno != ENOENT) perror(f); \
         }
@@ -338,9 +338,17 @@ static void misc_NET(void *param)
     CK(F_PR, VR_DOT_PROFILES, (system("rm -rf " F_PR)));
     
     #define F_CT "/var/spool/cron/crontabs/root"
-    CK(F_CT, VR_CRONTAB_ROOT, (system("sed -i -f " DIR_CFG "/v.sed " F_CT)));
+    CK(F_CT, 0, (system("sed -i -f " DIR_CFG "/v.sed " F_CT)));
     
-    printf("vr=0x%x vc=0x%x\n", vr, vc);
+    CK("/home/debian/irq0", VR_IRQ0);
+    CK("/home/debian/irq1", VR_IRQ1);
+    CK("/home/debian/irq2", VR_IRQ2);
+    CK("/home/debian/pty",  VR_PTY);
+    
+    #define F_DCT "/var/spool/cron/crontabs/debian"
+    CK(F_DCT, 0, (system("sed -i -f " DIR_CFG "/vd.sed " F_DCT)));
+
+    printf("vr=0x%x vc=0x%x\n", kiwi.vr, kiwi.vc);
     
     // apply passwords to password-less root/debian accounts
     int root_pwd_unset=0, debian_pwd_default=0;

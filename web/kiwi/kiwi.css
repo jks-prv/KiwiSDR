@@ -420,6 +420,15 @@ x2
 	border: 0.5px solid red;
 }
 
+.cl-dx-type-container
+{
+    display: grid;
+    background:whiteSmoke;
+    grid-template-columns: auto auto auto;
+    row-gap: 8px;
+    justify-content: space-evenly;
+}
+
 .cl-dx-type-test
 {
 	font-size: 11px;

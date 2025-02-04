@@ -208,7 +208,8 @@ function sstv_controls_setup()
                w3_checkbox('id-sstv-cbox-auto w3-margin-left w3-label-inline w3-label-not-bold', 'auto adjust', 'sstv.auto', true, 'sstv_auto_cbox_cb'),
 				   w3_button('id-sstv-btn-auto w3-margin-left w3-padding-smaller', 'Undo adjust', 'sstv_auto_cb'),
 				   w3_button('w3-margin-left w3-padding-smaller w3-css-yellow', 'Reset', 'sstv_reset_cb'),
-				   w3_button('w3-margin-left w3-padding-smaller w3-aqua', 'Test image', 'sstv_test_cb')
+				   w3_button('w3-margin-left w3-padding-smaller w3-blue', 'Save images', 'sstv_save_cb'),
+				   w3_button('w3-margin-left w3-padding-smaller w3-aqua', 'Test', 'sstv_test_cb')
 				),
             w3_half('', '',
                w3_div('id-sstv-mode-name'),
@@ -382,6 +383,20 @@ function sstv_test_cb(path, val, first)
 	ext_send('SET test');
 }
 
+function sstv_save_cb(path, val, first)
+{
+   if (first) return;
+   var imgURL = sstv.data_canvas.toDataURL("image/jpeg", 0.85);
+   var dlLink = document.createElement('a');
+   dlLink.download = kiwi_timestamp_filename('SSTV.', '.jpg');
+   dlLink.href = imgURL;
+   dlLink.target = '_blank';  // opens new tab in iOS instead of download
+   dlLink.dataset.downloadurl = ["image/jpeg", dlLink.download, dlLink.href].join(':');
+   document.body.appendChild(dlLink);
+   dlLink.click();
+   document.body.removeChild(dlLink);
+}
+
 function SSTV_blur()
 {
 	//console.log('### SSTV_blur');
@@ -397,7 +412,7 @@ function SSTV_help(show)
          w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
             w3_div('w3-margin-R-8',
                'Select an entry from the SSTV freq menu and wait for a signal to begin decoding.<br>' +
-               'Sometimes activity is +/- the given frequencies. Try the "test image" button.<br>' +
+               'Sometimes activity is +/- the given frequencies. Try the "test" button.<br>' +
                '<br>Supported modes:' +
                '<ul>' +
                   '<li>Martin: M1 M2 M3 M4</li>' +

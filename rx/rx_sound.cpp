@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 // Copyright (c) 2018-2024 Christoph Mayer, DL1CH
 
 #include "types.h"
@@ -88,8 +88,6 @@ snd_pkt_wb_t out_pkt_wb;
 const double gps_delay    = 28926.838e-6;
 const double gps_week_sec = 7*24*3600.0;
 
-float g_genfreq, g_genampl, g_mixfreq;
-
 // if entries here are ordered by snd_cmd_key_e then the reverse lookup (str_hash_t *)->hashes[key].name
 // will work as a debugging aid
 static str_hashes_t snd_cmd_hashes[] = {
@@ -160,7 +158,7 @@ void c2s_sound_setup(void *param)
 	wdsp_SAM_demod_init();
 
     //cprintf(conn, "rx%d c2s_sound_setup\n", conn->rx_channel);
-	send_msg(conn, SM_SND_DEBUG, "MSG center_freq=%d bandwidth=%d adc_clk_nom=%.0f", (int) ui_srate/2, (int) ui_srate, ADC_CLOCK_NOM);
+	send_msg(conn, SM_SND_DEBUG, "MSG center_freq=%d bandwidth=%d adc_clk_nom=%.0f", (int) ui_srate_Hz/2, (int) ui_srate_Hz, ADC_CLOCK_NOM);
 	send_msg(conn, SM_SND_DEBUG, "MSG audio_init=%d audio_rate=%d", conn->isLocal, snd_rate);
 
     dx_last_community_download();
@@ -230,7 +228,7 @@ void c2s_sound(void *param)
 	int j, k, n;
 
 	memset(s, 0, sizeof(snd_t));
-	s->freq = s->mode = s->squelch_on_seq = -1;
+	s->freq_kHz = s->mode = s->squelch_on_seq = -1;
 	s->agc = 1; s->thresh = -90; s->decay = 50;
 	s->compression = 1;
 	s->nb_algo = NB_OFF; s->nr_algo = NR_OFF_;
@@ -330,11 +328,11 @@ void c2s_sound(void *param)
 	while (TRUE) {
 		// reload freq NCO if adc clock has been corrected
 		// reload freq NCO if spectral inversion changed
-		if (s->freq >= 0 && (adc_clock_corrected != conn->adc_clock_corrected || s->spectral_inversion != kiwi.spectral_inversion)) {
+		if (s->freq_kHz >= 0 && (adc_clock_corrected != conn->adc_clock_corrected || s->spectral_inversion != kiwi.spectral_inversion)) {
 		    //cprintf(conn, "SND UPD adc_clock_corrected=%lf conn->adc_clock_corrected=%lf\n", adc_clock_corrected, conn->adc_clock_corrected);
 			adc_clock_corrected = conn->adc_clock_corrected;
             s->spectral_inversion = kiwi.spectral_inversion;
-            rx_sound_set_freq(conn, s->freq, s->spectral_inversion);
+            rx_sound_set_freq(conn, s->freq_kHz, s->spectral_inversion);
 		    //cprintf(conn, "SND freq updated due to ADC clock correction\n");
 		    
             rx_gen_set_freq(conn, s);
@@ -345,7 +343,7 @@ void c2s_sound(void *param)
                 //#define DOUBLE_SET_DELAY 500        // only 90% reliable!
                 #define DOUBLE_SET_DELAY 1500
                 if (timer_ms() > first_freq_time + DOUBLE_SET_DELAY) {
-                    rx_sound_set_freq(conn, s->freq, s->spectral_inversion);
+                    rx_sound_set_freq(conn, s->freq_kHz, s->spectral_inversion);
                     first_freq_set = false;
                 }
             }
@@ -446,7 +444,7 @@ void c2s_sound(void *param)
             // apply masked frequencies
             masked = masked_area = false;
             if (dx.masked_len != 0) {
-                int f = round(s->freq*kHz);
+                int f = round(s->freq_kHz * kHz);
                 int pb_lo = f + s->locut;
                 int pb_hi = f + s->hicut;
                 //printf("SND f=%d lo=%.0f|%d hi=%.0f|%d ", f, s->locut, pb_lo, s->hicut, pb_hi);
@@ -1060,7 +1058,7 @@ void c2s_sound(void *param)
                     // update UI with changes to RF attn from elsewhere
                     if (s->rf_attn_dB != kiwi.rf_attn_dB) {
                         send_msg(conn, false, "MSG rf_attn=%.1f", kiwi.rf_attn_dB);
-                        //cprintf(conn, "UPD rf_attn=%.1f\n", kiwi.rf_attn_dB);
+                        //cprintf(conn, "UPD rf_attn=%.1f (s->rf_attn_dB=%.1f)\n", kiwi.rf_attn_dB, s->rf_attn_dB);
                         s->rf_attn_dB = kiwi.rf_attn_dB;
                     }
                 }  // !isWB
@@ -1425,7 +1423,7 @@ int c2s_sound_camp(rx_chan_t *rxc, conn_t *conn, u1_t flags, char *bp, int bytes
         if (!conn_mon->camp_init) {
             //cprintf(conn_mon, ">>> CAMP init rx%d slot=%d/%d\n", rx_chan, i+1, n_camp);
             double frate = ext_update_get_sample_rateHz(ADC_CLK_SYS);
-            send_msg(conn_mon, SM_SND_DEBUG, "MSG center_freq=%d bandwidth=%d adc_clk_nom=%.0f", (int) ui_srate/2, (int) ui_srate, ADC_CLOCK_NOM);
+            send_msg(conn_mon, SM_SND_DEBUG, "MSG center_freq=%d bandwidth=%d adc_clk_nom=%.0f", (int) ui_srate_Hz/2, (int) ui_srate_Hz, ADC_CLOCK_NOM);
             send_msg(conn_mon, SM_SND_DEBUG, "MSG audio_camp=0,%d audio_rate=%d sample_rate=%.6f", conn->isLocal, snd_rate, frate);
             send_msg(conn_mon, SM_SND_DEBUG, "MSG audio_adpcm_state=%d,%d", s->adpcm_snd.index, s->adpcm_snd.previousValue);
             //cprintf(c, "MSG audio_adpcm_state=%d,%d seq=%d\n", s->adpcm_snd.index, s->adpcm_snd.previousValue, s->seq);

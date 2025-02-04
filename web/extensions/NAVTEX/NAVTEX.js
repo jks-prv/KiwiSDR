@@ -314,7 +314,7 @@ function navtex_controls_setup()
                
                w3_checkbox('w3-label-inline w3-label-not-bold/', 'auto<br>zoom', 'nt.auto_zoom', nt.auto_zoom, 'navtex_auto_zoom_cb'),
                w3_button('w3-padding-smaller w3-css-yellow', 'Clear', 'navtex_clear_button_cb', 0),
-               w3_button('id-navtex-log w3-padding-smaller w3-purple', 'Log', 'navtex_log_cb'),
+               w3_button('id-navtex-log w3-padding-smaller w3-blue', 'Log', 'navtex_log_cb'),
 
                cfg.navtex.test_file? w3_button('w3-padding-smaller w3-aqua', 'Test', 'navtex_test_cb') : '',
 

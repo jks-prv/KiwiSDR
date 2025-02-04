@@ -416,6 +416,7 @@ static print_max_min_int_t *print_max_min_init(void **state)
 void print_max_min_stream_i(void **state, int flags, const char *name, int index, int nargs, ...)
 {
 	print_max_min_int_t *p = print_max_min_init(state);
+	bool dump = (flags & P_MAX_MIN_DUMP);
 	bool update = false;
 
 	if (flags & P_MAX_MIN_RESET) {
@@ -427,7 +428,7 @@ void print_max_min_stream_i(void **state, int flags, const char *name, int index
 
 	va_list ap;
 	va_start(ap, nargs);
-	for (int i=0; i < nargs; i++) {
+	if (!dump) for (int i=0; i < nargs; i++) {
 		int arg_i = va_arg(ap, int);
 		if (arg_i > p->max_i) {
 			p->max_i = arg_i;
@@ -442,7 +443,7 @@ void print_max_min_stream_i(void **state, int flags, const char *name, int index
 	}
 	va_end(ap);
 	
-	if ((flags & P_MAX_MIN_DUMP) || ((flags & P_MAX_MIN_RANGE) && update)) {
+	if (dump || ((flags & P_MAX_MIN_RANGE) && update)) {
 		printf("min/max %s: %d(%d)..%d(%d)\n", name, p->min_i, p->min_idx, p->max_i, p->max_idx);
 	}
 }

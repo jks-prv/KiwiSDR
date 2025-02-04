@@ -445,7 +445,7 @@ fail:
         //printf("/snr qs=<%s>\n", mc->query);
         if (mc->query && strncmp(mc->query, "meas", 4) == 0) {
             if (isLocalIP) {
-                if (cfg_true("ant_switch.enable") && (antsw.using_ground || antsw.using_tstorm)) {
+                if (0 && cfg_true("ant_switch.enable") && (antsw.using_ground || antsw.using_tstorm)) {
                     asprintf(&sb, "/snr: ERROR antenna is grounded\n");
                 } else {
                     if (SNR_meas_tid) {
@@ -454,7 +454,7 @@ fail:
                     asprintf(&sb, "/snr: measuring..\n");
                 }
             } else {
-                asprintf(&sb, "/snr: NON_LOCAL MESURE ATTEMPT from %s\n", ip_unforwarded);
+                asprintf(&sb, "/snr: NON_LOCAL MEASURE ATTEMPT from %s\n", ip_unforwarded);
             }
             printf("%s", sb);
             break;

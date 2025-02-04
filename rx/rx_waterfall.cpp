@@ -226,7 +226,7 @@ void c2s_waterfall_setup(void *param)
 	conn_t *conn = (conn_t *) param;
 	int rx_chan = conn->rx_channel;
 
-	send_msg(conn, SM_WF_DEBUG, "MSG center_freq=%d bandwidth=%d adc_clk_nom=%.0f", (int) ui_srate/2, (int) ui_srate, ADC_CLOCK_NOM);
+	send_msg(conn, SM_WF_DEBUG, "MSG center_freq=%d bandwidth=%d adc_clk_nom=%.0f", (int) ui_srate_Hz/2, (int) ui_srate_Hz, ADC_CLOCK_NOM);
 	send_msg(conn, SM_WF_DEBUG, "MSG kiwi_up=1 rx_chan=%d", rx_chan);       // rx_chan needed by extint_send_extlist() on js side
 	extint_send_extlist(conn);
 
@@ -256,7 +256,7 @@ void c2s_waterfall(void *param)
 	float start=-1, _start, cf, aper_param;
 	float samp_wait_us;
 	float off_freq, off_freq_inv;
-	float HZperStart = ui_srate / (WF_WIDTH << MAX_ZOOM);
+	float HZperStart = ui_srate_Hz / (WF_WIDTH << MAX_ZOOM);
 	u64_t i_offset;
 	int tr_cmds = 0;
 	u4_t cmd_recv = 0;
@@ -365,7 +365,7 @@ void c2s_waterfall(void *param)
                     if (sscanf(cmd, "SET zoom=%d start=%f", &_zoom, &_start) == 2) {
                         //cprintf(conn, "WF: zoom=%d/%d start=%.3f(%.1f)\n", _zoom, zoom, _start, _start * HZperStart / kHz);
                         _zoom = CLAMP(_zoom, 0, MAX_ZOOM);
-                        float halfSpan_Hz = (ui_srate / (1 << _zoom)) / 2;
+                        float halfSpan_Hz = (ui_srate_Hz / (1 << _zoom)) / 2;
                         cf = (_start * HZperStart) + halfSpan_Hz;
                         #ifdef OPTION_HONEY_POT
                             cprintf(conn, "HONEY_POT W/F cf=%.3f\n", cf / kHz);
@@ -374,7 +374,7 @@ void c2s_waterfall(void *param)
                     } else
                     if (sscanf(cmd, "SET zoom=%d cf=%f", &_zoom, &cf) == 2) {
                         _zoom = CLAMP(_zoom, 0, MAX_ZOOM);
-                        float halfSpan_Hz = (ui_srate / (1 << _zoom)) / 2;
+                        float halfSpan_Hz = (ui_srate_Hz / (1 << _zoom)) / 2;
                         cf *= kHz;
                         _start = (cf - halfSpan_Hz) / HZperStart;
                         //cprintf(conn, "WF: zoom=%d cf=%.3f start=%.3f halfSpan=%.3f\n", _zoom, cf/kHz, _start * HZperStart / kHz, halfSpan_Hz/kHz);
@@ -784,10 +784,10 @@ void c2s_waterfall(void *param)
 		#endif
 		
 		float span = conn->adc_clock_corrected / 2 / (1<<zoom);
-		float disp_fs = ui_srate / (1<<zoom);
+		float disp_fs = ui_srate_Hz / (1<<zoom);
 		
 		// NB: plot_width can be greater than WF_WIDTH because it relative to the ratio of the
-		// (adc_clock_corrected/2) / ui_srate, which can be > 1 (hence plot_width_clamped).
+		// (adc_clock_corrected/2) / ui_srate_Hz, which can be > 1 (hence plot_width_clamped).
 		// All this is necessary because we might be displaying less than what adc_clock_corrected/2 implies because
 		// of using third-party obtained frequency scale images in our UI (this is not currently an issue).
 		wf->plot_width = WF_WIDTH * span / disp_fs;

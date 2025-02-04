@@ -26,6 +26,7 @@ var kiwi = {
    
    WIN_WIDTH_MIN: 1400,
    
+   force_mobile: false,
    mdev: false,
    mdev_s: '',
    mnew: false,
@@ -54,6 +55,7 @@ var kiwi = {
    conn_tstamp: 0,
    isOffset: false,
    loaded_files: {},
+   gps_chans: 0,
    GPS_auto_grid: '',
    GPS_fixes: 0,
    wf_fps: 0,
@@ -204,6 +206,9 @@ function kiwi_bodyonload(error)
 	{
 	   if (kiwi_storeInit('ident', "").endsWith('KF6VO')) dbgUs = true;
 	   
+	   kiwi.force_mobile = kiwi_url_param(['m', 'mobile']);
+	   if (kiwi.force_mobile) console.log('url: force_mobile');
+	   
 	   // for testing a clean webpage, e.g. kiwi:8073/test
 	   /*
 	   var url = kiwi_url();
@@ -221,6 +226,7 @@ function kiwi_bodyonload(error)
 		
       w3int_init();
 
+      /*
       if (!kiwi.skip_small_screen_check && conn_type == 'admin' && ext_mobile_info().iPad) {
          s = 'Admin interface not intended for small screens. <br>' +
              'Please use a desktop browser instead. <br><br>' +
@@ -228,6 +234,7 @@ function kiwi_bodyonload(error)
          kiwi_serious_error(s);
          return;
       }
+      */
 
 		if (conn_type == 'kiwi') {
 		
@@ -248,12 +255,14 @@ function kiwi_bodyonload(error)
 	}
 }
 
+/*
 function kiwi_small_screen_continue_cb()
 {
    kiwi.skip_small_screen_check = true;
    seriousError = false;
    kiwi_bodyonload('');
 }
+*/
 
 function kiwi_open_ws_cb(p)
 {
@@ -815,6 +824,13 @@ function time_display_html(ext_name, top)
 ////////////////////////////////
 // #ANSI #console output
 ////////////////////////////////
+
+// FIXME known problems:
+//
+// Diff-style output with singlet ">" & "<" confuses HTML handler code.
+// Overlayed lines using "\r" (e.g. file transfer) aren't quite right.
+//    Including those that overflow end-of-line.
+// Support numlock keypad? (there is an ANSI seq to enable this mode)
 
 var ansi = {
    colors:  [
@@ -2274,7 +2290,7 @@ function kiwi_output_msg(id, id_scroll, p)
 
 function gps_stats_cb(acquiring, tracking, good, fixes, adc_clock, adc_gps_clk_corrections)
 {
-   var s = (acquiring? 'yes':'pause') +', track '+ tracking +', good '+ good +', fixes '+ fixes.toUnits();
+   var s = (acquiring? 'yes':'pause') +', ch '+ kiwi.gps_chans +', track '+ tracking +', good '+ good +', fixes '+ fixes.toUnits();
 	w3_innerHTML('id-msg-gps', 'GPS: acquire '+ s);
 	w3_innerHTML('id-status-gps',
 	   w3_text('w3-text-css-orange', 'GPS'),
@@ -2509,7 +2525,7 @@ function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
 
 function config_str_update(rx_chans, gps_chans, vmaj, vmin)
 {
-	kiwi_config_str = 'v'+ vmaj +'.'+ vmin +', ch: '+ rx_chans +' SDR '+ gps_chans +' GPS';
+	kiwi_config_str = 'v'+ vmaj +'.'+ vmin +', D'+ kiwi.debian_maj +'.'+ kiwi.debian_min;
 	w3_innerHTML('id-status-config', kiwi_config_str);
 	kiwi_config_str_long = 'KiwiSDR '+ kiwi.model +', v'+ vmaj +'.'+ vmin +', '+ rx_chans +' SDR channels, '+ gps_chans +' GPS channels';
 	w3_innerHTML('id-msg-config', kiwi_config_str);
@@ -2520,10 +2536,11 @@ var config_net = {};
 function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm, mac, vmaj, vmin, dmaj, dmin)
 {
 	var s;
-	config_str_update(rx_chans, gps_chans, vmaj, vmin);
-	w3_innerHTML('id-msg-debian', 'Debian '+ dmaj +'.'+ dmin);
 	kiwi.debian_maj = dmaj;
 	kiwi.debian_min = dmin;
+	kiwi.gps_chans = gps_chans;
+	config_str_update(rx_chans, gps_chans, vmaj, vmin);
+	w3_innerHTML('id-msg-debian', 'Debian '+ dmaj +'.'+ dmin);
 
 	var net_config = w3_el("id-net-config");
 	if (net_config) {
@@ -2542,7 +2559,7 @@ function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm,
 			);
 		config_net.pub_ip = pub;
 		config_net.pub_port = port_ext;
-		config_net.pvt_ip = pub;
+		config_net.pvt_ip = pvt;
 		config_net.pvt_port = port_int;
 		config_net.mac = mac;
 		config_net.serno = serno;

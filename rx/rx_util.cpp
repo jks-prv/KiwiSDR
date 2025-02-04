@@ -44,6 +44,7 @@ Boston, MA  02110-1301, USA.
 #include "options.h"
 #include "services.h"
 #include "stats.h"
+#include "ant_switch.h"
 
 #include "wspr.h"
 #include "FT8.h"
@@ -1172,6 +1173,11 @@ void SNR_meas(void *param)
         static int meas_idx;
 	
         for (int loop = 0; loop == 0 && (snr_meas_interval_hrs || !regular_wakeup); loop++) {   // so break can be used below
+
+            // select antenna if required
+            ant_switch_check_set_default();
+            TaskSleepSec(3);
+
             if (internal_conn_setup(ICONN_WS_WF, &iconn, 0, PORT_BASE_INTERNAL_SNR, WS_FL_PREEMPT_AUTORUN | WS_FL_NO_LOG,
                 NULL, 0, 0, 0,
                 "SNR-measure", "internal%20task", "SNR",

@@ -22,6 +22,8 @@
     SOFTWARE.
 */
 
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
+
 var ant_sw = {
    
    // set on both sides
@@ -240,7 +242,6 @@ function ant_switch_user_init()
       w3_div('id-antsw-controls w3-margin-right w3-text-white',
          w3_inline('w3-gap-12/',
             w3_div('w3-text-aqua', '<b>Antenna switch</b>'),
-            w3_div('w3-text-white', 'by Kari Karvonen'),
             w3_button('id-antsw-help-btn w3-btn-right w3-green w3-small w3-padding-small', 'help', 'ant_switch_help')
          ),
          w3_div('w3-margin-LR-8',
@@ -722,7 +723,7 @@ function ant_switch_config_html2(n_ch)
          ) +
 
          w3_inline_percent('w3-margin-T-16 w3-valign-center/',
-            '', 53,
+            '&nbsp;', 53,
             w3_input_get('w3-defer//', 'cURL command arguments', 'ant_switch.ant'+ i +'cmd', 'ant_switch_cmd_cb', '')
          );
    }

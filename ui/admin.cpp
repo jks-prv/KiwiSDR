@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015-2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -460,7 +460,7 @@ void c2s_admin(void *param)
 
             if (strcmp(cmd, "SET snr_meas") == 0) {
                 if (SNR_meas_tid) {
-                    if (cfg_true("ant_switch.enable") && (antsw.using_ground || antsw.using_tstorm)) {
+                    if (0 && cfg_true("ant_switch.enable") && (antsw.using_ground || antsw.using_tstorm)) {
                         send_msg(conn, SM_NO_DEBUG, "MSG snr_stats=-1,-1");
                     } else {
                         TaskWakeupFP(SNR_meas_tid, TWF_CANCEL_DEADLINE, TO_VOID_PARAM(0));
@@ -553,6 +553,7 @@ void c2s_admin(void *param)
             i = strcmp(cmd, "SET rev_status_query");
             if (i == 0) {
                 net.proxy_status = rev_enable_start? 200:201;
+                printf("rev_status_query: rev_status=%d\n", net.proxy_status);
                 send_msg(conn, SM_NO_DEBUG, "ADM rev_status=%d", net.proxy_status);
                 continue;
             }
@@ -592,7 +593,7 @@ void c2s_admin(void *param)
                 } else {
                     asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
                         proxy_server, user_m, host_m, net.port_ext, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
-                    printf("proxy register: %s\n", cmd_p);
+                    printf("frpc setup: %s\n", cmd_p);
                     system(cmd_p);
 
                     // NB: can't use e.g. non_blocking_cmd() here to get the authorization status
@@ -600,10 +601,7 @@ void c2s_admin(void *param)
                     // So the non_blocking_cmd() will hang.
 		            lprintf("PROXY: starting frpc\n");
                     system("killall -q frpc; sleep 1");
-                    if (background_mode)
-                        system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
-                    else
-                        system("./pkgs/frp/" ARCH_DIR "/frpc -c " DIR_CFG "/frpc.ini &");
+                    system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
                 }
             
                 kiwi_asfree(cmd_p);

@@ -51,8 +51,8 @@ extern mem_t mem;
 	#define kiwi_realloc(from, ptr, size) realloc(ptr, size)
 	#define kiwi_free(from, ptr) free(ptr)
 	#define kiwi_strdup(from, s) strdup(s)
-	#define kiwi_malloc_stat() 0
-	#define mt_dump() 0
+	#define kiwi_malloc_stat() {}
+	#define mt_dump() {}
 #endif
 
 //#define MALLOC_INTERCEPT_PRINTF

@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
 
 /*
 
@@ -918,6 +918,14 @@ function w3_field_select(el_id, opts)
    }
    if (!el) return;
    
+   // If ext_set_scanning() has set extint.scanning then don't perform a field select
+   // if this element specifies the "scanning:1" option.
+   //
+   // The ALE_2G extension currently does this so its control panel UI items can be used
+   // without being interrupted by the frequency entry field taking focus away during
+   // each scan frequency tune.
+   if (opts['scanning'] && extint.scanning) return;
+   
    var focus=0, select=0, blur=0;
    if (opts['mobile'] && kiwi_isMobile()) blur = 1; else focus = select = 1;
    if (opts['blur']) blur = 1;
@@ -1569,7 +1577,7 @@ function w3_psa3(psa3)
       return { left:'', middle:'', right:a0 };
    else
    if (a.length == 2)
-      return { left:'', middle:a0, right:a1};
+      return { left:'', middle:a0, right:a1 };
    else
    if (a.length == 3)
       return { left:a0, middle:a1, right:a2 };
@@ -2114,6 +2122,11 @@ function w3_title(id, text)
    return el;
 }
 
+function w3_title_multi(id, text)
+{
+   w3_els(id, function(el, i) { el.title = text; } );
+}
+
 
 ////////////////////////////////
 // link
@@ -2224,6 +2237,7 @@ function w3_radio_unhighlight(path)
 
 function w3int_radio_click(ev, path, cb, cb_param)
 {
+   //console.log('w3int_radio_click path='+ path +' cb='+ cb +' cb_param='+ cb_param);
 	w3_radio_unhighlight(path);
 	w3_highlight(ev.currentTarget);
 
@@ -2749,7 +2763,12 @@ function w3int_input_keydown(ev, path, cb)
             (el.selectionStart == el.selectionEnd && el.selectionStart == el.textLength) ||
             
             // all text is selected
-            (el.selectionStart == 0 && el.selectionEnd == el.textLength)) {
+            (el.selectionStart == 0 && el.selectionEnd == el.textLength) ||
+            
+            // cause empty input lines followed by Enter to send empty command to shell
+            (el.value == '')
+            
+            ) {
             if (trace) console.log('w3_input_change...');
             //console.log('el.value='+ JSON.stringify(w3_el('id-ale_2g-user-textarea').value));
             //console.log(el);
@@ -4132,7 +4151,7 @@ function w3_inline(psa, attr)
       var psa3 = w3_psa3(psa);
       var psa_outer = w3_psa(psa3.middle, 'w3-show-inline-new');
       var psa_inner = w3_psa(psa3.right);
-         if (dump) console.log('w3_inline psa_outer='+ psa_outer +' psa_inner='+ psa_inner);
+      if (dump) console.log('w3_inline psa_outer='+ psa_outer +' psa_inner='+ psa_inner);
       var s = '<div w3d-inlo '+ psa_outer +'>';
       for (var i = 1; i < narg; i++) {
          var a = arguments[i];
@@ -4148,7 +4167,6 @@ function w3_inline(psa, attr)
             a = arguments[i];
             psa_merge = true;
          } else {
-            psa = '';
             if (psa_inner != '') {
                var psa3r = '';
                var a1 = psa3.right.split(' ');
@@ -4167,6 +4185,8 @@ function w3_inline(psa, attr)
                   }
                );
                psa = w3_psa(psa3r);
+            } else {
+               psa = '';
             }
          }
          
@@ -4194,16 +4214,31 @@ function w3_inline_array(psa, ar)
 }
 
 // see: stackoverflow.com/questions/29885284/how-to-set-a-fixed-width-column-with-css-flexbox
+//
+// If any psa prop is of the form N:prop then only use prop if N == current arg number
+// e.g.
+// w3_inline_percent('foo/bar 1:baz', w3_div('zero'), w3_div('one'), w3_div('two')) =>
+// <div class="foo">
+//    <div class="bar zero"> ... </div>
+//    <div class="bar baz one"> ... </div>
+//    <div class="bar two"> ... </div>
+// </div>
+// This is a generalization of the w3-btn-right feature of w3int_button()
+
 function w3_inline_percent(psa)
 {
+	var narg = arguments.length;
+   var dump = psa.includes('w3-dump');
    var psa3 = w3_psa3(psa);
    var psa_outer = w3_psa(psa3.middle, 'w3-show-inline-new');
-	var narg = arguments.length;
+   var psa_inner = w3_psa(psa3.right);
+   if (dump) console.log('w3_inline_percent psa_outer='+ psa_outer +' psa_inner='+ psa_inner);
 	var total = 0;
 	var prop = psa.includes('w3-debug')? 'w3_debug ' : '';
 	var last_halign_end = psa.includes('w3-last-halign-end');
 	var s = '<div w3d-inlpo '+ psa_outer +'>';
 		for (var i = 1; i < narg; i += 2) {
+		   var im1d2 = (i-1)/2;
 		   var style;
 		   if (i+1 < narg) {
 		      style = 'flex-basis:'+ arguments[i+1] +'%';
@@ -4212,11 +4247,39 @@ function w3_inline_percent(psa)
 		      style = 'flex-basis:'+ (100 - total) +'%';
 		   }
 		   if (i == narg-1 && last_halign_end) prop += 'w3-flex w3-halign-end';
-			s += '<div w3d-inlpi-'+ ((i-1)/2) +' '+ w3_psa(psa3.right, prop, style) +'>'+ arguments[i] + '</div>';
+         if (psa_inner != '') {
+            var psa3r = '';
+            var a1 = psa3.right.split(' ');
+            a1.forEach(
+               function(p1) {
+                  if (dump) console.log('N:prop i='+ (im1d2-0) +' p1=');
+                  var a2 = p1.split(':');
+                  if (dump) console.log(a2);
+                  if (a2.length == 2) {
+                     var n = +a2[0];
+                     if (dump) console.log('i='+ i +' n='+ n +' '+ (n == (im1d2-0)));
+                     psa3r = w3_sb(psa3r, (n == (im1d2-0))? a2[1] : '');
+                  } else {
+                     psa3r = w3_sb(psa3r, p1);
+                  }
+               }
+            );
+            if (dump) console.log('w3_inline_percent prop='+ prop +' style='+ style);
+            psa = w3_psa(psa3r, prop, style);
+         } else {
+			   psa = w3_psa(psa3.right, prop, style);
+         }
+			s += '<div w3d-inlpi-'+ w3_sb(im1d2, psa) +'>'+ (arguments[i] || '') + '</div>';
 		}
 	s += '</div>';
-	//console.log(s);
+	if (dump) console.log(s);
 	return s;
+}
+
+function w3_inline_percent_set(id, p)
+{
+   var el = w3_el(id);
+   el.style.flexBasis = pct(p);
 }
 
 /*
@@ -4385,6 +4448,7 @@ function w3_header(psa, size)
 	return s;
 }
 
+/*
 function w3_half(prop_row, prop_col, left, right, prop_left, prop_right)
 {
 	if (prop_left == undefined) prop_left = '';
@@ -4402,7 +4466,14 @@ function w3_half(prop_row, prop_col, left, right, prop_left, prop_right)
 	//console.log(s);
 	return s;
 }
+*/
 
+function w3_half(prop_row, prop_col, left, right)
+{
+   return w3_inline_percent(w3_sbc('/', prop_row, prop_col), left, 50, right);
+}
+
+/*
 function w3_third(prop_row, prop_col, left, middle, right)
 {
 	var s =
@@ -4420,7 +4491,14 @@ function w3_third(prop_row, prop_col, left, middle, right)
 	//console.log(s);
 	return s;
 }
+*/
 
+function w3_third(prop_row, prop_col, left, middle, right)
+{
+   return w3_inline_percent(w3_sbc('/', prop_row, prop_col), left, 33, middle, 33, right);
+}
+
+/*
 function w3_quarter(prop_row, prop_col, left, middleL, middleR, right)
 {
 	var s =
@@ -4440,6 +4518,12 @@ function w3_quarter(prop_row, prop_col, left, middleL, middleR, right)
 	'</div>';
 	//console.log(s);
 	return s;
+}
+*/
+
+function w3_quarter(prop_row, prop_col, left, middleL, middleR, right)
+{
+   return w3_inline_percent(w3_sbc('/', prop_row, prop_col), left, 25, middleL, 25, middleR, 25, right);
 }
 
 function w3_canvas(psa, w, h, opt)

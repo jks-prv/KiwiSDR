@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2021 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -127,7 +127,7 @@ void cfg_adm_transition()
 
 int inactivity_timeout_mins, ip_limit_mins;
 int S_meter_cal, waterfall_cal;
-double ui_srate, ui_srate_kHz;
+double ui_srate_Hz, ui_srate_kHz;
 int kiwi_reg_lo_kHz, kiwi_reg_hi_kHz;
 float max_thr;
 int n_camp;
@@ -149,13 +149,13 @@ static int snr_interval[] = { 0, 1, 4, 6, 24 };
 void update_freqs(bool *update_cfg)
 {
     int srate_idx = cfg_default_int("max_freq", 0, update_cfg);
-	ui_srate = srate_idx? 32*MHz : 30*MHz;
-	ui_srate_kHz = round(ui_srate/kHz);
+	ui_srate_Hz = srate_idx? 32*MHz : 30*MHz;
+	ui_srate_kHz = round(ui_srate_Hz/kHz);
     double foff_kHz = cfg_default_float("freq_offset", 0, update_cfg);
     rx_set_freq_offset_kHz(foff_kHz);
     //printf("foff: INIT %.3f\n", foff_kHz);
-	//printf("ui_srate=%.3f ui_srate_kHz=%.3f freq.offset_kHz=%.3f freq.offmax_kHz=%.3f\n",
-	//    ui_srate, ui_srate_kHz, freq.offset_kHz, freq.offmax_kHz);
+	//printf("ui_srate_Hz=%.0f ui_srate_kHz=%.3f freq.offset_kHz=%.3f freq.offmax_kHz=%.3f\n",
+	//    ui_srate_Hz, ui_srate_kHz, freq.offset_kHz, freq.offmax_kHz);
 }
 
 void update_vars_from_config(bool called_at_init)
@@ -164,7 +164,7 @@ void update_vars_from_config(bool called_at_init)
 	bool update_cfg = false;
 	bool up_cfg = false;
 	bool update_admcfg = false;
-	const char *s;
+	const char *s, *s2;
     bool err;
 
     // When called by client-side "SET save_cfg/save_adm=":
@@ -263,6 +263,25 @@ void update_vars_from_config(bool called_at_init)
 	} else {
         cfg_default_string("tdoa.server", "http://tdoa.kiwisdr.com", &update_admcfg);
     }
+    
+    
+    // iframe extension related
+    // enable sk6aw dx spots if no prior configuration
+    cfg_default_object("iframe", "{}", &up_cfg);
+    s = cfg_string("iframe.url", NULL, CFG_OPTIONAL);
+    s2 = cfg_string("iframe.html", NULL, CFG_OPTIONAL);
+    bool enabled = cfg_default_bool("iframe.enable", true, &up_cfg);
+    if (!kiwi_nonEmptyStr(s) && !kiwi_nonEmptyStr(s2) && enabled) {
+        cfg_set_int("iframe.src", 0);
+	    cfg_set_string("iframe.url", "https://spots.kiwisdr.com");
+	    cfg_set_string("iframe.title", "<span style=\\\"color:cyan\\\">Spots by <a href=\\\"http://www.sk6aw.net/cluster\\\" target=\\\"_blank\\\">SK6AW.NET</a></span>");
+        cfg_set_string("iframe.menu", "DX spots");
+        cfg_set_string("iframe.help", "Clicking on a spot frequency will tune the Kiwi.");
+        cfg_set_bool("iframe.allow_tune", true);
+	    update_cfg = cfg_gdb_break(true);
+    }
+    cfg_string_free(s);
+    cfg_string_free(s2);
 
 
     // fix any broken UTF-8 sequences via cfg_default_string()
@@ -331,7 +350,6 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("test_webserver_prio", false, &up_cfg);
     cfg_default_bool("test_deadline_update", false, &up_cfg);
     cfg_default_bool("disable_recent_changes", false, &up_cfg);
-    cfg_default_int("rf_attn_allow", 1, &up_cfg);
     cfg_default_int("S_meter_OV_counts", 10, &up_cfg);
     cfg_default_bool("webserver_caching", true, &up_cfg);
     max_thr = (float) cfg_default_int("overload_mute", -15, &up_cfg);
@@ -356,6 +374,10 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("init.setup", 0, &up_cfg);
     cfg_default_int("init.tab", 0, &up_cfg);
     cfg_default_float("init.rf_attn", 0, &up_cfg);
+
+    cfg_default_int("rf_attn_allow", 1, &up_cfg);
+    cfg_default_bool("rf_attn_alt", false, &up_cfg);
+    cfg_default_string("rf_attn_cmd", "", &up_cfg);
 
     cfg_default_object("ant_switch", "{}", &up_cfg);
     if (ant_switch_cfg(called_at_init)) update_cfg = cfg_gdb_break(true);
