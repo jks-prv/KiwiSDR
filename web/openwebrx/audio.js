@@ -222,7 +222,7 @@ function audio_camp(disconnect, is_local, less_buffering, compression)
    audio_ext_sequence = 0;
    audio_meas_dly_ena = 0;
    audio_initial_connect = false;
-   audio_watchdog_restart = false;;
+   audio_watchdog_restart = false;
 }
 
 function audio_reset()
@@ -368,8 +368,8 @@ function audio_init(is_local, less_buffering, compression)
    
 	audio_data = new Int16Array(audio_buffer_size);
 	audio_data_unsquelched = new Int16Array(audio_buffer_size);
-	audio_last_output_buffer = new Float32Array(audio_buffer_size)
-	audio_last_output_buffer2 = new Float32Array(audio_buffer_size)
+	audio_last_output_buffer = new Float32Array(audio_buffer_size);
+	audio_last_output_buffer2 = new Float32Array(audio_buffer_size);
 	audio_silence_buffer = new Float32Array(audio_buffer_size);
 	console.log('AUDIO buffer_size='+ audio_buffer_size +' buffering_scheme: '+ scheme_s);
 	
@@ -924,10 +924,11 @@ function audio_recv(data, ws, firstChars)
 	}
    audio_channels = audio_mode_iq? 2 : 1;
 
+   var now, msec;
 	if (audio_compression) {
 	   if (audio.d) {
-	      var now = Date.now();
-	      var msec = now - audio.last_msec;
+	      now = Date.now();
+	      msec = now - audio.last_msec;
 	      audio.last_msec = now;
 	      console.log('AC Q'+ audio_prepared_buffers.length +' '+ audio_channels +'ch '+ msec);
 	   }
@@ -936,8 +937,8 @@ function audio_recv(data, ws, firstChars)
 		samps = bytes*2;		// i.e. 1024 8b bytes -> 2048 16b real samps, 1KB -> 4KB, 4:1 over uncompressed
 	} else {
 	   if (audio.d) {
-	      var now = Date.now();
-	      var msec = now - audio.last_msec;
+	      now = Date.now();
+	      msec = now - audio.last_msec;
 	      audio.last_msec = now;
 	      if (isIQ)
 	         console.log('ANC IQ Q'+ audio_prepared_buffers.length +'/'+ audio_prepared_buffers2.length +' '+ audio_channels +'ch '+ msec);
@@ -980,6 +981,8 @@ function audio_recv(data, ws, firstChars)
 
 function audio_record(compressed)
 {
+   var i;
+   
 	// Recording hooks
    var samples = audio_mode_iq ? 1024 : (compressed ? 2048 : 512);
 
@@ -999,7 +1002,7 @@ function audio_record(compressed)
          }
       }
       kiwi.pre_captured = true;
-   }
+   };
 
 	if (window.recording) {
       
@@ -1021,6 +1024,7 @@ function audio_record(compressed)
          // insert pre record buffer:
          // either first time through after recording started
          // or squelch open during recording
+         var samp;
 	      if (kiwi.pre_captured) {
 	         if (kiwi.pre_wrapped) {
 	            /*
@@ -1036,16 +1040,16 @@ function audio_record(compressed)
 	            // buffer is completely filled, if wrapped (likely case) copy the two separate pieces
 	            console.log('AUDIO pre_record WRAPPED insert pre_off='+ kiwi.pre_off +' '+
 	               (kiwi.pre_size - kiwi.pre_off) +'+'+ kiwi.pre_off +'='+ kiwi.pre_size +' ping_pong='+ kiwi.pre_ping_pong);
-               for (var i = kiwi.pre_off; i < kiwi.pre_size; i += 2) {
-                  var samp = kiwi.pre_data.getInt16(i, true);
+               for (i = kiwi.pre_off; i < kiwi.pre_size; i += 2) {
+                  samp = kiwi.pre_data.getInt16(i, true);
                   window.recording_meta.data.setInt16(window.recording_meta.offset, samp, true);
                   window.recording_meta.offset += 2;
                   check_grow();
                }
                window.recording_meta.total_size += kiwi.pre_size - kiwi.pre_off;
 
-               for (var i = 0; i < kiwi.pre_off; i += 2) {
-                  var samp = kiwi.pre_data.getInt16(i, true);
+               for (i = 0; i < kiwi.pre_off; i += 2) {
+                  samp = kiwi.pre_data.getInt16(i, true);
                   window.recording_meta.data.setInt16(window.recording_meta.offset, samp, true);
                   window.recording_meta.offset += 2;
                   check_grow();
@@ -1054,8 +1058,8 @@ function audio_record(compressed)
 	         } else {
 	            // buffer is partially filled
 	            console.log('AUDIO pre_record NOT-WRAPPED insert pre_off='+ kiwi.pre_off +'/'+ kiwi.pre_size +' ping_pong='+ kiwi.pre_ping_pong);
-               for (var i = 0; i < kiwi.pre_off; i += 2) {
-                  var samp = kiwi.pre_data.getInt16(i, true);
+               for (i = 0; i < kiwi.pre_off; i += 2) {
+                  samp = kiwi.pre_data.getInt16(i, true);
                   window.recording_meta.data.setInt16(window.recording_meta.offset, samp, true);
                   window.recording_meta.offset += 2;
                   check_grow();
@@ -1070,7 +1074,7 @@ function audio_record(compressed)
 	      }
 
          // There are 2048 or 512 little-endian samples in each audio_data, the rest of the elements are zeroes
-         for (var i = 0; i < samples; ++i) {
+         for (i = 0; i < samples; ++i) {
             window.recording_meta.data.setInt16(window.recording_meta.offset, audio_data[i], true);
             window.recording_meta.offset += 2;
             check_grow();
@@ -1109,6 +1113,7 @@ var audio_push_ct = 0;
 
 function audio_prepare(data, data_len, seq, flags, smeter)
 {
+   var i;
 	var resample_new_decomp = resample_new && audio_compression && comp_lpf_taps_length;
 
 	//console.log("audio_prepare :: "+data_len.toString());
@@ -1217,16 +1222,16 @@ function audio_prepare(data, data_len, seq, flags, smeter)
 		}
 
 		if (resample_old) {
+		   var incr, di, frac, xc, xc2, xl;
 		
 			// Our traditional linear interpolator.
 			// Because this is an interpolator, and not a decimator, the post-LPF is only needed
 			// to clean up the high-frequency junk left above the input passband (input sample rate).
 			if (audio_channels == 2) {
             resample_output_size = Math.round(data_len/2 * audio_resample_ratio);
-            var incr = 1.0 / audio_resample_ratio;
-            var di = 0;
-            var frac = 0;
-            var xc, xc2, xl;
+            incr = 1.0 / audio_resample_ratio;
+            di = 0;
+            frac = 0;
             for (i=0; i < resample_output_size; i++) {
             
                // new = cur*frac + last*(1-frac)  [0 <= frac <= 1]  i.e. incr = old/new
@@ -1251,10 +1256,9 @@ function audio_prepare(data, data_len, seq, flags, smeter)
             resample_last2 = xc2;
 			} else {
             resample_output_size = Math.round(data_len * audio_resample_ratio);
-            var incr = 1.0 / audio_resample_ratio;
-            var di = 0;
-            var frac = 0;
-            var xc, xl;
+            incr = 1.0 / audio_resample_ratio;
+            di = 0;
+            frac = 0;
             for (i=0; i < resample_output_size; i++) {
             
                // new = cur*frac + last*(1-frac)  [0 <= frac <= 1]  i.e. incr = old/new
@@ -1331,12 +1335,12 @@ function audio_prepare(data, data_len, seq, flags, smeter)
 	if (audio_last_output_offset + idata_length <= audio_buffer_size) {
 	   // array fits into output buffer
 	   if (audio_channels == 2) {
-         for (var i=0; i < idata_length; i++) {
+         for (i=0; i < idata_length; i++) {
             audio_last_output_buffer[i+audio_last_output_offset] = idata[i] / 32768 * kiwi.volume_f;
             audio_last_output_buffer2[i+audio_last_output_offset] = idata2[i] / 32768 * kiwi.volume_f;
          }
 	   } else {
-         for (var i=0; i < idata_length; i++)
+         for (i=0; i < idata_length; i++)
             audio_last_output_buffer[i+audio_last_output_offset] = idata[i] / 32768 * kiwi.volume_f;
       }
 		audio_last_output_offset += idata_length;
@@ -1347,19 +1351,18 @@ function audio_prepare(data, data_len, seq, flags, smeter)
 		var copied = audio_buffer_size - audio_last_output_offset;
 		var remain = idata_length - copied;
 	   if (audio_channels == 2) {
-         for (var i=0; i < audio_buffer_size - audio_last_output_offset; i++) {  // fill the remaining space in the output buffer
+         for (i=0; i < audio_buffer_size - audio_last_output_offset; i++) {  // fill the remaining space in the output buffer
             audio_last_output_buffer[i+audio_last_output_offset] = idata[i] / 32768 * kiwi.volume_f;
             audio_last_output_buffer2[i+audio_last_output_offset] = idata2[i] / 32768 * kiwi.volume_f;
          }
 	   } else {
-         for (var i=0; i < audio_buffer_size - audio_last_output_offset; i++)    // fill the remaining space in the output buffer
+         for (i=0; i < audio_buffer_size - audio_last_output_offset; i++)    // fill the remaining space in the output buffer
             audio_last_output_buffer[i+audio_last_output_offset] = idata[i] / 32768 * kiwi.volume_f;
       }
 		dopush();	// push the output buffer and create a new one
 
 		//console.log("larger than; copied half: "+copied.toString()+", now at: "+audio_last_output_offset.toString());
 		do {
-			var i;
 			for (i=0; i < remain; i++) {
 			   // copy the remaining input samples to the new output buffer
 				if (i == audio_buffer_size) {
@@ -1394,7 +1397,7 @@ try {
 			{
 				var cd = this.getChannelData(channel);
 				for (var i=0; i < input.length; i++) cd[i] = input[i];
-			}
+			};
 	}
 } catch(ex) { console.log("CATCH: AudioBuffer.prototype.copyToChannel"); }
 
@@ -1466,7 +1469,7 @@ function audio_recompute_LPF(force, lo_cut, hi_cut)
          if (isNaN(hi_cut)) console.log(demodulators[0]);
          lo_cut = Math.abs(demodulators[0].low_cut);
       } else {
-         lo_cut = 0, hi_cut = 4000;    // default if no modulator currently defined
+         lo_cut = 0; hi_cut = 4000;    // default if no modulator currently defined
       }
    }
 

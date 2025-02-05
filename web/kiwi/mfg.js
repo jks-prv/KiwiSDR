@@ -101,7 +101,7 @@ function mfg_html()
                   'id-seed-phrase', '', 'mfg_set_seed_cb'
                )
             ),
-            '<hr>',
+            '<hr>'
          ),
 
          // write serno/model
