@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 801
+VERSION_MIN = 802
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -583,7 +583,7 @@ make_binary:
 	@echo "make_binary DONE"
 
 
-# NB: in KiwiSDR/bin/, NOT KiwiSDR.files/bin/
+# NB: in build/, NOT KiwiSDR.files/bin/
 PLAT_KIWI_BIN_NEW := $(BUILD_DIR)/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
 PLAT_KIWID_BIN_NEW := $(BUILD_DIR)/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
 
