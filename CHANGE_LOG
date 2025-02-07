@@ -3,6 +3,14 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.802  February 7, 2025
+    Added support for multiple iframe instances, up to 16. (thanks VK3KHZ)
+        Admin > Extensions > iframe has a new button called "populate with standard entries" which
+        will add 6 new iframe entries in addition to the new "DX spots" default added last release.
+        They are: solar conditions, K-index, HF propagation, lightning map, and aurora.
+
+    Fixed bug preventing change of proxy host name in certain cases.
+
 v1.801  February 5, 2025
     Admin page: Now works on small-screen devices. The admin page will now scroll left/right and
         up/down to display the full content that you would normally see using a desktop browser.
@@ -12,6 +20,7 @@ v1.801  February 5, 2025
         Small-screen support for user connections is much more difficult and still TBD.
 
     Added support for iframe content to tune Kiwi (i.e. frequency, passband, mode, zoom).
+        Try new entry "DX spots" in extension menu.
         Added SK6AW.net DX spots as the default iframe content if no prior iframe configuration
         had been setup. When you click on a spot frequency the Kiwi tunes and sets the mode.
         If your Kiwi needs to be configured for this open the admin extensions tab and select
@@ -36,6 +45,7 @@ v1.801  February 5, 2025
         During scanning the browser user interface focus will remain with the ALE extension.
         This means changes to the controls and cut/paste in the output window will not be disturbed.
         (thanks DK9FI)
+        Added "KFOR" to milcom frequency list. (thanks Mark W)
 
     SSTV:
         Added "save images" button. Saves current image bar as a browser .jpg download file.
@@ -47,7 +57,6 @@ v1.801  February 5, 2025
 
     FSK:
         Fixed broken custom shift menu setting.
-        Added "KFOR" to milcom frequency list. (thanks Mark W)
         Added SUBCOM VLF freqs to DX community database and FSK Milcom menu.
         (thanks Paulus via x.com/ParssinenPaulus/status/1865520723298533678)
 

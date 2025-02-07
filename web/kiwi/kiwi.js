@@ -779,7 +779,7 @@ function time_display_setup(ext_name_or_id)
 	}
 	time_display_prev = ext_name_or_id;
 	
-	var el = w3_el(ext_name_or_id);
+	el = w3_el(ext_name_or_id);
 	el.innerHTML =
 	   w3_div('',
          w3_div('id-time-display-inner',
@@ -1316,7 +1316,6 @@ function kiwi_output_msg(id, id_scroll, p)
       col_stop = col_stop || p.cols;
       var s = '';
       var a = [];
-      var i;
       for (var c = col_start, i = 0; c < col_stop; c++, i++) {
          var sgr = (isString(p.line_sgr[c]))? p.line_sgr[c] : '';
          var html = (isString(p.line_html[c]))? p.line_html[c] : '';
@@ -1337,7 +1336,7 @@ function kiwi_output_msg(id, id_scroll, p)
          p.dirty = [];
          p.els = [];
 
-         for (var r = 0; r <= p.nrows; r++) {
+         for (r = 0; r <= p.nrows; r++) {
             p.screen[r] = [];
             p.color[r] = [];
          }
@@ -1346,9 +1345,9 @@ function kiwi_output_msg(id, id_scroll, p)
       if (init == p.INIT_ALTBUF || init == p.INIT_RESIZE) {
          removeAllLines(parent_el);
          
-         for (var r = 1; r <= p.nrows; r++) {
+         for (r = 1; r <= p.nrows; r++) {
             try {
-               for (var c = 1; c <= p.cols; c++) {
+               for (c = 1; c <= p.cols; c++) {
                   p.screen[r][c] = ' ';
                   p.color[r][c] = { fg: null, bg: null };
                }
@@ -1663,6 +1662,9 @@ function kiwi_output_msg(id, id_scroll, p)
 
          // sequence complete, interpret
 		   if (interp) {
+            var ci, col, c_start, c_end, save_col, src_col, dst_col, col_stop;
+            var save_insertMode;
+
 		      //if (dbg && p.esc.state == p.NON_CSI) console.log('$INTERPRET ESC '+ kiwi_JSON(p.esc.s));
 		      var first = p.esc.s.charAt(0);
 		      var second = p.esc.s.charAt(1);
@@ -1701,7 +1703,6 @@ function kiwi_output_msg(id, id_scroll, p)
                
                if (c == 'K') {      // erase in line
                   if (p.isAltBuf) {
-                     var c_start, c_end;
                      result = 'erase in line: ';
 
                      switch (second) {
@@ -1715,7 +1716,7 @@ function kiwi_output_msg(id, id_scroll, p)
                   } else {
                      if (second == 'K') {
                         if (dbg) console.log('EEOL BEFORE col='+ p.ccol +' '+ line_s());
-                        var col_stop = p.line.length;
+                        col_stop = p.line.length;
                         for (i = p.ccol; i <= col_stop; i++) { p.line[i] = null; p.line_sgr[i] = null; p.line_html[i] = null; }
                         if (dbg) console.log('EEOL AFTER col='+ p.ccol +' '+ line_s());
                         result = 'erase in line: cur to EOL';
@@ -1725,7 +1726,7 @@ function kiwi_output_msg(id, id_scroll, p)
                
                if (c == 'J') {      // erase in display
                   if (p.isAltBuf) {
-                     var r_start, r_end, c_start, c_end;
+                     var r_start, r_end;
 
                      if (second == '0' || second == 'J') {     // [J  [0J
                         r_start = p.r; r_end = p.nrows;
@@ -1928,8 +1929,7 @@ function kiwi_output_msg(id, id_scroll, p)
                if (c == 'X') {      // ech=\E[%p1%dX
                   if (n1 == 0) n1 = 1;
                   if (p.isAltBuf) {
-                     var col;
-                     for (var ci = 0, col = p.c; ci < n1 && col <= p.cols; ci++, col++) {
+                     for (ci = 0, col = p.c; ci < n1 && col <= p.cols; ci++, col++) {
                         //if (dbg) console.log('erase '+ p.r +','+ col +'|'+ ci +'/'+ n1);
                         p.screen[p.r][col] = ' ';
                         p.color[p.r][col] = { fg: null, bg: null };
@@ -1938,8 +1938,7 @@ function kiwi_output_msg(id, id_scroll, p)
                      sched();
                      result = 'erase '+ n1 +' chars';
                   } else {
-                     var col;
-                     for (var ci = 0, col = p.ccol; ci < n1 && col <= p.line.length; ci++, col++) {
+                     for (ci = 0, col = p.ccol; ci < n1 && col <= p.line.length; ci++, col++) {
                         //if (dbg) console.log('erase '+ p.r +','+ col +'|'+ ci +'/'+ n1);
                         p.line[ci] = null;
                      }
@@ -1950,7 +1949,7 @@ function kiwi_output_msg(id, id_scroll, p)
                if (c == 'P') {
                   if (n1 == 0) n1 = 1;
                   if (p.isAltBuf) {
-                     var save_col = p.c, src_col, dst_col;
+                     save_col = p.c;
                      for (src_col = p.c + n1, dst_col = p.c; src_col <= p.cols; src_col++, dst_col++) {
                         p.screen[p.r][dst_col] = p.screen[p.r][src_col];
                         p.color [p.r][dst_col] = p.color [p.r][src_col];
@@ -1965,7 +1964,7 @@ function kiwi_output_msg(id, id_scroll, p)
                   } else {
                      if (dbg) console.log('DEL-CHARS BEFORE col='+ p.ccol +'/'+ p.line.length +' '+ line_s());
                      for (i = 0; i < n1; i++) {
-                        var col_stop = p.line.length;
+                        col_stop = p.line.length;
                         for (j = p.ccol; j < col_stop; j++) p.line[j] = p.line[j+1];
                         p.line[j] = null;
                      }
@@ -1978,7 +1977,7 @@ function kiwi_output_msg(id, id_scroll, p)
                if (c == '@') {
                   if (n1 == 0) n1 = 1;
                   if (p.isAltBuf) {
-                     var save_col = p.c, src_col, dst_col;
+                     save_col = p.c;
                      for (src_col = p.cols - n1, dst_col = p.cols; src_col >= save_col; src_col--, dst_col--) {
                         p.screen[p.r][dst_col] = p.screen[p.r][src_col];
                         p.color [p.r][dst_col] = p.color [p.r][src_col];
@@ -1993,7 +1992,7 @@ function kiwi_output_msg(id, id_scroll, p)
                   } else {
                      if (dbg) console.log('INS-CHARS BEFORE col='+ p.ccol +'/'+ p.line.length +' '+ line_s());
                      for (i = 0; i < n1; i++) {
-                        var col_stop = p.line.length;
+                        col_stop = p.line.length;
                         for (j = col_stop; j > p.ccol; j--) p.line[j] = p.line[j-1];
                      }
                      if (dbg) console.log('INS-CHARS AFTER col='+ p.ccol +'/'+ p.line.length +' '+ line_s());
@@ -2026,7 +2025,7 @@ function kiwi_output_msg(id, id_scroll, p)
                
                // pan up (text moves down)
                if (c == 'T' && p.isAltBuf) {
-                  var save_insertMode = p.insertMode;
+                  save_insertMode = p.insertMode;
                   p.insertMode = false;
                   move_in_display(p.margin_bottom, p.margin_bottom - n1, p.margin_top, -1);
                   erase_in_display(p.margin_top, p.margin_top + n1 - 1, 1, p.cols);
@@ -2037,7 +2036,7 @@ function kiwi_output_msg(id, id_scroll, p)
                
                // delete line(s)
                if (c == 'M' && p.isAltBuf) {
-                  var save_insertMode = p.insertMode;
+                  save_insertMode = p.insertMode;
                   p.insertMode = false;
                   move_in_display(p.r, p.r + 1, p.r + n1, +1);
                   erase_in_display(p.r + n1, p.r + n1, 1, p.cols);
@@ -2112,7 +2111,7 @@ function kiwi_output_msg(id, id_scroll, p)
             
                case 'M':
                   if (p.isAltBuf) {
-                     var save_insertMode = p.insertMode;
+                     save_insertMode = p.insertMode;
                      p.insertMode = false;
                      move_in_display(p.margin_bottom, p.margin_bottom - 1, p.margin_top, -1);
                      erase_in_display(p.margin_top, p.margin_top, 1, p.cols);
@@ -2202,7 +2201,7 @@ function kiwi_output_msg(id, id_scroll, p)
                   p.c = 1; dirty(); p.r++; dirty();
                   if (p.r > p.nrows) p.r = 1;    // \n
                } else {
-                  var stmp = line_join(1).s;
+                  stmp = line_join(1).s;
                   p.el.innerHTML = (stmp == '')? '&nbsp;' : stmp;
                   if (dbg) console.log('TEXT-EMIT '+ kiwi_JSON(stmp));
                   p.line = [];
@@ -2461,6 +2460,7 @@ var kiwi_config_str_long = '';
 
 function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
 {
+   var i;
    idle %= 100;   // handle multi-core cpus
    var cputempC = o.cc? o.cc : 0;
    var cputempF = cputempC * 9/5 + 32;
@@ -2480,7 +2480,7 @@ function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
 
    var user = '', sys = '', idle = '';
    var first = true;
-   for (var i = 0; i < o.cu.length; i++) {
+   for (i = 0; i < o.cu.length; i++) {
       user += (first? '':' ') + o.cu[i] +'%';
       sys  += (first? '':' ') + o.cs[i] +'%';
       idle += (first? '':' ') + o.ci[i] +'%';
@@ -2489,7 +2489,7 @@ function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
    var cpus = 'cpu';
    if (o.cu.length > 1) {
       cpus += '0';
-		for (var i = 1; i < o.cu.length; i++)
+		for (i = 1; i < o.cu.length; i++)
 		   cpus += ' cpu' + i;
    }
 	kiwi_cpu_stats_str_long =
@@ -2500,7 +2500,7 @@ function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
          w3_text('w3-text-black', 'FPGA eCPU: '+ ecpu.toFixed(0) +'%')
       );
 
-	var o = kiwi_dhms(uptime_secs);
+	o = kiwi_dhms(uptime_secs);
 	w3_innerHTML('id-status-config',
 	   w3_inline('',
          w3_text('w3-text-css-orange', 'KiwiSDR '+ kiwi.model),
@@ -2670,7 +2670,7 @@ function user_cb(obj)
 
 	obj.forEach(function(obj) {
 		//console.log(obj);
-		var s1 = '', s2 = '', s3 = '';
+		var s, s1 = '', s2 = '', s3 = '';
 		var i = obj.i;
 		var name = obj.n;
 		var freq = obj.f;
@@ -2714,7 +2714,7 @@ function user_cb(obj)
 			ip = ip.replace(/::ffff:/, '');		// remove IPv4-mapped IPv6 if any
 			g = (ip != '' || g != '')? ('('+ ip + g +')') : '';
 			var f = freq + kiwi.freq_offset_Hz;
-			var f = (f/1000).toFixed((f > 100e6)? 1:2);
+			f = (f/1000).toFixed((f > 100e6)? 1:2);
 			var f_s = f + ' kHz ';
 			var fo = (freq/1000).toFixed(2);
 
@@ -2758,7 +2758,7 @@ function user_cb(obj)
 		// inactivity timeout warning panel
 		if (i == rx_chan && obj.rn) {
 		   if (obj.rn <= 55 && !kiwi.inactivity_panel) {
-            var s =
+            s =
                (obj.rt == 1)?
                   'Inactivity timeout in one minute.<br>Close this panel to avoid disconnection.'
                :
@@ -2790,7 +2790,7 @@ function user_cb(obj)
          } else
          if (i == rx_chan && !confirmation.displayed) {
             ext_send('SET msg_log='+ encodeURIComponent('frequency scale offset changed '+ kiwi.freq_offset_kHz +' to '+ obj.fo +', page reloading'));
-            var s =
+            s =
                w3_div('',
                   'Frequency scale offset changed. Page will be reloaded.'
                   //w3_inline('w3-halign-space-around/', w3_button('w3-margin-T-16 w3-aqua', 'OK', 'freq_offset_page_reload'))
@@ -2982,6 +2982,7 @@ var client_public_ip;
 // includes msgs relevant for both user and admin modes
 function kiwi_msg(param, ws)     // #msg-proc #MSG
 {
+   var i, o, obj, s, p;
 	var rtn = true;
 	//if (param[0] != 'stats_cb' && param[0] != 'user_cb')
    //   console.log('$$ kiwi_msg    '+ (ws? ws.stream : '[ws?]') +' MSG '+ param[0] +'='+ param[1]);
@@ -3082,7 +3083,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
             // null configuration so user page continues to work
             dxcfg = {};
             dxcfg.dx_type = [];
-            for (var i = 0; i < 16; i++) {
+            for (i = 0; i < 16; i++) {
                dxcfg.dx_type.push({key:i, name:'type-'+i, color:'white'});
             }
             dxcfg.band_svc = [];
@@ -3104,7 +3105,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
             // null configuration so user page continues to work
             dxcomm_cfg = {};
             dxcomm_cfg.dx_type = [];
-            for (var i = 0; i < 16; i++) {
+            for (i = 0; i < 16; i++) {
                dxcomm_cfg.dx_type.push({key:i, name:'type-'+i, color:'white'});
             }
             dxcomm_cfg.band_svc = [];
@@ -3187,32 +3188,32 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 		case "mkr":
 			var mkr = param[1];
 			//console.log('MKR '+ mkr);
-			var obj = kiwi_JSON_parse('mkr', mkr);
+			obj = kiwi_JSON_parse('mkr', mkr);
 			if (obj) dx_label_render_cb(obj);
 			break;
 
 		case "user_cb":
 			//console.log('user_cb='+ param[1]);
-			var obj = kiwi_JSON_parse('user_cb', param[1]);
+			obj = kiwi_JSON_parse('user_cb', param[1]);
 			if (obj) user_cb(obj);
 			break;
 
 		case "config_cb":    // in response to "SET GET_CONFIG"
 			//console.log('config_cb='+ param[1]);
-			var o = kiwi_JSON_parse('config_cb', param[1]);
+			o = kiwi_JSON_parse('config_cb', param[1]);
 			if (o) config_cb(o.r, o.g, o.s, o.pu, o.pe, o.pv, o.pi, o.n, o.m, o.v1, o.v2, o.d1, o.d2);
 			break;
 
 		case "update_cb":
 			//console.log('update_cb='+ param[1]);
-			var o = kiwi_JSON_parse('update_cb', param[1]);
+			o = kiwi_JSON_parse('update_cb', param[1]);
 			if (o) update_cb(o.f, o.p, o.i, o.r, o.g, o.v1, o.v2, o.p1, o.p2,
 				decodeURIComponent(o.d), decodeURIComponent(o.t));
 			break;
 
 		case "stats_cb":     // in response to "SET STATS_UPD" (from both user and admin)
 			//console.log('stats_cb='+ param[1]);
-			var o = kiwi_JSON_parse('stats_cb', param[1]);
+			o = kiwi_JSON_parse('stats_cb', param[1]);
 			if (o) {
 				//console.log(o);
 				if (o.ce != undefined)
@@ -3249,7 +3250,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "status_msg_html":
-		   var s = w3_json_to_html('status_msg_html', param[1]);
+		   s = w3_json_to_html('status_msg_html', param[1]);
 		   //console.log('status_msg_html: <'+ s +'>');
 			w3_innerHTML('id-status-msg', s);		// overwrites last status msg
 			w3_innerHTML('id-msg-status', s);		// overwrites last status msg
@@ -3260,7 +3261,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "is_local":
-		   var p = param[1].split(',');
+		   p = param[1].split(',');
 		   console.log('kiwi_msg rx_chan='+ p[0] +' is_local='+ p[1]);
 			kiwi.is_local[+p[0]] = +p[1];
 			kiwi.tlimit_exempt_by_pwd[+p[0]] = +p[2];
@@ -3311,7 +3312,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "ip_limit":
-		   var p = decodeURIComponent(param[1]).split(',');
+		   p = decodeURIComponent(param[1]).split(',');
 			kiwi_24hr_ip_limit(parseInt(p[0]), p[1]);
 			break;
 
@@ -3345,7 +3346,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 
 		case 'notify_msg':
-		   var s = w3_json_to_html('notify_msg', param[1]);
+		   s = w3_json_to_html('notify_msg', param[1]);
 			console.log('notify_msg: '+ s);
 			if (confirmation.displayed) break;
          s = w3_div('', s);
@@ -3354,12 +3355,12 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 
 		case 'kiwi_kick':
-		   var p = decodeURIComponent(param[1]).split(',');
+		   p = decodeURIComponent(param[1]).split(',');
 		   var kicked = +p[0];
 		   //console.log('kiwi_kick kicked='+ kicked);
-		   var s = ext_get_cfg_param_string(kicked? 'cfg.reason_kicked' : 'cfg.reason_disabled');
+		   s = ext_get_cfg_param_string(kicked? 'cfg.reason_kicked' : 'cfg.reason_disabled');
 		   //console.log('kick_kick p1=<'+ p[1] +'> s=<'+ s +'>');
-		   var s = w3_json_to_html('kiwi_kick', p[1]) + ((s != '')? ('<br>Reason: '+ s) : '');
+		   s = w3_json_to_html('kiwi_kick', p[1]) + ((s != '')? ('<br>Reason: '+ s) : '');
          //kiwi_show_msg(s);
 			if (confirmation.displayed) break;
          s = w3_div('', s);
@@ -3367,7 +3368,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 		
 		case 'snr_stats':
-		   var p = param[1].split(',');
+		   p = param[1].split(',');
          kiwi_snr_stats(p[0], p[1]);
          break;
 

@@ -27,7 +27,7 @@ function kiwi_map_init(ext_name, init_latlon, init_zoom, mapZoom_nom, move_cb, z
          attribution: '<a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
          crossOrigin: true
       });
-   }
+   };
 
    var tiles = map_tiles('hybrid');
    var map = L.map('id-'+ ext_name +'-map',
@@ -59,7 +59,7 @@ function kiwi_map_init(ext_name, init_latlon, init_zoom, mapZoom_nom, move_cb, z
    
    tiles.addTo(map);
 
-   var scale = L.control.scale()
+   var scale = L.control.scale();
    scale.addTo(map);
    scale.setPosition('bottomleft');
 
@@ -162,7 +162,7 @@ function kiwi_map_day_night_visible(kmap, vis)
       day_night._path.style.cursor = 'grab';
    } else {
       day_night.remove();
-      kmap.map_layers = kmap.map_layers.filter(function(ae) { ae != day_night });
+      kmap.map_layers = kmap.map_layers.filter(function(ae) { return ae != day_night; });
    }
 }
 
@@ -174,7 +174,7 @@ function kiwi_map_graticule_visible(kmap, vis)
       kmap.map_layers.push(graticule);
    } else {
       graticule.remove();
-      kmap.map_layers = kmap.map_layers.filter(function(ae) { ae != graticule });
+      kmap.map_layers = kmap.map_layers.filter(function(ae) { return ae != graticule; });
    }
 }
 

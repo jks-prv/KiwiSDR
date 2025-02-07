@@ -87,7 +87,7 @@ function scope_draw(t1, t2, t3, t4, t5, trig)
    t5 = w3_obj_num(t5);
    trig = w3_obj_num(trig);
    
-   var yval = function(o) { return o.num * s.trace_height };
+   var yval = function(o) { return o.num * s.trace_height; };
 
 	if (t1.num && s.x != s.prev_x) {
 		s.ctx.fillStyle = 'cyan';

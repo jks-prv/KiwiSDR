@@ -78,7 +78,7 @@ function graph_rescale(gr)
 
 function graph_mode(gr, scale, max, min)
 {
-   gr.auto = (scale == 'auto')? 1:0
+   gr.auto = (scale == 'auto')? 1:0;
    if (!gr.auto) { gr.max = max; gr.min = min; }
    //console.log('gr.auto='+ gr.auto +' max='+ max +' min='+ min);
    graph_rescale(gr);
@@ -133,6 +133,7 @@ function graph_plot(gr, val_dB, opt)
    var h = cv.height;
    var wi = w-gr.xi;
 	var range = gr.hi - gr.lo;
+	var dB;
 
 	var y_dB = function(dB) {
 		var norm = (dB - gr.lo) / range;
@@ -155,13 +156,14 @@ function graph_plot(gr, val_dB, opt)
 			force_recomp = true;
 		}
 
+      var new_range, shrink, expand;
 		if (gr.goalL > gr.lo+gr.hysteresis || gr.goalL < gr.lo || force_recomp) { 
 			var new_lo = gridF_10dB(gr.goalL)-5;
-			var new_range = gr.hi - new_lo;
+			new_range = gr.hi - new_lo;
 
 			if (new_lo <= gr.lo) {
 				// shrink previous grid above with new background below
-				var shrink = range / new_range;
+				shrink = range / new_range;
 				if (wi) {
 					ct.drawImage(cv, gr.xi,0, wi,h, gr.xi,0, wi,h*shrink);
 					ct.fillStyle = gr.bg_color;
@@ -169,7 +171,7 @@ function graph_plot(gr, val_dB, opt)
 				}
 			} else {
 				// upper portion of previous grid expands to fill entire space
-				var expand = new_range / range;
+				expand = new_range / range;
 				if (wi) ct.drawImage(cv, gr.xi,0, wi,h*expand, gr.xi,0, wi,h);
 			}
 
@@ -181,10 +183,10 @@ function graph_plot(gr, val_dB, opt)
 		
 		if (gr.goalH > gr.hi || gr.goalH < gr.hi-gr.hysteresis || force_recomp) {
 			var new_hi = gridC_10dB(gr.goalH)+5;
-			var new_range = new_hi - gr.lo;
+			new_range = new_hi - gr.lo;
 			if (new_hi >= gr.hi) {
 				// shrink previous grid below with new background above
-				var shrink = range / new_range;
+				shrink = range / new_range;
 				if (wi) {
 					ct.drawImage(cv, gr.xi,0, wi,h, gr.xi,h*(1-shrink), wi,h*shrink);
 					ct.fillStyle = gr.bg_color;
@@ -192,7 +194,7 @@ function graph_plot(gr, val_dB, opt)
 				}
 			} else {
 				// lower portion of previous grid expands to fill entire space
-				var expand = new_range / range;
+				expand = new_range / range;
 				if (wi) ct.drawImage(cv, gr.xi,h*(1-expand), wi,h*expand, gr.xi,0, wi,h);
 			}
 			gr.hi = new_hi;
@@ -207,7 +209,7 @@ function graph_plot(gr, val_dB, opt)
 		ct.fillRect(w,0, gr.scaleWidth,h);
       ct.fillStyle = gr.scale_color;
       ct.font = '10px Verdana';
-      for (var dB = gr.lo; (dB = gridC_10dB(dB)) <= gr.hi; dB++) {
+      for (dB = gr.lo; (dB = gridC_10dB(dB)) <= gr.hi; dB++) {
          ct.fillText(dB +' '+ gr.db_units, w+2,y_dB(dB)+4, gr.scaleWidth);
       }
       gr.redraw_scale = false;
@@ -232,7 +234,7 @@ function graph_plot(gr, val_dB, opt)
          ct.fillStyle = gr.bg_color;
          ct.fillRect(w-1,0, 1,h);
          ct.fillStyle = gr.grid_color;
-         for (var dB = gr.lo; (dB = gridC_10dB(dB)) <= gr.hi; dB++) {
+         for (dB = gr.lo; (dB = gridC_10dB(dB)) <= gr.hi; dB++) {
             ct.fillRect(w-1,y_dB(dB), 1,1);
          }
       } else {

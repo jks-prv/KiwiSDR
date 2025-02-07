@@ -529,7 +529,7 @@ function reason_cb(path, val)
 ////////////////////////////////
 
 var connect = {
-   focus: 0,
+   focus_seen: 0,
    focus_query: false,
    NOT_IP:0, IS_IP:1, LOCAL_IP:-1, 
    timeout: null
@@ -793,7 +793,7 @@ function connect_html()
 
 function connect_focus()
 {
-   connect.focus = 1;
+   connect.focus_seen = 1;
    connect_update_url();
    w3_el('id-proxy-hdr').innerHTML = 'Proxy information for '+ adm.proxy_server;
    ext_send('SET DUC_status_query');
@@ -810,7 +810,7 @@ function connect_focus()
 
 function connect_blur()
 {
-   connect.focus = 0;
+   connect.focus_seen = 0;
 }
 
 function connect_auto_proxy_cb(path, idx, first, cb_param)
@@ -1162,6 +1162,8 @@ function connect_rev_register_cb(id, idx)
    
    kiwi_clearTimeout(connect.timeout);
 	w3_innerHTML('id-connect-rev-status', w3_icon('', 'fa-refresh fa-spin', 24) + '&nbsp; Getting status from proxy server...');
+
+   // update info on proxy server
 	var s = 'user='+ user +' host='+ host +' auto='+ auto;
 	console.log('rev register: '+ s);
 	ext_send('SET rev_register reg=1 '+ s);
@@ -1196,7 +1198,7 @@ function connect_rev_host_cb(path, val, first)
 
 function connect_rev_status_cb(status)
 {
-   if (!connect.focus) return;
+   if (!connect.focus_seen) return;
 	status = +status;
 	console.log('rev_status='+ status);
 	var s, error = false;
@@ -1258,9 +1260,9 @@ function connect_rev_status_cb(status)
 	// If this admin connection is on a proxy connection then it needs to be reconnected
 	// because frpc will be restarted using the new user and/or host value.
    var a = kiwi_remove_protocol(kiwi_host_port()).split('.');
-   var change = (a[0] != host);
-	var reload_auto = ( auto && change &&  status == 0);
-	var reload_man  = (!auto && change && (status >= 0 && status <= 2));
+   var host_changed = (a[0] != host);
+	var reload_auto = ( auto && host_changed &&  status == 0);
+	var reload_man  = (!auto && host_changed && (status >= 0 && status <= 2));
 	var admin_is_proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');
    console.log('connect_rev_status_cb: auto='+ auto +' user='+ user +' host='+ host +'|'+ a[0] +
       ' reload_auto|man='+ reload_auto +'|'+ reload_man +' focus_query='+ connect.focus_query +' error='+ error +' admin_is_proxy_conn='+ admin_is_proxy_conn);
@@ -1277,9 +1279,11 @@ function connect_rev_status_cb(status)
 	} else {
 	   // !admin_is_proxy_conn
 	   
-      // don't keep restarting frpc if user key invalid (status == 101)
-      if (cfg.sdr_hu_dom_sel == kiwi.REV && !connect.focus_query && error && status != 101) {
-         console_nv('$connect_rev_status_cb RESTART frpc', {status});
+      // setup frpc.ini and restart frpc if new account or host name updated
+      var proxy_setup = (status >= 1 && status <= 2);
+      console.log('reg=0 '+ TF(cfg.sdr_hu_dom_sel == kiwi.REV) + TF(!connect.focus_query) + TF(proxy_setup) + ' status='+ status);
+      if (cfg.sdr_hu_dom_sel == kiwi.REV && !connect.focus_query && proxy_setup) {
+         console_nv('reg=0 RESTART frpc', {status}, {host}, {auto});
          ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
       }
    }
