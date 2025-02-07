@@ -15,7 +15,7 @@ var extint = {
    extint_pwd_cb_param: null,
    extint_conn_type: null,
    ext_names: null,
-   hasIframeMenu: false,
+   iframe_names: [],
    
    isAdmin_cb: null,
    srate: 0,
@@ -248,6 +248,10 @@ function ext_set_cfg_param(path, val, save)
 		cfg_save_json('ext_set_cfg_param', path, val);
 	}
 }
+
+function ext_cfg_save() { config_save('cfg', cfg); }
+function ext_adm_save() { config_save('adm', adm); }
+function ext_dxcfg_save() { config_save('dxcfg', dxcfg); }
 
 function ext_get_freq_range()
 {
@@ -1190,7 +1194,10 @@ function extint_select(value)
          
          // remap the iframe virtual menu name
          var ext_name = extint.ext_names[idx];
-         if (extint.hasIframeMenu && ext_name == cfg.iframe.menu) ext_name = 'iframe';
+         if (extint.iframe_names.includes(ext_name)) {
+            console.log('REMAP '+ ext_name +' => iframe');
+            ext_name = 'iframe';
+         }
          extint.current_ext_name = ext_name;
 
          if (extint.first_ext_load) {
@@ -1210,13 +1217,20 @@ function extint_list_json(param)
    
    // add virtual entries for ui compatibility
    extint.former_exts.forEach(function(e,i) { extint.ext_names.push(e); });
-   console.log(extint.ext_names);
-   console.log(extint.ext_names.includes(cfg.iframe.menu));
+   //console.log(extint.ext_names);
    
-   // careful: check that menu name doesn't match an existing one
-   if (isNonEmptyString(cfg.iframe.menu) && !extint.ext_names.includes(cfg.iframe.menu)) {
-      extint.ext_names.push(cfg.iframe.menu);
-      extint.hasIframeMenu = true;
+   // careful: check that iframe menu names don't match an existing one
+   for (var i = 0; i < 8; i++) {
+      var s = 'iframe' + (i? i : '');
+      if (isDefined(cfg[s])) {
+         var o = cfg[s];
+         //console.log(o);
+         if (isNonEmptyString(o.menu) && !extint.ext_names.includes(o.menu)) {
+            extint.ext_names.push(o.menu);
+            extint.iframe_names.push(o.menu);
+            console.log('iframe menu'+ i +' '+ o.menu);
+         }
+      }
    }
    
 	kiwi_dedup_array(extint.ext_names);
@@ -1267,11 +1281,14 @@ function ext_auth()
 function extint_select_build_menu()
 {
    //console.log('extint_select_menu rx_chan='+ rx_chan +' ext_auth='+ ext_auth());
+   var iframe_names = kiwi_array_iter(extint.iframe_names, function(el) { return el.toLowerCase(); });
+   console.log(iframe_names);
+   var iframe_enable = ext_get_cfg_param('iframe.enable');
 	var s = '';
 	if (extint.ext_names && isArray(extint.ext_names)) {
 	   extint_enum_names(function(i, value, id, id_en) {
-         var enable = ext_get_cfg_param(id_en +'.enable');
-         //console.log('extint_select_menu id_en='+ id_en +' en='+ enable);
+         var enable = iframe_names.includes(id_en)? iframe_enable : ext_get_cfg_param(id_en +'.enable');
+         console.log('extint_select_menu id_en='+ id_en +' en='+ enable);
          if (enable == null || ext_auth() == kiwi.AUTH_LOCAL) enable = true;   // enable if no cfg param or local connection
          if (id == 'DRM') kiwi.DRM_enable = enable;
          
