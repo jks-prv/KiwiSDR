@@ -364,6 +364,28 @@ function kiwi_char_iter(s, func)
    return ra;
 }
 
+function kiwi_array_iter(a, func)
+{
+   var ra = [];
+   a.forEach(
+      function(el,i) {
+         ra[i] = func(el,i);
+      }
+   );
+   return ra;
+}
+
+function kiwi_array_iter_rv(a, func)
+{
+   var rv = 0;
+   a.forEach(
+      function(el,i) {
+         rv |= func(el,i);
+      }
+   );
+   return rv;
+}
+
 function kiwi_array_remove_undefined(ar)
 {
    var ra = [];
