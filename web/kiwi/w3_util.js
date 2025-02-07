@@ -180,12 +180,9 @@
 	1) kiwisdr.com website content
 	
 	2) antenna switch extension is a user of API:
-	   visible_block()         DEP
 	   w3_div()
 	   w3_divs()
 	   w3_inline()                   only in OLDER versions of the ant_switch ext
-	   w3_btn()
-	   w3_radio_btn(yes/no)    DEP   w3_radio_button
 	   w3_string_set_cfg_cb()
 	   w3_highlight()
 	   w3_unhighlight()
@@ -229,13 +226,6 @@ var w3int = {
    
    _last_: 0
 };
-
-
-////////////////////////////////
-// deprecated
-////////////////////////////////
-
-function visible_block() {}      // FIXME: used by OLDER versions of the antenna switch ext
 
 
 ////////////////////////////////
@@ -2258,17 +2248,6 @@ function w3int_radio_click(ev, path, cb, cb_param)
    w3int_post_action();
 }
 
-// deprecated (still used by antenna switch ext)
-function w3_radio_btn(text, path, isSelected, save_cb, prop)
-{
-	prop = (arguments.length > 4)? arguments[4] : null;
-	var _class = ' id-'+ path + (isSelected? (' '+ w3_highlight_color) : '') + (prop? (' '+prop) : '');
-	var oc = 'onclick="w3int_radio_click(event, '+ sq(path) +', '+ sq(save_cb) +')"';
-	var s = '<button class="w3-btn w3-ext-btn'+ _class +'" '+ oc +'>'+ text +'</button>';
-	//console.log(s);
-	return s;
-}
-
 function w3_radio_button(psa, text, path, isSelected, cb, cb_param)
 {
 	cb_param = cb_param || 0;
@@ -2473,13 +2452,6 @@ function w3_autorepeat_canceller(path, interval)
 {
    w3int.autorepeat_canceller_path = isUndefined(path)? null : path;
    w3int.autorepeat_canceller_interval = isUndefined(interval)? null : interval;
-}
-
-// deprecated (still used by older versions of antenna switch ext)
-function w3_btn(text, cb)
-{
-   console.log('### DEPRECATED: w3_btn');
-   return w3_button('', text, cb);
 }
 
 function w3_cb_param_encode(cbp)
@@ -2969,6 +2941,10 @@ function w3_input_get(psa, label, path, cb, init_val, placeholder)
    //var update_path_var = psa.includes('w3-update');
    var save = psa.includes('w3-defer')? EXT_SAVE_DEFER : undefined;
 	var cur_val = ext_get_cfg_param(path, (init_val == undefined)? null : init_val, save);
+	
+	// NB: This is still needed because legacy params might still have URI encoding (i.e. %NN)
+	// whereas our newer model that stores json does not. But kiwi_decodeURIComponent() will
+	// correct e.g. any singlet '%' saved in a json param.
 	cur_val = kiwi_decodeURIComponent('w3_input_get:'+ path, cur_val);
 	//console.log('w3_input_get: path='+ path +' cur_val="'+ cur_val +'" placeholder="'+ placeholder +'"');
 	return w3_input(psa, label, path, cur_val, cb, placeholder);
@@ -3023,6 +2999,10 @@ function w3_textarea_get_param(psa, label, path, rows, cols, cb, init_val)
    //var update_path_var = psa.includes('w3-update');
    var save = psa.includes('w3-defer')? EXT_SAVE_DEFER : undefined;
 	var cur_val = ext_get_cfg_param(path, (init_val == undefined)? null : init_val, save);
+	
+	// NB: This is still needed because legacy params might still have URI encoding (i.e. %NN)
+	// whereas our newer model that stores json does not. But kiwi_decodeURIComponent() will
+	// correct e.g. any singlet '%' saved in a json param.
 	cur_val = kiwi_decodeURIComponent('w3_textarea_get_param:'+ path, cur_val);
 	//if (psa.includes('w3-dump')) console.log('w3_textarea_get_param: path='+ path +' cur_val="'+ cur_val +'"');
 	return w3_textarea(psa, label, path, cur_val, rows, cols, cb);
