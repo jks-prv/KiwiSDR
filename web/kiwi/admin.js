@@ -3469,7 +3469,7 @@ function log_resize()
 	var el = w3_el('id-log-msg');
 	if (!el) return;
 	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
-	var log_height = window.innerHeight - hdr_height - (kiwi_isMobile()? 100 : 80);
+	var log_height = window.innerHeight - hdr_height - (kiwi_isMobile()? 100 : 90);
 	el.style.height = px(log_height);
 }
 
@@ -3888,7 +3888,7 @@ function console_resize()
 	var el = w3_el('id-console-msg');
 	if (!el) return;
 	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
-	var adj = admin.console.always_char_oriented? 110 : (admin.console.isMobile? 140 : 150);
+	var adj = admin.console.always_char_oriented? 115 : (admin.console.isMobile? 140 : 150);
 	var console_height = window.innerHeight - hdr_height - adj;
    //if (kiwi_isMobile()) alert('cr '+ console_height +'='+ window.innerHeight +'-'+ hdr_height +'-'+ adj);
 	el.style.height = px(console_height);
