@@ -1220,7 +1220,7 @@ function extint_list_json(param)
    //console.log(extint.ext_names);
    
    // careful: check that iframe menu names don't match an existing one
-   for (var i = 0; i < 8; i++) {
+   for (var i = 0; i < kiwi.iframe_n_menu; i++) {
       var s = 'iframe' + (i? i : '');
       if (isDefined(cfg[s])) {
          var o = cfg[s];

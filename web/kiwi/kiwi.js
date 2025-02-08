@@ -61,6 +61,7 @@ var kiwi = {
    wf_fps: 0,
    is_multi_core: 0,
    log2_seq: 0,
+   iframe_n_menu: 16,
    
    w3_text: 'w3-text-bottom w3-text-css-orange',
    inactivity_panel: false,
