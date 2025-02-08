@@ -373,14 +373,14 @@ void c2s_admin(void *param)
             //printf("ADMIN: %d <%s>\n", strlen(cmd), cmd);
 
             #ifdef ADMIN_TUNNEL
-                if (conn->auth != true || conn->auth_admin != true) {
-                    clprintf(conn, "### SECURITY: NO ADMIN CONN AUTH YET: %d %d %d %s <%s>\n",
+                if (!conn->auth || !conn->auth_admin) {
+                    clprintf(conn, "### SECURITY: NO ADMIN CONN AUTH YET: %d %d %s <%s>\n",
                         conn->auth, conn->auth_admin, conn->remote_ip, cmd);
                     continue;
                 }
             #else
                 if (!conn->auth || !conn->auth_admin) {
-                    lprintf("conn->auth=%d conn->auth_admin=%d\n", conn->auth, conn->auth_admin);
+                    clprintf(conn, "auth=%d auth_admin=%d already_admin=%d\n", conn->auth, conn->auth_admin, conn->already_admin);
                     dump();
                     panic("admin auth");
                 }

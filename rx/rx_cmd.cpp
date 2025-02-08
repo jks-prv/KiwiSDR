@@ -265,14 +265,26 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
     }
     
 	// SECURITY: we accept no incoming commands besides auth, options and keepalive until auth is successful
-	if (conn->auth == false &&
-	    strcmp(cmd, "SET keepalive") != 0 &&
-	    kiwi_str_begins_with(cmd, "SET options") == false &&    // options needed before CMD_AUTH
-	    kiwi_str_begins_with(cmd, "SET auth") == false) {
-		    clprintf(conn, "### SECURITY: NO AUTH YET: %s %s %s\n", stream_name, rx_conn_type(conn), conn->remote_ip);
-		    clprintf(conn, "%d <%.128s>\n", strlen(cmd), cmd);
+	if (conn->auth == false || conn->already_admin) {
+	    bool early_cmd = (
+	        strcmp(cmd, "SET keepalive") == 0 ||
+	        kiwi_str_begins_with(cmd, "SET options") == true ||     // options needed before CMD_AUTH
+	        kiwi_str_begins_with(cmd, "SET auth") == true
+	    );
+	    
+        if (conn->auth == false && !early_cmd) {
+            clprintf(conn, "### SECURITY: NO AUTH YET: %s %s %s\n", stream_name, rx_conn_type(conn), conn->remote_ip);
+            clprintf(conn, "%d <%.128s>\n", strlen(cmd), cmd);
             conn->kick = true;
-		    return true;	// fake that we accepted command so it won't be further processed
+            return true;	// fake that we accepted command so it won't be further processed
+        }
+        
+        // for already_admin conns allow early_cmd and "kick_admins" cmd
+        if (conn->auth == true && conn->already_admin && !early_cmd && strcmp(cmd, "SET kick_admins") != 0) {
+            //clprintf(conn, "### ALREADY_ADMIN IGNORE: %s %s %s\n", stream_name, rx_conn_type(conn), conn->remote_ip);
+            //clprintf(conn, "%d <%.128s>\n", strlen(cmd), cmd);
+            return true;	// fake that we accepted command so it won't be further processed
+        }
 	}
 	
 	#ifdef OPTION_HONEY_POT
@@ -743,6 +755,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 // don't do this for admin requests in the context of a user connection (e.g. dx edit panel)
                 if (type_admin && !conn->auth_kiwi && rx_count_server_conns(ADMIN_CONN) != 0) {
                     badp = BADP_ADMIN_CONN_ALREADY_OPEN;
+                    conn->already_admin = true;
                 }
             }
         
@@ -783,8 +796,11 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             }
             send_msg(conn, false, "MSG max_camp=%d", N_CAMP);
             
-            if (badp != BADP_ADMIN_CONN_ALREADY_OPEN)
+            if (badp == BADP_ADMIN_CONN_ALREADY_OPEN) {
+                conn->already_admin = true;
+            } else {
                 send_msg(conn, false, "MSG badp=%d", badp);
+            }
 
             kiwi_asfree(pwd_m); kiwi_asfree(ipl_m);
             cfg_string_free(pwd_s);
@@ -811,6 +827,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                                 continue;
                             if (c->rx_channel == chan || (c->type == STREAM_EXT && c->rx_channel == chan)) {
                                 c->auth_admin = true;
+                                if (conn->already_admin) c->already_admin = true;
                             }
                         }
                     }
