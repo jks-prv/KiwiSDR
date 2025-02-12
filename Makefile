@@ -22,6 +22,11 @@ BINARY_DISTRO := true
 
 include Makefile.comp.inc
 
+ifeq ($(KIWI_CCACHE),true)
+    CC := ccache $(CC)
+    CPP := ccache $(CPP)
+endif
+
 # for any config-specific options/dependencies
 -include ../kiwi.config/Makefile.kiwi.inc
 
@@ -2261,3 +2266,46 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    blockdev --flushbufs /dev/mmcblk$(SD_CARD_MMC_COPY)
 	    date
 endif
+
+.PHONY: docker-setup-qemu
+docker-setup-qemu:
+	docker run --privileged --rm tonistiigi/binfmt --install all
+
+DOCKER_PLATFORM ?= linux/arm/v7
+DOCKER_MAKE_VARS ?= BBG_BBB=true BYAI= BBAI_64= BBAI= RPI=
+DOCKER_CCACHE_DIR ?= $(HOME)/.cache/kiwisdr-ccache
+
+.PHONY: ci-binary-artifacts
+ci-binary-artifacts: $(BUILD_DIR)/kiwi.bin $(BUILD_DIR)/kiwid.bin
+	mkdir -p ci-artifacts/bin
+	cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
+	cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
+	cp $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW) ci-artifacts/bin/
+	(cd ci-artifacts; sha256sum bin/*.bin > SHA256SUMS)
+
+.PHONY: docker-build
+docker-build:
+	mkdir -p "$(DOCKER_CCACHE_DIR)"
+	docker run \
+		--rm \
+		--platform "$(DOCKER_PLATFORM)" \
+		-v "$$PWD:/root/KiwiSDR" \
+		-v "$(DOCKER_CCACHE_DIR):/root/.ccache" \
+		-w /root/KiwiSDR \
+		debian:11 /bin/bash -ec "\
+			export DEBIAN_FRONTEND=noninteractive; \
+			apt-get update; \
+			apt-get install -y make rsync ccache; \
+			echo 'Debian' > /etc/dogtag; \
+			export CCACHE_DIR=/root/.ccache; \
+			export PATH=/usr/lib/ccache:\$$PATH; \
+			ccache -M 1G; \
+			make check_detect KIWI_CCACHE=true $(DOCKER_MAKE_VARS); \
+			mkdir -p /root/kiwi.config; \
+			make lftp KIWI_CCACHE=true $(DOCKER_MAKE_VARS); \
+			make make_prereq KIWI_CCACHE=true $(DOCKER_MAKE_VARS); \
+			make build_makefile_inc KIWI_CCACHE=true $(DOCKER_MAKE_VARS); \
+			make ci-binary-artifacts KIWI_CCACHE=true $(DOCKER_MAKE_VARS); \
+			make verilog KIWI_CCACHE=true $(DOCKER_MAKE_VARS); \
+			ccache -s \
+		"
