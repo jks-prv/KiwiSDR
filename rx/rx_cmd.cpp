@@ -323,7 +323,9 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             // when server has gone away
             if (conn->type == STREAM_ADMIN || conn->type == STREAM_MFG) {
                 // conn->mc checked for == NULL above
-                send_msg(conn, false, "MSG keepalive");
+                send_msg(conn, false, "MSG keepalive=%d,%d", timer_sec(), conn->isLocal_ip && !conn->force_notLocal);
+                //cprintf(conn, "isLocal=%d force_notLocal=%d isLocal_ip=%d isPassword=%d awaitingPassword=%d\n",
+                //    conn->isLocal, conn->force_notLocal, conn->isLocal_ip, conn->isPassword, conn->awaitingPassword);
             }
 
             conn->keepalive_count++;
@@ -358,15 +360,16 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             conn->awaitingPassword = true;
 
             char *type_m = NULL, *pwd_m = NULL, *ipl_m = NULL;
-            n = sscanf(cmd, "SET auth t=%16ms p=%256ms ipl=%256ms", &type_m, &pwd_m, &ipl_m);
+            int reset_serno = 0;
+            n = sscanf(cmd, "SET auth t=%16ms p=%256ms ipl=%256ms r=%d", &type_m, &pwd_m, &ipl_m, &reset_serno);
 
             if (pwd_m != NULL && strcmp(pwd_m, "#") == 0) {
                 kiwi_asfree(pwd_m);
                 pwd_m = NULL;       // equivalent to NULL so ipl= can be sscanf()'d properly
             }
         
-            //cprintf(conn, "n=%d typem=%s pwd=%s ipl=%s <%s>\n", n, type_m, pwd_m, ipl_m, cmd);
-            if ((n != 1 && n != 2 && n != 3) || type_m == NULL) {
+            //cprintf(conn, "PWD n=%d typem=%s pwd=%s ipl=%s r=%d <%s>\n", n, type_m, pwd_m, ipl_m, reset_serno, cmd);
+            if (n < 1 || n > 4 || type_m == NULL) {
                 send_msg(conn, false, "MSG badp=%d", BADP_TRY_AGAIN);
                 kiwi_asfree(type_m); kiwi_asfree(pwd_m); kiwi_asfree(ipl_m);
                 return true;
@@ -576,7 +579,8 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 char *salt = NULL, *hash = NULL;
             #endif
             
-            bool pwd_not_required = false;
+            bool pwd_not_required = false, allow_pwd_reset = false;
+            int badp = BADP_TRY_AGAIN;
 
             if (type_kiwi_prot) {
                 pwd_s = admcfg_string("user_password", NULL, CFG_REQUIRED);
@@ -586,7 +590,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     if (!kiwi_crypt_file_read(DIR_CFG "/.eup", &seq, &salt, &hash)) {
                         printf("### DANGER: User password file not found or corrupted! Defaulting to no user password set.\n");
                         admcfg_set_string("user_password", "");
-		                admcfg_save_json(cfg_adm.json);     // DANGER: this can collide with admin cfg write!
+		                admcfg_save();      // DANGER: this can collide with admin cfg write!
 		                system("rm -f " DIR_CFG "/.eup");
                         no_pwd = true;
                     }
@@ -651,17 +655,46 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     if (!kiwi_crypt_file_read(DIR_CFG "/.eap", &seq, &salt, &hash)) {
                         printf("### DANGER: Admin password file not found or corrupted! Defaulting to no admin password set.\n");
                         admcfg_set_string("admin_password", "");
-		                admcfg_save_json(cfg_adm.json);     // DANGER: this can collide with admin cfg write!
+		                admcfg_save();      // DANGER: this can collide with admin cfg write!
 		                system("rm -f " DIR_CFG "/.eap");
                         no_pwd = true;
                     }
                 #endif
-
+                
                 bool prior_auth = (conn->auth && conn->auth_admin);
                 cfg_auto_login = admcfg_bool("admin_auto_login", NULL, CFG_REQUIRED);
                 pwd_lfprintf(prior_auth? PRINTF_REG : PRINTF_LOG, "PWD %s config pwd set %s, auto-login %s\n",
                     type_m, no_pwd? "FALSE":"TRUE", cfg_auto_login? "TRUE":"FALSE");
             
+                if (type_admin && reset_serno != 0) {
+                    if (timer_sec() > 5*60) {
+                        cprintf(conn, "PWD RESET: TOO LATE\n");
+                        badp = BADP_RESET_TOO_LATE;
+                    } else
+                    if (reset_serno != net.serno) {
+                        cprintf(conn, "PWD RESET: WRONG SERNO reset_serno=%d serno=%d\n", reset_serno, net.serno);
+                        badp = BADP_RESET_NOT_SERNO;
+                    } else
+                    if (!conn->isLocal_ip) {
+                        cprintf(conn, "PWD RESET: NOT LOCAL NET\n");
+                        badp = BADP_RESET_NOT_LOCAL;
+                    } else
+                    if (rx_count_server_conns(ADMIN_CONN) != 0) {
+                        cprintf(conn, "PWD RESET: ADMIN ALREADY OPEN\n");
+                        badp = BADP_RESET_ALREADY_OPEN;
+                    } else {
+                        cprintf(conn, "PWD RESET: CHANGED TO <%s>\n", pwd_m);
+                        admcfg_set_string("admin_password", pwd_m);
+		                admcfg_save();      // NB: no admin connection should be open to collide with?
+                        allow_pwd_reset = true;
+                    }
+                    if (!allow_pwd_reset) {
+                        send_msg(conn, false, "MSG badp=%d", badp);
+                        kiwi_asfree(type_m); kiwi_asfree(pwd_m); kiwi_asfree(ipl_m);
+                        return true;
+                    }
+                } else
+
                 // Since we no longer cookie save the admin password get session persistence by checking for prior auth.
                 // NB: This is important so the admin pwd isn't asked for repeatedly during e.g. dx list editing.
                 if (prior_auth) {
@@ -698,11 +731,13 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 pwd_s = NULL;
             }
         
-            int badp = BADP_TRY_AGAIN;
-
             pdb_printf("PWD %s %s RESULT: allow=%d pwd_s=<%s> pwd_m=<%s> cant_determine=%d is_local=%d is_local_e=%d %s\n",
                 type_m, uri, allow, pwd_s, pwd_m, cant_determine, is_local, is_local_e, conn->remote_ip);
 
+            if (type_admin && allow_pwd_reset) {
+                badp = BADP_RESET_OK;
+            } else
+            
             if (type_admin && !kiwi.allow_admin_conns) {
                 badp = BADP_DATABASE_UPDATE_IN_PROGRESS;
             } else
@@ -787,10 +822,11 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 }
             }
 
+            bool badp_ok = (badp == BADP_OK || badp == BADP_RESET_OK);
             send_msg(conn, false, "MSG rx_chans=%d", rx_chans);
             send_msg(conn, false, "MSG chan_no_pwd=%d", rx_chan_no_pwd());  // potentially corrected from cfg.chan_no_pwd
             send_msg(conn, false, "MSG chan_no_pwd_true=%d", rx_chan_no_pwd(PWD_CHECK_YES));
-            if (badp == BADP_OK && (stream_snd || conn->type == STREAM_ADMIN)) {
+            if (badp_ok && (stream_snd || conn->type == STREAM_ADMIN)) {
                 send_msg(conn, false, "MSG is_local=%d,%d,%d", chan, is_local? 1:0, conn->tlimit_exempt_by_pwd);
                 //pdb_printf("PWD %s %s\n", type_m, uri);
             }
@@ -808,7 +844,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             if (badp == BADP_NO_MULTIPLE_CONNS) conn->kick = true;
         
             // only when the auth validates do we setup the handler
-            if (badp == BADP_OK || badp == BADP_ADMIN_CONN_ALREADY_OPEN) {
+            if (badp_ok || badp == BADP_ADMIN_CONN_ALREADY_OPEN) {
         
                 // It's possible for both to be set e.g. auth_kiwi set on initial user connection
                 // then correct admin pwd given later for label edit.
@@ -837,7 +873,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     conn->auth = true;
                     conn->isLocal = is_local;
                     conn->isPassword = is_password;
-                
+                    
                     if (stream_snd_or_wf || stream_mon || stream_admin_or_mfg) {
                         send_msg(conn, SM_NO_DEBUG, "MSG version_maj=%d version_min=%d debian_ver=%d model=%d platform=%d ext_clk=%d abyy=%s freq_offset=%.3f",
                             version_maj, version_min, debian_ver, kiwi.model, kiwi.platform, kiwi.ext_clk, eibi_abyy, freq.offset_kHz);

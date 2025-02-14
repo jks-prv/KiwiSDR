@@ -572,6 +572,7 @@ function ext_valpwd(conn_type, pwd, ws)
 	//		with scanf() on the server end, e.g. embedded spaces
 	//		with cookie storage that deletes leading and trailing whitespace
 	pwd = encodeURIComponent(pwd);
+	kiwi.new_pwd = pwd;
 	
 	// must always store the pwd because it is typically requested (and stored) during the
 	// SND negotiation, but then needs to be available for the subsequent W/F connection
@@ -608,11 +609,23 @@ function ext_valpwd(conn_type, pwd, ws)
       conn_type = 'prot';
 	//console.log('SET auth t='+ conn_type +' p='+ pwd + ipl);
 	
+	/*
 	var options = 0;
 	if (kiwi_url_param('nolocal')) options |= extint.OPT_NOLOCAL;
 	if (options != 0) ext_send('SET options='+ options);
+	*/
+	
+	var reset_s = '';
+	// NB: parseInt() because +' ' evaluates to zero!
+	var serno = isNonEmptyString(kiwi.reset_serno)? (parseInt(kiwi.reset_serno)) : -1;
+	if (!isNumber(serno)) serno = -1;
+	if (kiwi.reset_pwd) {
+	   reset_s = ' r='+ serno;
+	   //console.log('RESET PWD serno='+ serno);
+	   if (ipl == '') ipl = ' ipl=#';
+	}
 
-	ext_send('SET auth t='+ conn_type +' p='+ pwd + ipl, ws);
+	ext_send('SET auth t='+ conn_type +' p='+ pwd + ipl + reset_s, ws);
 	// the server reply then calls extint_valpwd_cb() below
 }
 

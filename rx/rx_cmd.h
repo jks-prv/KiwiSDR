@@ -37,3 +37,8 @@ enum rx_common_cmd_key_e {
 #define BADP_NO_MULTIPLE_CONNS              5
 #define BADP_DATABASE_UPDATE_IN_PROGRESS    6
 #define BADP_ADMIN_CONN_ALREADY_OPEN        7
+#define BADP_RESET_TOO_LATE                 8
+#define BADP_RESET_NOT_SERNO                9
+#define BADP_RESET_NOT_LOCAL                10
+#define BADP_RESET_ALREADY_OPEN             11
+#define BADP_RESET_OK                       12

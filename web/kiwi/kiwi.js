@@ -43,6 +43,11 @@ var kiwi = {
    BADP_NO_MULTIPLE_CONNS:             5,
    BADP_DATABASE_UPDATE_IN_PROGRESS:   6,
    BADP_ADMIN_CONN_ALREADY_OPEN:       7,
+   BADP_RESET_TOO_LATE:                8,
+   BADP_RESET_NOT_SERNO:               9,
+   BADP_RESET_NOT_LOCAL:               10,
+   BADP_RESET_ALREADY_OPEN:            11,
+   BADP_RESET_OK:                      12,
    
    AUTH_LOCAL: 0,
    AUTH_PASSWORD: 1,
@@ -50,6 +55,9 @@ var kiwi = {
    is_local: [],
    tlimit_exempt_by_pwd: [],
    admin_save_pwd: false,
+   uptime: 0,
+   isLocal_ip: 0,
+   reset_pwd: false,
 
    stats_interval: 10000,
    conn_tstamp: 0,
@@ -267,8 +275,16 @@ function kiwi_small_screen_continue_cb()
 
 function kiwi_open_ws_cb(p)
 {
-	if (p.conn_type != 'kiwi')
-		setTimeout(function() { setInterval(function() { ext_send("SET keepalive"); }, 5000); }, 5000);
+   // send before starting admin keepalive's so conn->force_notLocal is accurate early enough
+   // on server side for use by reply keepalive
+	var options = 0;
+	if (kiwi_url_param('nolocal')) options |= extint.OPT_NOLOCAL;
+	if (options != 0) ext_send('SET options='+ options);
+
+	if (p.conn_type != 'kiwi') {
+		ext_send("SET keepalive");
+		setInterval(function() { ext_send("SET keepalive"); }, 5000);
+	}
 	
 	if (seriousError)
 	   return;        // don't go any further
@@ -413,12 +429,34 @@ function kiwi_ask_pwd(conn_kiwi)
 	// "&& conn_kiwi" to ignore pathological "/admin?prot" etc.
    var prot = (kiwi_url_param(['p', 'prot', 'protected'], true, false) && conn_kiwi);
 	if (prot) s1 = 'You have requested a password protected channel<br>';
+	
+	var reset_s = '';
+	if (!conn_kiwi && kiwi.isLocal_ip) {
+	   if (kiwi.uptime < 5*60) {
+         reset_s = '<hr>' +
+            w3_checkbox('//w3-label-inline w3-label-not-bold', 'Reset password', 'kiwi.reset_pwd', false, 'w3_bool_cb') +
+            w3_input('w3-margin-T-8|width:80%/w3-label-inline w3-label-not-bold w3-width-full/w3-margin-0|padding:1px|size=8', 'Serial number:', 'kiwi.reset_serno', '', 'w3_string_cb') +
+            w3_text('w3-margin-T-8 w3-text-black w3-text-wrap|width: 280px',
+               'If you\'ve forgotten the admin password you can reset it. Check the box above and enter the Kiwi\'s serial number. ' +
+               'Then enter the new admin password you wish to use. <br><br>' +
+               'For security, this feature will only appear for a 5 minute period after the Kiwi is started.'
+            );
+      } else {
+         reset_s = '<hr>' +
+            w3_text('w3-text-black w3-text-wrap|width: 280px',
+               'For security, the password reset feature will only appear on connections from the local network. ' +
+               'And for only a 5 minute period after the Kiwi is started.'
+            );
+      }
+	}
 
+   // done this way because cfg is not yet available
 	var user_login = conn_kiwi? w3_innerHTML('id-kiwi-user-login').trim() : '';
+
 	var s = isNonEmptyString(user_login)? (user_login +'<br><br>') : 'KiwiSDR: software-defined receiver<br>';
 	s += s1 + try_again +
       w3_input('w3-margin-TB-8/w3-label-inline w3-label-not-bold/kiwi-pw|padding:1px|size=40', 'Password:', 'id-pwd', '', 'kiwi_ask_pwd_cb') +
-      s2;
+      reset_s + s2;
 
 	kiwi_show_msg(s);
 	w3_field_select('id-pwd', {mobile:1});
@@ -433,9 +471,11 @@ function kiwi_valpwd1_cb(badp, p)
 	if (seriousError)
 	   return;        // don't go any further
 
+   console.log('badp='+ badp);
+   var again = false;
+   
 	if (badp == kiwi.BADP_TRY_AGAIN) {
-		kiwi_ask_pwd(p.conn_type == 'kiwi');
-		try_again = 'Try again. ';
+		again = true;
 	} else
 	if (badp == kiwi.BADP_STILL_DETERMINING_LOCAL_IP) {
 	   kiwi_show_msg('Still determining local interface address.<br>Please try reloading page in a few moments.');
@@ -458,15 +498,41 @@ function kiwi_valpwd1_cb(badp, p)
          w3_button('w3-medium w3-padding-smaller w3-red w3-margin-T-8', 'Kick other admin', 'kick_other_admin_cb')
       );
 	} else
-	if (badp == kiwi.BADP_OK) {
+	if (badp == kiwi.BADP_RESET_TOO_LATE) {
+		try_again = 'No password reset after 5 minutes.';
+		again = true;
+	} else
+	if (badp == kiwi.BADP_RESET_NOT_SERNO) {
+	   console.log('BADP_RESET_NOT_SERNO');
+		try_again = "Incorrect Kiwi serial number.";
+		again = true;
+	} else
+	if (badp == kiwi.BADP_RESET_NOT_LOCAL) {
+		try_again = "Not on the Kiwi's local network.";
+		again = true;
+	} else
+	if (badp == kiwi.BADP_RESET_ALREADY_OPEN) {
+		try_again = "Close other admin connections.";
+		again = true;
+	} else
+	if (badp == kiwi.BADP_OK || badp == kiwi.BADP_RESET_OK) {
 		if (p.conn_type == 'kiwi') {
 		
 			// For the client connection, repeat the auth process for the second websocket.
 			// It should always work since we only get here if the first auth has worked.
 			extint.ws = owrx_ws_open_wf(kiwi_open_ws_cb2, p);
 		} else {
+	      if (badp == kiwi.BADP_RESET_OK) {
+	         alert('admin password reset to: '+ dq(kiwi.new_pwd));
+	      }
 			kiwi_valpwd2_cb(0, p);
 		}
+	}
+	kiwi.new_pwd = null;
+	
+	if (again) {
+		kiwi_ask_pwd(p.conn_type == 'kiwi');
+		try_again = 'Try again. ';
 	}
 }
 
