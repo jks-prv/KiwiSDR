@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
     }
     
     bool update_admcfg = false;
-    if (update_admcfg) admcfg_save_json(cfg_adm.json);      // during init doesn't conflict with admin cfg
+    if (update_admcfg) admcfg_save();       // during init doesn't conflict with admin cfg
     
     int v_wb_buf_chans;
 
@@ -497,7 +497,7 @@ int main(int argc, char *argv[])
     do_gps = admcfg_default_bool("enable_gps", true, NULL);
     if (!do_gps) {
 	    admcfg_set_bool("enable_gps", true);
-		admcfg_save_json(cfg_adm.json);     // during init doesn't conflict with admin cfg
+		admcfg_save();      // during init doesn't conflict with admin cfg
 		do_gps = 1;
     }
     

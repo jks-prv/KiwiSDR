@@ -443,10 +443,10 @@ void eeprom_update(eeprom_action_e action)
                 }
                 admcfg_string_free(apw);
             }
-            admcfg_save_json(cfg_adm.json);
+            admcfg_save();
             
             cfg_set_int("sdr_hu_dom_sel", DOM_SEL_REV);
-            cfg_save_json(cfg_cfg.json);
+            cfg_save();
             lprintf("EEPROM dom_sel SET DOM_SEL_REV\n");
         }
     }

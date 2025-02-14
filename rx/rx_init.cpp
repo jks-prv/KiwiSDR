@@ -121,8 +121,8 @@ void cfg_adm_transition()
 
 
 	// update JSON files
-	admcfg_save_json(cfg_adm.json);     // during init doesn't conflict with admin cfg
-	cfg_save_json(cfg_cfg.json);        // during init doesn't conflict with admin cfg
+	admcfg_save();      // during init doesn't conflict with admin cfg
+	cfg_save();         // during init doesn't conflict with admin cfg
 }
 
 int inactivity_timeout_mins, ip_limit_mins;
@@ -583,7 +583,7 @@ void update_vars_from_config(bool called_at_init)
     if (up_cfg) update_cfg = cfg_gdb_break(true);
 	if (update_cfg) {
         //printf("_cfg_save_json update_cfg\n");
-		cfg_save_json(cfg_cfg.json);    // during init doesn't conflict with admin cfg
+		cfg_save();     // during init doesn't conflict with admin cfg
 	}
 
 
@@ -768,7 +768,7 @@ void update_vars_from_config(bool called_at_init)
     //admcfg_default_bool("ip_address.use_static", false, &update_admcfg);
 
 	if (update_admcfg)
-		admcfg_save_json(cfg_adm.json);     // during init doesn't conflict with admin cfg
+		admcfg_save();      // during init doesn't conflict with admin cfg
 
 
     // one-time-per-run initializations
