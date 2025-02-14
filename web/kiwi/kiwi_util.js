@@ -2371,11 +2371,12 @@ function open_websocket(stream, open_cb, open_cb_param, msg_cb, recv_cb, error_c
 	var tstamp = (w3_opt(opt, 'new_ts') == true)? ((new Date()).getTime()) : kiwi.conn_tstamp;
 	ws_url = ws_protocol + ws_url +'/ws/'+ (no_wf? 'no_wf/':'kiwi/') + tstamp +'/'+ stream;
 	var qs = w3_opt(opt, 'qs');
-	if (isString(qs))
-	   ws_url += '?'+ qs;
-	else
-	if (isNonEmptyString(window.location.search))
+	if (isString(qs)) {
+	   if (qs != '') ws_url += '?'+ qs;
+	} else
+	if (isNonEmptyString(window.location.search)) {
 	   ws_url += window.location.search;      // pass query string to support "&foff="
+	}
 	if (no_wf) wf.no_wf = true;
 	
 	console.log('$$open_websocket '+ ws_url);
