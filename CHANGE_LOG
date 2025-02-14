@@ -3,6 +3,23 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.803  February 14, 2025
+    Added admin password reset scheme. See KiwiSDR forum for discussion.
+    
+    Iframe extension
+        Show all 16 instances in user extension menu. (thanks VK3KHZ)
+        Prevent duplicate menu names from being setup. (thanks Steffen)
+    
+    SSTV extension
+        Added support for modes:
+            PD: PD120 (used by ISS) PD160 PD180 PD240 (but not PD290)
+            Robot: R12
+            Wraase: SC60
+            Pasokon: P3 P5 P7
+            FAX480
+    
+    Fixed bug preventing proxy client start if not running in certain situations.
+
 v1.802  February 7, 2025
     Added support for multiple iframe instances, up to 16. (thanks VK3KHZ)
         Admin > Extensions > iframe has a new button called "populate with standard entries" which

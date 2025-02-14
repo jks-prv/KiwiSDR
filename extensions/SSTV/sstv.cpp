@@ -26,12 +26,14 @@ sstv_chan_t sstv_chan[MAX_RX_CHANS];
 static void sstv_file_data(int rx_chan, int chan, int nsamps, TYPEMONO16 *samps, int freqHz)
 {
     sstv_chan_t *e = &sstv_chan[rx_chan];
-    if (!e->test || e->s2p >= sstv.s2p_end) return;
+    if (!e->test) return;
+    int tn = e->test_n;
+    if (e->s2p[tn] >= sstv.s2p_end[tn]) return;
     
     for (int i = 0; i < nsamps; i++) {
-        u2_t t = (u2_t) *e->s2p;
-        if (e->s2p < sstv.s2p_end) *samps++ = (s2_t) FLIP16(t);
-        e->s2p++;
+        u2_t t = (u2_t) *e->s2p[tn];
+        if (e->s2p[tn] < sstv.s2p_end[tn]) *samps++ = (s2_t) FLIP16(t);
+        e->s2p[tn]++;
     }
 }
 #endif
@@ -146,7 +148,8 @@ bool sstv_msgs(char *msg, int rx_chan)
 		printf("SSTV: start\n");
 
         #ifdef SSTV_TEST_FILE
-            e->s2p = e->s22p = sstv.s2p_start;
+            int tn = e->test_n;
+            e->s2p[tn] = e->s22p[tn] = sstv.s2p_start[tn];
             
             // misuse ext_register_receive_real_samps() to pushback audio samples from the test file
 		    ext_register_receive_real_samps(sstv_file_data, rx_chan);
@@ -222,18 +225,20 @@ bool sstv_msgs(char *msg, int rx_chan)
 		return true;
 	}
 	
-	if (strcmp(msg, "SET test") == 0) {
-		printf("SSTV: test\n");
+	int test;
+	if (sscanf(msg, "SET test=%d", &test) == 1) {
+        test = CLAMP(test, 0, sstv.n_test-1);
+		printf("SSTV: test=%d\n", test);
 
         #ifdef SSTV_TEST_FILE
-            e->s2p = e->s22p = sstv.s2p_start;
+            int tn = e->test_n = test;
+            e->s2p[tn] = e->s22p[tn] = sstv.s2p_start[tn];
 		#endif
 
-        bool test = (snd_rate != SND_RATE_3CH);
-		e->test = test;
-		if (test) ext_send_msg_encoded(rx_chan, false, "EXT", "mode_name", "");
+		e->test = (snd_rate != SND_RATE_3CH);
+		if (e->test) ext_send_msg_encoded(rx_chan, false, "EXT", "mode_name", "");
         ext_send_msg_encoded(rx_chan, false, "EXT", "status",
-            test? "test image" : "test image not available in 3-channel/20 kHz mode");
+            e->test? "test image" : "test image not available in 3-channel/20 kHz mode");
 		return true;
 	}
 	
@@ -280,25 +285,42 @@ ext_t sstv_ext = {
 	EXT_FLAGS_HEAVY
 };
 
-void SSTV_main() {
-
-    ext_register(&sstv_ext);
-    sstv.nom_rate = snd_rate;
-
 #ifdef SSTV_TEST_FILE
-    int n;
+static void sstv_testfile(int which, const char *fname)
+{
     char *file;
     int fd;
-    #define SSTV_FNAME      DIR_CFG "/samples/SSTV.test.au"
-    printf("SSTV: mmap " SSTV_FNAME "\n");
-    scall("sstv open", (fd = open(SSTV_FNAME, O_RDONLY)));
-    off_t fsize = kiwi_file_size(SSTV_FNAME);
+    printf("SSTV: mmap %s\n", fname);
+    scall("sstv open", (fd = open(fname, O_RDONLY)));
+    off_t fsize = kiwi_file_size(fname);
     printf("SSTV: size=%d\n", fsize);
     file = (char *) mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
     if (file == MAP_FAILED) sys_panic("SSTV mmap");
     close(fd);
     int words = fsize/2;
-    sstv.s2p_start = (s2_t *) file;
-    sstv.s2p_end = sstv.s2p_start + words;
+    sstv.s2p_start[which] = (s2_t *) file;
+    sstv.s2p_end[which] = sstv.s2p_start[which] + words;
+}
+#endif
+
+void SSTV_main() {
+
+    ext_register(&sstv_ext);
+    sstv.nom_rate = snd_rate;
+
+    ModeSpec_t *m = ModeSpec;
+    for (int i = 0; i < ARRAY_LEN(&ModeSpec[0]); i++, m++) {
+        m->NumLines /= m->LineHeight;   // do here instead of specifying in ModeSpec[]
+        printf("%dx%d %s\n", m->ImgWidth, m->NumLines, m->ShortName);
+    }
+    
+#ifdef SSTV_TEST_FILE
+    sstv_testfile(0, DIR_CFG "/samples/SSTV.test.au");
+    sstv.n_test = 1;
+#endif
+
+#ifdef SSTV_TEST_FILE2
+    sstv_testfile(1, DIR_CFG "/samples/SSTV.test2.au");
+    sstv.n_test = 2;
 #endif
 }

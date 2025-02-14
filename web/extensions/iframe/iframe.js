@@ -5,7 +5,6 @@ var iframe = {
    ext_name: 'iframe',  // NB: must match iframe.cpp:iframe_ext.name
    first_time: true,
    inst: 0,             // NB: not a cfg param, just the instance menu selection
-   n_menu: 16,
    menu: null,
    allow_tune: false,
    msg_handler: null,
@@ -145,7 +144,7 @@ function iframe_controls_setup()
    iframe.inst = 0;
 
    if (menu_name != 'iframe') {
-      for (var i = 0; i < iframe.n_menu; i++) {
+      for (var i = 0; i < kiwi.iframe_n_menu; i++) {
          var s = 'iframe' + (i? i : '');
          if (isDefined(cfg[s])) {
             var o = cfg[s];
@@ -266,11 +265,16 @@ function iframe_blur()
    }
 }
 
+
+////////////////////////////////
+// admin interface
+////////////////////////////////
+
 // called to display HTML for configuration parameters in admin interface
 function iframe_admin_html()
 {
    var inst_menu = [];
-   for (var i = 0; i < iframe.n_menu; i++) {
+   for (var i = 0; i < kiwi.iframe_n_menu; i++) {
       var menu = iframe_get_string('menu', i);
       if (isNonEmptyString(menu)) menu = ': '+ menu;
       inst_menu.push(i + menu);
@@ -286,7 +290,7 @@ function iframe_admin_html()
          '</ul>' +
          'Both sources are wrapped in a browser iframe for better isolation from the Kiwi user interface. <br>' +
          'If enabled by the checkbox below it\'s possible for the iframe content to set the Kiwi frequency, mode and zoom. <br><br>' +
-         'There can be up to '+ iframe.n_menu +' iframe instances, each with a separate named entry in the extension menu.'
+         'There can be up to '+ kiwi.iframe_n_menu +' iframe instances, each with a separate named entry in the extension menu.'
       ) +
       '<hr>' +
 
@@ -360,12 +364,12 @@ function iframe_populate_cb(path)
    
    // construct list of existing url and html entry fields
    var inst_urls = [];
-   for (i = 0; i < iframe.n_menu; i++) {
+   for (i = 0; i < kiwi.iframe_n_menu; i++) {
       inst_urls.push(iframe_get_string('url', i));
    }
    console.log(inst_urls);
    var inst_html = [];
-   for (i = 0; i < iframe.n_menu; i++) {
+   for (i = 0; i < kiwi.iframe_n_menu; i++) {
       inst_html.push(iframe_get_string('html', i));
    }
    console.log(inst_html);
@@ -401,7 +405,7 @@ function iframe_populate_cb(path)
          while (!iframe_inst_empty(j)) {
             j++;     // skip existing non-empty entries
          }
-         if (j == iframe.n_menu) return;
+         if (j == kiwi.iframe_n_menu) return;
          iframe_set(j, 'src', o.src);
          iframe_set(j, 'menu', o.menu);
          iframe_set(j, 'width', o.w);
@@ -447,8 +451,22 @@ function iframe_src_cb(path, idx, first)
 
 function iframe_menu_cb(path, val, first)
 {
-   // rename current instance menu selection
    val = val.trim();
+   
+   // prevent duplicate menu names
+   var inst_menu = [];
+   for (var i = 0; i < kiwi.iframe_n_menu; i++) {
+      var menu = iframe_get_string('menu', i);
+      if (isNonEmptyString(menu))
+         inst_menu.push(menu);
+   }
+   console.log(inst_menu);
+   if (inst_menu.includes(val)) {
+      w3_placeholder(path, 'duplicate name -- choose another');
+      return;
+   }
+
+   // rename current instance menu selection
    console.log('iframe_menu_cb: path='+ path +' val='+ val);
    w3_select_enum('id-iframe-inst',
       function(el, i) {

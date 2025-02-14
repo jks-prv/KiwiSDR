@@ -373,16 +373,17 @@ void c2s_admin(void *param)
             //printf("ADMIN: %d <%s>\n", strlen(cmd), cmd);
 
             #ifdef ADMIN_TUNNEL
-                if (conn->auth != true || conn->auth_admin != true) {
-                    clprintf(conn, "### SECURITY: NO ADMIN CONN AUTH YET: %d %d %d %s <%s>\n",
+                if (!conn->auth || !conn->auth_admin) {
+                    clprintf(conn, "### SECURITY: NO ADMIN CONN AUTH YET: %d %d %s <%s>\n",
                         conn->auth, conn->auth_admin, conn->remote_ip, cmd);
                     continue;
                 }
             #else
                 if (!conn->auth || !conn->auth_admin) {
-                    lprintf("conn->auth=%d conn->auth_admin=%d\n", conn->auth, conn->auth_admin);
+                    clprintf(conn, "*** auth=%d auth_admin=%d already_admin=%d <%s>\n",
+                        conn->auth, conn->auth_admin, conn->already_admin, cmd);
                     dump();
-                    panic("admin auth");
+                    //panic("admin auth");
                 }
             #endif
 
@@ -571,7 +572,14 @@ void c2s_admin(void *param)
             if (n == 4) {
                 const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
 
-                if (reg) {
+               #define FRPC_EXISTING    0
+               #define FRPC_NEW         1
+               #define FRPC_UPDATE_HOST 2
+               #define FRPC_PROXY_UPD   3
+
+                if (reg == FRPC_PROXY_UPD) {
+                    // update info on proxy server
+                    
                     // FIXME: validate unencoded user & host for allowed characters
                     asprintf(&cmd_p, "curl -Ls --ipv4 --connect-timeout 15 \"%s/?u=%s&h=%s&a=%d\"", proxy_server, user_m, host_m, rev_auto);
                     reply = non_blocking_cmd(cmd_p, &status);
@@ -591,17 +599,28 @@ void c2s_admin(void *param)
                     send_msg(conn, SM_NO_DEBUG, "ADM rev_status=%d", status);
                     net.proxy_status = status;
                 } else {
-                    asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
-                        proxy_server, user_m, host_m, net.port_ext, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
-                    printf("frpc setup: %s\n", cmd_p);
-                    system(cmd_p);
+                    // setup frpc.ini and restart frpc if new account or host name updated (FRPC_NEW, FRPC_UPDATE_HOST)
+                    // or check for existing (FRPC_EXISTING) and frpc is *not* running for some reason
 
-                    // NB: can't use e.g. non_blocking_cmd() here to get the authorization status
-                    // because frpc doesn't fork and return on authorization success.
-                    // So the non_blocking_cmd() will hang.
-		            lprintf("PROXY: starting frpc\n");
-                    system("killall -q frpc; sleep 1");
-                    system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
+                    reply = non_blocking_cmd("pgrep frpc", &status);
+                    kstr_free(reply);
+                    bool frpc_running = (status == 0);
+                    lprintf("PROXY: reg=%d status=%d frpc_running=%d\n", reg, status, frpc_running);
+
+                    if ((reg == FRPC_EXISTING && !frpc_running) || reg != FRPC_EXISTING) {
+                        asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
+                            proxy_server, user_m, host_m, net.port_ext, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
+                        printf("PROXY frpc setup: %s\n", cmd_p);
+                        system(cmd_p);
+    
+                        // NB: can't use e.g. non_blocking_cmd() here to get the authorization status
+                        // because frpc doesn't fork and return on authorization success.
+                        // So the non_blocking_cmd() will hang.
+                        lprintf("PROXY: starting frpc\n");
+                        system("killall -q frpc; sleep 1");
+                        system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
+                    } else
+                        cmd_p = NULL;
                 }
             
                 kiwi_asfree(cmd_p);

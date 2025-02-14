@@ -97,7 +97,7 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
     check(HannA != NULL);
     
     if (!Redraw) {
-        ext_send_msg(e->rx_chan, false, "EXT img_width=%d", m->ImgWidth);
+        ext_send_msg(e->rx_chan, false, "EXT img_size=%d,%d", m->ImgWidth, m->NumLines * (m->LineDouble? 2:1));
         ext_send_msg_encoded(e->rx_chan, false, "EXT", "new_img", "%s", m->ShortName);
     } else {
         ext_send_msg(e->rx_chan, false, "EXT redraw");
@@ -125,7 +125,7 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
     switch (m->format) {
 
     case FMT_420:
-        // Sp00s[12]
+        // Sp00g[12]
         ChanLen[0]   = m->PixelTime * m->ImgWidth * 2;
         ChanLen[1]   = ChanLen[2] = m->PixelTime * m->ImgWidth;
         ChanStart[0] = m->SyncTime + m->PorchTime;
@@ -134,7 +134,7 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
         break;
 
     case FMT_422:
-        // Sp00s1s2
+        // Sp00g1g2
         ChanLen[0]   = m->PixelTime * m->ImgWidth * 2;
         ChanLen[1]   = ChanLen[2] = m->PixelTime * m->ImgWidth;
         ChanStart[0] = m->SyncTime + m->PorchTime;
@@ -152,17 +152,17 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
         ChanStart[2] = ChanStart[1] + ChanLen[1];
         break;
 
-    case FMT_REV:
-        // s0s1Sp2
+    case FMT_111_REV:
+        // g0g1Sp2
         ChanLen[0]   = ChanLen[1] = ChanLen[2] = m->PixelTime * m->ImgWidth;
         ChanStart[0] = m->SeptrTime;
         ChanStart[1] = ChanStart[0] + ChanLen[0] + m->SeptrTime;
         ChanStart[2] = ChanStart[1] + ChanLen[1] + m->SyncTime + m->PorchTime;
         break;
 
-    case FMT_DEFAULT:
+    case FMT_111:
     default:
-        // Sp0s1s2
+        // Sp0g1g2
         ChanLen[0]   = ChanLen[1] = ChanLen[2] = m->PixelTime * m->ImgWidth;
         ChanStart[0] = m->SyncTime + m->PorchTime;
         ChanStart[1] = ChanStart[0] + ChanLen[0] + m->SeptrTime;
@@ -453,10 +453,14 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
                     p[2] = (*e->image)[tx][y][1];
                     break;
 
-                case YUV: {
+                // 2 YUVY FMT_111 PD* MP* (one scanline of data produces two lines of output)
+                // 1 YUV  FMT_420 R36 (y0u01, y1v01, y2u23, y3v23, ...)
+                // 1 YUV  FMT_422 R72 MR* ML* (y0y0u0v0)
+                // 2 YUV  FMT_422 R24 (line doubling to fill-out 120 => 240 height)
+                case YUV: {     // aka YCrCb
                     u1_t Y = (*e->image)[tx][y][0];
-                    u1_t U = (*e->image)[tx][y][1];
-                    u1_t V = (*e->image)[tx][y][2];
+                    u1_t U = (*e->image)[tx][y][1];     // R-Y
+                    u1_t V = (*e->image)[tx][y][2];     // B-Y
                     p[0] = clip((100 * Y + 140 * U - 17850) / 100.0);
                     p[1] = clip((100 * Y -  71 * U - 33 * V + 13260) / 100.0);
                     p[2] = clip((100 * Y + 178 * V - 22695) / 100.0);
@@ -469,14 +473,25 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
                 }
             }
         
+            // fmt      NumChans
+            // FMT_BW   1
+            // FMT_420  2
+            // else     3
             if (Channel >= NumChans-1) {
                 //real_printf("%s%d ", Redraw? "R":"L", y); fflush(stdout);
-                int _snr = MIN(SNR, 127);
-                _snr = MAX(_snr, -128);
+                struct {
+                    u1_t snr;
+                    u1_t w[2], h[2];
+                } hdr;
+                int snr_i = (int) SNR + 128;
+                hdr.snr = CLAMP(snr_i, 0, 255);
+                //printf("SNR %.1f %d %d\n", SNR, snr_i, hdr.snr);
+                SET_BE_U16(hdr.w, m->ImgWidth);
+                SET_BE_U16(hdr.h, m->NumLines * m->LineHeight);
                 
                 // double-up for 120/128 line modes
                 for (int i = m->LineHeight; i > 0; i--)
-                    ext_send_msg_data2(e->rx_chan, false, Redraw? 1:0, (u1_t) _snr+128, pixrow, m->ImgWidth*3 * sizeof(u1_t));
+                    ext_send_msg_data2(e->rx_chan, false, Redraw? 1:0, (u1_t *) &hdr, sizeof(hdr), pixrow, m->ImgWidth*3 * sizeof(u1_t));
                 if (Redraw) TaskSleepReasonMsec("sstv redraw", 10);
             }
         }

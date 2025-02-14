@@ -4,23 +4,33 @@ var sstv = {
    ext_name: 'SSTV',    // NB: must match example.c:example_ext.name
    first_time: true,
    
+   // marginL | (pg_sp+iw) | (pg_sp+iw) | (pg_sp+iw)
+   //
+   //                  |768
+   // 22 64+320 64+320 64+320
+   //    64+496    |560
+   //    64+800          |864       // PD290
+   
    w: 3*(64+320) - 64,
    h: 256,
    iw: 320,
    isp: 64,
    iws: 320+64,
    page: 0,
+   pw: [320, 320, 320],
+   ph: [256, 256, 256],
    pg_sp: 64,
+   marginL: 22,
    startx: 22+64,
    tw: 0,
    data_canvas: 0,
    image_y: 0,
    shift_second: false,
    auto: true,
+   max_height: 256,
    
    CMD_DRAW: 0,
    CMD_REDRAW: 1,
-   img_width: 0,
    
    //en.wikipedia.org/wiki/Slow-scan_television#Frequencies
    freqs_s: [ '3630_ANZ', '3730_EU', '3845_NA', 7171, 7180, 14230, 14233, 21340, 28680 ]
@@ -36,6 +46,7 @@ function SSTV_main()
 
 function sstv_recv(data)
 {
+   var i;
    var canvas = sstv.data_canvas;
    var ct = canvas.ctx;
 	var firstChars = arrayBufferToStringLen(data, 3);
@@ -45,12 +56,14 @@ function sstv_recv(data)
 		var ba = new Uint8Array(data, 4);
 		var cmd = ba[0];
 		var snr = ba[1];
-		var o = 2;
+		var width = (ba[2] << 8) + ba[3];
+		var height = (ba[4] << 8) + ba[5];
+		var o = 6;
 		var len = ba.length-1;
-
+		
       if (cmd == sstv.CMD_DRAW || cmd == sstv.CMD_REDRAW) {
          var imd = canvas.imd;
-         for (var i = 0; i < sstv.img_width; i++) {
+         for (i = 0; i < width; i++) {
             imd.data[i*4+0] = ba[o];
             imd.data[i*4+1] = ba[o+1];
             imd.data[i*4+2] = ba[o+2];
@@ -61,15 +74,14 @@ function sstv_recv(data)
          if (sstv.image_y < sstv.h) {
             sstv.image_y++;
          } else {
-            x = sstv.startx;
-            var w = sstv.w;
-            ct.drawImage(canvas, x,1,w,sstv.h-1, x,0,w,sstv.h-1);   // scroll up
+            x = Math.round(sstv.startx + (sstv.page * sstv.iws));
+            ct.drawImage(canvas, x,1,width,sstv.h-1, x,0,width,sstv.h-1);  // scroll up
          }
          x = Math.round(sstv.startx + (sstv.page * sstv.iws));
-         ct.putImageData(imd, x, sstv.image_y-1, 0,0,sstv.iw,1);
+         ct.putImageData(imd, x, sstv.image_y-1, 0,0,width,1);
          if (cmd == sstv.CMD_DRAW)
             sstv_status_cb('line '+ sstv.line +', SNR '+ ((snr-128).toFixed(0)) +' dB');
-         //console.log('line '+ sstv.line);
+         //console.log('SSTV line '+ sstv.line);
          sstv.line++;
       } else
 		   console.log('sstv_recv: DATA UNKNOWN cmd='+ cmd +' len='+ len);
@@ -81,7 +93,7 @@ function sstv_recv(data)
 	var stringData = arrayBufferToString(data);
 	var params = stringData.substring(4).split(" ");
 
-	for (var i=0; i < params.length; i++) {
+	for (i=0; i < params.length; i++) {
 		var param = params[i].split("=");
 
 		if (0 && param[0] != "keepalive") {
@@ -97,10 +109,30 @@ function sstv_recv(data)
 				sstv_controls_setup();
 				break;
 
-			case "img_width":
-				sstv.img_width = param[1];
-				//console.log('img_width='+ sstv.img_width);
-				break;
+         case "img_size":
+            var a = param[1].split(',');
+            var w = +a[0];
+            var h = +a[1];
+            console.log('SSTV img_size='+ w +'x'+ h);
+            sstv.iw = w;
+            sstv.iws = w + sstv.isp;
+            sstv.h = h;
+            sstv.cur_w = w;
+            sstv.cur_h = h;
+
+            // height expansion (only grows, never shrinks)
+            if (h > sstv.max_height) {
+               sstv.max_height = h;
+               w3_el('id-sstv-data').style.height = px(h);
+               w3_el('id-sstv-data-canvas').height = h;
+               ext_set_data_height(h);
+
+              // NB: when canvas height changed color resets to black, so refill entire canvas
+               ct.fillStyle = 'dimGray';
+               ct.fillRect(sstv.marginL,0, sstv.w+sstv.isp,h);
+            }
+            
+            break;
 
 			case "new_img":
 			   var mode_name = decodeURIComponent(param[1]);
@@ -147,19 +179,41 @@ function sstv_clear_display(mode_name)
 {
    var ct = sstv.data_canvas.ctx;
    var x = sstv.startx + (sstv.page * sstv.iws);
-   var y = sstv.h/2;
+   //var y = sstv.h/2;
+   var y = 256/2;
    var ts = 24;
    var isp = sstv.isp;
 
-   // clear previous marker
+   // clear previous page marker
    if (sstv.page != -1) {
       ct.fillStyle = 'dimGray';
       ct.fillRect(x-ts,y-ts/2, ts,ts);
    }
 
-   sstv.page = (sstv.page+1) % 3;
+   console.log('SSTV PRE page='+ sstv.page +' cur_w|h='+ sstv.cur_w +'|'+ sstv.cur_h +' pw|h='+ sstv.pw[sstv.page] +'|'+ sstv.ph[sstv.page]);
+   if (sstv.page == 0 && sstv.pw[sstv.page] != 320 && sstv.cur_w == 320) {
+      sstv.page = 2;
+   } else
+   if (sstv.cur_w > 320) {
+      sstv.page = 0;
+   } else {
+      sstv.page = (sstv.page+1) % 3;
+   }
+   console.log('SSTV POST page='+ sstv.page);
    x = sstv.startx + (sstv.page * sstv.iws);
 
+   // clear previous page
+   if (sstv.page != -1) {
+      ct.fillStyle = 'dimGray';
+      var pages = (sstv.pw[sstv.page] > 320 || sstv.cur_w > 320)? 2:1;
+      var w = pages * (64+320);
+      console.log('SSTV CLR pages='+ pages +' x='+ (x-64) +' w='+ (w+64));
+      ct.fillRect(x-64,0, w+64,sstv.ph[sstv.page]);
+   }
+   sstv.pw[sstv.page] = sstv.cur_w;
+   sstv.ph[sstv.page] = sstv.cur_h;
+
+   // draw current page marker
    ct.fillStyle = 'yellow';
    ct.beginPath();
    ct.moveTo(x-ts, y-ts/2);
@@ -168,16 +222,13 @@ function sstv_clear_display(mode_name)
    ct.closePath();
    ct.fill();
    
-   // clear previous text
-   ct.fillStyle = 'dimGray';
-   var font_sz = 16;
-   ct.fillRect(x-isp,y-ts-font_sz, isp,ts);
-
-   ct.font = font_sz +'px Arial';
+   // draw mode text
+   ct.font = '16px Arial';
    ct.fillStyle = 'yellow';
    var tx = x - ct.measureText(mode_name).width -4;
    ct.fillText(mode_name, tx, y - ts);
 
+   // background box
    ct.fillStyle = 'lightCyan';
    ct.fillRect(x,0, sstv.iw,sstv.h);
    sstv.image_y = 0;
@@ -192,7 +243,7 @@ function sstv_controls_setup()
    var data_html =
       time_display_html('sstv') +
 
-      w3_div('id-sstv-data|left:0; width:'+ px(sstv.tw) +'; background-color:black; position:relative;',
+      w3_div('id-sstv-data|left:0; width:'+ px(sstv.tw) +'; height:'+ px(sstv.h) +'; background-color:black; position:relative;',
    		'<canvas id="id-sstv-data-canvas" class="w3-crosshair" width='+ dq(sstv.tw)+' style="position:absolute;"></canvas>'
       );
 
@@ -209,7 +260,11 @@ function sstv_controls_setup()
 				   w3_button('id-sstv-btn-auto w3-margin-left w3-padding-smaller', 'Undo adjust', 'sstv_auto_cb'),
 				   w3_button('w3-margin-left w3-padding-smaller w3-css-yellow', 'Reset', 'sstv_reset_cb'),
 				   w3_button('w3-margin-left w3-padding-smaller w3-blue', 'Save images', 'sstv_save_cb'),
-				   w3_button('w3-margin-left w3-padding-smaller w3-aqua', 'Test', 'sstv_test_cb')
+				   w3_button('w3-margin-left w3-padding-smaller w3-aqua', 'Test', 'sstv_test_cb', 0),
+				   dbgUs?
+				         w3_button('w3-margin-L-8 w3-padding-smaller w3-aqua', 'T2', 'sstv_test_cb', 1)
+				      :
+				         ''
 				),
             w3_half('', '',
                w3_div('id-sstv-mode-name'),
@@ -235,14 +290,14 @@ function sstv_controls_setup()
 	sstv.data_canvas.addEventListener("mousedown", sstv_mousedown, false);
 	if (kiwi_isMobile())
 		sstv.data_canvas.addEventListener('touchstart', sstv_touchstart, false);
-   sstv.data_canvas.height = sstv.h.toString();
    ext_set_data_height(sstv.h);
+   sstv.data_canvas.height = sstv.h;
 
    var ct = sstv.data_canvas.ctx;
    ct.fillStyle = 'black';
    ct.fillRect(0,0, sstv.tw,sstv.h);
    ct.fillStyle = 'dimGray';
-   ct.fillRect(sstv.startx-sstv.isp,0, sstv.w+sstv.isp,sstv.h);
+   ct.fillRect(sstv.marginL,0, sstv.w+sstv.isp,sstv.h);
    sstv.page = -1;
    sstv.shift_second = false;
 
@@ -262,7 +317,7 @@ function sstv_controls_setup()
             ext_send('SET mmsstv');
          } else
          if (w3_ext_param('test', a).match) {
-            sstv_test_cb();
+            sstv_test_cb(null, 0);
          } else
          if (w3_ext_param('noadj', a).match) {
             sstv.auto = 1;    // gets inverted by sstv_auto_cbox_cb()
@@ -380,7 +435,8 @@ function sstv_test_cb(path, val, first)
    // mode_name & status fields set in cpp code
 	sstv_result_cb("");
 	sstv_fsk_id_cb("");
-	ext_send('SET test');
+	console.log('sstv_test_cb '+ val);
+	ext_send('SET test='+ val);
 }
 
 function sstv_save_cb(path, val, first)
@@ -417,18 +473,18 @@ function SSTV_help(show)
                '<ul>' +
                   '<li>Martin: M1 M2 M3 M4</li>' +
                   '<li>Scottie: S1 S2 SDX</li>' +
-                  '<li>Robot: R72 R36 R24 R24-BW R12-BW R8-BW</li>' +
-                  '<li>Wraase: SC120 SC180</li>' +
-                  '<li>PD: PD-50 PD-90</li>' +
+                  '<li>Robot: R12 R24 R36 R72 R8-BW R12-BW R24-BW</li>' +
+                  '<li>Wraase: SC60 SC120 SC180</li>' +
+                  '<li>Pasokon: P3 P5 P7</li>' +
+                  '<li>PD: PD50 PD90 PD120 PD160 PD180 PD240</li>' +
                   '<li>MMSSTV: MR73 MR90 MR115 MR140 MR175 MP73 MP115 MP140 MP175</li>' +
+                  '<li>FAX480</li>' +
                '</ul>' +
                'Unsupported modes:' +
                '<ul>' +
-                  '<li>Wraase: SC60</li>' +
-                  '<li>Amiga: AVT</li>' +
-                  '<li>Pasokon: P3 P5 P7</li>' +
-                  '<li>PD: PD-120 PD-160 PD-180 PD-240 PD-290</li>' +
+                  '<li>PD: PD290</li>' +
                   '<li>MMSSTV: MN73 MN110 MN140 MC110 MC140 MC180</li>' +
+                  '<li>Amiga: AVT24 AVT90 AVT94</li>' +
                '</ul>' +
                'If the image is still slanted or offset after auto adjustment you can make a manual<br>' +
                'correction. If you see what looks like an edge in the image then click in two places along<br>' +

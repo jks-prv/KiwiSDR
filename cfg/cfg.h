@@ -68,6 +68,7 @@ extern cfg_t cfg_cfg, cfg_adm, cfg_dx, cfg_dxcfg, cfg_dxcomm, cfg_dxcomm_cfg;
 #define CFG_LOOKUP_LVL1 ((jsmntok_t *) -1)
 
 #define cfg_init()							_cfg_init(&cfg_cfg, CFG_NONE, NULL)
+#define cfg_save()				            _cfg_save_json(&cfg_cfg, cfg_cfg.json)
 #define	cfg_get_json(size)					_cfg_get_json(&cfg_cfg, size)
 #define cfg_save_json(json)					_cfg_save_json(&cfg_cfg, json)
 #define cfg_walk(id, cb, p1, p2)            _cfg_walk(&cfg_cfg, id, cb, p1, p2)
@@ -110,6 +111,7 @@ extern cfg_t cfg_cfg, cfg_adm, cfg_dx, cfg_dxcfg, cfg_dxcomm, cfg_dxcomm_cfg;
 #define cfg_default_object(name, val, err) 	_cfg_default_object(&cfg_cfg, name, val, err)
 
 #define admcfg_init()						_cfg_init(&cfg_adm, CFG_NONE, NULL)
+#define admcfg_save()				        _cfg_save_json(&cfg_adm, cfg_adm.json)
 #define	admcfg_get_json(size)				_cfg_get_json(&cfg_adm, size)
 #define admcfg_save_json(json)				_cfg_save_json(&cfg_adm, json)
 #define admcfg_walk(id, cb, p1, p2)         _cfg_walk(&cfg_adm, id, cb, p1, p2)

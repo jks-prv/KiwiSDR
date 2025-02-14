@@ -109,6 +109,10 @@
     vertical-align: bottom
 }
 
+.w3-text-wrap {
+    text-wrap: auto
+}
+
 .w3-ext-btn
 {
     color: black;

@@ -88,6 +88,7 @@
 #endif
 
 #define SSTV_TEST_FILE
+//#define SSTV_TEST_FILE2
 #define SSTV_TEST_FILE_RATE 12000
 
 #define MINSLANT 30
@@ -104,26 +105,48 @@
 #define POWER(coeff) (coeff[0]*coeff[0] + coeff[1]*coeff[1])
 //#define POWER(coeff) (SSTV_MPOW(coeff[0],2) + SSTV_MPOW(coeff[1],2))
 
-enum { FMT_DEFAULT, FMT_BW, FMT_420, FMT_422, FMT_242, FMT_REV };
 
-#define UNSUPPORTED true
+// SSTV modes
+// NB: values must match ordering of ModeSpec[]
+enum {
+    UNKNOWN=0, VISX=1,
+    AVT24, AVT90, AVT94,
+    M1,    M2,    M3,    M4,
+    S1,    S2,    SDX,
+    R12,   R24,   R36,   R72,   R8BW, R12BW, R24BW,
+    SC60,  SC120, SC180,
+    PD50,  PD90,  PD120, PD160, PD180, PD240, PD290,
+    P3,    P5,    P7,
+    MP73,  MP115, MP140, MP175,
+    MR73,  MR90,  MR115, MR140, MR175,
+    ML180, ML240, ML280, ML320,
+    FX480
+};
+
+// Color encodings
+enum { GBR, RGB, YUV, BW };
+
+// Format
+enum { FMT_111, FMT_BW, FMT_420, FMT_422, FMT_242, FMT_111_REV };
+
+#define LINE_DOUBLE true
+#define UNSUPPORTED false, true
 
 typedef struct {
-  char   *Name;
-  char   *ShortName;
+  const char *Name;
+  const char *ShortName;
   SSTV_REAL  SyncTime;
   SSTV_REAL  PorchTime;
   SSTV_REAL  SeptrTime;
   SSTV_REAL  PixelTime;
   SSTV_REAL  LineTime;
-  u2_t ImgWidth;
-  u2_t NumLines;
-  u1_t  LineHeight;
-  u1_t  ColorEnc;
-  u1_t format;
-  bool unsupported;
+  u2_t       ImgWidth, NumLines;
+  u1_t       LineHeight, ColorEnc, format;
+  bool       LineDouble;
+  bool       unsupported;
 } ModeSpec_t;
 extern ModeSpec_t ModeSpec[];
+
 
 typedef struct {
     int X;
@@ -137,7 +160,8 @@ typedef struct {
 	u4_t nom_rate;
 
 	#ifdef SSTV_TEST_FILE
-        s2_t *s2p_start, *s2p_end;
+	    int n_test;
+        s2_t *s2p_start[2], *s2p_end[2];
     #endif
     
 } sstv_t;
@@ -226,29 +250,12 @@ typedef struct {
     
     
 	#ifdef SSTV_TEST_FILE
-        s2_t *s2p, *s22p;
+	    int test_n;
+        s2_t *s2p[2], *s22p[2];
     #endif
     
 } sstv_chan_t;
 extern sstv_chan_t sstv_chan[MAX_RX_CHANS];
-
-// SSTV modes
-enum {
-    UNKNOWN=0, VISX=1,
-    AVT,
-    M1,    M2,    M3,    M4,
-    S1,    S2,    SDX,
-    R72,   R36,   R24,   R24BW, R12BW, R8BW,
-    SC60,  SC120, SC180,
-    PD50,  PD90,  PD120, PD160, PD180, PD240, PD290,
-    P3,    P5,    P7,
-    MP73,  MP115, MP140, MP175,
-    MR73,  MR90,  MR115, MR140, MR175,
-    ML180, ML240, ML280, ML320
-};
-
-// Color encodings
-enum { GBR, RGB, YUV, BW };
 
 extern u1_t VISmap[], VISXmap[];
 

@@ -1530,6 +1530,14 @@ function w3_get_value(path)
 	return el.value;
 }
 
+function w3_placeholder(path, val)
+{
+	var el = w3_el(path);
+	if (!el) return null;
+   w3_set_value(el, '');
+   w3_attribute(el, 'placeholder', val);
+}
+
 function w3_add_toplevel(path)
 {
 	if (!path.startsWith('cfg.') && !path.startsWith('adm.'))
@@ -3031,6 +3039,7 @@ function w3int_checkbox_change(path, cb, cb_param)
 
 function w3_checkbox(psa, label, path, checked, cb, cb_param)
 {
+   var dump = psa.includes('w3-dump');
 	var id = w3_add_id(path);
 	var onchange = ' onchange="w3int_checkbox_change('+ sq(path) +', '+ sq(cb) +', '+ sq(cb_param) +')"';
 	var checked_s = checked? ' checked' : '';
@@ -3058,7 +3067,7 @@ function w3_checkbox(psa, label, path, checked, cb, cb_param)
 			w3_call(cb, path, checked, /* first */ true, cb_param);
 		}, 500);
 
-	//if (label == 'Title') console.log(s);
+	if (dump) console.log(s);
 	return s;
 }
 

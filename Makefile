@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 802
+VERSION_MIN = 803
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -565,13 +565,18 @@ make_binary:
         ifeq ($(BINARY_INSTALL),true)
 	        @echo "================"
 	        @echo "make_binary: $(PLAT_KIWI_BIN)"
-            ifeq ($(HAS_KIWI_BIN),true)
+            ifeq ($(MAKE_FORCE),true)
+	            @echo "   => make force: compiling from sources"
+	            @echo "================"
+	            @make $(MAKE_ARGS) make_all
+	            @echo "================"
+            else ifeq ($(HAS_KIWI_BIN),true)
 	            @echo "   => exists: not compiling from sources"
 	            @echo "   => cp $(PLAT_KIWI_BIN) $(BUILD_DIR)/kiwi.bin"
 	            @cp $(PLAT_KIWI_BIN) $(BUILD_DIR)/kiwi.bin
 	            @echo "================"
             else
-	            @echo "   => doesn't exist: compiling from sources"
+	            @echo "   => binary doesn't exist: compiling from sources"
 	            @echo "================"
 	            @make $(MAKE_ARGS) make_all
 	            @echo "================"
@@ -593,11 +598,11 @@ force: make_prereq
 	@make $(MAKE_ARGS) build_makefile_inc
 	@echo "================"
 	@echo "make force"
-	@make $(MAKE_ARGS) make_binary
+	@make $(MAKE_ARGS) MAKE_FORCE=true make_binary
 	@echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
 	@echo "================"
 	@cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
-	@make make_install_binary
+	@make MAKE_FORCE=true make_install_binary
 	@echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)"
 	@echo "================"
 	@cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
@@ -1478,7 +1483,14 @@ make_install_binary:
         ifeq ($(BINARY_INSTALL),true)
 	        @echo "================"
 	        @echo "make_install_binary: $(PLAT_KIWID_BIN)"
-            ifeq ($(HAS_KIWID_BIN),true)
+            ifeq ($(MAKE_FORCE),true)
+	            @echo "   => make force: installing from sources"
+	            @echo "================"
+	            @# don't use MAKE_ARGS here!
+	            @make make_install
+	            @make make_install_files
+	            @echo "================"
+            else ifeq ($(HAS_KIWID_BIN),true)
 	            @echo "   => exists: not installing from sources"
 	            @echo "   => cp $(PLAT_KIWID_BIN) $(BUILD_DIR)/kiwid.bin"
 	            @cp $(PLAT_KIWID_BIN) $(BUILD_DIR)/kiwid.bin
@@ -1486,7 +1498,7 @@ make_install_binary:
 	            @echo "================"
 	            @make make_install_files
             else
-	            @echo "   => doesn't exist: installing from sources"
+	            @echo "   => binary doesn't exist: installing from sources"
 	            @echo "================"
 	            @# don't use MAKE_ARGS here!
 	            @make make_install

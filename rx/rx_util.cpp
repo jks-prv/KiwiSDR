@@ -691,7 +691,7 @@ void show_conn(const char *prefix, u4_t printf_type, conn_t *cd)
     lfprintf(printf_type,
         "%sCONN-%02d %p %3s %-3s %s%s%s%s%s%s%s%s%s isPwd%d tle%d%d sv=%02d KA=%02d/60 KC=%05d mc=%9p %s%s:%d:%016llx%s%s%s%s\n",
         prefix, cd->self_idx, cd, type_s, rx_s,
-        cd->auth? "*":"_", cd->auth_kiwi? "K":"_", cd->auth_admin? "A":"_",
+        cd->auth? "*":"_", cd->auth_kiwi? "K":"_", cd->already_admin? "X":(cd->auth_admin?"A":"_"),
         cd->isMaster? "M":"_", cd->arun_preempt? "P":(cd->internal_connection? "I":(cd->ext_api? "E":"_")), cd->ext_api_determined? "D":"_",
         cd->isLocal? "L":(cd->force_notLocal? "F":"_"), cd->auth_prot? "P":"_", cd->awaitingPassword? "A":(cd->kick? "K":"_"),
         cd->isPassword, cd->tlimit_exempt, cd->tlimit_exempt_by_pwd, cd->served,
@@ -731,7 +731,7 @@ static void dump_task(void *param)
             if (cd->valid) nconn++;
         }
         lprintf("\n");
-        lprintf("CONNS: used %d/%d is_locked=%d  ______ => *auth, Kiwi, Admin, Master, Internal/Preempt/ExtAPI, DetAPI, Local/ForceNotLocal, ProtAuth, Kicked/AwaitPwd\n",
+        lprintf("CONNS: used %d/%d is_locked=%d  ______ => *auth, Kiwi, Admin/X-already, Master, Internal/Preempt/ExtAPI, DetAPI, Local/ForceNotLocal, ProtAuth, Kicked/AwaitPwd\n",
             nconn, N_CONNS, is_locked);
     
         for (cd = conns, i=0; cd < &conns[N_CONNS]; cd++, i++) {

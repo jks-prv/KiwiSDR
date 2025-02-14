@@ -37,7 +37,7 @@ typedef struct conn_st {
 	#define CN_MAGIC 0xcafecafe
 	u4_t magic;
 	int self_idx;
-	bool valid, auth, auth_kiwi, auth_prot, auth_admin;
+	bool valid, auth, auth_kiwi, auth_prot, auth_admin, already_admin;
 	bool isLocal, force_notLocal, isPassword, awaitingPassword;
 	bool isLocal_ip;    // is the ip itself a local or loopback address? (different from isLocal above)
 	int type;
