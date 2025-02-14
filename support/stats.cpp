@@ -362,7 +362,7 @@ static void called_every_second()
                     } else {
                         if (kiwi_str_begins_with(c->ident_user, "TDoA_service")) {
                             int f = (int) floor_kHz;
-                            freq_trig = (
+                            freq_trig = (   // HFDL (aeronautical) bands
                                 (f >= (2941-10) && f < 3500) ||     // stay outside 80m ham band
                                 (f >= (4654-10) && f <= (4687+10)) ||
                                 (f >= (5451-10) && f <= (5720+10)) ||
