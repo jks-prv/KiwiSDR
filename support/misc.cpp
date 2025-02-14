@@ -241,16 +241,19 @@ void send_msg_data(conn_t *c, bool debug, u1_t cmd, u1_t *bytes, int nbytes)
 	kiwi_ifree(buf, "send_msg_data");
 }
 
-void send_msg_data2(conn_t *c, bool debug, u1_t cmd, u1_t data2, u1_t *bytes, int nbytes)
+void send_msg_data2(conn_t *c, bool debug, u1_t cmd, u1_t *bytes2, int nbytes2, u1_t *bytes, int nbytes)
 {
-	int size = N_MSG_HDR + sizeof(cmd)+ sizeof(data2) + nbytes;
+	int size = N_MSG_HDR + sizeof(cmd)+ nbytes2 + nbytes;
 	char *buf = (char *) kiwi_imalloc("send_msg_data2", size);
 	char *s = buf;
 	int n = kiwi_snprintf_ptr(s, N_MSG_HDR + SPACE_FOR_NULL, "DAT ");
-	if (debug) cprintf(c, "send_msg_data2: cmd=%d data2=%d nbytes=%d size=%d\n", cmd, data2, nbytes, size);
+	if (debug) cprintf(c, "send_msg_data2: cmd=%d nbytes2=%d nbytes=%d size=%d\n", cmd, nbytes2, nbytes, size);
 	s += n;
 	*s++ = cmd;
-	*s++ = data2;
+	if (nbytes2) {
+		memcpy(s, bytes2, nbytes2);
+		s += nbytes2;
+	}
 	if (nbytes)
 		memcpy(s, bytes, nbytes);
 	send_msg_buf(c, buf, size);
