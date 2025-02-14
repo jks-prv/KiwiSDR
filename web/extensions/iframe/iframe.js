@@ -265,6 +265,11 @@ function iframe_blur()
    }
 }
 
+
+////////////////////////////////
+// admin interface
+////////////////////////////////
+
 // called to display HTML for configuration parameters in admin interface
 function iframe_admin_html()
 {
@@ -446,8 +451,22 @@ function iframe_src_cb(path, idx, first)
 
 function iframe_menu_cb(path, val, first)
 {
-   // rename current instance menu selection
    val = val.trim();
+   
+   // prevent duplicate menu names
+   var inst_menu = [];
+   for (var i = 0; i < kiwi.iframe_n_menu; i++) {
+      var menu = iframe_get_string('menu', i);
+      if (isNonEmptyString(menu))
+         inst_menu.push(menu);
+   }
+   console.log(inst_menu);
+   if (inst_menu.includes(val)) {
+      w3_placeholder(path, 'duplicate name -- choose another');
+      return;
+   }
+
+   // rename current instance menu selection
    console.log('iframe_menu_cb: path='+ path +' val='+ val);
    w3_select_enum('id-iframe-inst',
       function(el, i) {
