@@ -34,6 +34,11 @@ var admin = {
    users_sort: 0,
    exp_vis: [],
    
+   FRPC_EXISTING:    0,
+   FRPC_NEW:         1,
+   FRPC_UPDATE_HOST: 2,
+   FRPC_PROXY_UPD:   3,
+   
    _last_: 0
 };
 
@@ -1166,7 +1171,7 @@ function connect_rev_register_cb(id, idx)
    // update info on proxy server
 	var s = 'user='+ user +' host='+ host +' auto='+ auto;
 	console.log('rev register: '+ s);
-	ext_send('SET rev_register reg=1 '+ s);
+	ext_send('SET rev_register reg='+ admin.FRPC_PROXY_UPD +' '+ s);
 }
 
 function connect_rev_user_cb(path, val, first)
@@ -1269,10 +1274,14 @@ function connect_rev_status_cb(status)
 
    if (admin_is_proxy_conn) {
       if (reload_auto || reload_man) {
+         // update host name while proxy connected
+
          console_nv('$connect_rev_status_cb RELOAD ADMIN CONN', {reload_auto}, {reload_man});
          a[0] = host;
          kiwi.reload_url = kiwi_SSL() + a.join('.') +'/admin';
-         ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+         s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', admin.FRPC_UPDATE_HOST, user, host, auto);
+         console.log(s);
+         ext_send(s);
          wait_then_reload_page(10, 'You changed the Kiwi\'s host name. <br>' +
             'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
       }
@@ -1280,11 +1289,12 @@ function connect_rev_status_cb(status)
 	   // !admin_is_proxy_conn
 	   
       // setup frpc.ini and restart frpc if new account or host name updated
-      var proxy_setup = (status >= 1 && status <= 2);
-      console.log('reg=0 '+ TF(cfg.sdr_hu_dom_sel == kiwi.REV) + TF(!connect.focus_query) + TF(proxy_setup) + ' status='+ status);
+      var proxy_setup = (status >= admin.FRPC_EXISTING && status <= admin.FRPC_UPDATE_HOST);
+      console.log('status='+ status +' '+ TF(cfg.sdr_hu_dom_sel == kiwi.REV) + TF(!connect.focus_query) + TF(proxy_setup));
       if (cfg.sdr_hu_dom_sel == kiwi.REV && !connect.focus_query && proxy_setup) {
-         console_nv('reg=0 RESTART frpc', {status}, {host}, {auto});
-         ext_send('SET rev_register reg=0 user='+ user +' host='+ host +' auto='+ auto);
+         s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', status, user, host, auto);
+         console.log(s);
+         ext_send(s);
       }
    }
    
@@ -4486,7 +4496,9 @@ function admin_msg(param)
 		   break;
 
 		case "keepalive":
-         //console.log('ADMIN keepalive');
+		   var p = param[1].split(',');
+		   kiwi.uptime = +p[0];
+		   kiwi.isLocal_ip = +p[1];
 		   kiwi_clearTimeout(admin.keepalive_timeoout);
 		   if (adm.admin_keepalive) {
 		      //console.log('admin keepalive');
