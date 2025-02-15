@@ -30,6 +30,7 @@ static drm_info_t drm_info;
 void DRM_close(int rx_chan)
 {
     drm_t *d = &DRM_SHMEM->drm[rx_chan];
+	//rcprintf(rx_chan, "DRM close tid=%d run=%d\n", d->tid, d->run);
     assert(d->init);
     
     #ifdef DRM_SHMEM_DISABLE
@@ -37,6 +38,8 @@ void DRM_close(int rx_chan)
             TaskRemove(d->tid);
             d->tid = 0;
         }
+    #else
+        d->run = 0;     // stop DRM_loop()
     #endif
 }
 
