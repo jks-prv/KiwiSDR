@@ -9671,7 +9671,7 @@ function dx_send_update_retry()
 function dx_button_highlight()
 {
 	var el = w3_el((dx.o.gid == -1)? 'id-dx-add' : 'id-dx-modify');
-	el.style.border = '5px double red';
+	w3_border(el, '5px double red');
 }
 
 function dx_modify_cb(id, val)
@@ -9686,7 +9686,7 @@ function dx_modify_cb(id, val)
 	var el = w3_el('id-dx-modify');
 	setTimeout(function() {
 	   dx_close_edit_panel(id);
-	   el.style.border = '';
+	   w3_border(el, '');
 	}, 250);
 }
 

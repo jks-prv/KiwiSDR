@@ -848,6 +848,14 @@ function w3_width_height(el_id, w, h)
 	}
 }
 
+function w3_border(el_id, s)
+{
+	var el = w3_el(el_id);
+	if (!el) return null;
+	el.style.border = s;
+	return el;
+}
+
 // bounding box measured from the origin of parent
 function w3_boundingBox_children(el_id, debug)
 {
