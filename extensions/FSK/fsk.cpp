@@ -49,7 +49,7 @@ static void fsk_file_data(int rx_chan, int chan, int nsamps, TYPEMONO16 *samps, 
         return;
     }
     
-    // Pushback 12 kHz sample file so it sounds right.
+    // Pushback sample file.
     if (e->test) {
         for (int i = 0; i < nsamps; i++) {
             if (e->s2p < fsk.s2p_end) {

@@ -49,7 +49,7 @@ static void navtex_file_data(int rx_chan, int chan, int nsamps, TYPEMONO16 *samp
         return;
     }
     
-    // Pushback 12 kHz sample file so it sounds right.
+    // Pushback sample file.
     if (e->test) {
         for (int i = 0; i < nsamps; i++) {
             if (e->s2p < navtex.s2p_end) {
