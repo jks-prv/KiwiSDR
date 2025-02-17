@@ -4,18 +4,18 @@
 # NB: this distro image is a flasher
 
 PLAT="BBG_BBB"
-#VER="v1.690"
-#DEBIAN_VER="11.9"
-#CKSUM="5502e8f5f43deac988d4193a8945c00128095d515d1b2ac15c4406dac189dcb0"
-VER="v1.800"
+#VER="v1.800"
+#DEBIAN_VER="11.11"
+#CKSUM="40df86fe356572f2ca92eab2eb8d467fd6758efc7b8dea9e4c710e0b54ada02b"
+VER="v1.803"
 DEBIAN_VER="11.11"
-CKSUM="40df86fe356572f2ca92eab2eb8d467fd6758efc7b8dea9e4c710e0b54ada02b"
+CKSUM="ffae8ca077310d46538487b4e0d8108a934dd07bbf0105edc1ac46a6d42b5c01"
 
 HOST="http://kiwisdr.com/files"
 DISTRO="KiwiSDR_${VER}_${PLAT}_Debian_${DEBIAN_VER}.img.xz"
 DISTRO_FILE="/root/${DISTRO}"
 
-echo "--- get KiwiSDR ${PLAT} Debian ${DEBIAN_VER} distro image from net and create micro-SD flasher"
+echo "--- get KiwiSDR ${VER} ${PLAT} Debian ${DEBIAN_VER} distro image from net and create micro-SD flasher"
 echo -n "--- hit enter to proceed: "; read not_used
 
 rv=$(which xzcat || true)
