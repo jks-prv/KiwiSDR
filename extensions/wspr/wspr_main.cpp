@@ -1124,6 +1124,10 @@ void wspr_autorun(int instance, bool initial)
 void wspr_autorun_start(bool initial)
 {
     rx_util_t *r = &rx_util;
+    if (down) {
+        //printf("WSPR autorun_start: kiwi down\n");
+        return;
+    }
     if (wspr_c.num_autorun == 0) {
         //printf("WSPR autorun_start: none configured\n");
         return;

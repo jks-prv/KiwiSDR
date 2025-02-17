@@ -438,6 +438,10 @@ static void ft8_autorun(int instance, bool initial)
 void ft8_autorun_start(bool initial)
 {
     rx_util_t *r = &rx_util;
+    if (down) {
+        //printf("FT8 autorun_start: kiwi down\n");
+        return;
+    }
     if (ft8_conf2.num_autorun == 0) {
         //printf("FT8 autorun_start: none configured\n");
         return;
