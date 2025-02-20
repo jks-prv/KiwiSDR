@@ -3,6 +3,24 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.804  February 21, 2025
+    Antenna switch:
+        Fixed curl command processing. Use a plus sign ("+") to indicate a space in your curl URL.
+            E.g. "http://192.168.1.2?cmd=ant+1" runs curl with a URL argument of
+            "http://192.168.1.2?cmd=ant 1". A space is used as before to separate the arguments for
+            multiple commands. E.g. "http://192.168.1.2?cmd=ant+1 http://192.168.1.3?tune=144MHz".
+            (thanks Steffen)
+        Added a field for specifying a curl command to run when the antenna is switched to ground
+            (because the "Ground antennas when no users connected" option is enabled).
+        Added backend for Kmtronic 2-channel device [but needs testing]. (thanks Fernando)
+    
+    TDoA:
+        Added URL parameter to populate sampling station list with custom/private entries
+            (i.e. sampling hosts that are not on the map). See TDoA help panel.
+    
+    Fixed admin backup tab function broken by the admin password reset change.
+    Disabling user connections (admin control tab) now also stops autoruns.
+
 v1.803  February 14, 2025
     Added admin password reset scheme. See KiwiSDR forum for discussion.
     
