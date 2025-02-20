@@ -925,7 +925,7 @@ function webpage_html()
             ),
 
             w3_inline('w3-halign-space-between/',
-               w3_input('/w3-label-not-bold/', '', 'index_html_params.RX_QRA', '', 'webpage_input_grid_cb'),
+               w3_input('', '', 'index_html_params.RX_QRA', '', 'webpage_input_grid_cb'),
                w3_checkbox_get_param('//w3-label-inline', 'Continuous update from GPS', 'GPS_update_web_grid', 'admin_bool_cb', false)
             )
          ),
@@ -942,7 +942,7 @@ function webpage_html()
             ),
 
             w3_inline('w3-halign-space-between/',
-               w3_input('/w3-label-not-bold/', '', 'rx_gps', '', 'webpage_input_gps_cb'),
+               w3_input('', '', 'rx_gps', '', 'webpage_input_gps_cb'),
                w3_inline('/w3-margin-R-8',
                   w3_label('w3-bold', 'Continuous update from GPS: '),
                   w3_checkbox_get_param('/w3-label-inline/id-webpage-lores', 'lo res', 'GPS_update_web_lores', 'webpage_update_gps_cb', false, 0),

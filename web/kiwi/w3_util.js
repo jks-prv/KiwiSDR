@@ -2071,8 +2071,10 @@ function w3int_label(psa, text, path, extension)
 
    // don't emit empty label div
    //if (psa == '' && text == '' && extension == '') return '';
-   if (text == '' && ((psa != '' && psa != '||') || extension != ''))
+   if (text == '' && ((psa != '' && psa != '||') || extension != '')) {
       console_nv('$w3int_label', {text}, {psa}, {extension});
+      //kiwi_trace();
+   }
    if (text == '') {
       if (dump) console.log('$w3int_label <empty string>');
       return '';

@@ -417,6 +417,7 @@ int kiwi_split(char *ocp, char **mbuf, const char *delims, str_split_t argv[], i
 
 char *kiwi_str_replace(char *s, const char *from, const char *to, bool *caller_must_free)
 {
+    if (caller_must_free) *caller_must_free = false;
     char *fp;
     if ((fp = strstr(s, from)) == NULL) return NULL;
     
@@ -429,7 +430,6 @@ char *kiwi_str_replace(char *s, const char *from, const char *to, bool *caller_m
             int rlen = strlen(fp+flen) + 1;
             memmove((char *) fp+tlen, fp+flen, rlen);
         } while ((fp = strstr(s, from)) != NULL);
-        if (caller_must_free) *caller_must_free = false;
     } else {
         bool first = true;
         do {
@@ -442,7 +442,7 @@ char *kiwi_str_replace(char *s, const char *from, const char *to, bool *caller_m
         if (caller_must_free) *caller_must_free = true;
     }
     
-    return (char *) s;
+    return s;
 }
 
 void kiwi_str_unescape_quotes(char *str)
@@ -877,10 +877,10 @@ static u1_t clean_table[128] = {
 //  (ctrl)
     3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
 
-//    ! " # $ % & ' ( ) * + , - . /     not !"#$%'()*
+//    ! " # $ % & ' ( ) * + , - . /     not !"#$'()*   yes (space) &+,-./
     0,1,1,1,1,1,0,1,1,1,1,0,0,0,0,0,
 
-//  0 1 2 3 4 5 6 7 8 9 : ; < = > ?     not ;<>
+//  0 1 2 3 4 5 6 7 8 9 : ; < = > ?     not ;<>         yes :=?
     0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,
 
 //  @ (alpha)                           not @
@@ -901,11 +901,12 @@ char *kiwi_str_clean(char *str, int type)
     u1_t *s = (u1_t *) str;
 
     for (; *s != '\0'; s++) {
-        if (*s >= 0x80 || (type == KCLEAN_DELETE && (clean_table[*s] & KCLEAN_DELETE))) {
+        if (*s >= 0x80 || ((type & KCLEAN_DELETE) && (clean_table[*s] & KCLEAN_DELETE))) {
             kiwi_overlap_memcpy(s, s+1, strlen((char *) s+1) + SPACE_FOR_NULL);
-            continue;
+        } else
+        if ((type & KCLEAN_REPL_SPACE) && (clean_table[*s] & KCLEAN_REPL_SPACE)) {
+            *s = ' ';
         }
-        if (type == KCLEAN_REPL_SPACE && clean_table[*s] & KCLEAN_REPL_SPACE) *s = ' ';
     }
 
     return str;

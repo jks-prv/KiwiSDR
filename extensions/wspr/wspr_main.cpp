@@ -1194,7 +1194,7 @@ void wspr_autorun_restart()
         // reset only autorun instances identified above (there may be non-autorun WSPR extensions running)
         for (int rx_chan = 0; rx_chan < rx_chans; rx_chan++) {
             if (wspr_p[rx_chan] != NULL) {
-                printf(RED "WSPR autorun STOP2 ch=%d w=%p" NONL, rx_chan, wspr_p[rx_chan]);
+                //printf(RED "WSPR autorun STOP2 ch=%d w=%p" NONL, rx_chan, wspr_p[rx_chan]);
                 wspr_reset(wspr_p[rx_chan]);
             }
         }
