@@ -122,18 +122,22 @@ void ant_switch_task_start(const char *cmd)
     TaskWakeupF(antsw.task_tid, TWF_CANCEL_DEADLINE);
 }
 
-int ant_switch_setantenna(char *antenna) {      // "1" .. "10", "g"
+void ant_switch_curl_cmd(char *antenna, int rx_chan);
+
+int ant_switch_setantenna(char *antenna, int rx_chan) {     // "1" .. "10", "g"
     antsw_printf("ant_switch_setantenna Q-UP: <%s>\n", antenna);
     ant_switch_task_start(antenna);
+    ant_switch_curl_cmd(antenna, rx_chan);
 	return 0;
 }
 
-int ant_switch_toggleantenna(char *antenna) {   // "t1" .. "t10", "tg"
+int ant_switch_toggleantenna(char *antenna, int rx_chan) {  // "t1" .. "t10", "tg"
     char *cmd;
     asprintf(&cmd, "t%s", antenna);
     antsw_printf("ant_switch_toggleantenna Q-UP: <%s>\n", cmd);
     ant_switch_task_start(cmd);
     kiwi_asfree(cmd);
+    ant_switch_curl_cmd(antenna, rx_chan);
 	return 0;
 }
 
@@ -200,6 +204,7 @@ bool ant_switch_check_deny(int rx_chan)
     #define DENY_SWITCHING 1
     #define DENY_MULTIUSER 2
     
+    if (rx_chan < 0) return false;      // not called from user context
     int deny_reason = DENY_NONE;
     if (ant_switch_read_denyswitching(rx_chan) == true) deny_reason = DENY_SWITCHING;
     else
@@ -222,7 +227,7 @@ void ant_switch_find_default_ant(bool mark_as_default)
             antsw.using_tstorm = false;
             antsw.using_ground = false;
             if (mark_as_default) using_default = true;
-	        ant_switch_setantenna(ant);
+	        ant_switch_setantenna(ant, -1);
 	        kiwi_asfree(ant);
 	        break;
 	    }
@@ -259,7 +264,7 @@ void ant_switch_select_default_antenna()
             antsw.using_ground = true;
             using_default = false;
         }
-        ant_switch_setantenna((char *) "g");
+        ant_switch_setantenna((char *) "g", -1);
 	}
 }
 
@@ -278,14 +283,14 @@ void ant_switch_ReportAntenna(conn_t *conn)
             antsw.using_tstorm = true;
             antsw_printf("ant_switch rx%d PRE TSTORM-ON prev_selected_antennas=%s\n", rx_chan, selected_antennas);
             kiwi_strncpy(antsw.last_ant, selected_antennas, N_ANT);
-            ant_switch_setantenna((char *) "g");
+            ant_switch_setantenna((char *) "g", -1);
             antsw_printf("ant_switch rx%d POST TSTORM-ON cur_selected_antennas=%s\n", rx_chan, selected_antennas);
             NextTask("ant_switch_ReportAntenna tstorm");
         }
     } else {
         if (antsw.using_tstorm) {
             antsw.using_tstorm = false;
-            ant_switch_setantenna(antsw.last_ant);
+            ant_switch_setantenna(antsw.last_ant, -1);
         }
         if (conn) {
             send_msg(conn, ANT_SWITCH_DEBUG_MSG, "MSG antsw_Thunderstorm=0");
@@ -392,6 +397,53 @@ void ant_switch_notify_users()
     }
 }
 
+void ant_switch_curl_cmd(char *antenna, int rx_chan)
+{
+    int i, n;
+    if (ant_switch_check_deny(rx_chan)) return;     // prevent circumvention from client side
+
+    char *which = (antenna[0] == '\t')? &antenna[1] : antenna;
+    const char *ant_cmd = cfg_string(stprintf("ant_switch.ant%scmd", which), NULL, CFG_OPTIONAL);
+    if (!kiwi_nonEmptyStr(ant_cmd)) return;
+    char *ccmd = strdup(ant_cmd);
+    cfg_string_free(ant_cmd);
+    antsw_printf(CYAN "ant_switch: ccmd <%s>" NONL, ccmd);
+
+    #define NKWDS 8
+    char *cmd, *r_ccmd, *s;
+    str_split_t kwds[NKWDS];
+    n = kiwi_split((char *) ccmd, &r_ccmd, " ", kwds, NKWDS);
+    antsw_printf(CYAN "ant_switch: n=%d" NONL, n);
+
+    for (i = 0; i < n; i++) {
+        s = kwds[i].str;
+        antsw_printf("ant_switch KW%d: <%s> '%s' %d\n", i, s, ASCII[kwds[i].delim], kwds[i].delim);
+        kiwi_str_clean(s, KCLEAN_DELETE);     // enforce limited curl char set
+        bool must_free;
+        char *curl_arg = kiwi_str_replace(s, "+", "%20", &must_free);
+        if (!curl_arg) curl_arg = s;    // kiwi_str_replace() returns NULL if no match/replacement
+
+        #if 0
+            asprintf(&cmd, "echo '%s'", curl_arg);
+            antsw_printf(CYAN "ant_switch: <%s>" NONL, cmd);
+            non_blocking_cmd_system_child("antsw.curl", cmd, NO_WAIT);
+            kiwi_asfree(cmd);
+        #endif
+
+        asprintf(&cmd, "curl -skL '%s' >/dev/null", curl_arg);
+        //asprintf(&cmd, "curl -kL '%s'", curl_arg);
+        printf("ant_switch: rx_chan=%d ant=%s <%s>\n", rx_chan, antenna, cmd);
+        NextTask("curl START");
+        non_blocking_cmd_system_child("antsw.curl", cmd, NO_WAIT);
+        kiwi_asfree(cmd);
+        NextTask("curl DONE");
+
+        if (i < n-1) TaskSleepMsec(500);
+        if (must_free) kiwi_asfree(curl_arg);
+    }
+    kiwi_asfree(ccmd); kiwi_ifree(r_ccmd, "antsw_curl_cmd");
+}
+
 void ant_switch(void *param)    // task
 {
     while (1) {
@@ -440,9 +492,9 @@ bool ant_switch_msgs(char *msg, int rx_chan)
         if (!ant_switch_check_deny(rx_chan)) {      // prevent circumvention from client side
             if (ant_switch_validate_cmd(antenna)) {
                 if (ant_switch_read_denymixing()) {
-                    ant_switch_setantenna(antenna);
+                    ant_switch_setantenna(antenna, rx_chan);
                 } else {
-                    ant_switch_toggleantenna(antenna);
+                    ant_switch_toggleantenna(antenna, rx_chan);
                 }
                 using_default = false;
             } else {
@@ -477,31 +529,7 @@ bool ant_switch_msgs(char *msg, int rx_chan)
         return true;
     }
 
-    char *curl_cmd;
-    n = sscanf(msg, "SET antsw_curl_cmd=%255ms", &curl_cmd);
-    if (n == 1) {
-        if (!ant_switch_check_deny(rx_chan)) {      // prevent circumvention from client side
-            kiwi_str_decode_inplace(curl_cmd);
-            kiwi_str_clean(curl_cmd, KCLEAN_DELETE);
-            antsw_rcprintf(rx_chan, CYAN "ant_switch: curl_cmd <%s>" NONL, curl_cmd);
-
-			#define NKWDS 8
-			char *ccmd, *r_ccmd;
-			str_split_t kwds[NKWDS];
-			ccmd = strdup(curl_cmd);
-			n = kiwi_split((char *) ccmd, &r_ccmd, " ", kwds, NKWDS);
-			for (i = 0; i < n; i++) {
-				//printf("ant_switch KW%d: <%s> '%s' %d\n", i, kwds[i].str, ASCII[kwds[i].delim], kwds[i].delim);
-                char *cmd;
-                asprintf(&cmd, "curl -skL '%s' >/dev/null", kwds[i].str);
-                antsw_rcprintf(rx_chan, CYAN "ant_switch: <%s>" NONL, cmd);
-                non_blocking_cmd_system_child("antsw.curl", cmd, 200);
-                if (i < n-1) TaskSleepMsec(500);
-                kiwi_asfree(cmd);
-			}
-			kiwi_asfree(ccmd); kiwi_ifree(r_ccmd, "antsw_curl_cmd");
-        }
-        kiwi_asfree(curl_cmd);
+    if (strncmp(msg, "SET antsw_curl_cmd=", 19) == 0) {
         return true;
     }
 
