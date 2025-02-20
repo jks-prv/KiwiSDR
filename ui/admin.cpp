@@ -447,7 +447,8 @@ void c2s_admin(void *param)
                     down = false;
                 } else {
                     down = true;
-                    rx_server_kick(KICK_USERS);    // kick all users off
+                    //rx_server_kick(KICK_USERS);    // kick all users off
+                    rx_server_kick(KICK_ALL);      // kick everything (including autorun)
                 }
                 continue;
             }

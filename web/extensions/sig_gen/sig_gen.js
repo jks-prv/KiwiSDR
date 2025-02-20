@@ -110,6 +110,18 @@ function gen_controls_setup()
                if (kiwi.ext_clk && gen.mode == gen.SELF_TEST) gen.mode = gen.OFF;
             }
          } else
+         if ((r = w3_ext_param('off', a)).match) {
+            gen.mode = gen.OFF;
+         } else
+         if ((r = w3_ext_param('rf', a)).match) {
+            gen.mode = gen.RF;
+         } else
+         if ((r = w3_ext_param('af', a)).match) {
+            gen.mode = gen.AF;
+         } else
+         if ((r = w3_ext_param('self', a)).match) {
+            gen.mode = kiwi.ext_clk? gen.OFF : gen.SELF_TEST;
+         } else
          if ((r = w3_ext_param('freq', a)).match || (i == 0 && (r = w3_ext_param(null, a)).match)) {
             if (r.has_value) {
                v = r.string_case.parseFloatWithUnits('kM', 1e-3);
@@ -365,15 +377,16 @@ function sig_gen_help(show)
                '<a href="http://kiwisdr.com/info#id-self-test" target="_blank">Test result images</a></li></ul>' +
                         
                'URL parameters: <br>' +
-               w3_text('|color:orange', '<i>kHz</i> or freq:<i>kHz</i>&nbsp; mode:[<i>0123</i>] &nbsp; attn:<i>dB</i> &nbsp; stop:<i>kHz</i> &nbsp; ' +
-               'step:<i>kHz</i> &nbsp; dwell:<i>msecs</i> &nbsp; sweep') +
+               w3_text('|color:orange', '<i>kHz</i> or freq:<i>kHz</i>&nbsp; &nbsp; mode:[<i>0123</i>] or &nbsp; off &nbsp; rf &nbsp; af &nbsp; self <br>' +
+                  'attn:<i>dB</i> &nbsp; stop:<i>kHz</i> &nbsp; ' +
+                  'step:<i>kHz</i> &nbsp; dwell:<i>msecs</i> &nbsp; sweep') +
                
                '<br><br>Frequencies are in kHz and can use the <x1>k</x1> and <x1>M</x1> suffix notation (e.g. 7.1M). ' +
-               'The mode numbers 0-3 correspond to the four Mode menu entries.'
+               'The mode numbers 0-3 correspond to the four Mode menu entries or use the names off, rf, af, self.'
             )
          );
 
-      confirmation_show_content(s, 610, 375);
+      confirmation_show_content(s, 610, 400);
       w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
    }
    return true;

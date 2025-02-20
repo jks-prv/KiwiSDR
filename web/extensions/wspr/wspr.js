@@ -109,6 +109,8 @@ var wspr = {
       '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00',
    ],
 
+   restart_highlight: '3px solid red',
+
    last_last: 0
 };
 
@@ -703,7 +705,10 @@ function wspr_config_html()
                
                w3_inline('w3-margin-top/',
                   w3_button('w3-blue', 'set all to regular use', 'wspr_autorun_all_regular_cb'),
-                  w3_button('id-wspr-restart w3-margin-left w3-aqua w3-hide', 'autorun restart', 'wspr_autorun_restart_cb')
+                  w3_text('w3-margin-L-32 w3-text-teal w3-bold', 'Set all preemptable:'),
+                  w3_button('w3-margin-L-8 w3-green', 'yes', 'wspr_autorun_all_preempt_cb', 1),
+                  w3_button('w3-margin-L-8 w3-red', 'no', 'wspr_autorun_all_preempt_cb', 0),
+                  w3_button('id-wspr-restart w3-margin-L-32 w3-aqua', 'autorun restart', 'wspr_autorun_restart_cb')
                ),
                
                w3_div('id-wspr-admin-autorun w3-margin-T-16')
@@ -767,7 +772,7 @@ function wspr_autorun_restart_cb()
 {
    console.log('wspr_autorun_restart_cb');
    wspr_autorun_public_check();
-   w3_hide('id-wspr-restart');
+   w3_border('id-wspr-restart', '');
    ext_send("ADM wspr_autorun_restart");  // NB: must be sent as ADM command
 }
 
@@ -776,7 +781,7 @@ function wspr_autorun_select_cb(path, idx, first)
    //console.log('wspr_autorun_select_cb path='+ path +' idx='+ idx +' cfg_i='+ wspr.menu_i_to_cfg_i[+idx]);
    admin_select_cb(path, wspr.menu_i_to_cfg_i[+idx], first);
    if (first) return;
-   w3_show('id-wspr-restart');
+   w3_border('id-wspr-restart', wspr.restart_highlight);
 	var el = w3_el('id-kiwi-container');
 	w3_scrollDown(el);   // keep menus visible
 	
@@ -787,7 +792,7 @@ function wspr_preempt_select_cb(path, idx, first)
    //console.log('wspr_preempt_select_cb path='+ path +' idx='+ idx);
    admin_select_cb(path, idx, first);
    if (first) return;
-   w3_show('id-wspr-restart');
+   w3_border('id-wspr-restart', wspr.restart_highlight);
 	var el = w3_el('id-kiwi-container');
 	w3_scrollDown(el);   // keep menus visible
 	
@@ -807,7 +812,23 @@ function wspr_autorun_all_regular_cb(path, idx, first)
       admin_select_cb(path, 0, /* first: true => no save */ true);
    }
    ext_set_cfg_param('WSPR.autorun', 0, EXT_SAVE);
-   w3_show('id-wspr-restart');
+   w3_border('id-wspr-restart', wspr.restart_highlight);
+	var el = w3_el('id-kiwi-container');
+	w3_scrollDown(el);   // keep menus visible
+}
+
+function wspr_autorun_all_preempt_cb(path, idx, first)
+{
+   console.log('wspr_autorun_all_preempt_cb: idx='+ idx);
+   if (first) return;
+   var val = +idx;
+   for (var i = 0; i < rx_chans; i++) {
+      path = 'WSPR.preempt'+ i;
+      w3_select_value(path, val);
+      admin_select_cb(path, val, /* first: true => no save */ true);
+   }
+   ext_set_cfg_param('WSPR.preempt', 0, EXT_SAVE);
+   w3_border('id-wspr-restart', wspr.restart_highlight);
 	var el = w3_el('id-kiwi-container');
 	w3_scrollDown(el);   // keep menus visible
 }

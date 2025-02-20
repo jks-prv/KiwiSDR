@@ -4496,9 +4496,14 @@ function admin_msg(param)
 		   break;
 
 		case "keepalive":
-		   var p = param[1].split(',');
-		   kiwi.uptime = +p[0];
-		   kiwi.isLocal_ip = +p[1];
+		   // The keepalive sent by the backup function doesn't contain the additional info
+         if (param.length == 2) {
+            var p = param[1].split(',');
+            if (p.length == 2) {
+               kiwi.uptime = +p[0];
+               kiwi.isLocal_ip = +p[1];
+            }
+         }
 		   kiwi_clearTimeout(admin.keepalive_timeoout);
 		   if (adm.admin_keepalive) {
 		      //console.log('admin keepalive');

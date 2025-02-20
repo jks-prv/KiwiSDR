@@ -207,8 +207,8 @@ function sstv_clear_display(mode_name)
       ct.fillStyle = 'dimGray';
       var pages = (sstv.pw[sstv.page] > 320 || sstv.cur_w > 320)? 2:1;
       var w = pages * (64+320);
-      console.log('SSTV CLR pages='+ pages +' x='+ (x-64) +' w='+ (w+64));
-      ct.fillRect(x-64,0, w+64,sstv.ph[sstv.page]);
+      console.log('SSTV CLR pages='+ pages +' x='+ (x-64) +' w='+ w);
+      ct.fillRect(x-64,0, w,sstv.ph[sstv.page]);
    }
    sstv.pw[sstv.page] = sstv.cur_w;
    sstv.ph[sstv.page] = sstv.cur_h;

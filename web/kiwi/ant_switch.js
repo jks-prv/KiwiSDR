@@ -37,7 +37,6 @@ var ant_sw = {
    can_mix: true,
    ip_or_url: null,
    exantennas: 0,    // to avoid console.log spam on timer updates
-   first_time: true,
    
    // only set on user side
    focus: false,
@@ -45,7 +44,6 @@ var ant_sw = {
    running: false,
    buttons_locked: false,
    buttons_selected: [],
-   chan_that_switched_ant: null,
 
    denymixing: 0,
    thunderstorm: 0,
@@ -293,7 +291,6 @@ function ant_switch_display_update(ant) {
 
 function ant_switch_select_antenna(ant) {
    ant_switch_log('ant_switch: switching to antenna '+ ant);
-   ant_sw.chan_that_switched_ant = rx_chan;
    ext_send('SET antsw_SetAntenna='+ ant);
 }
 
@@ -358,7 +355,7 @@ function ant_switch_process_reply(ant_selected_antenna) {
       
          // Check for frequency offset and high-side injection change
          // but only when one antenna is selected and mixing is disabled.
-         // Also check if curl command needs to be issued.
+         // curl command issuance is done on server side.
          if (ant_sw.denymixing && selected_antennas_list.length == 1) {
             var s = 'ant_switch.ant'+ antN;
             var mode = ext_get_cfg_param(s +'mode', '', EXT_NO_SAVE);
@@ -383,13 +380,6 @@ function ant_switch_process_reply(ant_selected_antenna) {
                }
             } else {
                console.log('ant='+ antN +' not setting offset');
-            }
-
-            if (rx_chan === ant_sw.chan_that_switched_ant) {
-               var cmd = ext_get_cfg_param(s +'cmd', '', EXT_NO_SAVE);
-               console.log('antsw cmd=<'+ cmd +'>');
-               if (!ant_sw.first_time && cmd != '') ext_send('SET antsw_curl_cmd='+ encodeURIComponent(cmd));
-               ant_sw.chan_that_switched_ant = null;
             }
          }
       }
@@ -442,8 +432,6 @@ function ant_switch_process_reply(ant_selected_antenna) {
          }
       }
    }
-   
-   ant_sw.first_time = false;
 }
 
 function ant_switch_lock_buttons(lock) {
@@ -695,7 +683,8 @@ function ant_switch_cb(path, val, first) {
 
 function ant_switch_cmd_cb(path, val, first)
 {
-   w3_string_set_cfg_cb(path, val, first);
+   //w3_string_set_cfg_cb(path, val, first);
+   w3_json_set_cfg_cb(path, val, first);
 }
 
 function ant_switch_config_html2(n_ch)
@@ -753,46 +742,63 @@ function ant_switch_config_html()
                w3_div('id-antsw-error w3-hide')
             ),
 
-            w3_div('id-antsw-container w3-hide',
+            w3_divs('id-antsw-container w3-hide/w3-margin-T-24',
                w3_div('',
-                  '<br>If antenna switching is denied then users cannot switch antennas. <br>' +
-                  'Admin can always switch antennas, either from a user connection on the local network, or from the <br>' +
-                  'admin console tab using the script: <x1>pkgs/ant_switch/ant-switch-frontend</x1> <br><br>' +
-                  'The last menu option allows anyone connecting using a password to switch antennas <br>' +
-                  '(i.e. time limit exemption password on the admin page control tab, not the user login password). <br>' +
-                  'Other connections made without passwords are denied.'
+                  w3_select('w3-width-auto w3-label-inline|color:red', 'Allow antenna switching by:', '',
+                     'ant_switch.denyswitching', ant_sw.denyswitching, ant_sw.deny_s, 'ant_denyswitch_cb'),
+   
+                  w3_div('w3-margin-T-8',
+                     'If antenna switching is denied then users cannot switch antennas. <br>' +
+                     'Admin can always switch antennas, either from a user connection on the local network, or from the <br>' +
+                     'admin console tab using the script: <x1>pkgs/ant_switch/ant-switch-frontend</x1> <br><br>' +
+                     'The last menu option allows anyone connecting using a password to switch antennas <br>' +
+                     '(i.e. time limit exemption password on the admin page control tab, not the user login password). <br>' +
+                     'Other connections made without passwords are denied.'
+                  )
                ),
-               w3_select('w3-width-auto w3-label-inline w3-margin-T-8|color:red', 'Allow antenna switching by:', '',
-                  'ant_switch.denyswitching', ant_sw.denyswitching, ant_sw.deny_s, 'ant_denyswitch_cb'),
-
-               w3_div('w3-margin-T-16','If antenna mixing is denied then users can select only one antenna at time.'),
-               w3_switch_label_get_param('id-antsw-mix-switch w3-defer w3-margin-T-8/w3-label-inline w3-label-left/', 'Deny antenna mixing?',
-                  'Yes', 'No', 'ant_switch.denymixing', true, false, 'ant_switch_cb'),
-
-               w3_div('w3-margin-T-16','If multiuser is denied then antenna switching is disabled when more than one user is online.'),
-               w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left w3-margin-T-8', 'Deny multiuser switching?',
-                  'Yes', 'No', 'ant_switch.denymultiuser', true, false, 'ant_switch_cb'),
-
-               w3_div('w3-margin-T-16','If thunderstorm mode is activated, all antennas and forced to ground and switching is disabled.'),
-               w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left w3-margin-T-8', 'Enable thunderstorm mode?',
-                  'Yes', 'No', 'ant_switch.thunderstorm', true, false, 'ant_switch_cb'),
-
-               w3_div('w3-margin-T-16',
-                  'The <x1>Default antenna</x1> checkbox below define which single antenna is initially selected. <br>' +
-                  'And also when no users are connected if the switch below is set to <x1>Yes</x1>. <br>' +
-                  '"Users" includes all connections including FT8/WSPR autorun and kiwirecorder (e.g. wsprdaemon). <br>' +
-                  'If multiple are checked only the first encountered is used.'
+               
+               w3_div('',
+                  w3_switch_label_get_param('id-antsw-mix-switch w3-defer/w3-label-inline w3-label-left/', 'Deny antenna mixing?',
+                     'Yes', 'No', 'ant_switch.denymixing', true, false, 'ant_switch_cb'),
+                  w3_div('w3-margin-T-8','If antenna mixing is denied then users can select only one antenna at time.')
                ),
-               w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left w3-margin-T-8',
-                  'Switch to default antenna when no users connected?',
-                  'Yes', 'No', 'ant_switch.default_when_no_users', true, true, 'admin_radio_YN_cb'),
-
-               w3_div('w3-margin-T-16',
-                  'Grounds antennas instead of switching to default antenna when no users connected.'
+               
+               w3_div('',
+                  w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left', 'Deny multiuser switching?',
+                     'Yes', 'No', 'ant_switch.denymultiuser', true, false, 'ant_switch_cb'),
+                  w3_div('w3-margin-T-8','If multiuser is denied then antenna switching is disabled when more than one user is online.')
                ),
-               w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left w3-margin-T-8',
-                  'Ground antennas when no users connected?',
-                  'Yes', 'No', 'ant_switch.ground_when_no_users', true, true, 'admin_radio_YN_cb'),
+               
+               w3_div('',
+                  w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left', 'Enable thunderstorm mode?',
+                     'Yes', 'No', 'ant_switch.thunderstorm', true, false, 'ant_switch_cb'),
+                  w3_div('w3-margin-T-8','If thunderstorm mode is activated, all antennas and forced to ground and switching is disabled.')
+               ),
+
+               w3_div('',
+                  w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left',
+                     'Switch to default antenna when no users connected?',
+                     'Yes', 'No', 'ant_switch.default_when_no_users', true, true, 'admin_radio_YN_cb'),
+                  w3_div('w3-margin-T-8',
+                     'The <x1>Default antenna</x1> checkbox below defines which single antenna is initially selected. <br>' +
+                     'And also when no users are connected if the switch above is set to <x1>Yes</x1>. <br>' +
+                     '"Users" includes all connections including FT8/WSPR autorun and kiwirecorder (e.g. wsprdaemon, TDoA). <br>' +
+                     'If multiple are checked only the first encountered is used.')
+               ),
+
+               w3_div('',
+                  w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left',
+                     'Ground antennas when no users connected?',
+                     'Yes', 'No', 'ant_switch.ground_when_no_users', true, true, 'admin_radio_YN_cb'),
+                  w3_div('w3-margin-T-8',
+                     'Grounds antennas instead of switching to default antenna when no users are connected.'
+                  )
+               ),
+
+               w3_half('', '',
+                  w3_input_get('w3-defer//', 'Ground antenna cURL command arguments', 'ant_switch.antgcmd', 'ant_switch_cmd_cb', ''),
+                  w3_text('w3-margin-left w3-text-teal', 'cURL command to run when antenna switched to ground.')
+               ),
 
                w3_div('','<hr><b>Antenna buttons configuration</b><br>'),
                w3_col_percent('w3-margin-T-16/',

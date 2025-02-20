@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 803
+VERSION_MIN = 804
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -2057,7 +2057,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     prep_distro: clean_logs
 	    -systemctl --full --lines=250 stop kiwid.service || true
 	    -systemctl --full --lines=250 enable kiwid.service || true
-	    (cd $(DIR_CFG); jq '.onetime_password_check = false | .rev_auto = false | .rev_auto_user = "" | .rev_auto_host = "" | .rev_user = "" | .rev_host = "" | .update_check = true | .update_install = true' admin.json > /tmp/jq && mv /tmp/jq admin.json)
+	    (cd $(DIR_CFG); jq '.onetime_password_check = false | .admin_password = "" | .user_password = "" | .rev_auto = false | .rev_auto_user = "" | .rev_auto_host = "" | .rev_user = "" | .rev_host = "" | .update_check = true | .update_install = true' admin.json > /tmp/jq && mv /tmp/jq admin.json)
 	    (cd $(DIR_CFG); jq '.sdr_hu_dom_sel = 2 | .server_url = ""' kiwi.json > /tmp/jq && mv /tmp/jq kiwi.json)
 	    (cd $(DIR_CFG); rm -f .do_once.dep .keyring4.dep frpc.ini seq_serno)
 	    -rm -f /tmp/.kiwi* /root/.ssh/auth* /root/.ssh/known*
@@ -2090,8 +2090,9 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    @(cd $(DIR_CFG); $(JA) | grep update_)
 	    @echo 'want: rev_auto = false, rev_auto_{user,host} = "", rev_{user,host} = ""'
 	    @(cd $(DIR_CFG); $(JA) | grep rev_)
-	    @echo 'want: admin_password = ""'
-	    @(cd $(DIR_CFG); $(JA) | grep admin_pa)
+	    @echo 'want: admin_password = "" user_password = ""'
+	    @(cd $(DIR_CFG); $(JA) | grep admin_password)
+	    @(cd $(DIR_CFG); $(JA) | grep user_password)
 	    @echo "want: file to be found"
 	    -@ls -la unix_env/reflash_delay_update
 	    @echo "want: enabled/enabled"

@@ -848,6 +848,14 @@ function w3_width_height(el_id, w, h)
 	}
 }
 
+function w3_border(el_id, s)
+{
+	var el = w3_el(el_id);
+	if (!el) return null;
+	el.style.border = s;
+	return el;
+}
+
 // bounding box measured from the origin of parent
 function w3_boundingBox_children(el_id, debug)
 {
@@ -2063,8 +2071,10 @@ function w3int_label(psa, text, path, extension)
 
    // don't emit empty label div
    //if (psa == '' && text == '' && extension == '') return '';
-   if (text == '' && ((psa != '' && psa != '||') || extension != ''))
+   if (text == '' && ((psa != '' && psa != '||') || extension != '')) {
       console_nv('$w3int_label', {text}, {psa}, {extension});
+      //kiwi_trace();
+   }
    if (text == '') {
       if (dump) console.log('$w3int_label <empty string>');
       return '';
