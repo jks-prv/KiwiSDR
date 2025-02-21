@@ -2161,6 +2161,7 @@ function dx_search_ident_cb(path, val, first, cb_a)
    if (first) return;
    //console.log('dx_search_ident_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
    if (cb_a[1] == 'ev') return;     // so we don't run twice
+   if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
 	ext_send('SET MARKER idx='+ idx +' search_ident='+ encodeURIComponent(val));
@@ -2171,6 +2172,7 @@ function dx_search_notes_cb(path, val, first, cb_a)
    if (first) return;
    //console.log('dx_search_notes_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
    if (cb_a[1] == 'ev') return;     // so we don't run twice
+   if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
 	ext_send('SET MARKER idx='+ idx +' search_notes='+ encodeURIComponent(val));
