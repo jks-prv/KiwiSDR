@@ -175,7 +175,7 @@ enum state_t { INIT, BUSY, DONE };
 #define IMAGE_CDIM 3
 typedef u1_t image_t[IMAGE_XDIM][IMAGE_YDIM][IMAGE_CDIM];
 
-#define LINES_XDIM 600
+#define LINES_XDIM 700
 #define LINES_YDIM ((MAXSLANT-MINSLANT)*2)
 typedef u2_t lines_t[LINES_XDIM][LINES_YDIM];
 
