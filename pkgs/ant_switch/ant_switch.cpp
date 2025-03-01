@@ -404,7 +404,7 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
 
     char *which = (antenna[0] == '\t')? &antenna[1] : antenna;
     const char *ant_cmd = cfg_string(stprintf("ant_switch.ant%scmd", which), NULL, CFG_OPTIONAL);
-    if (!kiwi_nonEmptyStr(ant_cmd)) return;
+    if (kiwi_emptyStr(ant_cmd)) return;
     char *ccmd = strdup(ant_cmd);
     cfg_string_free(ant_cmd);
     antsw_printf(CYAN "ant_switch: ccmd <%s>" NONL, ccmd);

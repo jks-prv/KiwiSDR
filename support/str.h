@@ -45,6 +45,7 @@ void kiwi_get_chars(char *field, char *value, size_t size);
 #define SET_CHARS(field, value, fill) kiwi_set_chars(field, value, fill, sizeof(field));
 void kiwi_set_chars(char *field, const char *value, const char fill, size_t size);
 bool kiwi_nonEmptyStr(const char *s);
+#define kiwi_emptyStr(s) !kiwi_nonEmptyStr(s)
 char *kiwi_str_replace(char *s, const char *from, const char *to, bool *caller_must_free DEF_NULL);
 void kiwi_str_unescape_quotes(char *str);
 char *kiwi_json_to_html(char *str, bool doBR DEF_TRUE);

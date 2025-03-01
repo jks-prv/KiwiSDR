@@ -271,7 +271,7 @@ void update_vars_from_config(bool called_at_init)
     s = cfg_string("iframe.url", NULL, CFG_OPTIONAL);
     s2 = cfg_string("iframe.html", NULL, CFG_OPTIONAL);
     bool enabled = cfg_default_bool("iframe.enable", true, &up_cfg);
-    if (!kiwi_nonEmptyStr(s) && !kiwi_nonEmptyStr(s2) && enabled) {
+    if (kiwi_emptyStr(s) && kiwi_emptyStr(s2) && enabled) {
         cfg_set_int("iframe.src", 0);
 	    cfg_set_string("iframe.url", "https://spots.kiwisdr.com");
 	    cfg_set_string("iframe.title", "<span style=\\\"color:cyan\\\">Spots by <a href=\\\"http://www.sk6aw.net/cluster\\\" target=\\\"_blank\\\">SK6AW.NET</a></span>");
