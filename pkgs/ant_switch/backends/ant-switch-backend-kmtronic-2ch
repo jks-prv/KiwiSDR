@@ -29,15 +29,18 @@ N_CH=2
 VERSION=2.0
 ADDR_FILE="/etc/default/kmtronic-2ch"
 
+# These switches have no status query command. So simply remember last state sent.
+KMTRONIC_STATUS="/tmp/kmtronic-2ch-ant"
+
 if [ -e $ADDR_FILE ]; then
 	. $ADDR_FILE
 else
     KMTRONIC_URL="http://192.168.1.199:80"
 fi
 
-CURLEXEC=/usr/bin/curl
 # no switch auth currently
-CURLOPTS=" --silent --connect-timeout 1 --max-time 2 "
+CURLCMD="/usr/bin/curl --silent --connect-timeout 1 --max-time 2 "
+#CURLCMD="echo "
 
 AntSW_ShowBackend() {
     echo "kmtronic-2ch v$VERSION 2ch mix $KMTRONIC_URL"
@@ -68,8 +71,10 @@ AntSW_Initialize() {
 AntSW_GroundAll() {
     # This function turns off (deselects) all antennas
     # no return value
-    $CURLEXEC $CURLOPTS $KMTRONIC_URL/FF0100 > /dev/null 2>&1
-    $CURLEXEC $CURLOPTS $KMTRONIC_URL/FF0200 > /dev/null 2>&1
+    $CURLCMD $KMTRONIC_URL/FF0100 > /dev/null 2>&1
+    echo -n 0 > ${KMTRONIC_STATUS}1
+    $CURLCMD $KMTRONIC_URL/FF0200 > /dev/null 2>&1
+    echo -n 0 > ${KMTRONIC_STATUS}2
 }
 
 function set_antenna() {
@@ -77,7 +82,8 @@ function set_antenna() {
     # Only one antenna
     # Antenna to select is on variable $1
     # no return value
-    $CURLEXEC $CURLOPTS $KMTRONIC_URL/FF0${1}01 > /dev/null 2>&1
+    $CURLCMD $KMTRONIC_URL/FF0${1}01 > /dev/null 2>&1
+    echo -n 1 > ${KMTRONIC_STATUS}${1}
 }
 
 AntSW_SelectAntenna() {
@@ -94,17 +100,24 @@ AntSW_RemoveAntenna() {
     # Antenna to deleselct is on variable $1
     # Only one antenna
     # no return value
-    $CURLEXEC $CURLOPTS $KMTRONIC_URL/FF0${1}00 > /dev/null 2>&1
+    $CURLCMD $KMTRONIC_URL/FF0${1}00 > /dev/null 2>&1
+    echo -n 0 > ${KMTRONIC_STATUS}${1}
 }
 
 AntSW_ToggleAntenna() {
     # This function toggles antenna
     # if on, then off
     # if off, then on
-    # Antenna to toogle is on variable $1
+    # Antenna to toggle is on variable $1
     # Only one antenna
     # no return value
-    $CURLEXEC $CURLOPTS $KMTRONIC_URL/relays.cgi?relay=$1 > /dev/null 2>&1
+    toggle=`cat ${KMTRONIC_STATUS}${1}`
+    if [ "x$toggle" == "x1" ]; then
+        toggle="0"
+    else
+        toggle="1"
+    fi
+    echo -n $toggle > ${KMTRONIC_STATUS}${1}
 }
 
 AntSW_ShowSelected() {
@@ -116,32 +129,18 @@ AntSW_ReportSelected() {
     # returns a string
     # Selected antennas: 1
     # or comma separated list
-    # Selected antennas: 1,2,3,4
+    # Selected antennas: 1,2
 
-    #reply='
-    #<response>
-    #<relay0>[01]</relay0>      // heartbeat?
-    #<relay1>[01]</relay1>      // first ant
-    # ...
-    #<relay8>[01]</relay8>      // last ant
-    #</response>
-    #'
-    reply=`$CURLEXEC $CURLOPTS $KMTRONIC_URL/status.xml`
-    digits=`echo $reply | sed 's/relay[0-8]//g' | sed 's/[^0-1]//g' | /usr/bin/tr -d '\n'`
-    if [[ "x$digits" == "x" ]] || [[ ${#digits} != 9 ]]; then
-        # curl failed. Reply with invalid message so 
-        # gui doesn't get hang. fixme.
-        digits="000000000"
-    fi
-    for s in 1 2 3 4 5 6 7 8; do
+    digits=`cat ${KMTRONIC_STATUS}1``cat ${KMTRONIC_STATUS}2`
+    for s in 0 1; do
         thisbit=${digits:${s}:1}
         if [ "x$thisbit" == "x1" ]; then
-            selectedantennas="${selectedantennas}$(($s)),"
+            selectedantennas="${selectedantennas}$(($s+1)),"
             antennafound=$(($antennafound+1))
         fi
     done
-    thisbits=${digits:1:8}
-    if [ "x$thisbits" == "x00000000" ]; then
+    thisbits=${digits:0:2}
+    if [ "x$thisbits" == "x00" ]; then
         # All antenna inputs are grounded
         antennafound=1
         selectedantennas="g,"
