@@ -216,6 +216,7 @@ alias mfa="make force ASAN=1 OPT=1"
 alias mskip="make skip"
 alias masm="make ASM_OUT=1"
 alias mh="make help"
+alias min="make info"
 alias m0="make OPT=0"
 alias mgdb="make debug GDB=1"
 alias ma="make ASAN=1 OPT=1"
@@ -572,6 +573,7 @@ alias st="stty -a"
 alias adc="function _adc () { while true; do curl -s $_our_ip:8073/adc?level=\$1; sleep 0.5; done ; } ; _adc"
 alias adcov="function _adcov () { curl -s $_our_ip:8073/adc_ov } ; _adcov"
 alias adcovr="function _adcovr () { curl -s $_our_ip:8073/adc_ov?reset } ; _adcovr"
+alias flog="tail -n 100 -f /var/log/frpc.log"
 
 
 # networking

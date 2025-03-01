@@ -99,7 +99,7 @@ AntSW_ToggleAntenna() {
     # This function toggles antenna
  	# if on, then off
 	# if off, then on
-	# Antenna to toogle is on variable $1
+	# Antenna to toggle is on variable $1
     # Only one antenna
     # no return value
 	$CURLEXEC $CURLOPTS $SNAPTEKK_URL/switch/t$1 > /dev/null 2>&1
