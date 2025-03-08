@@ -711,6 +711,12 @@ function w3_id(el_id)
 	return (id? id : 'id-NULL');
 }
 
+function w3_activeElement()
+{
+   // returns 'id-NULL' if activeElement is null
+   return w3_id(document.activeElement);
+}
+
 // assign innerHTML, silently failing if element doesn't exist
 function w3_innerHTML(id)
 {
@@ -902,6 +908,7 @@ function w3_center_in_window(el_id, id)
 }
 
 // conditionally select field element
+// also used to dismiss popup keyboard on mobile via el.blur()
 function w3_field_select(el_id, opts)
 {
 	var el = w3_el(el_id);
@@ -924,19 +931,30 @@ function w3_field_select(el_id, opts)
    // each scan frequency tune.
    if (opts['scanning'] && extint.scanning) return;
    
-   var focus=0, select=0, blur=0;
+   var focus=0, select=0, blur=0, dismiss=0;
    if (opts['mobile'] && kiwi_isMobile()) blur = 1; else focus = select = 1;
    if (opts['blur']) blur = 1;
+   if (opts['dismiss_kybd']) dismiss = 1;
    if (opts['focus_select']) focus = select = 1;
    if (opts['focus_only']) { focus = 1; select = 0; }
    if (opts['select_only']) select = 1;
    
-   if (trace) console.log('w3_field_select focus='+ focus +' select='+ select +' blur='+ blur);
-   //if (opts['log']) canvas_log('$'+ opts['log'] +': F='+ focus +' S='+ select +' B='+ blur);
+   if (trace) console.log('w3_field_select focus='+ focus +' select='+ select +' blur='+ blur +' dismiss='+ dismiss);
+   //if (opts['log']) canvas_log('$'+ opts['log'] +': F='+ focus +' S='+ select +' B='+ blur +' D='+ dismiss +' S='+ TF(kiwi_isOld_iOS()));
+   
+   // old iPad-2 safari/iOS does this weird repeating keyboard popup if keyboard blurred this way
+   if (kiwi_isOld_iOS()) dismiss = 0;
+
    if (focus) el.focus();
    if (select) el.select();
    if (blur) el.blur();
+   if (dismiss) el.blur();
    if (trace) kiwi_trace();
+}
+
+function w3_dismiss_keyboard(el)
+{
+   w3_field_select(el, {dismiss_kybd:1});
 }
 
 // add, remove or check presence of class properties
@@ -2711,6 +2729,7 @@ function w3int_input_keydown(ev, path, cb)
    var disabled = w3_parent_with(el, 'w3-disabled');
    //w3_remove(el, 'kiwi-pw');
    var trace = w3_contains(el, 'w3-trace');
+trace=1;
    if (trace) console.log('w3int_input_keydown k='+ k + (ctrl? ' CTRL ':'') +' val=<'+ el.value +'> cb='+ cb +' disabled='+ disabled);
    var cb_a = cb.split('|');
    
@@ -2763,12 +2782,14 @@ function w3int_input_keydown(ev, path, cb)
             //console.log('el.value='+ JSON.stringify(w3_el('id-ale_2g-user-textarea').value));
             //console.log(el);
             w3_input_change(path, cb, 'kd');
+            w3_dismiss_keyboard(el);
          }
       } else
 	   if (el.value == '') {
          // cause empty input lines followed by Enter to send empty command to shell
          //console.log('w3int_input_keydown: empty line + Enter');
          w3_input_change(path, cb, 'kd');
+         w3_dismiss_keyboard(el);
       }
 	}
 
@@ -2777,6 +2798,7 @@ function w3int_input_keydown(ev, path, cb)
       //console.log('w3int_input_keydown Delete: len='+ el.value.length +' ss='+ el.selectionStart +' se='+ el.selectionEnd);
       el.value = '';
       w3_input_change(path, cb, 'kd');
+      w3_dismiss_keyboard(el);
 	}
 }
 
@@ -2813,6 +2835,7 @@ function w3_input_change(path, cb, from)
 	var el = w3_el(path);
 	if (el) {
       var trace = w3_contains(el, 'w3-trace');
+trace=1;
       if (trace) console.log('w3_input_change path='+ path +' from='+ from);
       
       // cb is a string because can't pass an object to onclick
@@ -2836,6 +2859,7 @@ function w3_input_change(path, cb, from)
 */
    }
 	
+   w3_dismiss_keyboard(el);
    w3int_post_action();
 }
 
@@ -2872,6 +2896,8 @@ function w3_input(psa, label, path, val, cb, placeholder)
 	var onkeydown = ' onkeydown="w3int_input_keydown(event, '+ sq(path) +', '+ sq(cb) +')"';
 	var onkeyup = ' onkeyup="w3int_input_keyup(event, '+ sq(path) +', '+ sq(cb) +')"';
 	var events = (path && !custom)? (onchange + oninput + onkeydown + onkeyup) : '';
+	//var auto = psa.includes('w3-no-auto-anything')? ' autocomplete="off" autocorrect="off" autocapitalize="off"' : '';
+	var auto = ' autocomplete="off" autocorrect="off" autocapitalize="off"';
 	val = ' value='+ dq(w3_esc_dq(val) || '');
 	var inline = psa.includes('w3-label-inline');
 	var bold = !psa.includes('w3-label-not-bold');
@@ -2891,7 +2917,7 @@ function w3_input(psa, label, path, val, cb, placeholder)
 	if (dump) console.log('O:['+ psa_outer +'] L:['+ psa_label +'] I:['+ psa_inner +']');
 	
    // NB: include id in an id= for benefit of keyboard shortcut field detection
-	var in_s = '<input id='+ dq(id) +' '+ psa_inner + val + events +'>';
+	var in_s = '<input id='+ dq(id) +' '+ psa_inner + val + events + auto +'>';
 	var cb_s = '|'+ id +'|'+ cb;
 	
 	if (psa.includes('w3-up-down')) {
@@ -4076,6 +4102,32 @@ function w3_table(psa)
 			s += arguments[i];
 		}
 	s += '</table>';
+	//console.log(s);
+	return s;
+}
+
+function w3_table_head(psa)
+{
+	var p = w3_psa(psa);
+	var s = '<thead '+ p +'>';
+		for (var i=1; i < arguments.length; i++) {
+	      if (arguments[i] == null) continue;
+			s += arguments[i];
+		}
+	s += '</thead>';
+	//console.log(s);
+	return s;
+}
+
+function w3_table_body(psa)
+{
+	var p = w3_psa(psa);
+	var s = '<tbody '+ p +'>';
+		for (var i=1; i < arguments.length; i++) {
+	      if (arguments[i] == null) continue;
+			s += arguments[i];
+		}
+	s += '</tbody>';
 	//console.log(s);
 	return s;
 }

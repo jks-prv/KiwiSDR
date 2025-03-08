@@ -105,12 +105,17 @@
 	cursor: default;
 }
 
+.w3-text-left {
+    text-align: left
+}
+
 .w3-text-bottom {
     vertical-align: bottom
 }
 
 .w3-text-wrap {
-    text-wrap: auto
+    /* text-wrap: auto;     NB: doesn't work on iOS safari pre 17.4 */
+	white-space: normal;
 }
 
 .w3-ext-btn
@@ -766,6 +771,11 @@ input[type=range]::-moz-range-thumb {
     padding: 0
 }
 
+.w3-padding-1
+{
+    padding: 1px
+}
+
 .w3-padding-L-8
 {
     padding-left: 8px
@@ -1261,6 +1271,11 @@ input[type=range]::-moz-range-thumb {
 .w3-nowrap
 {
 	white-space: nowrap;
+}
+
+.w3-wrap
+{
+	white-space: normal;
 }
 
 .w3-normal
