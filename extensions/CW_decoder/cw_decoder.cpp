@@ -26,6 +26,7 @@ typedef struct {
 	int run;
 	bool task_created;
 	tid_t tid;
+	
 	int rd_pos;
 	bool seq_init;
 	u4_t seq;

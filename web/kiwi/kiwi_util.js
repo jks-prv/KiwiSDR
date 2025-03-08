@@ -66,7 +66,7 @@ var kiwi_util = {
 };
 
 var kiwi_iOS, kiwi_iPhone, kiwi_MacOS, kiwi_linux, kiwi_Windows, kiwi_android;
-var kiwi_safari, kiwi_firefox, kiwi_chrome, kiwi_opera, kiwi_smartTV;
+var kiwi_safari, kiwi_firefox, kiwi_chrome, kiwi_opera, kiwi_smartTV, kiwi_browserVersion;
 var kiwi_touch;
 
 // wait until DOM has loaded before proceeding (browser has loaded HTML, but not necessarily images)
@@ -143,9 +143,6 @@ document.onreadystatechange = function() {
 		} else
 		if (kiwi_chrome) {
 		   kiwi_safari = null;
-		} else
-		if (kiwi_safari) {
-		   if (kiwi_browserVersion) kiwi_safari[1] = kiwi_browserVersion[1];
 		}
 
 		if (!website) console.log('Safari='+ kiwi_isSafari() + ' Firefox='+ kiwi_isFirefox() + ' Chrome='+ kiwi_isChrome() + ' Opera='+ kiwi_isOpera());
@@ -180,6 +177,9 @@ function kiwi_load2()
 }
 
 function kiwi_is_iOS() { return kiwi_iOS; }
+
+// works even for non-Safari browsers
+function kiwi_isOld_iOS() { return (kiwi_isSafari() <= 601); }
 
 function kiwi_is_iPhone() { return kiwi_iPhone; }
 
@@ -850,8 +850,8 @@ function canvas_log_int(s)
          var h = screen.height;
          if (w >= 600 && h >= 950) {   // iPad & tablets
             //el.style.top = '36px';     // top
-            el.style.top = '200px';    // bottom
-            //el.style.bottom = '0';
+            //el.style.top = '200px';    // mid
+            el.style.bottom = '0';     // bottom
             //el.style.right = '0';
             el.style.left = '0';
             el.style.width = '350px';
@@ -974,6 +974,8 @@ function kiwi_serializeEvent(e) {
       buttons: e.buttons,
       cancelBubble: e.cancelBubble,
       cancelable: e.cancelable,
+      charCode: e.charCode,
+      code: e.code,
       clientX: e.clientX,
       clientY: e.clientY,
       composed: e.composed,
@@ -984,6 +986,8 @@ function kiwi_serializeEvent(e) {
       eventPhase: e.eventPhase,
       fromElement: e.fromElement ? e.fromElement.outerHTML : null,
       isTrusted: e.isTrusted,
+      key: e.key,
+      keyCode: e.keyCode,
       layerX: e.layerX,
       layerY: e.layerY,
       metaKey: e.metaKey,
