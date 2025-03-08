@@ -173,8 +173,8 @@ bool ant_switch_read_denymultiuser(int rx_chan) {
     bool deny_multi = cfg_true("ant_switch.denymultiuser");
     if (ext_auth(rx_chan) == AUTH_LOCAL) deny_multi = false;    // don't apply to local connections
     bool result = (deny_multi && kiwi.current_nusers > 1);
-    //antsw_rcprintf(rx_chan, "ant_switch_read_denymultiuser deny_multi=%d current_nusers=%d result=%d\n",
-    //    deny_multi, kiwi.current_nusers, result);
+    antsw_rcprintf(rx_chan, "ant_switch_read_denymultiuser deny_multi=%d current_nusers=%d result=%d\n",
+        deny_multi, kiwi.current_nusers, result);
     return result? true : false;
 }
 
@@ -198,18 +198,19 @@ void ant_switch_check_isConfigured()
     }
 }
 
+#define DENY_NONE 0
+#define DENY_SWITCHING 1
+#define DENY_MULTIUSER 2
+    
 bool ant_switch_check_deny(int rx_chan)
 {
-    #define DENY_NONE 0
-    #define DENY_SWITCHING 1
-    #define DENY_MULTIUSER 2
-    
     if (rx_chan < 0) return false;      // not called from user context
     int deny_reason = DENY_NONE;
     if (ant_switch_read_denyswitching(rx_chan) == true) deny_reason = DENY_SWITCHING;
     else
     if (ant_switch_read_denymultiuser(rx_chan) == true) deny_reason = DENY_MULTIUSER;
     snd_send_msg(rx_chan, ANT_SWITCH_DEBUG_MSG, "MSG antsw_AntennaDenySwitching=%d", deny_reason);
+    antsw_rcprintf(rx_chan, "ant_switch_check_deny deny_reason=%d DENY=%d\n", deny_reason, deny_reason != DENY_NONE);
     return (deny_reason != DENY_NONE);
 }
 
@@ -340,6 +341,14 @@ void ant_switch_poll_10s()
     snr_initial_meas_done = kiwi.snr_initial_meas_done;
     if (snr_done) using_default = false;    // allow re-evaluation of default when snr meas completes
     
+    for (int rx_chan = 0; rx_chan < rx_chans; rx_chan++) {
+        NextTask("ant_switch_poll_10s");
+        conn_t *c = rx_channels[rx_chan].conn;
+        if (!c || !c->valid || (c->type != STREAM_SOUND && c->type != STREAM_WATERFALL) || c->internal_connection)
+            continue;
+        ant_switch_check_deny(rx_chan);
+    }
+    
     if (using_default || (thunderstorm && antsw.using_tstorm) || !enable) return;
 
     if (no_users && (cfg_true("ant_switch.default_when_no_users") || cfg_true("ant_switch.ground_when_no_users"))) {
@@ -400,7 +409,7 @@ void ant_switch_notify_users()
 void ant_switch_curl_cmd(char *antenna, int rx_chan)
 {
     int i, n;
-    if (ant_switch_check_deny(rx_chan)) return;     // prevent circumvention from client side
+    if (ant_switch_check_deny(rx_chan) != DENY_NONE) return;    // prevent circumvention from client side
 
     char *which = (antenna[0] == '\t')? &antenna[1] : antenna;
     const char *ant_cmd = cfg_string(stprintf("ant_switch.ant%scmd", which), NULL, CFG_OPTIONAL);
@@ -489,7 +498,7 @@ bool ant_switch_msgs(char *msg, int rx_chan)
     if (n == 1) {
         //antsw_rcprintf(rx_chan, "ant_switch: %s\n", msg);
         antsw.notify_rx_chan = rx_chan;     // notifier is current rx_chan
-        if (!ant_switch_check_deny(rx_chan)) {      // prevent circumvention from client side
+        if (ant_switch_check_deny(rx_chan) == DENY_NONE) {      // prevent circumvention from client side
             if (ant_switch_validate_cmd(antenna)) {
                 if (ant_switch_read_denymixing()) {
                     ant_switch_setantenna(antenna, rx_chan);
@@ -509,7 +518,7 @@ bool ant_switch_msgs(char *msg, int rx_chan)
     n = sscanf(msg, "SET antsw_freq_offset=%d", &freq_offset_ant);
     if (n == 1) {
         //antsw_rcprintf(rx_chan, "ant_switch: freq_offset %d\n", freq_offset_ant);
-        if (!ant_switch_check_deny(rx_chan)) {      // prevent circumvention from client side
+        if (ant_switch_check_deny(rx_chan) == DENY_NONE) {      // prevent circumvention from client side
             rx_set_freq_offset_kHz((double) freq_offset_ant);
             antsw_printf("ant_switch FOFF %.3f\n", freq.offset_kHz);
         }
@@ -520,7 +529,7 @@ bool ant_switch_msgs(char *msg, int rx_chan)
     n = sscanf(msg, "SET antsw_high_side=%d", &high_side_ant);
     if (n == 1) {
         //antsw_rcprintf(rx_chan, "ant_switch: high_side %d\n", high_side_ant);
-        if (!ant_switch_check_deny(rx_chan)) {      // prevent circumvention from client side
+        if (ant_switch_check_deny(rx_chan) == DENY_NONE) {     // prevent circumvention from client side
             // if antenna switch extension is active override current inversion setting
             // and lockout the admin config page setting until a restart
             kiwi.spectral_inversion_lockout = true;
