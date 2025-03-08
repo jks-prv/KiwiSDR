@@ -8,6 +8,8 @@
 //
 // Updates:
 //
+//  5 mar 25 66.245.192.0/21 (192.0:199.255) 66.245.196.27 constant/vultr/choopa repeating CMD_MARKER unknown variant
+//  4 mar 25 107.191.32.0/19 (32.0:63.255) 107.191.49.208 constant/vultr/choopa repeating CMD_MARKER unknown variant
 // 14 jan 25 remove 35.0.0.0/8 because it's allocated to multiple entities one of which is Charter that has a Kiwi customer
 // 13 jan 25 80.240.22.0/23 (22.0:23.255) 80.240.22.250 vultr via email
 // 19 nov 24 198.11.128.0/18 (128.0:191.255) 198.11.168.156 alibaba via forum
@@ -129,6 +131,7 @@
     "65.49.192.0/19",
     "65.49.224.0/20",
     "66.42.64.0/18",
+    "66.245.192.0/21",
     "67.219.96.0/20",
     "69.251.12.0/24",
     "70.34.192.0/19",
@@ -154,6 +157,7 @@
     "104.196.0.0/14",
     "104.238.128.0/18",
     "107.150.0.0/16",
+    "107.191.32.0/19",
     "108.61.0.0/16",
     "110.87.0.0/16",
     "114.249.0.0/18",
