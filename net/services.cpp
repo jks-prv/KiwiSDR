@@ -43,6 +43,7 @@ Boston, MA  02110-1301, USA.
 #include "sha256.h"
 
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -250,6 +251,33 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
     lprintf("MY_KIWI: %sregister\n", reg? "":"un");
 }
 
+void proxy_frpc_setup(const char *proxy_server, const char *user, const char *host, int port)
+{
+    if (kiwi_emptyStr(user) || kiwi_emptyStr(host) || kiwi_emptyStr(proxy_server))
+        return;
+
+    // criteria for using secondary proxy server(s)
+    //#define PROXY2_ENABLE
+    //#define PROXY2_TEST
+    #ifdef PROXY2_ENABLE
+        // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
+        const char *actual_proxy_server = isdigit(host[0])? "proxy2.kiwisdr.com" : proxy_server;
+    #elif PROXY2_TEST
+        const char *actual_proxy_server = strcmp(host, "jksp2")? proxy_server : "proxy2.kiwisdr.com";
+    #else
+        // no redirection
+        const char *actual_proxy_server = proxy_server;
+    #endif
+
+    lprintf("PROXY init frpc.ini: actual_proxy_server=%s\n", actual_proxy_server);
+    char *cmd_p;
+    asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
+        actual_proxy_server, user, host, port, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
+    printf("PROXY: %s\n", cmd_p);
+    system(cmd_p);
+    kiwi_asfree(cmd_p);
+}
+
 static void misc_NET(void *param)
 {
     char *cmd_p, *cmd_p2 = NULL;
@@ -272,34 +300,33 @@ static void misc_NET(void *param)
 	system("killall -q frpc");
 	int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
 	bool proxy = (dom_sel == DOM_SEL_REV);
-	lprintf("PROXY: %s dom_sel_menu=%d\n", proxy? "YES":"NO", dom_sel);
+    const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
+	lprintf("PROXY: %s dom_sel_menu=%d %s\n", proxy? "YES":"NO", dom_sel, proxy_server);
 	
 	if (proxy) {
 	    if (!kiwi_file_exists(DIR_CFG "/frpc.ini")) {
             bool rev_auto = admcfg_true("rev_auto");
-            const char *user = admcfg_string("rev_auto_user", NULL, CFG_OPTIONAL);
-            const char *host = admcfg_string("rev_auto_host", NULL, CFG_OPTIONAL);
-            const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_OPTIONAL);
+            const char *user, *host;
+            if (rev_auto) {
+                user = admcfg_string("rev_auto_user", NULL, CFG_OPTIONAL);
+                host = admcfg_string("rev_auto_host", NULL, CFG_OPTIONAL);
+            } else {
+                user = admcfg_string("rev_user", NULL, CFG_OPTIONAL);
+                host = admcfg_string("rev_host", NULL, CFG_OPTIONAL);
+            }
             lprintf("PROXY: no " DIR_CFG "/frpc.ini cfg file\n");
             lprintf("PROXY: rev_auto=%d user=%s host=%s proxy_server=%s\n",
                 rev_auto, user, host, proxy_server);
 
-            if (rev_auto && kiwi_nonEmptyStr(user) && kiwi_nonEmptyStr(host) && kiwi_nonEmptyStr(proxy_server)) {
-                lprintf("PROXY: initializing frpc configuration file\n");
-                asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
-                    proxy_server, user, host, net.port_ext, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
-                printf("proxy register: %s\n", cmd_p);
-                system(cmd_p);
-                kiwi_asfree(cmd_p);
-            }
-            
-            admcfg_string_free(user); admcfg_string_free(host); admcfg_string_free(proxy_server);
+            proxy_frpc_setup(proxy_server, user, host, net.port_ext);
+            admcfg_string_free(user); admcfg_string_free(host);
 	    }
 	    
 		lprintf("PROXY: starting frpc\n");
 		rev_enable_start = true;
 		system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
 	}
+	admcfg_string_free(proxy_server);
 
     // find and remove known viruses, mostly as a result of Debian root/debian accounts
     // without passwords on networks with ssh open to the Internet
