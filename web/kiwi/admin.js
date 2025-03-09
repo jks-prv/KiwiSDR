@@ -1290,11 +1290,13 @@ function connect_rev_status_cb(status)
 	   
       // setup frpc.ini and restart frpc if new account or host name updated
       var proxy_setup = (status >= admin.FRPC_EXISTING && status <= admin.FRPC_UPDATE_HOST);
-      console.log('status='+ status +' '+ TF(cfg.sdr_hu_dom_sel == kiwi.REV) + TF(!connect.focus_query) + TF(proxy_setup));
+      console.log('!admin_is_proxy_conn: status='+ status +' rev='+ TF(cfg.sdr_hu_dom_sel == kiwi.REV) +' focus='+ TF(connect.focus_query) +' proxy_setup='+ TF(proxy_setup));
       if (cfg.sdr_hu_dom_sel == kiwi.REV && !connect.focus_query && proxy_setup) {
          s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', status, user, host, auto);
          console.log(s);
          ext_send(s);
+      } else {
+         console.log('did NOT send a rev_register');
       }
    }
    
@@ -3585,7 +3587,7 @@ function console_html()
                w3_div('id-console-line',
                   admin.console.isMobile?
                      w3_inline('w3-margin-T-8/',
-                        w3_input('//id-console-line-input w3-input-any-change||autocomplete="off" autocorrect="off" autocapitalize="off"',
+                        w3_input('//id-console-line-input w3-input-any-change',
                            '', 'console_input', '', 'console_input_cb|console_key_cb', 'enter shell command'),
                         w3_inline('w3-margin-L-16/',
                            w3_button('w3-yellow', '^C', 'console_ctrl_button_cb', 'c'),

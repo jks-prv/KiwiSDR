@@ -1261,9 +1261,11 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 DX_DONE();
                 
                 #ifdef OPTION_DENY_APP_FINGERPRINT_CONN
-                    clprintf(conn, "API: non-Kiwi app fingerprint was denied connection\n");
-                    send_msg(conn, SM_NO_DEBUG, "MSG too_busy=%d", cfg_int("ext_api_nchans", NULL, CFG_REQUIRED));
-                    conn->kick = true;
+                    if (!conn->auth_admin) {
+                        clprintf(conn, "API: non-Kiwi app fingerprint was denied connection\n");
+                        send_msg(conn, SM_NO_DEBUG, "MSG too_busy=%d", cfg_int("ext_api_nchans", NULL, CFG_REQUIRED));
+                        conn->kick = true;
+                    }
                 #endif
 
                 return true;

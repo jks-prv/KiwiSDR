@@ -494,11 +494,11 @@ function kiwi_main_ready()
    if (show_activeElement) {
       setInterval(
          function() {
-            var id = w3_id(document.activeElement);   // returns 'id-NULL' if ae is null
+            var id = w3_activeElement();     // returns 'id-NULL' if activeElement is null
             if (id != owrx.activeElementID && id != 'id-freq-input') {
-               w3_innerHTML('id-owner-info', id);
                owrx.activeElementID = id;
             }
+            w3_innerHTML('id-owner-info', owrx.activeElementID +'<br>'+ id);
          }, 250
       );
    }
@@ -6610,6 +6610,23 @@ function freqset_select()
 	w3_field_select('id-freq-input', {mobile:1, log:1, scanning:1});
 }
 
+function freqset_select_mobile()
+{
+   if (kiwi_isMobile()) {
+      w3_field_select('id-freq-input', {focus_select:1, log:1, scanning:1});
+      return true;
+   } else {
+      return false;
+   }
+}
+
+function freqset_select_desktop_and_mobile()
+{
+   if (!freqset_select_mobile()) {
+      freqset_select();
+   }
+}
+
 function modeset_update_ui(mode)
 {
 	if (owrx.last_mode_el != null) owrx.last_mode_el.style.color = "white";
@@ -6742,9 +6759,7 @@ function freqset_complete(from, ev)
 	// "/" alone resets to default passband (".." for iPhone)
    if (obj.value == '/' || (iPhone && obj.value == '..')) {
       //console.log('restore_passband '+ cur_mode);
-      restore_passband(cur_mode);
-      demodulator_analog_replace(cur_mode);
-      freqset_update_ui(owrx.FSET_NOP);      // restore previous
+      pb_default_cb();
       return;
    }
    
@@ -9056,8 +9071,8 @@ function dx_filter(shift_plus_ctl_alt)
    if (shift_plus_ctl_alt == true) {
       dx_filter_opt_cb('dx.filter_case', 0);
       dx_filter_opt_cb('dx.filter_grep', 0);
-      dx.filter_ident = dx.filter_notes = '';
-      dx_filter_cb(null, null, false, /* no_close */ true);
+      dx_filter_cb('dx.filter_ident', '', false, /* no_close */ true);
+      dx_filter_cb('dx.filter_notes', '', false, /* no_close */ true);
       return;
    }
    
@@ -9105,7 +9120,10 @@ function dx_filter_panel_close()
 function dx_filter_cb(path, val, first, no_close)
 {
    if (first) return;
-	if (path) w3_string_cb(path, val);
+	if (path) {
+	   w3_set_value(path, val);      // for benefit of direct callers
+	   w3_string_cb(path, val);
+	}
 	var filtered = (dx.filter_ident != '' || dx.filter_notes != '');
    //console.log('dx_filter_cb path='+ path +' val='+ val +' filtered='+ filtered);
    //console.log('DX_FILTER ident=<'+ dx.filter_ident +'> notes=<'+ dx.filter_notes +
@@ -10243,6 +10261,7 @@ function ident_complete(from, which)
          if (el[i]) {
             el[i].value = ident;
             w3_schedule_highlight(el[i]);
+            w3_dismiss_keyboard(el[i]);
          }
       }
    }
@@ -10266,18 +10285,31 @@ function ident_complete(from, which)
 function ident_keyup(el, evt, which)
 {
 	//event_dump(evt, "IKU");
-	//canvas_log('CTO-ku');
+	//canvas_log('IDKU');
+	//console.log(evt);
+	//canvas_log(evt.type +'|'+ key_stringify(evt));
+	//alert(kiwi_serializeEvent(evt));
 	kiwi_clearTimeout(ident_tout);
 	//console.log("IKU el="+ typeof(el) +" val="+ el.value +' send_ident='+ send_ident);
 	
 	// Ignore modifier keys used with mouse events that also appear here.
 	// Also keeps ident_complete timeout from being set after return key.
 	//if (ignore_next_keyup_event) {
-	if (evt != undefined && evt.key != undefined) {
-		var klen = evt.key.length;
-		if (any_alternate_click_event_except_shift(evt) || klen != 1 && evt.key != 'Backspace' && evt.key != 'Shift') {
-		   //console.log('IDENT key='+ evt.key);
-			if (evt.key == 'Enter') {
+	var key;
+	if (kiwi_isOld_iOS()) {
+	   // this doesn't really help because old iOS imposes a delay before the enter event occurs
+	   // and there is still no way to dismiss the keyboard in old iOS
+	   key = (evt && evt.keyCode == 13)? 'Enter' : null;
+	} else {
+	   key = (evt && evt.key)? evt.key : null;
+	}
+	
+	if (key) {
+		var klen = key.length;
+      //canvas_log('k='+ key);
+		if ((any_alternate_click_event_except_shift(evt) || klen != 1) && key != 'Backspace' && key != 'Shift') {
+		   //console.log('IDENT key='+ key);
+			if (key == 'Enter') {
 			   ident_complete('Enter', which);
 			}
          //console.log("ignore shift-key ident_keyup");
@@ -10338,7 +10370,7 @@ function shortcut_key_mod(evt)
 
 function keyboard_shortcut_init()
 {
-   if ((kiwi_isMobile() && !mobile_laptop_test) || kiwi_isFirefox() < 47 || kiwi_isChrome() <= 49 || kiwi_isOpera() <= 36) return;
+   if (kiwi_isFirefox() < 47 || kiwi_isChrome() <= 49 || kiwi_isOpera() <= 36) return;
    
    shortcut.help =
       w3_div('',
@@ -10349,7 +10381,7 @@ function keyboard_shortcut_init()
          w3_inline_percent('w3-padding-tiny', 'b B', 25, 'scroll band menu'),
          w3_inline_percent('w3-padding-tiny', 'e E', 25, 'scroll extension menu'),
          w3_inline_percent('w3-padding-tiny', 'a A d l u c f q', 25, 'toggle modes: AM SAM DRM LSB USB CW NBFM IQ,<br>add alt to toggle backwards (e.g. SAM modes)'),
-         w3_inline_percent('w3-padding-tiny', 'p P alt-p', 25, 'passband narrow/widen, restore default'),
+         w3_inline_percent('w3-padding-tiny', 'p P /', 25, 'passband narrow/widen, restore default'),
          w3_inline_percent('w3-padding-tiny', 'UD-arrow-keys', 25, 'passband adjust both, right(shift), left(alt) edges'),
          w3_inline_percent('w3-padding-tiny', 'r', 25, 'toggle audio recording'),
          w3_inline_percent('w3-padding-tiny', 'R', 25, 'switch to the RF tab'),
@@ -10494,12 +10526,17 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    // passband
    case 'p':
    case 'P':
-      if (key_mod == shortcut.CTL_ALT) {
+      if (key_mod == shortcut.CTL_ALT) {     // backward compatibility
          restore_passband(cur_mode);
          demodulator_analog_replace(cur_mode);
       } else {
          passband_increment(key == 'P', owrx.PB_NO_EDGE);
       }
+      break;
+
+   case '/':      // for benefit of mobile keyboards
+      restore_passband(cur_mode);
+      demodulator_analog_replace(cur_mode);
       break;
    
    case 'ArrowUp':
@@ -10516,7 +10553,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    case ' ': toggle_or_set_mute(); break;
 
    // frequency entry / memory list
-   case 'g': case '=': freqset_select(); break;
+   case 'g': case '=': freqset_select_desktop_and_mobile(); break;
    case 'm': freq_memory_menu_open(/* shortcut_key */ true); break;
    case 'b': band_scroll(1); break;
    case 'B': band_scroll(-1); break;
@@ -10669,6 +10706,19 @@ function keyboard_shortcut_event(evt)
    
    var field_or_slider = (evt.target.nodeName == 'INPUT');
    var slider_not_field = (evt.target.type == 'range');
+   var ae = w3_activeElement();
+   var no_other_input_elements_have_focus = (ae == 'id-kiwi-body');
+
+   // mobile: if a field input key and the freq input field is not selected, then select it
+   // before processing the key.
+   if (field_input_key && kiwi_isMobile() && no_other_input_elements_have_focus) {
+      if (ae != 'id-freq-input') {
+         //console.log('KEY MOBILE KYBD SELECT');
+         freqset_select_mobile();
+      }
+      //console.log('KEY MOBILE KYBD <'+ k +'> '+ id + suffix);
+   } else
+   
    if (!field_or_slider || slider_not_field || (id == 'id-freq-input' && !field_input_key)) {
       
       // don't interfere with the meta key shortcuts of the browser
@@ -10799,8 +10849,8 @@ function test_audio_suspended()
 
    if (cfg.require_id && isEmptyString(ident)) {
       snd_send('SET require_id=1');
-      s1 = w3_input('w3-flex w3-flex-col w3-valign-center//w3-custom-events w3-margin-T-10 w3-font-18px w3-normal'+
-         '|padding:1px; width:300px|size=20'+
+      s1 = w3_input('w3-flex w3-flex-col w3-valign-center//w3-custom-events w3-margin-T-10 w3-font-18px w3-normal w3-padding-1'+
+         '|width:300px|size=20'+
          ' onchange="ident_complete(\'el\', 3)" onkeyup="ident_keyup(this, event, 3)"',
          'Enter your name or callsign <br> to start KiwiSDR', 'ident-input3');
       onclick = '';
@@ -10875,7 +10925,7 @@ function panels_setup()
    
    el = w3_el("id-ident");
 	el.innerHTML =
-		w3_input('w3-label-not-bold/w3-custom-events|padding:1px|size=20'+
+		w3_input('w3-label-not-bold/w3-custom-events w3-padding-1||size=20'+
 		   ' onchange="ident_complete(\'el\', 1)" onkeyup="ident_keyup(this, event, 1)"',
 		   'Your name or callsign:', 'ident-input1');
 
@@ -12949,8 +12999,8 @@ function users_setup()
    var mobile2 = ' ontouchstart="popup_keyboard_touchstart(event)"';
 	s +=
 		w3_inline('w3-valign w3-margin-R-8/1:w3-ialign-right 1:w3-ialign-bottom 1:w3-margin-B-4',
-         w3_input('w3-margin-TB-4/w3-label-not-bold/w3-custom-events' + mobile1 +
-            '|padding:1px|size=100 onchange="ident_complete(\'el\', 2)" onkeyup="ident_keyup(this, event, 2)"'+ mobile2,
+         w3_input('w3-margin-TB-4/w3-label-not-bold/w3-custom-events w3-padding-1' + mobile1 +
+            '||size=100 onchange="ident_complete(\'el\', 2)" onkeyup="ident_keyup(this, event, 2)"'+ mobile2,
             'Your name or callsign:', 'ident-input2'),
          w3_button('id-admin-page-btn w3-aqua w3-small w3-padding-small w3-margin-L-16', 'admin page', 'admin_page_cb')
          

@@ -30,3 +30,5 @@ bool wakeup_reg_kiwisdr_com(wakeup_reg_e wakeup_reg);
 
 void my_kiwi_register(bool reg, int root_pwd_unset = 0, int debian_pwd_default = 0);
 void file_GET(void *param);
+
+void proxy_frpc_setup(const char *proxy_server, const char *user, const char *host, int port);

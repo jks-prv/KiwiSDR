@@ -36,6 +36,7 @@ Boston, MA  02110-1301, USA.
 #include "printf.h"
 #include "kiwi_ui.h"
 #include "fpga.h"
+#include "services.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -133,15 +134,11 @@ void c2s_mfg(void *param)
 					kiwi_usleep(100000);
 			}
 
-			char *cmd_p, *user_m = NULL, *host_m = NULL;
+			char *user_m = NULL, *host_m = NULL;
 			n = sscanf(cmd, "SET rev_config user=%256ms host=%256ms", &user_m, &host_m);
 			if (n == 2) {
                 const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
-                asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
-                    proxy_server, user_m, host_m, net.port_ext, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
-                printf("proxy register: %s\n", cmd_p);
-                system(cmd_p);
-                kiwi_asfree(cmd_p);
+                proxy_frpc_setup(proxy_server, user_m, host_m, net.port_ext);
                 kiwi_asfree(user_m); kiwi_asfree(host_m);
                 admcfg_string_free(proxy_server);
 				continue;

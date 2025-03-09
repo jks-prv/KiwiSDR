@@ -435,7 +435,8 @@ function kiwi_ask_pwd(conn_kiwi)
 	   if (kiwi.uptime < 5*60) {
          reset_s = '<hr>' +
             w3_checkbox('//w3-label-inline w3-label-not-bold', 'Reset password', 'kiwi.reset_pwd', false, 'w3_bool_cb') +
-            w3_input('w3-margin-T-8|width:80%/w3-label-inline w3-label-not-bold w3-width-full/w3-margin-0|padding:1px|size=8', 'Serial number:', 'kiwi.reset_serno', '', 'w3_string_cb') +
+            w3_input('w3-margin-T-8|width:80%/w3-label-inline w3-label-not-bold w3-width-full/w3-margin-0 w3-font-16px w3-padding-1||size=8',
+               'Serial number:', 'kiwi.reset_serno', '', 'w3_string_cb') +
             w3_text('w3-margin-T-8 w3-text-black w3-text-wrap|width: 280px',
                'If you\'ve forgotten the admin password you can reset it. Check the box above and enter the Kiwi\'s serial number. ' +
                'Then enter the new admin password you wish to use. <br><br>' +
@@ -455,7 +456,8 @@ function kiwi_ask_pwd(conn_kiwi)
 
 	var s = isNonEmptyString(user_login)? (user_login +'<br><br>') : 'KiwiSDR: software-defined receiver<br>';
 	s += s1 + try_again +
-      w3_input('w3-margin-TB-8/w3-label-inline w3-label-not-bold/kiwi-pw|padding:1px|size=40', 'Password:', 'id-pwd', '', 'kiwi_ask_pwd_cb') +
+      w3_input('w3-margin-TB-8/w3-label-inline w3-label-not-bold/w3-font-16px kiwi-pw w3-padding-1||size=40',
+         'Password:', 'id-pwd', '', 'kiwi_ask_pwd_cb') +
       reset_s + s2;
 
 	kiwi_show_msg(s);
@@ -2418,7 +2420,7 @@ function kiwi_show_error_ask_exemption_cb(path, val, first)
 function kiwi_show_error_ask_exemption(s)
 {
    s += '<br><br>If you have an exemption password from the KiwiSDR owner/admin <br> please enter it here: ' +
-      w3_input('w3-margin-TB-8/w3-label-inline w3-label-not-bold/kiwi-pw|padding:1px|size=40',
+      w3_input('w3-margin-TB-8/w3-label-inline w3-label-not-bold/w3-font-16px kiwi-pw w3-padding-1||size=40',
          'Password:', 'id-epwd', '', 'kiwi_show_error_ask_exemption_cb');
 	kiwi_show_msg(s);
 	w3_field_select('id-epwd', {mobile:1});

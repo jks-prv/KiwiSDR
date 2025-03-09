@@ -572,6 +572,7 @@ void c2s_admin(void *param)
             n = sscanf(cmd, "SET rev_register reg=%d user=%256ms host=%256ms auto=%d", &reg, &user_m, &host_m, &rev_auto);
             if (n == 4) {
                 const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
+                
 
                #define FRPC_EXISTING    0
                #define FRPC_NEW         1
@@ -585,6 +586,7 @@ void c2s_admin(void *param)
                     asprintf(&cmd_p, "curl -Ls --ipv4 --connect-timeout 15 \"%s/?u=%s&h=%s&a=%d\"", proxy_server, user_m, host_m, rev_auto);
                     reply = non_blocking_cmd(cmd_p, &status);
                     printf("proxy register: %s\n", cmd_p);
+                    kiwi_asfree(cmd_p);
                     if (reply == NULL || status < 0 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
                         printf("proxy register: ERROR %p 0x%x\n", reply, status);
                         status = 900;
@@ -609,22 +611,17 @@ void c2s_admin(void *param)
                     lprintf("PROXY: reg=%d status=%d frpc_running=%d\n", reg, status, frpc_running);
 
                     if ((reg == FRPC_EXISTING && !frpc_running) || reg != FRPC_EXISTING) {
-                        asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
-                            proxy_server, user_m, host_m, net.port_ext, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
-                        printf("PROXY frpc setup: %s\n", cmd_p);
-                        system(cmd_p);
-    
+                        proxy_frpc_setup(proxy_server, user_m, host_m, net.port_ext);
+
                         // NB: can't use e.g. non_blocking_cmd() here to get the authorization status
                         // because frpc doesn't fork and return on authorization success.
                         // So the non_blocking_cmd() will hang.
                         lprintf("PROXY: starting frpc\n");
                         system("killall -q frpc; sleep 1");
                         system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
-                    } else
-                        cmd_p = NULL;
+                    }
                 }
             
-                kiwi_asfree(cmd_p);
                 kiwi_asfree(user_m); kiwi_asfree(host_m);
                 admcfg_string_free(proxy_server);
                 continue;

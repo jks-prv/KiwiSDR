@@ -63,6 +63,7 @@ function cw_decoder_recv(data)
 
 	for (var i=0; i < params.length; i++) {
 		var param = params[i].split("=");
+		var p, el;
 
 		if (0 && param[0] != "keepalive") {
 			if (isDefined(param[1]))
@@ -89,9 +90,9 @@ function cw_decoder_recv(data)
 				break;
 
 			case "cw_train":
-			   var el = w3_el('id-cw-train-count');
+			   el = w3_el('id-cw-train-count');
 			   if (!el) break;
-			   var p = +param[1];
+			   p = +param[1];
 			   if (p < 0)
 			      w3_innerHTML(el, 'error '+ (-p) +'/4');
 			   else
@@ -103,7 +104,7 @@ function cw_decoder_recv(data)
 			
 			case "cw_plot":
 			   var a = param[1].split(',');
-			   var p = +a[0];
+			   p = +a[0];
 			   if (!isNumber(p)) break;
 			   var polarity = +a[1];
 			   var auto_th = +a[2];
@@ -116,7 +117,7 @@ function cw_decoder_recv(data)
 			   if (cw.test) {
                var pct = w3_clamp(parseInt(param[1]), 0, 100);
                //if (pct > 0 && pct < 3) pct = 3;    // 0% and 1% look weird on bar
-               var el = w3_el('id-cw-bar');
+               el = w3_el('id-cw-bar');
                if (el) el.style.width = pct +'%';
                //console.log('bar_pct='+ pct);
             }
@@ -145,10 +146,10 @@ function cw_decoder_output_chars(c)
 
 function cw_decoder_controls_setup()
 {
+   var do_test = false, do_help = false;
 	var p = ext_param();
 	if (p) {
       p = p.split(',');
-      var do_test = false, do_help = false;
       p.forEach(
          function(a, i) {
             console.log('p'+ i +'='+ a);
@@ -450,7 +451,7 @@ function CW_decoder_blur()
 // called to display HTML for configuration parameters in admin interface
 function CW_decoder_config_html()
 {
-   ext_config_html(cw, 'cw', 'CW', 'CW decoder configuration');
+   ext_config_html(cw, 'cw', 'CW decoder', 'CW decoder configuration');
 }
 
 function CW_decoder_help(show)
