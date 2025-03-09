@@ -3,6 +3,21 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.805  March 9, 2025
+    Mobile improvements:
+        Keyboards shortcuts work again, e.g. a Bluetooth keyboard connected to iPad. (thanks DL3LED)
+        Popup keyboard dismissed properly after "return" key pressed (e.g. on "ident" fields)
+        Disabled input field auto complete, auto correct, auto capitalize.
+    
+    Antenna switch:
+        Buttons now turn green for Kmtronic-2ch switch. (thanks Fernando)
+        Multiuser/mixing denial notification working again. (Thanks Steffen)
+
+    CW Skimmer extension: New. But consider it experimental as there are a number of problems.
+    SSTV extension: Fixed MP mode height issue. (thanks VK3HK, VK3KHZ)
+    DX label filter panel: Reset button now clears ident & notes fields.
+    Update to satellite table to reflect recent Galileo changes. (thanks F4FPR)
+
 v1.804  February 21, 2025
     Antenna switch:
         Fixed curl command processing. Use a plus sign ("+") to indicate a space in your curl URL.
