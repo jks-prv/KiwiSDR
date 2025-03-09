@@ -196,8 +196,8 @@ function cw_skimmer_controls_setup()
 			)
 		);
 	
-	cws.saved_setup = ext_save_setup();
-	ext_set_mode('cw');
+	//cws.saved_setup = ext_save_setup();
+	//ext_set_mode('cw');
 	ext_panel_show(controls_html, data_html, null);
 	time_display_setup('cw');
 
@@ -285,7 +285,7 @@ function CW_skimmer_blur()
 	ext_set_data_height();     // restore default height
 	ext_send('SET cws_stop');
    kiwi_clearInterval(cws.log_interval);
-	ext_restore_setup(cws.saved_setup);
+	//ext_restore_setup(cws.saved_setup);
 }
 
 // called to display HTML for configuration parameters in admin interface
