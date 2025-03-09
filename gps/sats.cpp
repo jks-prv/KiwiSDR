@@ -61,30 +61,60 @@ SATELLITE Sats[] = {
     
     // Sats that specify PRN with G2 delay (not used, doc only)
     // and G2 init value (octal) instead of as taps on G2
+    // 03/09/2025 PRN and SBAS update based on information of www.gps.gov/technical//prn-codes/L1-CA-PRN-code-assignments-2023-Apr.pdf
 
 /*
     // WAAS (USA SBAS)
-    {131, 1012, 00551, SBAS},
-    {133,  603, 01731, SBAS},
-    {135,  359, 01216, SBAS},
-    {138,  386, 00450, SBAS},
-    {140,  456, 01653, SBAS},
+    {131, 1012, 00551, SBAS},  // Eutelsat 117 West B
+    {133,  603, 01731, SBAS},  // SES-15
+    {135,  359, 01216, SBAS},  // Previously Anik F1R now broadcasted by Intelsat Galaxy 30
+//  {138,  386, 00450, SBAS},  // Ceased operational WAAS transmissions on May 17, 2022. en.wikipedia.org/wiki/Anik_F1R
+
+    // SDCM (RUSSIA SBAS)
+    {125, 235, 01076, SBAS}, // Luch 5B Satellite en.wikipedia.org/wiki/Luch_5B
+    {140, 456, 01653, SBAS}, // Luch 5V Satellite en.wikipedia.org/wiki/Luch_5V
+    {141, 499, 01411, SBAS}, // Luch 5A Satellite en.wikipedia.org/wiki/Luch_5A
 
     // EGNOS (Europe SBAS)
-    {120,  145, 01106, SBAS},
-    {123,   21, 00232, SBAS},
-    {136,  595, 00740, SBAS},
+ // {120,  145, 01106, SBAS}, // Decomissionned replace by PRN 121 egnos.gsc-europa.eu/egnos-system/realtime
+    {121,  175, 01241, SBAS}, // Active as PRN 121 since February 14, 2020 en.wikipedia.org/wiki/Eutelsat_5_West_B
+    {123,   21, 00232, SBAS}, // ASTRA 5B
+    {136,  595, 00740, SBAS}, // HOTBIRD 13G en.wikipedia.org/wiki/Hot_Bird#Hotbird_13G
 
     // GATBP (AUS SBAS)
-    {122,   52, 00267, SBAS},
+    {122,   52, 00267, SBAS}, // Will be replaced by SouthPAN I-8 Sat around 2027 - Actually Inmarsat’s 4F1 - Some failures around mid 2023
 
+    // GAGAN (India SBAS)  en.wikipedia.org/wiki/GPS-aided_GEO_augmented_navigation
+    {127,  657, 00717, SBAS}, // GSAT-8 en.wikipedia.org/wiki/GSAT-8 
+    {128,  634, 01532, SBAS}, // GSAT-10 en.wikipedia.org/wiki/GSAT-10
+    {132,  127, 01060, SBAS}, // GSAT-15 en.wikipedia.org/wiki/GSAT-15
+
+    // BDSBAS (China SBAS)  en.wikipedia.org/wiki/BeiDou#BeiDou-3
+    {130,  355, 00341, SBAS}, // G1 en.wikipedia.org/wiki/Compass-G1
+    {143,  307, 01312, SBAS}, // G3
+    {144,  355, 00341, SBAS}, // G2
+
+    // KASS (South Korea SBAS)  en.wikipedia.org/wiki/BeiDou#BeiDou-3
+    {134,  130, 00706, SBAS}, // MEASAT-3D en.wikipedia.org/wiki/MEASAT_Satellite_Systems
+    
     // MSAS (Japan SBAS)
-    {129,  762, 01250, SBAS},
-    {137,   68, 01007, SBAS},
+    {129,  762, 01250, SBAS}, // QZS-3
+    {137,  68, 01007, SBAS},  // QZS-3
+ // {139,  793, 00305, SBAS}, // QZS-7 - Launch planned
+
+     // A-SBAS (Africa and Indian Ocean SBAS)
+    {147,  118, 00355, SBAS}, // NigComSat-1R
+
+    // AL-SBAS (Algeria SBAS)
+    {148,  163, 00335, SBAS}, // ALCOMSAT-1 en.wikipedia.org/wiki/Alcomsat-1
+
+   // UK-SBAS (United-Kingdom SBAS)
+    {158,  904, 01542, SBAS}, // UK SBAS Testbed over Inmarsat 3F5 www.inmarsat.com/en/news/latest-news/government/2021/first-uk-generated-national-satnav-signal-to-be-delivered.html
+ 
 */
 
     // QZSS (Japan) prn(saif) = 183++, prn(std) = 193++
-    // last checked: 3-Fep-2025
+    // last checked: 3-Feb-2025
     // sys.qzss.go.jp/dod/en/constellation.html [PNT L1 C/A entries]
 //  {193, 339, 01050, QZSS},   // SVN1, QZS-1, terminated 15-Sep-2023
     {194, 208, 01607, QZSS},   // SVN2, QZS-2
@@ -98,7 +128,7 @@ SATELLITE Sats[] = {
 //  {202, 900, 01045},
 
     // Galileo E1B
-    // last checked: 30-October-2024
+    // last checked: 08-March-2025
     // www.gsc-europa.eu/system-service-status/constellation-information
     // en.wikipedia.org/wiki/List_of_Galileo_satellites
 //  { 1, 0, 0, E1B},    // gsat0210 removed from active service
@@ -106,7 +136,7 @@ SATELLITE Sats[] = {
     { 3, 0, 0, E1B},    // gsat0212
     { 4, 0, 0, E1B},    // gsat0213
     { 5, 0, 0, E1B},    // gsat0214
-    { 6, 0, 0, E1B},    // gsat0227 Active - NAGU 2024034 - https://www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024034
+    { 6, 0, 0, E1B},    // gsat0227 Active - NAGU 2024034 - www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024034
     { 7, 0, 0, E1B},    // gsat0207
     { 8, 0, 0, E1B},    // gsat0208
     { 9, 0, 0, E1B},    // gsat0209
@@ -116,20 +146,20 @@ SATELLITE Sats[] = {
     {13, 0, 0, E1B},    // gsat0220
 //  {14, 0, 0, E1B},    // gsat0202 unavailable
     {15, 0, 0, E1B},    // gsat0221
-//  {16, 0, 0, E1B},    // gsat0232 - Launched 2024-09-17 - under commissioning - NAGU 2024038 - https://www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024038
+    {16, 0, 0, E1B},    // gsat0232 - Launched 2024-09-17 - Active NAGU 2025004 www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2025004
 //  {17, 0, 0, E1B},    // 
 //  {18, 0, 0, E1B},    // gsat0201 unavailable
     {19, 0, 0, E1B},    // gsat0103
-//  {20, 0, 0, E1B},    // gsat0104 removed from active service - NAGU 2024015 - https://www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024015
+//  {20, 0, 0, E1B},    // gsat0104 decommissioned satellite - NAGU 2024015 - www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024015
     {21, 0, 0, E1B},    // gsat0215
 //  {22, 0, 0, E1B},    // gsat0204 removed from active service
-//  {23, 0, 0, E1B},    // gsat0226 - Launched 2024-09-17 - under commissioning - NAGU 2024038 - https://www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024038
+    {23, 0, 0, E1B},    // gsat0226 - Launched 2024-09-17 - Active NAGU 2025003 - www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2025003
     {24, 0, 0, E1B},    // gsat0205
     {25, 0, 0, E1B},    // gsat0216
     {26, 0, 0, E1B},    // gsat0203
     {27, 0, 0, E1B},    // gsat0217
 //  {28, 0, 0, E1B},    // 
-    {29, 0, 0, E1B},    // gsat0225 Active - NAGU 2024033 - https://www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024033
+    {29, 0, 0, E1B},    // gsat0225 Active - NAGU 2024033 - www.gsc-europa.eu/notice-advisory-to-galileo-users-nagu-2024033
     {30, 0, 0, E1B},    // gsat0206
     {31, 0, 0, E1B},    // gsat0218
 //  {32, 0, 0, E1B},    // 
