@@ -1043,6 +1043,11 @@ void wspr_autorun(int instance, bool initial)
 	double center_freq_kHz, tune_freq_kHz;
 	bool iwbp = (wspr_cfs[band] == WSPR_BAND_IWBP);
 
+    if (is_locked) {
+        //printf("WSPR autorun: DRM is_locked\n");
+	    return;
+    }
+
     if (iwbp) {
         int min;
         utc_hour_min_sec(NULL, &min, NULL);

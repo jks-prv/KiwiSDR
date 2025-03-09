@@ -208,6 +208,7 @@ int main(int argc, char *argv[])
 		if (ARG("-e1b_cg_gain")) { ARGL(gps_cg_gain); printf("e1b_cg_gain %d\n", gps_cg_gain); } else
 
 		if (ARG("-debian")) {} else     // dummy arg so Kiwi version can appear in e.g. htop
+		if (ARG("-nmulti")) { is_multi_core = false; printf("no multi-core\n"); } else
 		if (ARG("-ctrace")) { ARGL(web_caching_debug); } else
 		if (ARG("-ext")) kiwi.ext_clk = true; else
 		if (ARG("-use_spidev")) { ARGL(use_spidev); } else

@@ -26,7 +26,7 @@ typedef struct {
 } drm_buf_t;
 
 typedef struct {
-    int drm_chan;
+    int drm_max_rx;
     
     s2_t *s2p_start1, *s2p_end1;
     s2_t *s2p_start2, *s2p_end2;
