@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -48,6 +48,9 @@ Boston, MA  02110-1301, USA.
 #include <math.h>
 #include <fftw3.h>
 
+#define TR_WF_CMDS      0
+#define SM_WF_DEBUG		false
+
 #ifdef USE_WF_NEW
 #define	WF_USING_HALF_FFT	1	// the result is contained in the first half of the complex FFT
 #define	WF_USING_HALF_CIC	1	// only use half of the remaining FFT after a CIC
@@ -63,6 +66,10 @@ Boston, MA  02110-1301, USA.
 #define WF_C_NSAMPS	WF_C_NFFT
 
 #define	WF_WIDTH		1024	// width of waterfall display
+
+#define MAX_FFT_USED	MAX(WF_C_NFFT / WF_USING_HALF_FFT, WF_WIDTH)
+
+#define	MAX_START(z)	((WF_WIDTH << MAX_ZOOM) - (WF_WIDTH << (MAX_ZOOM - z)))
 
 struct fft_t {
 	fftwf_plan hw_dft_plan;
@@ -101,6 +108,9 @@ struct wf_pkt_t {
 #define	WF_SPEED_MED		13
 #define	WF_SPEED_FAST		WF_SPEED_MAX
 
+#define WF_NSPEEDS 5
+static const int wf_fps[] = { WF_SPEED_OFF, WF_SPEED_1FPS, WF_SPEED_SLOW, WF_SPEED_MED, WF_SPEED_FAST };
+
 enum { WF_SELECT_OFF = 0, WF_SELECT_1FPS = 1, WF_SELECT_SLOW = 2, WF_SELECT_MED = 3, WF_SELECT_FAST = 4 };
 
 #define WF_ZOOM_MIN     0
@@ -114,6 +124,7 @@ enum aper_algo_t { IIR=0, MMA, EMA, OFF };
 
 #define WF_CIC_COMP 10
 enum wf_interp_t { WF_MAX=0, WF_MIN, WF_LAST, WF_DROP, WF_CMA };
+static const char *interp_s[] = { "max", "min", "last", "drop", "cma" };
 
 struct wf_inst_t {
 	conn_t *conn;
@@ -125,14 +136,26 @@ struct wf_inst_t {
 	u2_t wf2fft_map[WF_WIDTH];							// map is 1:1 with plot
 	u2_t drop_sample[WF_WIDTH];
 	int start, prev_start, zoom, prev_zoom;
+	float start_f;
 	u4_t mark;
 	int speed, fft_used_limit;
-	bool new_map, new_map2, compression, no_sync, isWF, isFFT;
+	bool new_map, new_map2, new_map3, compression, no_sync, isWF, isFFT;
 	int flush_wf_pipe;
 	bool cic_comp;
 	wf_interp_t interp;
 	int window_func;
 	bool trigger;
+	
+	int tr_cmds;
+	u4_t cmd_recv;
+	float cf, HZperStart;
+	float off_freq, off_freq_inv;
+	u64_t i_offset;
+	bool new_scale_mask;
+	bool spectral_inversion;
+	u4_t aper_pan_timer;
+	int scale;
+	int wband;
 
 	// NB: matches rx_noise.h which is not included here to prevent re-compile cascade
     #define NOISE_TYPES 4

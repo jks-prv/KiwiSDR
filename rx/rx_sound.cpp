@@ -378,7 +378,7 @@ void c2s_sound(void *param)
 		// and locks-up a receiver channel
 		conn->keep_alive = conn->internal_connection? 0 : (timer_sec() - conn->keepalive_time);
 		bool keepalive_expired = (conn->keep_alive > (conn->auth? KEEPALIVE_SEC : KEEPALIVE_SEC_NO_AUTH));
-		bool connection_hang = (conn->keepalive_count > 4 && s->cmd_recv != CMD_ALL);
+		bool connection_hang = (conn->keepalive_count > 4 && s->cmd_recv != CMD_SND_ALL);
 		if (keepalive_expired || connection_hang || conn->inactivity_timeout || conn->kick) {
 			//if (keepalive_expired) clprintf(conn, "SND KEEP-ALIVE EXPIRED\n");
 			//if (connection_hang) clprintf(conn, "SND CONNECTION HANG\n");
@@ -420,14 +420,14 @@ void c2s_sound(void *param)
         }
 
 		// don't process any audio data until we've received all necessary commands
-		if (s->cmd_recv != CMD_ALL) {
+		if (s->cmd_recv != CMD_SND_ALL) {
 			TaskSleepMsec(100);
 			continue;
 		}
 		
 		if (!conn->snd_cmd_recv_ok) {
 			#ifdef TR_SND_CMDS
-				clprintf(conn, "SND cmd_recv ALL 0x%x/0x%x\n", s->cmd_recv, CMD_ALL);
+				clprintf(conn, "SND cmd_recv ALL 0x%x/0x%x\n", s->cmd_recv, CMD_SND_ALL);
 			#endif
             rx_enable(rx_chan, RX_DATA_ENABLE);
 			conn->snd_cmd_recv_ok = true;
