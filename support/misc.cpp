@@ -694,6 +694,15 @@ int kiwi_file_write(const char *id, const char *fn, char *s, int len, bool add_n
     return n;
 }
 
+bool gps_isValid(const char *lat_lon)
+{
+    return (
+        strcmp(lat_lon, "(-37.631120, 176.172210)") != 0 &&
+        strcmp(lat_lon, "(0.00, 0.00)") != 0 &&
+        strcmp(lat_lon, "(0.000000, 0.000000)") != 0
+    );
+}
+
 static const char *field = "ABCDEFGHIJKLMNOPQR";
 static const char *square = "0123456789";
 static const char *subsquare = "abcdefghijklmnopqrstuvwx";
@@ -750,6 +759,7 @@ int latLon_to_grid6(latLon_t *loc, char *grid6)
 {
 	int i;
 	double r, lat, lon;
+	//printf("latLon_to_grid6: lat=%f lon=%f\n", loc->lat, loc->lon);
 	
 	// longitude
 	lon = loc->lon + 180.0;
@@ -779,6 +789,7 @@ int latLon_to_grid6(latLon_t *loc, char *grid6)
 	i = (int) floor(r * (SUBSQ_PER_SQ / SQ_LAT_DEG));
 	grid6[5] = subsquare[i];
 	
+	//printf("latLon_to_grid6: grid6=%s\n", grid6);
 	return 0;
 }
 
