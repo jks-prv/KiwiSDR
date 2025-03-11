@@ -62,7 +62,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "Amiga Video Transceiver 24",
-    "AVT24",
+    "AVT24", AVT24,
     0,
     0,
     0e-3,
@@ -75,7 +75,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "Amiga Video Transceiver 90",
-    "AVT90",
+    "AVT90", AVT90,
     0,
     0,
     0e-3,
@@ -88,7 +88,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "Amiga Video Transceiver 94",
-    "AVT94",
+    "AVT94", AVT94,
     0,
     0,
     0e-3,
@@ -112,7 +112,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "Martin M1",
-    "M1",
+    "M1", M1,
     4.862e-3,       // sync
     0.572e-3,       // porch
     0.572e-3,       // gap
@@ -124,7 +124,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "Martin M2",
-    "M2",
+    "M2", M2,
     4.862e-3,       // sync
     0.572e-3,       // porch
     0.572e-3,       // gap
@@ -136,28 +136,26 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "Martin M3",
-    "M3",
+    "M3", M3,
     4.862e-3,       // sync
     0.572e-3,       // porch
     0.572e-3,       // gap
     0.4576e-3,      // pix 146.432/320
     446.446e-3,     // line SpGgBgRg 4.862+(3*(0.572+146.432))+0.572 = 446.446
-    320, 128, 2,
-    GBR, FMT_111,
-    LINE_DOUBLE     // line doubling to fill-out 128 => 256 height
+    320, 256, 2,
+    GBR, FMT_111
   },
 
   {
     "Martin M4",
-    "M4",
+    "M4", M4,
     4.862e-3,       // sync
     0.572e-3,       // porch
     0.572e-3,       // gap
     0.2288e-3,      // pix 73.216/320
     226.798e-3,     // line SpGgBgRg 4.862+(3*(0.572+73.216))+0.572 = 226.798
-    320, 128, 2,
-    GBR, FMT_111,
-    LINE_DOUBLE     // line doubling to fill-out 128 => 256 height
+    320, 256, 2,
+    GBR, FMT_111
   },
 
 
@@ -167,7 +165,7 @@ ModeSpec_t ModeSpec[] = {
 
   {  // N7CXI
     "Scottie S1",
-    "S1",
+    "S1", S1,
     9e-3,           // sync
     1.5e-3,         // porch
     1.5e-3,         // gap
@@ -179,7 +177,7 @@ ModeSpec_t ModeSpec[] = {
 
   {  // N7CXI
     "Scottie S2",
-    "S2",
+    "S2", S2,
     9e-3,           // sync
     1.5e-3,         // porch
     1.5e-3,         // gap
@@ -191,7 +189,7 @@ ModeSpec_t ModeSpec[] = {
 
   {  // N7CXI
     "Scottie DX",
-    "SDX",
+    "SDX", SDX,
     9e-3,           // sync
     1.5e-3,         // porch
     1.5e-3,         // gap
@@ -210,36 +208,34 @@ ModeSpec_t ModeSpec[] = {
 
   {  // OK2MNM
     "Robot 12",
-    "R12",
+    "R12", R12,
     9e-3,           // sync
     3e-3,           // porch
     6e-3,           // gap = 4.5 even/odd separator + 1.5 porch
     0.085415625e-3, // pix 27.333/320
     100e-3,         // line = SpY[UV]g 9+3+(54.666+27.333)+6 = 100
                     // 600 LPM = 100
-    320, 120, 2,
-    YUV, FMT_420,
-    LINE_DOUBLE     // line doubling to fill-out 120 => 240 height
+    320, 240, 2,
+    YUV, FMT_420
   },
 
 
-  {  // OK2MNM
+  {  // MMSSTV
     "Robot 24",
-    "R24",
-    9e-3,           // sync
-    3e-3,           // porch
-    6e-3,           // gap = 4.5 even/odd separator + 1.5 porch
-    0.1375e-3,      // pix 44/320
-    200e-3,         // line = SpY[UV]g 9+3+88+(2*(6+44)) = 200
+    "R24", R24,
+    6e-3,           // sync
+    2e-3,           // porch
+    4e-3,           // gap = 3.0 even/odd separator + 1.0 porch
+    0.14375e-3,     // pix 46/320
+    200e-3,         // line = SpYYgUgV 6+2+92+(2*(4+46)) = 200
                     // 300 LPM = 200
-    320, 120, 2,
-    YUV, FMT_422,
-    LINE_DOUBLE     // line doubling to fill-out 120 => 240 height
+    320, 240, 2,
+    YUV, FMT_422
   },
 
-  {  // N7CXI
+  {  // MMSSTV
     "Robot 36",
-    "R36",
+    "R36", R36,
     9e-3,           // sync
     3e-3,           // porch
     6e-3,           // gap = 4.5 even/odd separator + 1.5 porch
@@ -250,51 +246,68 @@ ModeSpec_t ModeSpec[] = {
     YUV, FMT_420
   },
 
-  {  // N7CXI
+  {  // MMSSTV
     "Robot 72",
-    "R72",
+    "R72", R72,
     9e-3,           // sync
     3e-3,           // porch
     6e-3,           // gap = 4.5 sep + 1.5 porch
     0.215625e-3,    // pix 69/320
     300e-3,         // line = SpYYgUgV = 9+3+138+(2*(6+69)) = 300
                     // 200 LPM = 300
+                    // 240/72 = 3.333 = 0.300
     320, 240, 1,
     YUV, FMT_422
   },
 
   {  // N7CXI
     "Robot 8 B/W",
-    "R8-BW",
-    7e-3,
+    "R8-BW", R8BW,
+    6.666e-3,
     0e-3,
     0e-3,
-    0.188e-3,
-    67e-3,
+    0.1875e-3,      // 60/320
+    66.666e-3,      // line = 6.666+60 = 66.666
+                    // 120L/8s = 15L/s = 900LPM = 66.666ms/L
     320, 240, 2,
     BW, FMT_BW
   },
 
   {  // N7CXI
     "Robot 12 B/W",
-    "R12-BW",
+    "R12-BW", R12BW,
     7e-3,
     0e-3,
     0e-3,
-    0.291e-3,
-    100e-3,
+    0.290625e-3,    // pix 93/320
+    100e-3,         // line = 7+93 = 100
+                    // 120L/12s = 10L/s = 600LPM = 100ms/L
     320, 240, 2,
     BW, FMT_BW
   },
 
   {  // N7CXI
     "Robot 24 B/W",
-    "R24-BW",
+    "R24-BW", R24BW,
     7e-3,
     0e-3,
     0e-3,
-    0.291e-3,
-    100e-3,
+    0.290625e-3,    // pix 93/320
+    100e-3,         // line = 7+93 = 100
+                    // 240L/24s = 10L/s = 600LPM = 100ms/L
+    320, 240, 1,
+    BW, FMT_BW
+  },
+
+  {  // N7CXI
+    "Robot 36 B/W",
+    "R36-BW", R36BW,
+    7e-3,
+    0e-3,
+    0e-3,
+    0.446875e-3,    // 143/320
+    150e-3,         // line = 7+143 = 150
+                    // 240L/36s = 6.66L/s = 400LPM = 150ms/L
     320, 240, 1,
     BW, FMT_BW
   },
@@ -306,7 +319,7 @@ ModeSpec_t ModeSpec[] = {
 
   { // MMSSTV
     "Wraase SC-2 60",
-    "SC60",
+    "SC60", SC60,
     5.5006e-3,          // sync
     0.5e-3,             // porch
     0e-3,               // gap
@@ -320,7 +333,7 @@ ModeSpec_t ModeSpec[] = {
 
   { // MMSSTV
     "Wraase SC-2 120",
-    "SC120",
+    "SC120", SC120,
     5.52248e-3,         // sync
     0.5e-3,             // porch
     0e-3,               // gap
@@ -334,7 +347,7 @@ ModeSpec_t ModeSpec[] = {
 
   {  // MMSSTV
     "Wraase SC-2 180",
-    "SC180",
+    "SC180", SC180,
     5.5437e-3,          // sync (MMSSTV, LPM)
     0.5e-3,             // porch
     0e-3,               // gap
@@ -355,86 +368,86 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "PD-50",
-    "PD50",
+    "PD50", PD50,
     20e-3,              // sync
     2.08e-3,            // porch
     0e-3,               // gap
     0.286e-3,           // pix 91.52/320
-    388.16e-3,          // line SpYUVY = 20+2.08+91.52+91.52+91.52+91.52 = 388.16
+    388.16e-3,          // line SpYUVY = 20+2.08+(4*91.52) = 388.16
     320, 256, 2,
-    YUV, FMT_111
+    YUVY, FMT_111
   },
 
   {
     "PD-90",
-    "PD90",
+    "PD90", PD90,
     20e-3,
     2.08e-3,
     0e-3,
     0.532e-3,               // pix 170.24/320
-    703.04e-3,              // SpYUVY = 20+2.08+170.24+170.24+170.24+170.24 = 703.04
+    703.04e-3,              // SpYUVY = 20+2.08+(4*170.24) = 703.04
     320, 256, 2,
-    YUV, FMT_111
+    YUVY, FMT_111
   },
 
   {
     "PD-120",
-    "PD120",
+    "PD120", PD120,
     20e-3,                  // sync
     2.08e-3,                // porch
     0e-3,                   // gap
     0.19e-3,                // pix 121.6/640
-    508.48e-3,              // SpYUVY = 20+2.08+121.6+121.6+121.6+121.6 = 508.48
+    508.48e-3,              // SpYUVY = 20+2.08+(4*121.6) = 508.48
     640, 496, 2,
-    YUV, FMT_111
+    YUVY, FMT_111
   },
 
   {
     "PD-160",
-    "PD160",
+    "PD160", PD160,
     20e-3,
     2.08e-3,
     0e-3,
     0.382e-3,               // pix 195.584/512
-    804.416e-3,             // SpYUVY = 20+2.08+195.584+195.584+195.584+195.584 = 804.416
+    804.416e-3,             // SpYUVY = 20+2.08+(4*195.584) = 804.416
     512, 400, 2,
-    YUV, FMT_111
+    YUVY, FMT_111
   },
 
   {
     "PD-180",
-    "PD180",
+    "PD180", PD180,
     20e-3,
     2.08e-3,
     0e-3,
     0.286e-3,               // pix 183.040/640
-    754.24e-3,              // SpYUVY = 20+2.08+183.040+183.040+183.040+183.040 = 754.240
+    754.24e-3,              // SpYUVY = 20+2.08+(4*183.040) = 754.240
     640, 496, 2,
-    YUV, FMT_111
+    YUVY, FMT_111
   },
 
   {
     "PD-240",
-    "PD240",
+    "PD240", PD240,
     20e-3,
     2.08e-3,
     0e-3,
     0.382e-3,               // pix 244.480/640
-    1000e-3,                // SpYUVY = 20+2.08+244.480+244.480+244.480+244.480 = 1000.0
+    1000e-3,                // SpYUVY = 20+2.08+(4*244.480) = 1000.0
     640, 496, 2,
-    YUV, FMT_111
+    YUVY, FMT_111
   },
 
   {
     "PD-290",
-    "PD290",
+    "PD290", PD290,
     20e-3,
     2.08e-3,
     0e-3,
     0.286e-3,               // pix 228.800/800
-    937.28e-3,              // SpYUVY = 20+2.08+228.800+228.800+228.800+228.800 = 937.280
+    937.28e-3,              // SpYUVY = 20+2.08+(4*228.800) = 937.280
     800, 616, 2,
-    YUV, FMT_111
+    YUVY, FMT_111
   },
 
 
@@ -446,7 +459,7 @@ ModeSpec_t ModeSpec[] = {
 
   {  // N7CXI
     "Pasokon P3",
-    "P3",
+    "P3", P3,
     25.0/4800.0,    // sync 25x pix
     0e-3,           // porch 0x pix
     5.0/4800.0,     // gap 5x pix
@@ -458,7 +471,7 @@ ModeSpec_t ModeSpec[] = {
 
   {  // N7CXI
     "Pasokon P5",
-    "P5",
+    "P5", P5,
     25.0/3200.0,    // sync 25x pix
     0e-3,           // porch 0x pix
     5.0/3200.0,     // gap 5x pix
@@ -470,7 +483,7 @@ ModeSpec_t ModeSpec[] = {
 
   {  // N7CXI
     "Pasokon P7",
-    "P7",
+    "P7", P7,
     25.0/2400.0,    // sync 25x pix
     0e-3,           // porch 0x pix
     5.0/2400.0,     // gap 5x pix
@@ -489,54 +502,50 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV MP73",
-    "MP73",
+    "MP73", MP73,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0e-3,           // gap
     0.4375e-3,      // pix 140/320
     570.0e-3,       // SpYUVY = 9+1+(4*140) = 570
-    320, 128, 2,
-    YUV, FMT_111,
-    LINE_DOUBLE     // line doubling to fill-out 128 => 256 height
+    320, 256, 2,
+    YUVY, FMT_111
   },
 
   {
     "MMSSTV MP115",
-    "MP115",
+    "MP115", MP115,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0e-3,           // gap
     0.696875e-3,    // pix 223/320
     902.0e-3,       // SpYUVY = 9+1+(4*223) = 902
-    320, 128, 2,
-    YUV, FMT_111,
-    LINE_DOUBLE     // line doubling to fill-out 128 => 256 height
+    320, 256, 2,
+    YUVY, FMT_111
   },
 
   {
     "MMSSTV MP140",
-    "MP140",
+    "MP140", MP140,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0e-3,           // gap
     0.84375e-3,     // pix 270/320
     1090.0e-3,      // SpYUVY = 9+1+(4*270) = 1090
-    320, 128, 2,
-    YUV, FMT_111,
-    LINE_DOUBLE     // line doubling to fill-out 128 => 256 height
+    320, 256, 2,
+    YUVY, FMT_111
   },
 
   {
     "MMSSTV MP175",
-    "MP175",
+    "MP175", MP175,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0e-3,           // gap
     1.0625e-3,      // pix 340/320
     1370.0e-3,      // SpYUVY = 9+1+(4*340) = 1370
-    320, 128, 2,
-    YUV, FMT_111,
-    LINE_DOUBLE     // line doubling to fill-out 128 => 256 height
+    320, 256, 2,
+    YUVY, FMT_111
   },
 
 // NB:
@@ -544,7 +553,7 @@ ModeSpec_t ModeSpec[] = {
 //  Our color bar test file has bar overlap?
   {
     "MMSSTV MR73",
-    "MR73",
+    "MR73", MR73,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -556,7 +565,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV MR90",
-    "MR90",
+    "MR90", MR90,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -568,7 +577,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV MR115",
-    "MR115",
+    "MR115", MR115,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -580,7 +589,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV MR140",
-    "MR140",
+    "MR140", MR140,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -592,7 +601,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV MR175",
-    "MR175",
+    "MR175", MR175,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -607,7 +616,7 @@ ModeSpec_t ModeSpec[] = {
 //  Our color bar test file has bar overlap?
   {
     "MMSSTV ML180",
-    "ML180",
+    "ML180", ML180,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -619,7 +628,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV ML240",
-    "ML240",
+    "ML240", ML240,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -631,7 +640,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV ML280",
-    "ML280",
+    "ML280", ML280,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -643,7 +652,7 @@ ModeSpec_t ModeSpec[] = {
 
   {
     "MMSSTV ML320",
-    "ML320",
+    "ML320", ML320,
     9.0e-3,         // sync
     1.0e-3,         // porch
     0.1e-3,         // gap
@@ -661,7 +670,7 @@ ModeSpec_t ModeSpec[] = {
 ////////////////////////////////
   {
     "FAX480",
-    "FAX480",
+    "FAX480", FX480,
     5.12e-3,        // sync
     0e-3,           // porch
     0e-3,           // gap
@@ -670,7 +679,9 @@ ModeSpec_t ModeSpec[] = {
                     // 224.497 LPM = 267.264
     512, 480, 1,
     BW, FMT_BW
-  }
+  },
+  
+  {}    // end marker
 };
 
 
@@ -680,11 +691,13 @@ ModeSpec_t ModeSpec[] = {
  * Reference: Dave Jones KB4YZ (1998): "List of SSTV Modes with VIS Codes".
  *            www.tima.com/~djones/vis.txt (link broken)
  *
+ *            www.digigrup.org/ccdd/sstv.htm
+ *
  */
 
 u1_t   VISmap[] = {
 //  x0     x1     x2     x3    x4     x5     x6     x7     x8     x9     xA     xB    xC    xD    xE     xF
-    R12,   0,     R8BW,  0,    R24,   FX480, R12BW, 0,     R36,   0,     R24BW, 0,    R72,  0,    0,     0,     // 0x
+    R12,   0,     R8BW,  0,    R24,   FX480, R12BW, 0,     R36,   0,     R24BW, 0,    R72,  0,    R36BW, 0,     // 0x
     0,     0,     0,     0,    0,     0,     0,     0,     0,     0,     0,     0,    0,    0,    0,     0,     // 1x
     M4,    0,     0,     VISX, M3,    0,     0,     0,     M2,    0,     0,     0,    M1,   0,    0,     0,     // 2x
     0,     0,     0,     0,    0,     0,     0,     SC180, S2,    0,     0,     SC60, S1,   0,    0,     SC120, // 3x
