@@ -1292,11 +1292,12 @@ void on_GPS_solution()
 {
     //printf("on_GPS_solution: WSPR_auto=%d FT8_auto=%d haveLat=%d\n", wspr_c.GPS_update_grid, ft8_conf.GPS_update_grid, (gps.StatLat != 0));
     if (gps.StatLat) {
+        latLon_t loc;
+        loc.lat = gps.sgnLat;
+        loc.lon = gps.sgnLon;
+        bool grid_ok = (latLon_to_grid6(&loc, kiwi.grid6) == 0);    // see also gps/stat.cpp::TEST_MM
         if (wspr_c.GPS_update_grid || ft8_conf.GPS_update_grid) {
-            latLon_t loc;
-            loc.lat = gps.sgnLat;
-            loc.lon = gps.sgnLon;
-            if (latLon_to_grid6(&loc, kiwi.grid6) == 0) {   // see also gps/stat.cpp::TEST_MM
+            if (grid_ok) {
                 if (wspr_c.GPS_update_grid)
                     wspr_update_rgrid(kiwi.grid6);
                 if (ft8_conf.GPS_update_grid)
@@ -1304,7 +1305,7 @@ void on_GPS_solution()
             }
         }
         
-        int res= cfg_true("GPS_update_web_hires")? 6:2;
+        int res = cfg_true("GPS_update_web_hires")? 6:2;
         kiwi_snprintf_buf(kiwi.latlon_s, "(%.*f, %.*f)", res, gps.sgnLat, res, gps.sgnLon);
         //printf("on_GPS_solution: %s %s\n", kiwi.grid6, kiwi.latlon_s);
     }

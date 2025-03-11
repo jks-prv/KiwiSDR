@@ -621,26 +621,30 @@ fail:
 	//	OKAY, used by kiwisdr.com and Priyom Pavlova at the moment
 	//	Returns '\n' delimited keyword=value pairs
 	case AJAX_STATUS: {
-		const char *s1, *s3, *s4, *s5, *s6, *s7;
+		const char *s1, *s3, *s4 = NULL, *s5, *s6, *s7, *gps_loc;
+		char *s4a = NULL, *ipinfo_lat_lon = NULL;
 		
 		// if location hasn't been changed from the default try using ipinfo lat/log
 		// or, failing that, put us in Antarctica to be noticed
-		s4 = cfg_string("rx_gps", NULL, CFG_OPTIONAL);
-		const char *gps_loc;
-		char *ipinfo_lat_lon = NULL;
-		if (strcmp(s4, "(-37.631120, 176.172210)") == 0) {
-		    #ifdef USE_GPS
-                if (kiwi.ipinfo_ll_valid) {
-                    asprintf(&ipinfo_lat_lon, "(%f, %f)", kiwi.ipinfo_lat, kiwi.ipinfo_lon);
-                    gps_loc = ipinfo_lat_lon;
-                } else
-            #endif
-			{
-				gps_loc = "(-69.0, 90.0)";		// Antarctica
-			}
+		if (kiwi_nonEmptyStr(kiwi.latlon_s)) {
+		    s4a = strdup(kiwi.latlon_s);
+            gps_loc = s4a;
 		} else {
-			gps_loc = s4;
-		}
+            s4 = cfg_string("rx_gps", NULL, CFG_OPTIONAL);
+            if (gps_isValid(s4)) {
+                gps_loc = s4;
+            } else {
+                #ifdef USE_GPS
+                    if (kiwi.ipinfo_ll_valid) {
+                        asprintf(&ipinfo_lat_lon, "(%f, %f)", kiwi.ipinfo_lat, kiwi.ipinfo_lon);
+                        gps_loc = ipinfo_lat_lon;
+                    } else
+                #endif
+                {
+                    gps_loc = "(-69.0, 90.0)";		// Antarctica
+                }
+            }
+        }
 		
 		// append location to name if none of the keywords in location appear in name
 		s1 = cfg_string("rx_name", NULL, CFG_OPTIONAL);
@@ -814,6 +818,7 @@ fail:
 		kiwi_asfree(ipinfo_lat_lon);
 		cfg_string_free(s3);
 		cfg_string_free(s4);
+		kiwi_asfree(s4a);
 		cfg_string_free(s5);
 		cfg_string_free(s6);
 		cfg_string_free(s7);
