@@ -563,20 +563,26 @@ retry:
                 // if autorun on configurations with limited wf chans (e.g. rx8_wf2) never use the wf chans at all
                 rx_free_count_e wf_flags = ((ws_flags & WS_FL_IS_AUTORUN) && !(ws_flags & WS_FL_INITIAL))? RX_COUNT_NO_WF_AT_ALL : RX_COUNT_NO_WF_FIRST;
                 rx_free_count_e flags = ((isKiwi_UI || isWF_conn) && !isNo_WF)? RX_COUNT_ALL : wf_flags;
-                int inuse = rx_chans - rx_chan_free_count(flags, &rx_n, &heavy);
-                conn_printf("%s cother=%p isKiwi_UI=%d isWF_conn=%d isNo_WF=%d inuse=%d/%d use_rx=%d heavy=%d locked=%d %s\n",
-                    st->uri, cother, isKiwi_UI, isWF_conn, isNo_WF, inuse, rx_chans, rx_n, heavy, is_locked,
+                int preempt = 0;
+                int free = rx_chan_free_count(flags, &rx_n, &heavy, &preempt);
+                int inuse = rx_chans - free - preempt;
+                conn_printf("%s cother=%p isKiwi_UI=%d isWF_conn=%d isNo_WF=%d inuse=%d/%d preempt=%d use_rx=%d heavy=%d locked=%d %s\n",
+                    st->uri, cother, isKiwi_UI, isWF_conn, isNo_WF, inuse, rx_chans, preempt, rx_n, heavy, is_locked,
                     (flags == RX_COUNT_ALL)? "RX_COUNT_ALL" : ((flags == RX_COUNT_NO_WF_FIRST)? "RX_COUNT_NO_WF_FIRST" : "RX_COUNT_NO_WF_AT_ALL"));
             
+                // possibly deny new user connection if DRM has locked and drm_nreg_chans exceeded
                 if (is_locked) {
                     if (inuse == 0) {
                         printf("DRM note: locked but no channels in use?\n");
                         is_locked = 0;
                     } else {
-                        printf("DRM nreg_chans=%d inuse=%d heavy=%d (is_locked=1)\n", drm_nreg_chans, inuse, heavy);
+                        if (!internal)
+                            printf("DRM nreg_chans=%d inuse=%d preempt=%d heavy=%d (is_locked=1)\n", drm_nreg_chans, inuse, preempt, heavy);
                         if (inuse > drm_nreg_chans) {
-                            printf("DRM (locked for exclusive use %s)\n", st->uri);
-                            if (!internal) send_msg_mc(mc, SM_NO_DEBUG, "MSG exclusive_use");
+                            if (!internal) {
+                                printf("DRM (locked for exclusive use %s)\n", st->uri);
+                                send_msg_mc(mc, SM_NO_DEBUG, "MSG exclusive_use");
+                            }
                             mc->connection_param = NULL;
                             conn_init(c);
                             return NULL;
@@ -600,9 +606,10 @@ retry:
                         if (ok_kiwi || ok_non_kiwi || ok_internal) {
                             for (i = 0; i < rx_chans; i++) {
                                 int victim;
-                                if ((victim = rx_autorun_find_victim()) != -1) {
+                                conn_t *victim_conn;
+                                if ((victim = rx_autorun_find_victim(&victim_conn)) != -1) {
                                     rx_n = victim;
-                                    c = rx_channels[rx_n].conn;
+                                    c = victim_conn;
                                     c->preempted = true;
                                     rx_enable(rx_n, RX_CHAN_FREE);
                                     rx_server_remove(c);

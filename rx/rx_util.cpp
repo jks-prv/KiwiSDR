@@ -196,6 +196,7 @@ void rx_loguser(conn_t *c, logtype_e type)
 	kiwi_asfree(s);
 }
 
+// NB: heavy count doesn't include preemptable channels
 int rx_chan_free_count(rx_free_count_e flags, int *idx, int *heavy, int *preempt, int *busy)
 {
 	int i, free_cnt = 0, free_idx = -1, heavy_cnt = 0, preempt_cnt = 0, busy_cnt = 0;
@@ -209,10 +210,11 @@ int rx_chan_free_count(rx_free_count_e flags, int *idx, int *heavy, int *preempt
     #define RX_CHAN_FREE_COUNT() { \
         rx = &rx_channels[i]; \
         if (rx->busy) { \
+            bool preempt = (rx->conn && rx->conn->arun_preempt); \
             /*printf("rx_chan_free_count rx%d: ext=%p flags=0x%x\n", i, rx->ext, rx->ext? rx->ext->flags : 0xffffffff);*/ \
-            if (rx->ext && (rx->ext->flags & EXT_FLAGS_HEAVY)) \
+            if (rx->ext && (rx->ext->flags & EXT_FLAGS_HEAVY) && !preempt) \
                 heavy_cnt++; \
-            if (rx->conn && rx->conn->arun_preempt) \
+            if (preempt) \
                 preempt_cnt++; \
             busy_cnt++; \
         } else { \
@@ -365,7 +367,7 @@ void rx_autorun_clear()
     memset(rx_util.arun_evictions, 0, sizeof(rx_util.arun_evictions));
 }
 
-int rx_autorun_find_victim()
+int rx_autorun_find_victim(conn_t **victim_conn)
 {
     conn_t *c, *lowest_eviction_conn;
     u4_t lowest_eviction_count = (u4_t) -1;
@@ -393,9 +395,24 @@ int rx_autorun_find_victim()
         //    lowest_eviction_conn->ident_user, lowest_eviction_ch, lowest_eviction_count, highest_eviction_ch);
         rx_util.arun_which[lowest_eviction_ch] = ARUN_NONE;
         rx_util.arun_evictions[lowest_eviction_ch]++;
+        if (victim_conn) *victim_conn = lowest_eviction_conn;
         return lowest_eviction_ch;
     }
     return -1;
+}
+
+void rx_autorun_kick_all_preemptable()
+{
+    conn_t *c;
+    for (int ch = 0; ch < rx_chans; ch++) {
+        rx_chan_t *rx = &rx_channels[ch];
+        if (!rx->busy) continue;
+        c = rx->conn;
+        if (!c->arun_preempt) continue;
+        c->preempted = true;
+        rx_enable(ch, RX_CHAN_FREE);
+        rx_server_remove(c);
+    }
 }
 
 void rx_autorun_restart_victims(bool initial)
@@ -518,7 +535,8 @@ bool save_config(u2_t key, conn_t *conn, char *cmd)
     char *sb;
     const bool dbug = true;
     save_cfg_t *cfg;
-    
+    //clprintf(conn, "save_config: ENTER key=%d cmd=\"%.32s\"\n", key, cmd);
+
     switch (key) {
         case CMD_SAVE_CFG:   cfg = &save_cfg; break;
         case CMD_SAVE_DXCFG: cfg = &save_dxcfg; break;
@@ -673,6 +691,7 @@ bool save_config(u2_t key, conn_t *conn, char *cmd)
         return true;
     }
 
+    //clprintf(conn, "save_config: isFrag=%d isEnd=%d key=%d cmd=\"%.32s\"\n", isFrag, isEnd, key, cmd);
     return false;   // always (and only) return false if the cmd matching failed
 }
 
@@ -1275,11 +1294,12 @@ void on_GPS_solution()
 {
     //printf("on_GPS_solution: WSPR_auto=%d FT8_auto=%d haveLat=%d\n", wspr_c.GPS_update_grid, ft8_conf.GPS_update_grid, (gps.StatLat != 0));
     if (gps.StatLat) {
+        latLon_t loc;
+        loc.lat = gps.sgnLat;
+        loc.lon = gps.sgnLon;
+        bool grid_ok = (latLon_to_grid6(&loc, kiwi.grid6) == 0);    // see also gps/stat.cpp::TEST_MM
         if (wspr_c.GPS_update_grid || ft8_conf.GPS_update_grid) {
-            latLon_t loc;
-            loc.lat = gps.sgnLat;
-            loc.lon = gps.sgnLon;
-            if (latLon_to_grid6(&loc, kiwi.grid6) == 0) {   // see also gps/stat.cpp::TEST_MM
+            if (grid_ok) {
                 if (wspr_c.GPS_update_grid)
                     wspr_update_rgrid(kiwi.grid6);
                 if (ft8_conf.GPS_update_grid)
@@ -1287,7 +1307,7 @@ void on_GPS_solution()
             }
         }
         
-        int res= cfg_true("GPS_update_web_hires")? 6:2;
+        int res = cfg_true("GPS_update_web_hires")? 6:2;
         kiwi_snprintf_buf(kiwi.latlon_s, "(%.*f, %.*f)", res, gps.sgnLat, res, gps.sgnLon);
         //printf("on_GPS_solution: %s %s\n", kiwi.grid6, kiwi.latlon_s);
     }

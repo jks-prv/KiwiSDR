@@ -1205,12 +1205,12 @@ function drm_desktop_controls_setup(w_multi)
          else {
             if (drm_nreg_chans == 1)
                s = 'Can only run DRM with one other <br> Kiwi connection.' +
-                   'And the other connection <br> is not using any extensions. ';
+                   'And the other connection <br> is not using any extensions.';
             else
                s = 'Can only run DRM with '+ drm_nreg_chans +' or fewer other <br> Kiwi connections. ' +
-                   'And the other connections <br> are not using any extensions. ';
+                   'And the other connections <br> are not using any extensions.';
          }
-         s += 'Please try again <br> when these conditions are met.';
+         s += ' Please try <br> again when these conditions are met.';
       }
       controls_inner = w3_text('w3-medium w3-text-css-yellow', s);
    } else {

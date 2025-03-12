@@ -34,7 +34,7 @@ var tdoa = {
    // set from json on callback
    hosts: [],
    // has:
-   // .i .id .h .p .lat .lon .fm .u .um .mac .a .n
+   // .i .id .h .p .lat .lon .lo .fm .u .um .mac .a .n
    // we add:
    // .idx fixme needed?
    // .id_lcase
@@ -621,7 +621,10 @@ function tdoa_host_title(h)
    title += '\nAntenna: '+ h.a;
    if (h.snr > 0)
       title += '\nHF S/N score: '+ h.snr +' dB';
-   title += '\n'+ h.fm +' GPS fixes/min';
+   if (h.lo)
+      title += '\nGPS: warning low resolution';
+   else
+      title += '\nGPS: '+ h.fm +' fixes/min';
    title += '\nShift-click for waterfall preview';
    return title;
 }
@@ -916,7 +919,10 @@ function tdoa_style_marker(marker, idx, name, type, map)
                rh.clientWidth = el.clientWidth;
                //console.log(rh.idx +' '+ rh.id +' '+ el.clientWidth);
                if (rh.type_host) {
-                  if (rh.selected) w3_color(el, 'black', 'yellow'); else w3_color(el, 'white', 'blue');
+                  if (rh.selected)
+                     w3_color(el, 'black', 'yellow');
+                  else
+                     w3_color(el, 'white', rh.lo? 'red' : 'blue');
                }
                el.title = rh.title;
                el.kiwi_mkr_2_ref_or_host = rh;
@@ -943,7 +949,7 @@ function tdoa_style_marker(marker, idx, name, type, map)
                      //console.log(ev);
                      if (!rh.selected) {
                         if (rh.type_host)
-                           w3_color(el, 'white', 'blue');
+                           w3_color(el, 'white', rh.lo? 'red' : 'blue');
                         else
                            w3_color(el, 'black', 'lime');
                         el.style.zIndex = 9000;    // NB: "z-index: 9000" in TDoA.css
@@ -1881,7 +1887,11 @@ function tdoa_host_click_status_cb(obj, field_idx)
             tdoa_set_icon('listen', field_idx, 'fa-volume-up', 20, 'lime',
                'click to open in new tab/page\nshift-click for waterfall preview',
                'tdoa_listen_cb', field_idx);
-            var s = fixes_min? (fixes_min +' GPS fixes/min') : 'channel available';
+            var s;
+            if (f.host.lo)
+               s = 'GPS: low resolution';
+            else
+               s = fixes_min? ('GPS: '+ fixes_min +' fixes/min') : 'channel available';
             w3_innerHTML('id-tdoa-sample-status-'+ field_idx, s);
 
             if (create_mkr) {

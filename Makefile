@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 805
+VERSION_MIN = 806
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -557,6 +557,10 @@ endif
 PLAT_KIWI_BIN := $(DIR_FILE_SRC)/bin/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
 HAS_KIWI_BIN := $(shell test -x $(PLAT_KIWI_BIN) && echo true)
 
+# NB: in build/, NOT KiwiSDR.files/bin/
+PLAT_KIWI_BIN_NEW := $(BUILD_DIR)/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
+PLAT_KIWID_BIN_NEW := $(BUILD_DIR)/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
+
 .PHONY: make_binary
 make_binary:
     ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
@@ -569,6 +573,9 @@ make_binary:
 	            @echo "   => make force: compiling from sources"
 	            @echo "================"
 	            @make $(MAKE_ARGS) make_all
+	            @echo "================"
+	            @echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
+	            @cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
 	            @echo "================"
             else ifeq ($(HAS_KIWI_BIN),true)
 	            @echo "   => exists: not compiling from sources"
@@ -588,10 +595,6 @@ make_binary:
 	@echo "make_binary DONE"
 
 
-# NB: in build/, NOT KiwiSDR.files/bin/
-PLAT_KIWI_BIN_NEW := $(BUILD_DIR)/kiwi_$(VER)_$(DEBMM)_$(PLAT).bin
-PLAT_KIWID_BIN_NEW := $(BUILD_DIR)/kiwid_$(VER)_$(DEBMM)_$(PLAT).bin
-
 .PHONY: force
 force: make_prereq
 	rm -f $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
@@ -599,14 +602,7 @@ force: make_prereq
 	@echo "================"
 	@echo "make force"
 	@make $(MAKE_ARGS) MAKE_FORCE=true make_binary
-	@echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
-	@echo "================"
-	@cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
 	@make MAKE_FORCE=true make_install_binary
-	@echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)"
-	@echo "================"
-	@cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
-	@sum $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
 	@echo "make force DONE"
 
 
@@ -1488,7 +1484,12 @@ make_install_binary:
 	            @echo "================"
 	            @# don't use MAKE_ARGS here!
 	            @make make_install
+	            @echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)"
+	            @cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
+	            @sum $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
+	            @echo "================"
 	            @make make_install_files
+#	            @echo "NB: may reboot at this point due to DO_ONCE FORCE_REBOOT"
 	            @echo "================"
             else ifeq ($(HAS_KIWID_BIN),true)
 	            @echo "   => exists: not installing from sources"
@@ -1588,7 +1589,7 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 
 
         ifeq ($(REBASE_DISTRO),true)
-	        -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first . $(DIR_FILE_SRC) && exit'
+	        -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first --verbose=1 . $(DIR_FILE_SRC) && exit'
 	        -chmod +x $(DIR_FILE_SRC)/bin/kiwi*
 	        rsync -av --delete $(DIR_FILE_SRC)/samples/ $(DIR_CFG)/samples
 	        -sed -e 's/Beagle_SDR_GPS/KiwiSDR/' < /root/.bashrc.local >/tmp/bashrc.local
@@ -1983,7 +1984,7 @@ clean: clean_ext clean_deprecated $(DEP_LFTP)
     ifeq ($(REBASE_DISTRO),true)
 	    @echo
 	    @echo "update $(DIR_FILE_SRC) for BINARY_INSTALL"
-	    -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first . $(DIR_FILE_SRC) && exit'
+	    -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first --verbose=1 . $(DIR_FILE_SRC) && exit'
 	    -chmod +x $(DIR_FILE_SRC)/bin/kiwi*
     endif
 

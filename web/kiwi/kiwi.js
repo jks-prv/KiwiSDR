@@ -3291,11 +3291,13 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 				extint.nom_srate = o.nsr;
 
 				gps_stats_cb(o.ga, o.gt, o.gg, o.gf, o.gc, o.go);
-				if (o.gr) {
+				//console.log('o.gr='+ o.gr +' o.gl='+ o.gl);
+				if (o.gr || o.gl) {
 				   kiwi.GPS_auto_grid = decodeURIComponent(o.gr);
 				   kiwi.GPS_auto_latlon = decodeURIComponent(o.gl);
 				   kiwi.GPS_fixes = o.gf;
 				   //console.log('stats_cb kiwi.GPS_auto_grid='+ kiwi.GPS_auto_grid);
+				   //console.log('stats_cb kiwi.GPS_auto_latlon='+ kiwi.GPS_auto_latlon);
 				}
 				
 				// present in both admin & user

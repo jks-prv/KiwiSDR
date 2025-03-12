@@ -384,6 +384,11 @@ static void ft8_autorun(int instance, bool initial)
     double dial_freq_kHz = ft8_autorun_dial[band];
     double if_freq_kHz = dial_freq_kHz - freq.offset_kHz;
     bool ft4 = (isFT4[band] != 0);
+    
+    if (is_locked) {
+        //printf("FT8 autorun: DRM is_locked\n");
+	    return;
+    }
 
 	if (!rx_freq_inRange(dial_freq_kHz)) {
 	    if (!ft8_arun_seen[instance]) {
@@ -400,7 +405,7 @@ static void ft8_autorun(int instance, bool initial)
     char *geoloc;
     const char *pre = preempt? (ft8_conf.GPS_update_grid? ",%20pre" : ",%20preemptable") : "";
     const char *rgrid = ft8_conf.GPS_update_grid? stprintf(",%%20%s", ft8_conf.rgrid) : "";
-    printf("ft8_autorun preempt=%d rgrid=%s GPS_update_grid=%d\n", preempt, ft8_conf.rgrid, ft8_conf.GPS_update_grid);
+    printf("FT8 autorun: preempt=%d rgrid=%s GPS_update_grid=%d\n", preempt, ft8_conf.rgrid, ft8_conf.GPS_update_grid);
     asprintf(&geoloc, "0%%20decoded%s%s", pre, rgrid);
 
 	bool ok = internal_conn_setup(ICONN_WS_SND | ICONN_WS_EXT, &iconn[instance], instance, PORT_BASE_INTERNAL_FT8,

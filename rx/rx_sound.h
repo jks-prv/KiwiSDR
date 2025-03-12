@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2019-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 

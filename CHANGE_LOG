@@ -3,6 +3,13 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.806  March 12, 2025
+    Let DRM extension kick preemptable channels so it can run. (thanks VK6KCH)
+    SSTV extension: Fixed Robot B/W modes and added R36-BW. (thanks N1NKM)
+    Fixed "continuous update from GPS" of admin webpage grid/location fields. (thanks JQ6LIA)
+    TDoA extension: Flag sampling hosts as having low GPS resolution (but not doing this just yet).
+    Fixed more cases of failing to restart proxy client when proxy configuration changed.
+
 v1.805  March 9, 2025
     Mobile improvements:
         Keyboards shortcuts work again, e.g. a Bluetooth keyboard connected to iPad. (thanks DL3LED)

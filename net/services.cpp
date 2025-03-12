@@ -79,7 +79,7 @@ static void get_TZ(void *param)
 		if (lat_lon != NULL) {
 			n = sscanf(lat_lon, "%*[^0-9+-]%f%*[^0-9+-]%f)", &lat, &lon);
 			// consider default lat/lon to be the same as unset
-			if (n == 2 && strcmp(lat_lon, "(-37.631120, 176.172210)") != 0 && strcmp(lat_lon, "(0.000000, 0.000000)") != 0) {
+			if (n == 2 && gps_isValid(lat_lon)) {
 				lprintf("TIMEZONE: lat/lon from admin webpage config: (%f, %f)\n", lat, lon);
 				haveLatLon = true;
 			}

@@ -310,14 +310,17 @@ function sstv_controls_setup()
       for (var i=0, len = p.length; i < len; i++) {
          var a = p[i];
          //console.log('SSTV: param <'+ a +'>');
+         var r;
          if (w3_ext_param('help', a).match) {
             ext_help_click();
          } else
          if (w3_ext_param('mmsstv', a).match) {
             ext_send('SET mmsstv');
          } else
-         if (w3_ext_param('test', a).match) {
-            sstv_test_cb(null, 0);
+         if ((r = w3_ext_param('test', a)).match) {
+            var test = r.has_value? r.num : 1;
+            test = w3_clamp(test, 1, 2, 1);
+            sstv_test_cb(null, test-1);
          } else
          if (w3_ext_param('noadj', a).match) {
             sstv.auto = 1;    // gets inverted by sstv_auto_cbox_cb()
@@ -473,11 +476,12 @@ function SSTV_help(show)
                '<ul>' +
                   '<li>Martin: M1 M2 M3 M4</li>' +
                   '<li>Scottie: S1 S2 SDX</li>' +
-                  '<li>Robot: R12 R24 R36 R72 R8-BW R12-BW R24-BW</li>' +
+                  '<li>Robot: R12 R24 R36 R72 R8-BW R12-BW R24-BW R36-BW</li>' +
                   '<li>Wraase: SC60 SC120 SC180</li>' +
                   '<li>Pasokon: P3 P5 P7</li>' +
                   '<li>PD: PD50 PD90 PD120 PD160 PD180 PD240</li>' +
                   '<li>MMSSTV: MR73 MR90 MR115 MR140 MR175 MP73 MP115 MP140 MP175</li>' +
+                  '<li>MMSSTV: ML180 ML240 ML280 ML320</li>' +
                   '<li>FAX480</li>' +
                '</ul>' +
                'Unsupported modes:' +
@@ -486,9 +490,9 @@ function SSTV_help(show)
                   '<li>MMSSTV: MN73 MN110 MN140 MC110 MC140 MC180</li>' +
                   '<li>Amiga: AVT24 AVT90 AVT94</li>' +
                '</ul>' +
-               'If the image is still slanted or offset after auto adjustment you can make a manual<br>' +
-               'correction. If you see what looks like an edge in the image then click in two places along<br>' +
-               'the edge. The image will then auto adjust. You can repeat this procedure multiple times<br>' +
+               'If the image is still slanted or offset after auto adjustment you can make a manual ' +
+               'correction. If you see what looks like an edge in the image then click in two places along ' +
+               'the edge. The image will then auto adjust. You can repeat this procedure multiple times ' +
                'if necessary.' +
                '<br><br>URL parameters: <br>' +
                w3_text('|color:orange', '(freq menu match) &nbsp; noadj &nbsp; test') +
@@ -511,5 +515,18 @@ function SSTV_help(show)
 // called to display HTML for configuration parameters in admin interface
 function SSTV_config_html()
 {
-   ext_config_html(sstv, 'sstv', 'SSTV', 'SSTV configuration');
+   var s =
+      w3_inline_percent('w3-container',
+         w3_div('w3-margin-T-16 w3-restart',
+            w3_input_get('', 'Test1 filename', 'SSTV.test_file1', 'w3_string_set_cfg_cb', 'SSTV.test.au')
+         ), 40
+      ) +
+
+      w3_inline_percent('w3-container',
+         w3_div('w3-margin-T-16 w3-restart',
+            w3_input_get('', 'Test2 filename', 'SSTV.test_file2', 'w3_string_set_cfg_cb', 'SSTV.test2.au')
+         ), 40
+      );
+
+   ext_config_html(sstv, 'sstv', 'SSTV', 'SSTV configuration', s);
 }

@@ -130,21 +130,21 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
     
     #if 0
         if (strcmp(conn->remote_ip, "") == 0 /* && strcmp(cmd, "SET keepalive") != 0 */)
-            cprintf(conn, "SND <%s> cmd_recv 0x%x/0x%x\n", cmd, s->cmd_recv, CMD_ALL);
+            cprintf(conn, "SND <%s> cmd_recv 0x%x/0x%x\n", cmd, s->cmd_recv, CMD_SND_ALL);
     #endif
 
     // SECURITY: this must be first for auth check
     bool keep_alive;
     if (rx_common_cmd(STREAM_SOUND, conn, cmd, &keep_alive)) {
         if ((conn->ip_trace || (TR_SND_CMDS && s->tr_cmds < 32)) && !keep_alive) {
-            clprintf(conn, "SND #%02d [rx_common_cmd] <%s> cmd_recv 0x%x/0x%x\n", s->tr_cmds, cmd, s->cmd_recv, CMD_ALL);
+            clprintf(conn, "SND #%02d [rx_common_cmd] <%s> cmd_recv 0x%x/0x%x\n", s->tr_cmds, cmd, s->cmd_recv, CMD_SND_ALL);
             s->tr_cmds++;
         }
         return;
     }
 
     if (conn->ip_trace || (TR_SND_CMDS && s->tr_cmds < 32)) {
-        clprintf(conn, "SND #%02d <%s> cmd_recv 0x%x/0x%x\n", s->tr_cmds, cmd, s->cmd_recv, CMD_ALL);
+        clprintf(conn, "SND #%02d <%s> cmd_recv 0x%x/0x%x\n", s->tr_cmds, cmd, s->cmd_recv, CMD_SND_ALL);
         s->tr_cmds++;
     }
 

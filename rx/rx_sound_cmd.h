@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2019-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -37,7 +37,7 @@ Boston, MA  02110-1301, USA.
 #define CMD_PASSBAND	0x04
 #define CMD_AGC			0x08
 #define	CMD_AR_OK		0x10
-#define	CMD_ALL			(CMD_FREQ | CMD_MODE | CMD_PASSBAND | CMD_AGC | CMD_AR_OK)
+#define	CMD_SND_ALL     (CMD_FREQ | CMD_MODE | CMD_PASSBAND | CMD_AGC | CMD_AR_OK)
 
 #define LOOP_BC 1024
 

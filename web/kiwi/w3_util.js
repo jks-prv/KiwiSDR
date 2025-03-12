@@ -2729,7 +2729,6 @@ function w3int_input_keydown(ev, path, cb)
    var disabled = w3_parent_with(el, 'w3-disabled');
    //w3_remove(el, 'kiwi-pw');
    var trace = w3_contains(el, 'w3-trace');
-trace=1;
    if (trace) console.log('w3int_input_keydown k='+ k + (ctrl? ' CTRL ':'') +' val=<'+ el.value +'> cb='+ cb +' disabled='+ disabled);
    var cb_a = cb.split('|');
    
@@ -2835,7 +2834,6 @@ function w3_input_change(path, cb, from)
 	var el = w3_el(path);
 	if (el) {
       var trace = w3_contains(el, 'w3-trace');
-trace=1;
       if (trace) console.log('w3_input_change path='+ path +' from='+ from);
       
       // cb is a string because can't pass an object to onclick

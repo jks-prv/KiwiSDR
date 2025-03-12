@@ -94,8 +94,8 @@ bool DRM_msgs(char *msg, int rx_chan)
     if (strcmp(msg, "SET ext_server_init") == 0) {
 		ext_send_msg(rx_chan, false, "EXT ready");
 		
-		// extension notified of rx_chan >= drm_info.drm_chan in response to lock_set below
-		if (rx_chan < drm_info.drm_chan) {
+		// extension notified of rx_chan >= drm_info.drm_max_rx in response to lock_set below
+		if (rx_chan < drm_info.drm_max_rx) {
             d->rx_chan = rx_chan;	// remember our receiver channel number
         }
         
@@ -123,8 +123,12 @@ bool DRM_msgs(char *msg, int rx_chan)
 	#define DRM_OK_LOCKED           1
 
     if (strcmp(msg, "SET lock_set") == 0) {
-        int rv, heavy = 0;
-        int inuse = rx_chans - rx_chan_free_count(RX_COUNT_ALL, NULL, &heavy);
+        int rv, heavy = 0, preempt = 0;
+        int free = rx_chan_free_count(RX_COUNT_ALL, NULL, &heavy, &preempt);
+        int inuse = rx_chans - free - preempt;
+        int inuse_all = rx_chans - free;
+        printf("DRM rx_chans=%d - free=%d - preempt=%d => inuse=%d inuse_all=%d\n",
+            rx_chans, free, preempt, inuse, inuse_all);
 
     //#define DRM_12KHZ_ONLY
     #ifdef DRM_12KHZ_ONLY
@@ -138,15 +142,22 @@ bool DRM_msgs(char *msg, int rx_chan)
         } else {
             int prev = is_locked;
             if (is_multi_core) {
-                is_locked = (rx_chan < drm_info.drm_chan)? 1:0;
-                printf("DRM multi-core lock_set: inuse=%d heavy=%d rx_chan=%d drm_chan=%d prev=%d locked=%d\n",
-                    inuse, heavy, rx_chan, drm_info.drm_chan, prev, is_locked);
+                is_locked = (rx_chan < drm_info.drm_max_rx)? 1:0;
+                printf("DRM multi-core lock_set: inuse=%d heavy=%d rx_chan=%d drm_max_rx=%d prev_locked=%d => locked=%d\n",
+                    inuse, heavy, rx_chan, drm_info.drm_max_rx, prev, is_locked);
             } else {
                 // inuse-1 to not count DRM channel
-                is_locked = ((inuse-1) <= drm_nreg_chans && heavy == 0 && rx_chan < drm_info.drm_chan)? 1:0;
+                is_locked = ((inuse-1) <= drm_nreg_chans && heavy == 0 && rx_chan < drm_info.drm_max_rx)? 1:0;
                 if (conn->is_locked)
                     printf("DRM conn->is_locked was already set?\n");
-                printf("DRM single-core lock_set: inuse=%d(%d) heavy=%d prev=%d locked=%d\n", inuse, inuse-1, heavy, prev, is_locked);
+                
+                // if preemption needs to be used then just kick them all and they'll come back as able
+                if (is_locked && preempt) {
+                    printf("DRM autorun_kick_all_preemptable\n");
+                    rx_autorun_kick_all_preemptable();
+                }
+                printf("DRM single-core lock_set: inuse=%d(%d) drm_nreg_chans=%d heavy=%d prev_locked=%d => locked=%d\n",
+                    inuse, inuse-1, drm_nreg_chans, heavy, prev, is_locked);
             }
             if (is_locked) conn->is_locked = true;
             rv = is_locked? DRM_OK_LOCKED : DRM_CONFLICT;
@@ -290,7 +301,7 @@ void DRM_data(u1_t cmd, u1_t *data, u4_t nbuf)
 
 void DRM_poll(int rx_chan)
 {
-    if (rx_chan >= drm_info.drm_chan) return;
+    if (rx_chan >= drm_info.drm_max_rx) return;
     
     drm_t *d = &DRM_SHMEM->drm[rx_chan];
     
@@ -361,7 +372,7 @@ ext_t DRM_ext = {
 void DRM_main()
 {
     drm_t *d;
-    drm_info.drm_chan = DRM_MAX_RX;
+    drm_info.drm_max_rx = DRM_MAX_RX;
     
     #ifdef DRM
         for (int i=0; i < DRM_MAX_RX; i++) {

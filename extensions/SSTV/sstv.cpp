@@ -11,6 +11,7 @@
 #include "kiwi.h"
 #include "web.h"
 #include "misc.h"
+#include "mem.h"
 
 #include <sys/mman.h>
 
@@ -149,10 +150,12 @@ bool sstv_msgs(char *msg, int rx_chan)
 
         #ifdef SSTV_TEST_FILE
             int tn = e->test_n;
-            e->s2p[tn] = e->s22p[tn] = sstv.s2p_start[tn];
-            
-            // misuse ext_register_receive_real_samps() to pushback audio samples from the test file
-		    ext_register_receive_real_samps(sstv_file_data, rx_chan);
+            if (sstv.s2p_start[tn]) {
+                e->s2p[tn] = e->s22p[tn] = sstv.s2p_start[tn];
+                
+                // misuse ext_register_receive_real_samps() to pushback audio samples from the test file
+                ext_register_receive_real_samps(sstv_file_data, rx_chan);
+            }
 		#endif
 
         if (!e->task_created) {
@@ -286,20 +289,31 @@ ext_t sstv_ext = {
 };
 
 #ifdef SSTV_TEST_FILE
-static void sstv_testfile(int which, const char *fname)
+static void sstv_testfile(int which)
 {
-    char *file;
+    const char *fn;
+    char *fn2;
+
+    fn = cfg_string(stprintf("SSTV.test_file%d", which+1), NULL, CFG_OPTIONAL);
+    if (!fn || *fn == '\0') return;
+    asprintf(&fn2, DIR_CFG "/samples/%s", fn);
+    cfg_string_free(fn);
+
     int fd;
-    printf("SSTV: mmap %s\n", fname);
-    scall("sstv open", (fd = open(fname, O_RDONLY)));
-    off_t fsize = kiwi_file_size(fname);
-    printf("SSTV: size=%d\n", fsize);
-    file = (char *) mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (file == MAP_FAILED) sys_panic("SSTV mmap");
-    close(fd);
-    int words = fsize/2;
-    sstv.s2p_start[which] = (s2_t *) file;
-    sstv.s2p_end[which] = sstv.s2p_start[which] + words;
+    printf("SSTV: mmap %s\n", fn2);
+    fd = open(fn2, O_RDONLY);
+    if (fd >= 0) {
+        off_t fsize = kiwi_file_size(fn2);
+        kiwi_asfree(fn2);
+        printf("SSTV: size=%d\n", fsize);
+        char *file = (char *) mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
+        close(fd);
+        if (file != MAP_FAILED) {
+            int words = fsize/2;
+            sstv.s2p_start[which] = (s2_t *) file;
+            sstv.s2p_end[which] = sstv.s2p_start[which] + words;
+        }
+    }
 }
 #endif
 
@@ -308,19 +322,30 @@ void SSTV_main() {
     ext_register(&sstv_ext);
     sstv.nom_rate = snd_rate;
 
-    ModeSpec_t *m = ModeSpec;
-    for (int i = 0; i < ARRAY_LEN(&ModeSpec[0]); i++, m++) {
-        m->NumLines /= m->LineHeight;   // do here instead of specifying in ModeSpec[]
-        printf("%dx%d %s\n", m->ImgWidth, m->NumLines, m->ShortName);
+    ModeSpec_t *m = &ModeSpec[VISX+1];
+    for (int i = VISX+1; m->Name; i++, m++) {
+        m->ImgHeight = m->NumLines;
+        if (m->ColorEnc == YUVY) {
+            m->NumLines /= 2;
+            //printf(YELLOW "YUVY %s" NONL, m->ShortName);
+        } else
+        if (m->LineHeight > 1) {
+            m->NumLines /= m->LineHeight;
+            //printf(YELLOW "LineHeight=%d NumLines=%d => %d %s" NONL,
+            //    m->LineHeight, m->ImgHeight, m->NumLines, m->ShortName);
+        }
+        //printf("%dx%d %s\n", m->ImgWidth, m->NumLines, m->ShortName);
+        if (i != m->VIS)
+            printf(YELLOW "SSTV warning: i=%d VIS=%d %s" NONL, i, m->VIS, m->ShortName);
     }
     
 #ifdef SSTV_TEST_FILE
-    sstv_testfile(0, DIR_CFG "/samples/SSTV.test.au");
+    sstv_testfile(0);
     sstv.n_test = 1;
 #endif
 
 #ifdef SSTV_TEST_FILE2
-    sstv_testfile(1, DIR_CFG "/samples/SSTV.test2.au");
+    sstv_testfile(1);
     sstv.n_test = 2;
 #endif
 }

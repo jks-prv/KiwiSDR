@@ -97,7 +97,7 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
     check(HannA != NULL);
     
     if (!Redraw) {
-        ext_send_msg(e->rx_chan, false, "EXT img_size=%d,%d", m->ImgWidth, m->NumLines * (m->LineDouble? 2:1));
+        ext_send_msg(e->rx_chan, false, "EXT img_size=%d,%d", m->ImgWidth, m->ImgHeight);
         ext_send_msg_encoded(e->rx_chan, false, "EXT", "new_img", "%s", m->ShortName);
     } else {
         ext_send_msg(e->rx_chan, false, "EXT redraw");
@@ -457,7 +457,9 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
                 // 1 YUV  FMT_420 R36 (y0u01, y1v01, y2u23, y3v23, ...)
                 // 1 YUV  FMT_422 R72 MR* ML* (y0y0u0v0)
                 // 2 YUV  FMT_422 R24 (line doubling to fill-out 120 => 240 height)
-                case YUV: {     // aka YCrCb
+                case YUV:
+                case YUVY:
+                {
                     u1_t Y = (*e->image)[tx][y][0];
                     u1_t U = (*e->image)[tx][y][1];     // R-Y
                     u1_t V = (*e->image)[tx][y][2];     // B-Y
@@ -489,7 +491,7 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
                 SET_BE_U16(hdr.w, m->ImgWidth);
                 SET_BE_U16(hdr.h, m->NumLines * m->LineHeight);
                 
-                // double-up for 120/128 line modes
+                // double-up for 120/128 line modes or when YUVY encoding
                 for (int i = m->LineHeight; i > 0; i--)
                     ext_send_msg_data2(e->rx_chan, false, Redraw? 1:0, (u1_t *) &hdr, sizeof(hdr), pixrow, m->ImgWidth*3 * sizeof(u1_t));
                 if (Redraw) TaskSleepReasonMsec("sstv redraw", 10);

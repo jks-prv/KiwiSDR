@@ -30,7 +30,7 @@ u1_t sstv_get_vis(sstv_chan_t *e)
     #define N_HDRBUF 100
     #define N_TONE 100
     SSTV_REAL Power[N_POWER] = {0}, HeaderBuf[N_HDRBUF] = {0}, tone[N_TONE] = {0}, Hann[SSTV_MS_2_MAX_SAMPS(20)] = {0};
-    bool      gotvis = false;
+    bool      gotvis = false, parerr = false;
     u1_t      Bit[16] = {0}, ParityBit = 0, ParityBit2 = 0;
     int       nbits = 0;
     u1_t      mode = UNKNOWN;
@@ -192,12 +192,20 @@ u1_t sstv_get_vis(sstv_chan_t *e)
                 
                         if (nbits == 8 && Parity != ParityBit) {
                             printf("SSTV: Parity fail\n");
-                            gotvis = false;
+                            parerr = true;
                         } else
                         if (nbits == 16 && Parity2 != ParityBit2) {
                             printf("SSTV: Parity2 fail\n");
+                            parerr = true;
+                        }
+
+                    //#define IGNORE_PARITY_ERRS
+                    #ifdef IGNORE_PARITY_ERRS
+                    #else
+                        if (parerr) {
                             gotvis = false;
                         } else
+                    #endif
                         if (VISmap[VIS] == UNKNOWN) {
                             printf("SSTV: Unknown VIS\n");
                             ext_send_msg_encoded(e->rx_chan, false, "EXT", "status", "unknown VIS-8 code 0x%02x", VIS);

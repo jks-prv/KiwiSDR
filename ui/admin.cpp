@@ -94,9 +94,7 @@ void c2s_admin_setup(void *param)
 	const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
 	send_msg_encoded(conn, "ADM", "proxy_url", "%s:%d", proxy_server, PROXY_SERVER_PORT);
 	admcfg_string_free(proxy_server);
-	#ifdef MULTI_CORE
-	    send_msg(conn, SM_NO_DEBUG, "ADM is_multi_core");
-	#endif
+    if (is_multi_core) send_msg(conn, SM_NO_DEBUG, "ADM is_multi_core");
 	send_msg(conn, SM_NO_DEBUG, "ADM init=%d", rx_chans);
 	send_msg_encoded(conn, "ADM", "repo_dir", "%s", REPO_DIR);
 	send_msg_encoded(conn, "ADM", "repo_git", "%s", REPO_GIT);
@@ -595,9 +593,10 @@ void c2s_admin(void *param)
                         printf("proxy register: reply: %s\n", rp);
                         status = 901;
                         n = sscanf(rp, "status=%d", &status);
-                        printf("proxy register: n=%d status=%d\n", n, status);
+                        if (n != 1) printf("proxy register: n=%d status=%d\n", n, status);
                     }
                     kstr_free(reply);
+                    lprintf("PROXY: reg=%d(FRPC_PROXY_UPD) status=%d\n", FRPC_PROXY_UPD, status);
 
                     send_msg(conn, SM_NO_DEBUG, "ADM rev_status=%d", status);
                     net.proxy_status = status;
@@ -616,7 +615,9 @@ void c2s_admin(void *param)
                         // NB: can't use e.g. non_blocking_cmd() here to get the authorization status
                         // because frpc doesn't fork and return on authorization success.
                         // So the non_blocking_cmd() will hang.
-                        lprintf("PROXY: starting frpc\n");
+                        // That also means two separate system()s must be used below because the
+                        // second one detaches with a "&".
+                        lprintf("PROXY: (re)starting frpc\n");
                         system("killall -q frpc; sleep 1");
                         system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
                     }
@@ -737,7 +738,7 @@ void c2s_admin(void *param)
 
             i = strcmp(cmd, "SET reload_index_params");
             if (i == 0) {
-                printf("reload_index_params\n");
+                //printf("reload_index_params\n");
                 reload_index_params();
                 continue;
             }

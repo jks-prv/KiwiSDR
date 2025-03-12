@@ -113,7 +113,7 @@ enum {
     AVT24, AVT90, AVT94,
     M1,    M2,    M3,    M4,
     S1,    S2,    SDX,
-    R12,   R24,   R36,   R72,   R8BW, R12BW, R24BW,
+    R12,   R24,   R36,   R72,   R8BW, R12BW, R24BW, R36BW,
     SC60,  SC120, SC180,
     PD50,  PD90,  PD120, PD160, PD180, PD240, PD290,
     P3,    P5,    P7,
@@ -124,26 +124,25 @@ enum {
 };
 
 // Color encodings
-enum { GBR, RGB, YUV, BW };
+enum { GBR, RGB, YUV, YUVY, BW };
 
 // Format
 enum { FMT_111, FMT_BW, FMT_420, FMT_422, FMT_242, FMT_111_REV };
 
-#define LINE_DOUBLE true
-#define UNSUPPORTED false, true
+#define UNSUPPORTED true
 
 typedef struct {
   const char *Name;
-  const char *ShortName;
+  const char *ShortName; u2_t VIS;
   SSTV_REAL  SyncTime;
   SSTV_REAL  PorchTime;
   SSTV_REAL  SeptrTime;
   SSTV_REAL  PixelTime;
   SSTV_REAL  LineTime;
-  u2_t       ImgWidth, NumLines;
-  u1_t       LineHeight, ColorEnc, format;
-  bool       LineDouble;
+  u2_t       ImgWidth, NumLines, LineHeight;
+  u1_t       ColorEnc, format;
   bool       unsupported;
+  u2_t       ImgHeight;
 } ModeSpec_t;
 extern ModeSpec_t ModeSpec[];
 
