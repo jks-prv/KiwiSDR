@@ -250,7 +250,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
     if (keep_alive) *keep_alive = false;
 	
 	if (mc == NULL) {
-	    //cprintf(conn, "### cmd but mc is null <%s>\n", cmd);
+	    cprintf(conn, "### cmd but connection closed? <%s>\n", cmd);
 	    return false;
 	}
 	

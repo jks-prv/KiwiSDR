@@ -535,7 +535,8 @@ bool save_config(u2_t key, conn_t *conn, char *cmd)
     char *sb;
     const bool dbug = true;
     save_cfg_t *cfg;
-    
+    //clprintf(conn, "save_config: ENTER key=%d cmd=\"%.32s\"\n", key, cmd);
+
     switch (key) {
         case CMD_SAVE_CFG:   cfg = &save_cfg; break;
         case CMD_SAVE_DXCFG: cfg = &save_dxcfg; break;
@@ -690,6 +691,7 @@ bool save_config(u2_t key, conn_t *conn, char *cmd)
         return true;
     }
 
+    //clprintf(conn, "save_config: isFrag=%d isEnd=%d key=%d cmd=\"%.32s\"\n", isFrag, isEnd, key, cmd);
     return false;   // always (and only) return false if the cmd matching failed
 }
 

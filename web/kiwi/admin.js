@@ -549,6 +549,9 @@ var connect = {
 var duc_update_i = { 0:'5 min', 1:'10 min', 2:'15 min', 3:'30 min', 4:'60 min' };
 var duc_update_v = { 0:5, 1:10, 2:15, 3:30, 4:60 };
 
+function connect_rev_user() { return (adm.rev_auto? adm.rev_auto_user : adm.rev_user); }
+function connect_rev_host() { return (adm.rev_auto? adm.rev_auto_host : adm.rev_host); }
+
 function connect_html()
 {
    // remove old references to kiwisdr.example.com so empty field message shows
@@ -560,7 +563,7 @@ function connect_html()
    
    // fix unexpected fixed IP when proxy mode selected
    if (cfg.sdr_hu_dom_sel == kiwi.REV && (s == '' || s == '103.156.230.194')) {
-      var server_url = adm.rev_auto? adm.rev_auto_host : adm.rev_host;
+      var server_url = connect_rev_host();
       if (server_url != '') server_url += '.'+ adm.proxy_server;
       console.log('connect_html REV RESET server_url='+ server_url);
       ext_set_cfg_param('cfg.server_url', server_url, EXT_SAVE);
@@ -821,7 +824,10 @@ function connect_blur()
 function connect_auto_proxy_cb(path, idx, first, cb_param)
 {
 	var enabled = (+idx == w3_SWITCH_YES_IDX);
-	//console.log('connect_auto_proxy_cb: path='+ path +' first='+ first +' enabled='+ enabled);
+	console.log('connect_auto_proxy_cb: path='+ path +' first='+ first +' enabled='+ enabled);
+	admin.last_rev_user = connect_rev_user();
+	admin.last_rev_host = connect_rev_host();
+	console.log('connect_auto_proxy_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
 	admin_bool_cb(path, enabled, first);
 	
 	w3_hide2('id-proxy-user', enabled);
@@ -844,7 +850,7 @@ function connect_update_url()
 	w3_el('id-connect-duc-dom').innerHTML = 'Use domain name from DUC configuration below: ' +
 	   w3_div('w3-show-inline-block w3-text-black '+ ok_color, ok? adm.duc_host : '(none currently set)');
 
-   var rev_host = adm.rev_auto? adm.rev_auto_host : adm.rev_host;
+   var rev_host = connect_rev_host();
    ok = (rev_host != '');
    ok_color = ok? 'w3-background-pale-aqua' : 'w3-override-yellow';
    var rev_host_fqdn = ok? (rev_host +'.'+ adm.proxy_server) : '(none currently set)';
@@ -914,7 +920,7 @@ function connect_dom_duc_focus()
 
 function connect_dom_rev_focus(check_restart)
 {
-   var server_url = adm.rev_auto? adm.rev_auto_host : adm.rev_host;
+   var server_url = connect_rev_host();
    if (server_url != '') server_url += '.'+ adm.proxy_server;
    console.log('connect_dom_rev_focus server_url='+ server_url);
 	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
@@ -1158,8 +1164,8 @@ function connect_rev_usage()
 function connect_rev_register_cb(id, idx)
 {
    var auto = adm.rev_auto? 1:0;
-   var user = auto? adm.rev_auto_user : adm.rev_user;
-   var host = auto? adm.rev_auto_host : adm.rev_host;
+   var user = connect_rev_user();
+   var host = connect_rev_host();
    if (user == '' || host == '') {
       connect_rev_status_cb(100);
       return;
@@ -1176,14 +1182,19 @@ function connect_rev_register_cb(id, idx)
 
 function connect_rev_user_cb(path, val, first)
 {
-   connect_rev_usage();
+	admin.last_rev_user = connect_rev_user();
+	console.log('connect_rev_user_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
    w3_clearInnerHTML('id-connect-rev-status');
    w3_string_set_cfg_cb(path, val, first);
+   connect_rev_register_cb();
+   connect_rev_usage();
 }
 
 function connect_rev_host_cb(path, val, first)
 {
-	//console.log('connect_rev_host_cb: path='+ path +' val=<'+ val +'> '+ val[0] +' '+ adm.rev_host);
+	console.log('connect_rev_host_cb: path='+ path +' val=<'+ val +'>');
+	admin.last_rev_host = connect_rev_host();
+	console.log('connect_rev_host_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
 	var check_restart = true;
    connect_rev_usage();
    if (val[0] >= '0' && val[0] <= '9') {
@@ -1196,6 +1207,7 @@ function connect_rev_host_cb(path, val, first)
    w3_string_set_cfg_cb(path, val, first);
    if (cfg.sdr_hu_dom_sel == kiwi.REV) {     // if currently selected option update the value
       connect_dom_rev_focus(check_restart);
+      connect_rev_register_cb();
    } else {
       connect_update_url();
    }
@@ -1209,8 +1221,8 @@ function connect_rev_status_cb(status)
 	var s, error = false;
 	
 	var auto = adm.rev_auto? 1:0;
-   var user = auto? adm.rev_auto_user : adm.rev_user;
-   var host = auto? adm.rev_auto_host : adm.rev_host;
+   var user = connect_rev_user();
+   var host = connect_rev_host();
    console_nv('$connect_rev_status_cb', {status}, {auto}, {user}, {host});
    if (!auto && (status == 200 || status == 201) && (user == '' || host == '')) {
       status = 100;
@@ -1228,9 +1240,9 @@ function connect_rev_status_cb(status)
    }
    
 	switch (status) {
-		case   0: s = 'Existing account, registration successful'; break;
-		case   1: s = 'New account, registration successful'; break;
-		case   2: s = 'Updating host name, registration successful'; break;
+		case   0: s = 'Existing account, registration successful'; break;       // FRPC_EXISTING
+		case   1: s = 'New account, registration successful'; break;            // FRPC_NEW
+		case   2: s = 'Updating host name, registration successful'; break;     // FRPC_UPDATE_HOST
 
 		case 100: s = 'User key or host name field blank'; break;
 		case 101: s = 'User key invalid. Did you email your user/API key to support@kiwisdr.com as per the instructions?'; break;
@@ -1264,24 +1276,34 @@ function connect_rev_status_cb(status)
 	
 	// If this admin connection is on a proxy connection then it needs to be reconnected
 	// because frpc will be restarted using the new user and/or host value.
-   var a = kiwi_remove_protocol(kiwi_host_port()).split('.');
-   var host_changed = (a[0] != host);
+   var cur_hp = kiwi_remove_protocol(kiwi_host_port()).split('.');
+	var admin_is_proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');    // FIXME: alt proxy servers?
+	var focus_query = connect.focus_query;
+   
+   // these are only valid if admin_is_proxy_conn since kiwi_host_port() could be a local IP otherwise
+   var host_changed = (cur_hp[0] != host);
 	var reload_auto = ( auto && host_changed &&  status == 0);
 	var reload_man  = (!auto && host_changed && (status >= 0 && status <= 2));
-	var admin_is_proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');
-   console.log('connect_rev_status_cb: auto='+ auto +' user='+ user +' host='+ host +'|'+ a[0] +
-      ' reload_auto|man='+ reload_auto +'|'+ reload_man +' focus_query='+ connect.focus_query +' error='+ error +' admin_is_proxy_conn='+ admin_is_proxy_conn);
+
+   console.log('connect_rev_status_cb: auto='+ auto +' user='+ user +' host='+ host +'|'+ cur_hp[0] +
+      ' reload_auto|man='+ reload_auto +'|'+ reload_man +' focus_query='+ focus_query +' error='+ error +' admin_is_proxy_conn='+ admin_is_proxy_conn);
 
    if (admin_is_proxy_conn) {
       if (reload_auto || reload_man) {
          // update host name while proxy connected
 
          console_nv('$connect_rev_status_cb RELOAD ADMIN CONN', {reload_auto}, {reload_man});
-         a[0] = host;
-         kiwi.reload_url = kiwi_SSL() + a.join('.') +'/admin';
+         cur_hp[0] = host;
+         kiwi.reload_url = kiwi_SSL() + cur_hp.join('.') +'/admin';
          s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', admin.FRPC_UPDATE_HOST, user, host, auto);
          console.log(s);
-         ext_send(s);
+         
+         // wait long enough for in-flight save_config() to finish before doing the rev_register
+         // which will close the admin connection immediately by having stopped frpc
+         //ext_send(s);
+         //ext_send_after_cfg_save(s);      // doesn't work in this case
+         setTimeout(function() { ext_send(s); }, 3000);
+
          wait_then_reload_page(10, 'You changed the Kiwi\'s host name. <br>' +
             'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
       }
@@ -1289,9 +1311,16 @@ function connect_rev_status_cb(status)
 	   // !admin_is_proxy_conn
 	   
       // setup frpc.ini and restart frpc if new account or host name updated
+      var user_or_host_changed = (user != admin.last_rev_user || host != admin.last_rev_host);
+      if (status == admin.FRPC_EXISTING && user_or_host_changed) {
+         console.log('status => FRPC_UPDATE_HOST(2) because user_or_host_changed');
+	      console.log('user|host='+ user +'|'+ host +' last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
+         status = admin.FRPC_UPDATE_HOST;
+      }
       var proxy_setup = (status >= admin.FRPC_EXISTING && status <= admin.FRPC_UPDATE_HOST);
-      console.log('!admin_is_proxy_conn: status='+ status +' rev='+ TF(cfg.sdr_hu_dom_sel == kiwi.REV) +' focus='+ TF(connect.focus_query) +' proxy_setup='+ TF(proxy_setup));
-      if (cfg.sdr_hu_dom_sel == kiwi.REV && !connect.focus_query && proxy_setup) {
+      var isProxy = (cfg.sdr_hu_dom_sel == kiwi.REV);
+      console.log('!admin_is_proxy_conn: status='+ status +' rev='+ TF(isProxy) +' focus_query='+ TF(focus_query) +' proxy_setup='+ TF(proxy_setup));
+      if (isProxy && !focus_query && proxy_setup) {
          s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', status, user, host, auto);
          console.log(s);
          ext_send(s);
@@ -4176,6 +4205,7 @@ function admin_resize()
       var scr = w3_el("id-admin-scr");
          var con1 = w3_el("id-admin-con1");
             var nav = w3_el("id-admin-nav");
+            if (isUndefined(top)) return;
             var hdr_height = top.clientHeight + nav.clientHeight;
             var con2 = w3_el('id-admin-con2');
                // ...
@@ -4684,6 +4714,7 @@ function admin_recv(data)
 				connect_DUC_status_cb(parseFloat(param[1]));
 				break;
 
+         // in response to us sending "SET rev_status_query" or "SET rev_register reg=..." with reg == FRPC_PROXY_UPD
 			case "rev_status":
 				connect_rev_status_cb(parseFloat(param[1]));
 				break;
