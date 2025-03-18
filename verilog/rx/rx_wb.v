@@ -155,7 +155,6 @@ fir_iq #(.WIDTH(RXO_BITS))
 `endif
 
 	reg [15:0] rx_dout;
-	
 	always @*
 	    if (rd_getWB)
 	    begin
