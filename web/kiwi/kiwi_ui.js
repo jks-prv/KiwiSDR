@@ -279,6 +279,7 @@ function sd_backup_click_cb(id, idx)
 
 function sd_backup_progress()
 {
+   var pct;
 	kiwi.sd_progress++;
 	var secs = (kiwi.sd_progress % 60).toFixed(0).leadingZeros(2);
 	var mins = Math.floor(kiwi.sd_progress / 60).toFixed(0);
@@ -289,7 +290,7 @@ function sd_backup_progress()
 		   w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = '100%';
          w3_innerHTML('id-sd-backup-msg', 'finalizing SD card');
       } else {
-         var pct = ((kiwi.backup_progress / kiwi.backup_size) * 100).toFixed(0);
+         pct = ((kiwi.backup_progress / kiwi.backup_size) * 100).toFixed(0);
          if (pct == 0) pct = 1;
          if (pct <= 99) {	// stall updates until we actually finish in case SD is writing slowly
             w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = pct +'%';
@@ -298,7 +299,7 @@ function sd_backup_progress()
       }
    } else
    if (kiwi.sd_upgrade) {
-      var pct = ((kiwi.sd_progress / (20*60)) * 100).toFixed(0);
+      pct = ((kiwi.sd_progress / (20*60)) * 100).toFixed(0);
       if (pct == 0) pct = 1;
       if (pct <= 99) {	// stall updates until we actually finish in case SD is writing slowly
          w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = pct +'%';

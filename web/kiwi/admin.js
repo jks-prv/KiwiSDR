@@ -1684,7 +1684,7 @@ function backup_html()
                   w3_div('w3-margin-bottom w3-text-teal w3-bold',
                      'Create a Debian 11 upgrade SD card which includes all Kiwi customizations in kiwi.config directory.'),
                   w3_button('w3-aqua', 'Click to write upgrade SD card', 'sd_backup_click_cb', /* upgrade */ 1)
-               ),
+               )
             ),
             '<hr>',
 
