@@ -8,6 +8,7 @@
 //
 // Updates:
 //
+// 14 mar 25 23.123.206.34/32 AT&T proxy attack
 //  5 mar 25 66.245.192.0/21 (192.0:199.255) 66.245.196.27 constant/vultr/choopa repeating CMD_MARKER unknown variant
 //  4 mar 25 107.191.32.0/19 (32.0:63.255) 107.191.49.208 constant/vultr/choopa repeating CMD_MARKER unknown variant
 // 14 jan 25 remove 35.0.0.0/8 because it's allocated to multiple entities one of which is Charter that has a Kiwi customer
@@ -93,6 +94,7 @@
     "5.62.32.0/19",
     "5.253.115.0/25",
     "8.215.0.0/16",
+    "23.123.206.34/32",
     "23.251.128.0/19",
     "27.154.20.0/24",
     "27.154.22.0/24",
