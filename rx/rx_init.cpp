@@ -305,6 +305,23 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_string("reason_disabled", "", &up_cfg);
     cfg_default_string("panel_readme", "", &up_cfg);
     
+    // move index_html_params.RX_QRA to rx_grid
+	if ((s = cfg_string("index_html_params.RX_QRA", NULL, CFG_OPTIONAL)) != NULL) {
+        cfg_set_string("rx_grid", s);
+        update_cfg = cfg_gdb_break(true);
+	    cfg_string_free(s);
+	    cfg_rem_string("index_html_params.RX_QRA");
+	} else {
+        cfg_default_string("rx_grid", "", &up_cfg);
+	}
+
+    // replaced by rx_location
+	if ((s = cfg_string("index_html_params.RX_GMAP", NULL, CFG_OPTIONAL)) != NULL) {
+        update_cfg = cfg_gdb_break(true);
+	    cfg_string_free(s);
+        cfg_rem_string("index_html_params.RX_GMAP");
+    }
+
     // pcb.jpg => pcb.png since new pcb photo has alpha channel that only .png supports.
     // Won't disturb an RX_PHOTO_FILE set to kiwi.config/photo.upload by admin photo upload process.
 	if ((s = cfg_string("index_html_params.RX_PHOTO_FILE", NULL, CFG_OPTIONAL)) != NULL) {
@@ -427,9 +444,8 @@ void update_vars_from_config(bool called_at_init)
     // Only handle forced speed changes here as ESPEED_AUTO is always in effect after a reboot.
     // ethtool doesn't seem to have a way to go back to auto speed once a forced speed is set?
     int espeed = cfg_default_int("ethernet_speed", 0, &up_cfg);
-    static int current_espeed;
-    if (espeed != current_espeed || (kiwi.platform == PLATFORM_BB_AI64 && current_espeed == ESPEED_10M)) {
-        if (kiwi.platform == PLATFORM_BB_AI64 && (espeed == ESPEED_10M || current_espeed == ESPEED_10M)) {
+    if (espeed != kiwi.current_espeed || (kiwi.platform == PLATFORM_BB_AI64 && kiwi.current_espeed == ESPEED_10M)) {
+        if (kiwi.platform == PLATFORM_BB_AI64 && (espeed == ESPEED_10M || kiwi.current_espeed == ESPEED_10M)) {
             lprintf("ETH0 CAUTION: BBAI-64 doesn't support 10 mbps. Reverting to auto speed.\n");
             espeed = ESPEED_AUTO;
             if (called_at_init)
@@ -441,7 +457,7 @@ void update_vars_from_config(bool called_at_init)
                     stprintf("ethtool -s eth0 speed %d duplex full", (espeed == ESPEED_10M)? 10:100), NO_WAIT);
             }
         }
-        current_espeed = espeed;
+        kiwi.current_espeed = espeed;
     }
     
     int mtu = cfg_default_int("ethernet_mtu", 0, &up_cfg);

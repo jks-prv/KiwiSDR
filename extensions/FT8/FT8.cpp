@@ -267,7 +267,7 @@ bool ft8_msgs(char *msg, int rx_chan)
 
 void ft8_update_rgrid(char *rgrid)
 {
-    kiwi_strncpy(ft8_conf.rgrid, rgrid, LEN_GRID);
+    kiwi_strncpy(ft8_conf.rgrid, rgrid, LEN_GRID6);
     //printf("ft8_conf.rgrid %s\n", ft8_conf.rgrid);
     
     // update grid shown in user lists when there haven't been any new spots recently
@@ -307,7 +307,7 @@ bool ft8_update_vars_from_config(bool called_at_init_or_restart)
     cfg_default_string("ft8.grid", s, &update_cfg);
 	cfg_string_free(s);
     s = (char *) cfg_string("ft8.grid", NULL, CFG_REQUIRED);
-	kiwi_strncpy(ft8_conf.rgrid, s, LEN_GRID);
+	kiwi_strncpy(ft8_conf.rgrid, s, LEN_GRID6);
     wspr_set_latlon_from_grid(s);
 	cfg_string_free(s);
 	grid_to_latLon(ft8_conf.rgrid, &ft8_conf2.r_loc);

@@ -82,16 +82,18 @@ int qsort_intcomp(const void *elem1, const void *elem2)
 float median_f(float *f, int len, float *pct_1, float *pct_2)
 {
      qsort(f, len, sizeof *f, qsort_floatcomp);
-     if (pct_1) *pct_1 = f[(int) (len * (*pct_1 / 100.0))];
-     if (pct_2) *pct_2 = f[(int) (len * (*pct_2 / 100.0))];
+     float len_f = len - 1;
+     if (pct_1) *pct_1 = f[(int) (len_f * (*pct_1 / 100.0))];
+     if (pct_2) *pct_2 = f[(int) (len_f * (*pct_2 / 100.0))];
      return f[len/2];
 }
 
 int median_i(int *i, int len, int *pct_1, int *pct_2)
 {
      qsort(i, len, sizeof *i, qsort_intcomp);
-     if (pct_1) *pct_1 = i[(int) (len * ((float) *pct_1 / 100.0))];
-     if (pct_2) *pct_2 = i[(int) (len * ((float) *pct_2 / 100.0))];
+     float len_f = len - 1;
+     if (pct_1) *pct_1 = i[(int) (len_f * ((float) *pct_1 / 100.0))];
+     if (pct_2) *pct_2 = i[(int) (len_f * ((float) *pct_2 / 100.0))];
      return i[len/2];
 }
 
@@ -697,6 +699,7 @@ int kiwi_file_write(const char *id, const char *fn, char *s, int len, bool add_n
 bool gps_isValid(const char *lat_lon)
 {
     return (
+        lat_lon != NULL &&
         strcmp(lat_lon, "(-37.631120, 176.172210)") != 0 &&
         strcmp(lat_lon, "(0.00, 0.00)") != 0 &&
         strcmp(lat_lon, "(0.000000, 0.000000)") != 0
@@ -755,7 +758,7 @@ bool grid_to_latLon(const char *grid, latLon_t *loc)
 	return true;
 }
 
-int latLon_to_grid6(latLon_t *loc, char *grid6)
+void latLon_to_grid6(latLon_t *loc, char *grid6)
 {
 	int i;
 	double r, lat, lon;
@@ -763,7 +766,7 @@ int latLon_to_grid6(latLon_t *loc, char *grid6)
 	
 	// longitude
 	lon = loc->lon + 180.0;
-	if (lon < 0 || lon >= 360.0) return -1;
+	if (lon < 0 || lon >= 360.0) lon = 0;
 	i = (int) lon / FLD_DEG_LON;
 	grid6[0] = field[i];
 	r = lon - (i * FLD_DEG_LON);
@@ -777,7 +780,7 @@ int latLon_to_grid6(latLon_t *loc, char *grid6)
 	
 	// latitude
 	lat = loc->lat + 90.0;
-	if (lat < 0 || lat >= 180.0) return -1;
+	if (lat < 0 || lat >= 180.0) lat = 0;
 	i = (int) lat / FLD_DEG_LAT;
 	grid6[1] = field[i];
 	r = lat - (i * FLD_DEG_LAT);
@@ -789,8 +792,8 @@ int latLon_to_grid6(latLon_t *loc, char *grid6)
 	i = (int) floor(r * (SUBSQ_PER_SQ / SQ_LAT_DEG));
 	grid6[5] = subsquare[i];
 	
+	grid6[6] = '\0';
 	//printf("latLon_to_grid6: grid6=%s\n", grid6);
-	return 0;
 }
 
 int grid_to_distance_km(latLon_t *r_loc, char *grid)

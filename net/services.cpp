@@ -87,6 +87,7 @@ static void get_TZ(void *param)
 		}
 	
 	    #ifdef USE_GPS
+	        // use hires to determine timezone in case location straddles a TZ boundary
             if (!haveLatLon && gps.StatLat) {
                 lat = gps.sgnLat; lon = gps.sgnLon;
                 lprintf("TIMEZONE: lat/lon from GPS: (%f, %f)\n", lat, lon);
@@ -96,8 +97,7 @@ static void get_TZ(void *param)
 		
 		// lowest priority since it will be least accurate
 		if (!haveLatLon && kiwi.ipinfo_ll_valid) {
-			lat = kiwi.ipinfo_lat; lon = kiwi.ipinfo_lon;
-			lprintf("TIMEZONE: lat/lon from ipinfo: (%f, %f)\n", lat, lon);
+			lprintf("TIMEZONE: lat/lon from ipinfo: %s\n", kiwi.ipinfo_loc);
 			haveLatLon = true;
 		}
 		
@@ -561,7 +561,13 @@ static bool ipinfo_json(int https, const char *url, const char *path, const char
         }
         
         if (kiwi.ipinfo_ll_valid) {
-            lprintf("IPINFO: lat/lon = (%f, %f) from %s\n", kiwi.ipinfo_lat, kiwi.ipinfo_lon, url);
+			lat = kiwi.ipinfo_lat; lon = kiwi.ipinfo_lon;
+            asprintf(&kiwi.ipinfo_loc, "(%f, %f)", lat, lon);
+            latLon_t loc;
+            loc.lat = lat;
+            loc.lon = lon;
+            latLon_to_grid6(&loc, kiwi.ipinfo_grid6);
+            lprintf("IPINFO: lat/lon=%s grid=%s from %s\n", kiwi.ipinfo_loc, kiwi.ipinfo_grid6, url);
         }
     }
 

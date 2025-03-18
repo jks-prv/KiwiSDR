@@ -251,7 +251,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
 	
 	if (mc == NULL) {
 	    cprintf(conn, "### cmd but connection closed? <%s>\n", cmd);
-	    return false;
+	    return true;    // fake that we accepted command so it won't be further processed
 	}
 	
 	NextTask("rx_common_cmd");      // breakup long runs of sequential commands -- sometimes happens at startup
@@ -1801,8 +1801,8 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             sb = kstr_asprintf(NULL, cpu_stats_buf? "{%s," : "{", kstr_sp(cpu_stats_buf));
 
             float sum_kbps = audio_kbps[rx_chans] + waterfall_kbps[rx_chans] + http_kbps;
-            sb = kstr_asprintf(sb, "\"ac\":%.0f,\"wc\":%.0f,\"fc\":%.0f,\"ah\":%.0f,\"as\":%.0f,\"sr\":%.6f,\"wsr\":%d,\"nsr\":%d",
-                audio_kbps[ch], waterfall_kbps[ch], waterfall_fps[ch], http_kbps, sum_kbps,
+            sb = kstr_asprintf(sb, "\"ac\":%.0f,\"wc\":%.0f,\"fc\":%d,\"ah\":%.0f,\"as\":%.0f,\"sr\":%.6f,\"wsr\":%d,\"nsr\":%d",
+                audio_kbps[ch], waterfall_kbps[ch], (int) floorf(waterfall_fps[ch]), http_kbps, sum_kbps,
                 ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate * rx_wb_buf_chans, snd_rate);
 
             #ifdef USE_GPS
@@ -1811,9 +1811,15 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             #endif
 
             #ifdef USE_SDR
-                sb = kstr_asprintf(sb, ",\"gr\":\"%s\"", kiwi_str_encode_static(kiwi.grid6));
-                sb = kstr_asprintf(sb, ",\"gl\":\"%s\"", kiwi_str_encode_static(kiwi.latlon_s));
-                //printf("status sending kiwi.grid6=<%s> kiwi.latlon_s=<%s>\n", kiwi.grid6, kiwi.latlon_s);
+                char *loc, *grid;
+                bool loc_free, grid_free;
+		        get_location_grid(&loc, &loc_free, &grid, &grid_free);
+
+                sb = kstr_asprintf(sb, ",\"gr\":\"%s\"", kiwi_str_encode_static(grid? grid : (char *) "(none)"));
+                sb = kstr_asprintf(sb, ",\"gl\":\"%s\"", kiwi_str_encode_static(loc? loc : (char *) ""));
+                //printf("CMD_STATS_UPD grid=<%s> loc=<%s>\n", grid, loc);
+                if (loc_free) cfg_string_free(loc);
+                if (grid_free) cfg_string_free(grid);
 
                 sb = kstr_asprintf(sb, ",\"sa\":%d,\"sh\":%d,\"sl\":%d", snr_all, freq.isOffset? -1 : snr_HF,
                     kiwi.spectral_inversion_lockout? 1:0);

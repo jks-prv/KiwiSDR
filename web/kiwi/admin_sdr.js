@@ -70,8 +70,8 @@ function update_web_grid()
    
    if (admin.current_tab_name == 'webpage') {
       if (cfg.GPS_update_web_grid) {
-         w3_set_value('index_html_params.RX_QRA', kiwi.GPS_auto_grid);
-         w3_input_change('index_html_params.RX_QRA', 'webpage_input_grid_cb', 'gps');
+         w3_set_value('rx_grid', kiwi.GPS_auto_grid);
+         w3_input_change('rx_grid', 'webpage_input_grid_cb', 'gps');
       }
    }
 }
@@ -925,7 +925,7 @@ function webpage_html()
             ),
 
             w3_inline('w3-halign-space-between/',
-               w3_input('', '', 'index_html_params.RX_QRA', '', 'webpage_input_grid_cb'),
+               w3_input('', '', 'rx_grid', '', 'webpage_input_grid_cb'),
                w3_checkbox_get_param('//w3-label-inline', 'Continuous update from GPS', 'GPS_update_web_grid', 'admin_bool_cb', false)
             )
          ),
@@ -1076,7 +1076,7 @@ function webpage_input_grid_cb(path, val, first, cb_a)
 
 function webpage_update_check_grid()
 {
-	var grid = ext_get_cfg_param('index_html_params.RX_QRA');
+	var grid = ext_get_cfg_param('rx_grid');
 	w3_el('webpage-grid-check').innerHTML = '<a href="http://www.levinecentral.com/ham/grid_square.php?Grid='+ grid +'" target="_blank">check grid</a>';
 }
 
@@ -1280,11 +1280,11 @@ function webpage_focus()
 
 	admin_set_decoded_value('index_html_params.PAGE_TITLE');
 	admin_set_decoded_value('index_html_params.RX_LOC');
-	admin_set_decoded_value('index_html_params.RX_QRA');
 	admin_set_decoded_value('index_html_params.RX_ASL');
 	admin_set_decoded_value('index_html_params.RX_PHOTO_HEIGHT');
 	admin_set_decoded_value('index_html_params.RX_PHOTO_TITLE');
 	admin_set_decoded_value('index_html_params.RX_PHOTO_DESC');
+	admin_set_decoded_value('rx_grid');
 	admin_set_decoded_value('rx_gps');
 	admin_set_decoded_value('rx_antenna');
 	admin_set_decoded_value('admin_email');
@@ -1297,8 +1297,8 @@ function webpage_focus()
 
 	w3_el('id-webpage-grid-set').onclick = function() {
 		var val = admin.status.grid;
-		w3_set_value('index_html_params.RX_QRA', val);
-		w3_input_change('index_html_params.RX_QRA', 'webpage_input_grid_cb');
+		w3_set_value('rx_grid', val);
+		w3_input_change('rx_grid', 'webpage_input_grid_cb');
 	};
 
 	// get updates while the webpage tab is selected
