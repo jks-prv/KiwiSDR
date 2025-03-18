@@ -67,6 +67,7 @@ u2_t kstr_next_free;
 int kstr_nused, kstr_hiwat;
 
 char ASCII[256][8];
+char COLORS[8][16] = { RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA, GREY, "" };
 
 void kstr_init()
 {
