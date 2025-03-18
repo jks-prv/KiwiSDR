@@ -6,6 +6,7 @@ var fsk = {
    
    dataH: 300,
    ctrlW: 575,
+   ctrlW_wide: 675,
    ctrlH: 200,
 
    lhs: 150,
@@ -25,13 +26,13 @@ var fsk = {
    
    freq: 0,
    cf: 1000,
+   preset_i: 0,
    shift: 170,
-   shift_i: 1,
+   shift_i: 2,
    shift_cval: 0,
    shift_custom: false,
    baud: 50,
    baud_i: 2,
-   BAUD_CUSTOM_IDX: 8,
    baud_cval: 0,
    baud_custom: false,
    baud_mult: 1,
@@ -39,8 +40,11 @@ var fsk = {
    inverted: 1,
    encoding: 'ITA2',
    
+   preset_s: [ 'ham', 'sitor-b', 'wx', 'dsc', 'selcall' ],
+   
    SHIFT_CUSTOM_IDX: 10,
    shift_s: [ 50, 85, 170, 200, 340, 425, 450, 500, 850, 1000, 'custom' ],
+   BAUD_CUSTOM_IDX: 8,
    baud_s: [ 36, 45.45, 50, 75, 100, 150, 200, 300, 'custom' ],
    framing_s: [ '5N1', '5N1V', '5N1.5', '5N2', '7N1', '8N1', '4/7', 'EFR', 'EFR2', 'CHU', '7/3' ],
    encoding_s: [ 'ITA2', 'ASCII', 'CCIR476', 'DSC', 'Selcall' ],
@@ -489,39 +493,19 @@ function fsk_controls_setup()
          
          // combo setups
          if ((r = w3_ext_param('sitor-b', a)).match) {   // e.g. NAVTEX, MSI, WLO/TAH/SVO et al etc.
-            fsk.shift = 170; fsk.shift_custom = false;
-            fsk.baud = 100; fsk.baud_custom = false;
-            fsk.framing = '4/7';
-            fsk.inverted = 0;
-            fsk.encoding = 'CCIR476';
+            fsk_preset('sitor-b');
          } else
          if ((r = w3_ext_param('wx', a)).match) {
-            fsk.shift = 450; fsk.shift_custom = false;
-            fsk.baud = 50; fsk.baud_custom = false;
-            fsk.framing = '5N1.5';
-            fsk.inverted = 1;
-            fsk.encoding = 'ITA2';
+            fsk_preset('wx');
          } else
          if ((r = w3_ext_param('dsc', a)).match) {
-            fsk.shift = 170; fsk.shift_custom = false;
-            fsk.baud = 100; fsk.baud_custom = false;
-            fsk.framing = '7/3';
-            fsk.inverted = 1;
-            fsk.encoding = 'DSC';
+            fsk_preset('dsc');
          } else
          if ((r = w3_ext_param('selcall', a)).match) {
-            fsk.shift = 170; fsk.shift_custom = false;
-            fsk.baud = 100; fsk.baud_custom = false;
-            fsk.framing = '7/3';
-            fsk.inverted = 0;
-            fsk.encoding = 'Selcall';
+            fsk_preset('selcall');
          } else
          if ((r = w3_ext_param('ham', a)).match) {
-            fsk.shift = 170; fsk.shift_custom = false;
-            fsk.baud = 45.45; fsk.baud_custom = false;
-            fsk.framing = '5N1.5';
-            fsk.inverted = 0;
-            fsk.encoding = 'ITA2';
+            fsk_preset('ham');
          }
       });
    }
@@ -554,6 +538,8 @@ function fsk_controls_setup()
             w3_inline('id-fsk-menus/'),
 
             w3_inline('/w3-margin-between-16',
+               w3_select(fsk.sfmt, '', 'preset', 'fsk.preset_i', W3_SELECT_SHOW_TITLE, fsk.preset_s, 'fsk_preset_cb'),
+
                w3_inline('',
                   w3_select(fsk.sfmt, '', 'shift', 'fsk.shift_i', W3_SELECT_SHOW_TITLE, fsk.shift_s, 'fsk_shift_cb'),
                   w3_input('id-fsk-shift-custom w3-margin-left w3-hide|padding:0;width:auto|size=4', '', 'fsk.shift_cval', fsk.shift_cval, 'fsk_shift_custom_cb')
@@ -741,7 +727,61 @@ function fsk_setup()
    w3_select_set_if_includes('fsk.encoding', '\\b'+ fsk.encoding +'\\b');
    w3_checkbox_set('fsk.inverted', fsk.inverted);
    
+   var wide = (fsk.shift_custom || fsk.baud_custom);
+	ext_set_controls_width_height(wide? fsk.ctrlW_wide : fsk.ctrlW, fsk.ctrlH);
+   
    fsk_crosshairs(1);
+}
+
+function fsk_preset(s)
+{
+   if (s == 'sitor-b') {   // e.g. NAVTEX, MSI, WLO/TAH/SVO et al etc.
+      fsk.shift = 170;
+      fsk.baud = 100;
+      fsk.framing = '4/7';
+      fsk.inverted = 0;
+      fsk.encoding = 'CCIR476';
+   } else
+   if (s == 'wx') {
+      fsk.shift = 450;
+      fsk.baud = 50;
+      fsk.framing = '5N1.5';
+      fsk.inverted = 1;
+      fsk.encoding = 'ITA2';
+   } else
+   if (s == 'dsc') {
+      fsk.shift = 170;
+      fsk.baud = 100;
+      fsk.framing = '7/3';
+      fsk.inverted = 1;
+      fsk.encoding = 'DSC';
+   } else
+   if (s == 'selcall') {
+      fsk.shift = 170;
+      fsk.baud = 100;
+      fsk.framing = '7/3';
+      fsk.inverted = 0;
+      fsk.encoding = 'Selcall';
+   } else
+   if (s == 'ham') {
+      fsk.shift = 170;
+      fsk.baud = 45.45;
+      fsk.framing = '5N1.5';
+      fsk.inverted = 0;
+      fsk.encoding = 'ITA2';
+   }
+   
+   fsk.shift_custom = fsk.baud_custom = false;
+}
+
+function fsk_preset_cb(path, idx, first)
+{
+   if (first) return;
+   fsk_preset(fsk.preset_s[+idx]);
+   fsk_setup();
+   w3_show_hide('id-fsk-shift-custom', false);
+   w3_show_hide('id-fsk-baud-custom', false);
+
 }
 
 function fsk_crosshairs(vis)
