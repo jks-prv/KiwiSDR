@@ -113,9 +113,9 @@ void c2s_mfg(void *param)
 				continue;
 			}
 
-			i = strcmp(cmd, "SET microSD_write");
+			i = strcmp(cmd, "SET sd_backup");
 			if (i == 0) {
-				mprintf_ff("MFG: received microSD_write\n");
+				mprintf_ff("MFG: received sd_backup\n");
 			    sd_backup(conn, false);
 				continue;
 			}

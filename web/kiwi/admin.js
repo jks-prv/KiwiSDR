@@ -179,8 +179,9 @@ function status_user_kick_cb(id, idx)
 
 var mode_icon_snd12 = w3_icon('w3-text-blue', 'fa-volume-up', 28) +'&nbsp;';
 var mode_icon_snd20 = w3_icon('w3-text-red', 'fa-volume-up', 28) +'&nbsp;';
-var mode_icon_fft = w3_icon('w3-text-green', 'fa-bar-chart', 28) +'&nbsp;';
-var mode_icon_wf = w3_icon('w3-text-amber', 'fa-area-chart', 28) +'&nbsp;';
+var mode_icon_fft   = w3_icon('w3-text-green', 'fa-bar-chart', 28) +'&nbsp;';
+var mode_icon_wf    = w3_icon('w3-text-amber', 'fa-area-chart', 28) +'&nbsp;';
+var mode_icon_wfs   = w3_icon('', 'fa-area-chart fa-gradient', 28) +'&nbsp;';
 
 function mode_html()
 {
@@ -214,12 +215,14 @@ function mode_html()
             w3_sidenav('id-sidenav-fw|width:'+ bwpx +';border-collapse:collapse',
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Kiwi classic', 'id-sidenav-fw', kiwi.RX4_WF4, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX4_WF4)),
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More receivers', 'id-sidenav-fw', kiwi.RX8_WF2, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF2)),
+               w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Waterfall share', 'id-sidenav-fw', kiwi.RX8_WF8, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF8)),
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More bandwidth', 'id-sidenav-fw', kiwi.RX3_WF3, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX3_WF3)),
                s1
             ),
             w3_div('w3-margin-left w3-left',
                w3_div('id-fw-4ch w3-flex w3-padding-TB-6'),
                w3_div('id-fw-8ch w3-flex w3-padding-TB-6'),
+               w3_div('id-fw-wfs w3-flex w3-padding-TB-6'),
                w3_div('id-fw-3ch w3-flex w3-padding-TB-6'),
                s2
             )
@@ -234,7 +237,8 @@ function mode_html()
 
                w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
                w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
-               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
+               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf),  w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
+               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wfs), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 11-level zoom')),
                w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12 kHz max bandwidth ')),
 
                'The original Kiwi FPGA with its 4 tuneable audio/waterfall receiver channels and 12 GPS channels was completely full. ' +
@@ -307,8 +311,9 @@ function mode_focus()
    w3_innerHTML('id-fw-hdr', s);
 
    //var rx12wf = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, mode_icon_fft, '<br>', mode_icon_wf);
-   var rx12_wf = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wf);
-   var rx20_wf = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd20, '<br>', mode_icon_wf);
+   var rx12_wf  = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wf);
+   var rx12_wfs = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wfs);
+   var rx20_wf  = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd20, '<br>', mode_icon_wf);
    
    var rx12_afft = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_fft);
    
@@ -321,6 +326,10 @@ function mode_focus()
    for (i = 0; i < 2; i++) s += rx12_wf;
    for (i = 2; i < 8; i++) s += rx12_afft;
    w3_innerHTML('id-fw-8ch', s);
+
+   s = '';
+   for (i = 0; i < 8; i++) s += rx12_wfs;
+   w3_innerHTML('id-fw-wfs', s);
 
    s = '';
    for (i = 0; i < 3; i++) s += rx20_wf;
@@ -1643,28 +1652,39 @@ function backup_html()
    
 	var s =
       w3_div('id-backup w3-hide',
-         w3_div('w3-margin-bottom w3-text-teal w3-bold', 'Backup complete contents of KiwiSDR by writing Beagle filesystem onto a user provided micro-SD card'),
 
          w3_div('id-sd-backup-container', 
-            w3_div('w3-container w3-text w3-red', 'WARNING: after SD card is written immediately remove from Beagle.<br>Otherwise on next reboot Beagle will be re-flashed from SD card.'),
-            '<hr>',
-
-            w3_div('w3-container w3-valign',
-               w3_button('w3-aqua w3-margin', 'Click to write micro-SD card', 'sd_backup_click_cb'),
+            w3_inline_percent('w3-margin-right/w3-container w3-valign',
+               w3_div('',
+                  w3_div('w3-margin-bottom w3-text-teal w3-bold',
+                     'Backup complete contents of KiwiSDR by writing Beagle filesystem onto a user provided SD card'),
+                  w3_button('w3-aqua', 'Click to write backup SD card', 'sd_backup_click_cb', /* backup */ 0)
+               ), 22,
 
                w3_div('w3-margin-L-64',
-                  w3_div('id-sd-progress-container w3-progress-container w3-round-large w3-css-lightGray w3-show-inline-block',
-                     w3_div('id-sd-progress w3-progressbar w3-round-large w3-light-green w3-width-zero',
-                        w3_div('id-sd-progress-text w3-container')
+                  w3_div('w3-container w3-text w3-red',
+                     'WARNING: after SD card is written immediately remove from Beagle.<br>Otherwise on next reboot Beagle will be re-flashed from SD card.'),
+
+                  w3_inline('|margin-top:45px/',
+                     w3_div('id-sd-progress-container w3-progress-container w3-round-large w3-css-lightGray w3-show-inline-block',
+                        w3_div('id-sd-progress w3-progressbar w3-round-large w3-light-green w3-width-zero',
+                           w3_div('id-sd-progress-text w3-container')
+                        )
+                     ),
+            
+                     w3_inline('/w3-margin-left',
+                        w3_div('id-sd-backup-time'),
+                        w3_div('id-sd-backup-icon'),
+                        w3_div('id-sd-backup-msg')
                      )
-                  ),
-         
-                  w3_inline('w3-margin-T-8/',
-                     w3_div('id-sd-backup-time'),
-                     w3_div('id-sd-backup-icon w3-margin-left'),
-                     w3_div('id-sd-backup-msg w3-margin-left')
                   )
-               )
+               ), 56,
+               
+               w3_div('',
+                  w3_div('w3-margin-bottom w3-text-teal w3-bold',
+                     'Create a Debian 11 upgrade SD card which includes all Kiwi customizations in kiwi.config directory.'),
+                  w3_button('w3-aqua', 'Click to write upgrade SD card', 'sd_backup_click_cb', /* upgrade */ 1)
+               ),
             ),
             '<hr>',
 
@@ -1676,7 +1696,7 @@ function backup_html()
 
 function backup_focus()
 {
-	w3_width_height('id-sd-progress-container', 300);
+	w3_width_height('id-sd-progress-container', 200);
 	w3_width_height('id-output-msg', null, 400);
 	
    sd_backup_focus();
@@ -1860,7 +1880,7 @@ function network_html()
                )
             ),
          
-            w3_div('w3-center w3-text-teal|widthx:300px',
+            w3_div('w3-center w3-text-teal',
                w3_select('w3-width-auto', 'Power on restart delay (secs)', '', 'adm.restart_delay', adm.restart_delay, network.restart_delay_s, 'admin_select_cb'),
                w3_text('w3-block w3-center w3-text-black',
                   'On a power on of the Kiwi, how long to <br>' +
@@ -4702,8 +4722,8 @@ function admin_recv(data)
 				log_update(param[1]);
 				break;
 
-			case "microSD_done":
-				sd_backup_write_done(parseFloat(param[1]));
+			case "sd_done":
+				sd_done(parseFloat(param[1]));
 				break;
 
 			case "domain_check_result":
