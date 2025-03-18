@@ -631,19 +631,20 @@ Number.prototype.toFixedNZ = function(d)
 	return s;
 };
 
-Number.prototype.toUnits = function()
+Number.prototype.toUnits = function(include_space)
 {
+   var suffix = function(s) { return (include_space? ' ':'') + s; };
 	var n = Number(this);
 	if (n < 1000) {
-		return n.toString();             // nnn
+		return n.toString() + suffix('');         // nnn
 	} else
 	if (n < 1e6) {
-		return (n/1e3).toFixed(1)+'k';   // nnn.fk
+		return (n/1e3).toFixed(1) + suffix('k');  // nnn.fk
 	} else
 	if (n < 1e9) {
-		return (n/1e6).toFixed(1)+'M';   // nnn.fM
+		return (n/1e6).toFixed(1) + suffix('M');  // nnn.fM
 	} else {
-		return (n/1e9).toFixed(1)+'G';   // nnn.fG
+		return (n/1e9).toFixed(1) + suffix('G');  // nnn.fG
 	}
 };
 
