@@ -1,3 +1,5 @@
+[updated 24 March 2025]
+
 # KiwiSDR-antenna-switch-extension
 
 This is an antenna switch extension for the KiwiSDR software defined radio.
@@ -40,6 +42,7 @@ You will need antenna switch hardware.
 * beagle-gpio for controlling up to ten Beaglebone Green/Black/AI/AI-64 GPIO pins.
 * snaptekk for controlling Snaptekk WiFi ham radio 8 antenna switch.
 * kmtronic for controlling KMTronic LAN Ethernet IP 8 channels WEB Relay.
+* kmtronic-2ch for controlling KMTronic LAN Ethernet IP 2 channels WEB Relay board.
 * kmtronic-udp for controlling KMTronic LAN Ethernet IP 8 channels UDP Relay.
 * arduino-netshield for Arduino Nano V3.0 GPIO pins. ENC28J60 Ethernet Shield needed.
 * example-backend is an example script for your own backend development.
@@ -78,10 +81,6 @@ Antenna mixing mode: you can select multiple antennas simultaneously. Click ante
 
 If admin has disable antenna switching, buttons are grey and you cannot click them.
 
-## Demo site
-
-KiwiSDR Kaustinen http://sdr.vy.fi
-
 ## Donate
 If you want to support this project, you can [send a donation via PayPal](https://www.paypal.me/oh1kk).
 
@@ -89,4 +88,4 @@ If you want to support this project, you can [send a donation via PayPal](https:
 
 [The MIT License (MIT)](LICENSE)
 
-Copyright (c) 2019-2024 Kari Karvonen
+Copyright (c) 2019-2025 Kari Karvonen

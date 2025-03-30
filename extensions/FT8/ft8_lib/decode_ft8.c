@@ -36,10 +36,10 @@
 
 //const int kMin_score = 10; // Minimum sync score threshold for candidates
 const int kMin_score = 0; // Minimum sync score threshold for candidates
-const int kMax_candidates = 140;
+#define kMax_candidates 140
 const int kLDPC_iterations = 25;
 
-const int kMax_decoded_messages = 50;
+#define kMax_decoded_messages 50
 
 const int kFreq_osr = 2; // Frequency oversampling rate (bin subdivision)
 const int kTime_osr = 2; // Time oversampling rate (symbol subdivision)

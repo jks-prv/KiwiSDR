@@ -179,7 +179,7 @@ function cw_skimmer_controls_setup()
 				   w3_div('w3-medium w3-text-aqua', '<b>CW skimmer</b>'),
                w3_div('w3-margin-L-16', 'Luarvique KC1TXE')
 				),
-				w3_div('', '<b><a href="https://github.com/luarvique/csdr-cwskimmer" target="_blank">CSDR based CW skimmer</a></b> &copy; 2022'),
+				w3_div('', '<b><a href="https://github.com/luarvique/csdr-cwskimmer" target="_blank">CSDR based CW skimmer</a></b> &copy; 2025'),
             
 				w3_inline('w3-margin-T-10/w3-margin-between-16',
                w3_button('w3-padding-smaller', 'Clear', 'cws_clear_button_cb', 0),

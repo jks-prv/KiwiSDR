@@ -59,6 +59,7 @@ void gps_main(int argc, char *argv[]);
 
 #define	MIN_SIG     16
 
+// Decimate by 4 to reduce the FFT size to 16k given 64k input samples
 #define DECIM       4
 //#define DECIM       8
 #define SAMPLE_RATE (FS_I / DECIM)
