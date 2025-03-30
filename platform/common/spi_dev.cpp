@@ -18,6 +18,8 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+
 #include "types.h"
 #include "config.h"
 #include "kiwi.h"
@@ -110,6 +112,7 @@ static void _spi_dev(SPI_SEL sel, SPI_MOSI *mosi, int tx_xfers, SPI_MISO *miso, 
 		spi_tr.tx_buf = (unsigned long) txb;
 		spi_tr.rx_buf = (unsigned long) rxb;
 		spi_tr.len = spi_bytes;
+		spi_tr.word_delay_usecs = 0;
 		spi_tr.delay_usecs = 0;
 		spi_tr.speed_hz = speed;
 		spi_tr.bits_per_word = SPI_BPW;		// zero also means 8-bits?
@@ -195,7 +198,9 @@ static void _spi_dev_init(int spi_clkg, int spi_speed)
 		if (spi_fd != -1) close(spi_fd);
 	
 	    const char *spi_devname;
-        #if defined(CPU_AM5729)
+        #if defined(CPU_AM67)
+            spi_devname = "/dev/spidev2.0";
+        #elif defined(CPU_AM5729)
             spi_devname = "/dev/spidev1.0";
         #elif defined(CPU_AM3359)
             if (debian_ver <= 9)
@@ -221,7 +226,11 @@ static void _spi_dev_init(int spi_clkg, int spi_speed)
         }
 	
 		u4_t max_speed = 0, check_speed;
-		if (spi_speed == SPI_48M) max_speed = 48000000; else
+		#ifdef CPU_AM67
+		    if (spi_speed == SPI_48M) max_speed = 50000000; else
+		#else
+		    if (spi_speed == SPI_48M) max_speed = 48000000; else
+		#endif
 		if (spi_speed == SPI_24M) max_speed = 24000000; else
 		if (spi_speed == SPI_12M) max_speed = 12000000; else
 		if (spi_speed == SPI_6M) max_speed = 6000000; else
@@ -315,6 +324,11 @@ void spi_dev_init2()
         #endif
 
         #ifdef CPU_TDA4VM
+            use_spidev = 1;
+            use_async = 1;
+        #endif
+
+        #ifdef CPU_AM67
             use_spidev = 1;
             use_async = 1;
         #endif

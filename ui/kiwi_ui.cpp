@@ -142,7 +142,7 @@ void sd_backup(conn_t *conn, bool from_admin)
     #endif
 
     // On BBAI-64, backup script only supports dual-partition setups (i.e. /boot/firmware on p1)
-    if (kiwi.platform == PLATFORM_BB_AI64 && (
+    if (kiwi.platform == PLATFORM_BBAI_64 && (
         !kiwi_file_exists("/boot/firmware") ||
         !kiwi_file_exists("/boot/firmware/extlinux") ||
         !kiwi_file_exists("/boot/firmware/extlinux/extlinux.conf")

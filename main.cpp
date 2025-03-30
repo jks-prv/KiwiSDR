@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2022 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -42,6 +42,7 @@ Boston, MA  02110-1301, USA.
 #include "debug.h"
 #include "fpga.h"
 #include "rx_util.h"
+#include "rx_waterfall_cmd.h"
 
 #include "other.gen.h"
 
@@ -148,11 +149,15 @@ int main(int argc, char *argv[])
 	#endif
 	
 	#ifdef PLATFORM_beaglebone_ai
-	    kiwi.platform = PLATFORM_BB_AI;
+	    kiwi.platform = PLATFORM_BBAI;
 	#endif
 	
 	#ifdef PLATFORM_beaglebone_ai64
-	    kiwi.platform = PLATFORM_BB_AI64;
+	    kiwi.platform = PLATFORM_BBAI_64;
+	#endif
+	
+	#ifdef PLATFORM_beagleY_ai
+	    kiwi.platform = PLATFORM_BYAI;
 	#endif
 	
 	#ifdef PLATFORM_raspberrypi
@@ -180,6 +185,8 @@ int main(int argc, char *argv[])
 		if (ARG("-fw")) { ARGL(fw_sel_override); printf("firmware select override: %d\n", fw_sel_override); } else
 		if (ARG("-fw_test")) { ARGL(fw_test); printf("firmware test: %d\n", fw_test); } else
 		if (ARG("-wb")) { ARGL(wb_sel_override); printf("wideband rate override: %d\n", wb_sel_override); } else
+		if (ARG("-rdoff")) { ARGL(wf_rd_offset); printf("WF rd_offset: %d\n", wf_rd_offset); } else
+		if (ARG("-wfsd")) { ARGL(wf_slowdown); printf("WF slowdown: %d\n", wf_slowdown); } else
 
 		if (ARG("-kiwi_reg")) kiwi_reg_debug = TRUE; else
 		if (ARG("-cmd_debug")) cmd_debug = TRUE; else
@@ -379,6 +386,18 @@ int main(int argc, char *argv[])
         rx2_decim = RX2_STD_DECIM;
         nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
         lprintf("firmware: SDR_RX8_WF2\n");
+    } else
+    if (fw_sel == FW_SEL_SDR_RX8_WF8) {
+        fpga_id = FPGA_ID_RX8_WF2;
+        rx_chans = 8;
+        wf_chans = 2;
+        kiwi.wf_share = true;
+        snd_rate = SND_RATE_8CH;
+        rx_decim = RX_DECIM_8CH;
+        rx1_decim = RX1_STD_DECIM;
+        rx2_decim = RX2_STD_DECIM;
+        nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
+        lprintf("firmware: SDR_RX8_WF2 (wf_share)\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX3_WF3) {
         fpga_id = FPGA_ID_RX3_WF3;

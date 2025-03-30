@@ -444,8 +444,8 @@ void update_vars_from_config(bool called_at_init)
     // Only handle forced speed changes here as ESPEED_AUTO is always in effect after a reboot.
     // ethtool doesn't seem to have a way to go back to auto speed once a forced speed is set?
     int espeed = cfg_default_int("ethernet_speed", 0, &up_cfg);
-    if (espeed != kiwi.current_espeed || (kiwi.platform == PLATFORM_BB_AI64 && kiwi.current_espeed == ESPEED_10M)) {
-        if (kiwi.platform == PLATFORM_BB_AI64 && (espeed == ESPEED_10M || kiwi.current_espeed == ESPEED_10M)) {
+    if (espeed != kiwi.current_espeed || (kiwi.platform == PLATFORM_BBAI_64 && kiwi.current_espeed == ESPEED_10M)) {
+        if (kiwi.platform == PLATFORM_BBAI_64 && (espeed == ESPEED_10M || kiwi.current_espeed == ESPEED_10M)) {
             lprintf("ETH0 CAUTION: BBAI-64 doesn't support 10 mbps. Reverting to auto speed.\n");
             espeed = ESPEED_AUTO;
             if (called_at_init)

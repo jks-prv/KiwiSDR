@@ -1,3 +1,6 @@
+#
+# Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+#
 # For the benefit of KiwiSDR non-tree builds like liquid-dsp that don't want
 # the default of "CC=gcc" but which is otherwise difficult to specify any other way.
 # Benefits platform-conditional parts of bashrc as well.
@@ -5,9 +8,10 @@
 # DANGER: Can't use any "echo ..." in below otherwise scp's to the Kiwi will silently FAIL.
 # Do an "export xx=yy" and "pe xx" instead to see what's happening.
 
-BBG_BBB="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "AM335x" && echo "true" || echo "false")"
+BYAI="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleY-AI" && echo "true" || echo "false")"
 BBAI_64="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleBone AI-64" && echo "true" || echo "false")"
 BBAI="$(test -e /proc/device-tree && cat /proc/device-tree/model | sed "s/\(.*\)./\1x/" | grep -q -s "BeagleBone AIx" && echo "true" || echo "false")"
+BBG_BBB="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "AM335x" && echo "true" || echo "false")"
 RPI="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "Raspberry Pi" && echo "true" || echo "false")"
 
 DEBIAN_7="$(cat /etc/debian_version | grep -q -s "7\." && echo "true" || echo "false")"
@@ -18,7 +22,10 @@ DEBIAN_11="$(cat /etc/debian_version | grep -q -s "11\." && echo "true" || echo 
 
 APT_GET_FORCE=
 
-if [ "x${BBAI_64}" == "xtrue" ] ; then
+if [ "x${BYAI}" == "xtrue" ] ; then
+    export CPU="AM67"
+    export CC="clang"
+elif [ "x${BBAI_64}" == "xtrue" ] ; then
     export CPU="TDA4VM"
     if [ "x${DEBIAN_11}" == "xtrue" ] ; then
         export CC="clang-11"
@@ -282,7 +289,7 @@ sp="[[:space:]]"
 # to grep with embedded spaces on Debian now need:
 #   g 'text1[[:space:]]text2'
 # or
-#   g text1${sp}text2
+#   g text1${sp}text2 WITHOUT ENCLOSING QUOTATION (' or ")
 #
 d_gr_exclude="--exclude-dir .git --exclude-dir .svn --exclude-dir ./web/pkgs_maps/leaflet ${no_grep}"
 alias grep="grep \$COLOR"
@@ -400,18 +407,32 @@ else
 fi
 
 
-# BBAI/BBAI-64 common
 # NB: /opt/source/dtb-* must match kernel version, hence based on "uname -r"
 d_sys=`uname -r`
-# following gives e.g. 4.19.94-ti-r42 => 4.19-ti
-d_ver=`uname -r | sed "s/\([0-9]*\.[0-9]*\)\..*/\1-ti/"`
+
+# BYAI
+if [ "x${BYAI}" == "xtrue" ] ; then
+    # following gives e.g. 6.1.83-ti-arm64-r67 => dtb-6.1-Beagle
+    d_ver=`uname -r | sed "s/\([0-9]*\.[0-9]*\)\..*/\1-Beagle/"`
+    export PLATFORM="BYAI"
+    d_dt="/opt/source/dtb-${d_ver}"
+    d_dt2="/opt/source/dtb-${d_ver}/src/arm64"
+    alias cdpm="echo FIXME cdpm on BYAI"
+    alias mdt="make install_arm64"
+    alias idt="echo BBAI-64; echo cd: cdbo cdbdt; echo dt: cddt cpdt m cpdt2 \(cpdtr2\); echo gpio: pmux wdt cdsdt cdpm"
+fi
+
+# BBAI/BBAI-64 common
 
 # BBAI-64
 if [ "x${BBAI_64}" == "xtrue" ] ; then
+    # following gives e.g. 4.19.94-ti-r42 => 4.19-ti
+    d_ver=`uname -r | sed "s/\([0-9]*\.[0-9]*\)\..*/\1-ti/"`
     export PLATFORM="BBAI-64"
     d_dt="/opt/source/dtb-${d_ver}"
     d_dt2="/opt/source/dtb-${d_ver}/src/arm64"
     alias cdpm="cd /sys/kernel/debug/pinctrl/11c000.pinctrl-pinctrl-single"
+    alias mdt="make install_arm64"
     alias idt="echo BBAI-64; echo cd: cdbo cdbdt; echo dt: cddt cpdt m cpdt2 \(cpdtr2\); echo gpio: pmux wdt cdsdt cdpm"
 fi
 
@@ -419,10 +440,12 @@ alias midt="make install_kiwi_device_tree"
 
 # BBAI
 if [ "x${BBAI}" == "xtrue" ] ; then
+    d_ver=`uname -r | sed "s/\([0-9]*\.[0-9]*\)\..*/\1-ti/"`
     export PLATFORM="BBAI"
     d_dt="/opt/source/dtb-${d_ver}"
     d_dt2="/opt/source/dtb-${d_ver}/src/arm"
     alias cdpm="echo no cdpm on BBAI"
+    alias mdt="make install_arm64"
     alias idt="echo BBAI; echo cd: cdbo cdbdt; echo dt: cddt cpdt m cpdt2 \(cpdtr2\); echo gpio: pmux wdt cdsdt ver"
 fi
 
@@ -483,12 +506,14 @@ alias opp="omapconf show opp"
 
 # BBG/BBB
 if [ "x${BBG_BBB}" == "xtrue" ] ; then
+    d_ver=`uname -r | sed "s/\([0-9]*\.[0-9]*\)\..*/\1-ti/"`
     export PLATFORM="BBG_BBB"
     d_dt="/opt/source/dtb-${d_ver}"
     d_dt2="/opt/source/dtb-${d_ver}/src/arm"
     alias cdpm="cd /sys/kernel/debug/pinctrl/4a003400.pinmux"
     #alias pmux="more /sys/kernel/debug/pinctrl/44e10800.pinmux/pinmux-pins"
     alias idt="echo BBG/BBB; echo gpio: pmux cdsdt"
+    alias mdt="make install_arm"
 fi
 
 alias cddt="cd ${d_dt}"

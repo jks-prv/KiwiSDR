@@ -1,6 +1,6 @@
 // KiwiSDR
 //
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 var kiwi = {
    d: {},      // debug
@@ -11,11 +11,12 @@ var kiwi = {
    model: 1,   
    
    PLATFORM_BBG_BBB: 0,
-   PLATFORM_BB_AI:   1,
-   PLATFORM_BB_AI64: 2,
-   PLATFORM_RPI:     3,
+   PLATFORM_BBAI:    1,
+   PLATFORM_BBAI_64: 2,
+   PLATFORM_BYAI:    3,
+   PLATFORM_RPI:     4,
    platform: -1,
-   platform_s: [ 'BBG/B', 'BBAI', 'BBAI-64', 'RPi' ],
+   platform_s: [ 'BBG/B', 'BBAI', 'BBAI-64', 'BYAI', 'RPi' ],
    
    cfg:   { seq:0, name:'cfg',   cmd:'save_cfg',   lock:0, timeout:null },
    dxcfg: { seq:0, name:'dxcfg', cmd:'save_dxcfg', lock:0, timeout:null },
@@ -26,6 +27,7 @@ var kiwi = {
    
    WIN_WIDTH_MIN: 1400,
    
+   wf_share: false,
    force_mobile: false,
    mdev: false,
    mdev_s: '',
@@ -117,7 +119,7 @@ var kiwi = {
    BAND_SCALE_ONLY: 4,
    BAND_MENU_ONLY: 5,
 
-   RX4_WF4:0, RX8_WF2:1, RX3_WF3:2, RX14_WF0:3, RX_WB:4,
+   RX4_WF4:0, RX8_WF2:1, RX3_WF3:2, RX14_WF0:3, RX_WB:4, RX8_WF8:5,
    
    NAM:0, DUC:1, PUB:2, SIP:3, REV:4,
    
@@ -2512,6 +2514,8 @@ var kiwi_xfer_stats_str_long = "";
 
 function xfer_stats_cb(audio_kbps, waterfall_kbps, waterfall_fps, http_kbps, sum_kbps)
 {
+	kiwi.wf_fps = waterfall_fps;
+
 	kiwi_xfer_stats_str =
 	   w3_text('w3-text-css-orange', 'Net') +
 	   w3_text('', 'aud '+ audio_kbps.toFixed(0) +', wf '+ waterfall_kbps.toFixed(0) +', http '+
@@ -2527,7 +2531,7 @@ var kiwi_cpu_stats_str_long = '';
 var kiwi_config_str = '';
 var kiwi_config_str_long = '';
 
-function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
+function cpu_stats_cb(o, uptime_secs, ecpu)
 {
    var i;
    idle %= 100;   // handle multi-core cpus
@@ -2545,7 +2549,6 @@ function cpu_stats_cb(o, uptime_secs, ecpu, waterfall_fps)
 	   w3_text('', cpufreq +' ') +
 	   w3_text('w3-text-css-orange', 'eCPU') +
 	   w3_text('', ecpu.toFixed(0) +'%');
-	kiwi.wf_fps = waterfall_fps;
 
    var user = '', sys = '', idle = '';
    var first = true;
@@ -2737,7 +2740,7 @@ function user_cb(obj)
 
 	obj.forEach(function(obj) {
 		//console.log(obj);
-		var s, s1 = '', s2 = '', s3 = '';
+		var s, s1 = '', s2 = '';
 		var i = obj.i;
 		var name = obj.n;
 		var freq = obj.f;
@@ -2805,6 +2808,7 @@ function user_cb(obj)
 		   if (kiwi.called_from_user) {
             w3_innerHTML('id-optbar-user-'+ i, (s1 != '')? (s1 +'<br>'+ s2) : '');
          } else {
+            var s3 = (kiwi.called_from_admin && obj.fc)? (' ('+ obj.fc +' fps)') : '';
          
 		      // status display used by admin & monitor page
             w3_innerHTML(id_prefix + i, s1 + s2 + s3);
@@ -3113,6 +3117,10 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			wf_chans_real = parseInt(param[1]);
 			break;
 
+		case "wf_share":
+			kiwi.wf_share = parseInt(param[1]);
+			break;
+
 		case "rx_chan":
 			rx_chan = parseInt(param[1]);
 			//console.log('rx_chan='+ rx_chan);
@@ -3284,7 +3292,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			if (o) {
 				//console.log(o);
 				if (o.ce != undefined)
-				   cpu_stats_cb(o, o.ct, o.ce, o.fc);
+				   cpu_stats_cb(o, o.ct, o.ce);
 				xfer_stats_cb(o.ac, o.wc, o.fc, o.ah, o.as);
 				extint.srate = o.sr;
 				extint.wb_srate = Math.round(o.wsr / 1e3);

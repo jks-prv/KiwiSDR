@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015-2022 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -306,8 +306,12 @@ void fpga_init() {
             if (!first) real_printf("after spi_dev SPI2_CH0CONF=0x%08x SPI2_CH0CTRL=0x%08x\n", SPI0_CONF, SPI0_CTRL);
             first = 1;
         #endif
-    }
 
+        #if 0 && defined(TEST_FLAG_SPI_RFI)
+            kiwi_exit(0);
+        #endif
+    }
+    
 	// keep clocking until config/startup finishes
 	n = sizeof(zeros.bytes);
     spi_dev(SPI_FPGA, &zeros, SPI_B2X(n), &readback, SPI_B2X(n));

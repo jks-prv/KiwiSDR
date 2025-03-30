@@ -1,6 +1,6 @@
 #!/bin/sh
 # wrapper for running the app
-# Copyright (c) 2014-2022 John Seamons, ZL4VO/KF6VO
+# Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 DEV=kiwi
 BUILD_DIR=../build
@@ -32,11 +32,16 @@ if test ! -f /etc/dogtag; then
 	exit 0
 fi
 
+BYAI=$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleY-AI" && echo true)
 BBAI_64=$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleBone AI-64" && echo true)
 BBAI=$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleBone AI$" && echo true)
 RPI=$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "Raspberry Pi" && echo true)
 
-if [ "x${BBAI_64}" = "xtrue" ] ; then
+if [ "x${BYAI}" = "xtrue" ] ; then
+    PLATFORM="BYAI"
+	USE_SPIDEV=1
+    USE_SPI="USE_SPIDEV"
+elif [ "x${BBAI_64}" = "xtrue" ] ; then
     PLATFORM="BBAI-64"
 	USE_SPIDEV=1
     USE_SPI="USE_SPIDEV"
@@ -113,7 +118,10 @@ DEBIAN=$(cat /etc/debian_version)
 echo ${PLATFORM} "Debian ${DEBIAN}" ${USE_SPI}
 
     # cape
-    if [ "x${BBAI_64}" = "xtrue" ] ; then
+    if [ "x${BYAI}" = "xtrue" ] ; then
+        echo "BYAI uses custom Kiwi device tree loaded via U-boot"
+        modprobe spidev
+    elif [ "x${BBAI_64}" = "xtrue" ] ; then
         echo "BBAI-64 uses custom Kiwi device tree loaded via U-boot"
         modprobe spidev
     elif [ "x${BBAI}" = "xtrue" ] ; then

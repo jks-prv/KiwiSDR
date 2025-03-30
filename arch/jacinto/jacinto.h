@@ -15,19 +15,25 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2022 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2022-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
-// TDA4VM memory map (BBAI-64)
+// TDA4VM memory map (BBAI-64) TRM 2.1 pdfpg 126
 #ifdef CPU_TDA4VM
  #define PRCM_BASE	NULL        // already powered up
- #define PMUX_BASE	0x0011C000
+ #define PMUX_BASE	0x0011C000  // CTRL_MMR0_CFG0/CTRLMMR_PADCONFIG0
  #define GPIO0_BASE	0x00600000
+ #define SPI_BASE	NULL        // SPI_PIO never used
+ #define MMAP_SIZE	0x2000
+#endif
 
- #define SPI6_BASE	NULL        // SPI_PIO never used
- #define SPI_BASE	SPI6_BASE
-
+// AM67 memory map (BYAI) TRM 2.1 pdfpg 40
+#ifdef CPU_AM67
+ #define PRCM_BASE	NULL        // already powered up
+ #define PMUX_BASE	0x000f4000  // PADCFG_CTRL0_CFG0
+ #define GPIO0_BASE	0x00600000
+ #define SPI_BASE	NULL        // SPI_PIO never used
  #define MMAP_SIZE	0x2000
 #endif
 
@@ -65,6 +71,38 @@ Boston, MA  02110-1301, USA.
  #define	PMUX_OFF    0x0000000f  // mode 15
 #endif
 
+#ifdef CPU_AM67                     // TRM 6.1.2.1.2 pad configuration regs
+                                    // J722S_Registers_Public_20250115.xlsx sheet 90_PADCFG_CTRL0
+                                    // CAUTION: padconfig0 reg is different from all others (fields missing)
+                                    // padconfig0 0xf4000, padconfig1 0xf4004
+                                    // padconfig1 hw reset value 0x8214007
+ 
+ #define	PMUX_ISOBP	0x00800000  // 23 isolation bypass
+ #define	PMUX_ISOOV	0x00400000  // 22 isolation override
+
+ #define	PMUX_TXDIS	0x00200000  // 21 TX disable
+
+ #define	PMUX_DRIVE	0x00180000  // 20:19 LVCMOS drive strength
+ #define	PMUX_SLOW	0x00100000
+ #define	PMUX_FAST	0x00080000
+ #define	PMUX_NOM	0x00000000
+
+ #define	PMUX_RXEN	0x00040000  // 18 RX enable
+ 
+ #define	PMUX_PU		0x00020000  // 17 1 = pull-up
+ #define	PMUX_PD		0x00000000  // 17 0 = pull-down
+ #define	PMUX_PDIS	0x00010000  // 16 1 = pull disable
+ 
+ #define	PMUX_ST		0x00004000  // 14 schmitt trigger
+ #define    PMUX_ATTR_S 20
+ #define    PMUX_ATTR_E 14
+
+ #define	PMUX_MODE   0x0000000f  // mode bits
+ #define	PMUX_SPI    0x00000000  // SPI  = mode 1    // see: beagley_ai-pins.txt
+ #define	PMUX_GPIO   0x00000007  // GPIO = mode 7
+ #define	PMUX_OFF    0x0000000f  // mode 15
+#endif
+
 #define	PMUX_OUT	(PMUX_NOM | PMUX_PDIS)
 #define	PMUX_OUT_PU	(PMUX_NOM | PMUX_PU)
 #define	PMUX_OUT_PD	(PMUX_NOM | PMUX_PD)
@@ -89,7 +127,17 @@ Boston, MA  02110-1301, USA.
  #define    GPIO_BANK(gpio) ((gpio).bank)
 #endif
 
-// J721E_registers4.pdf table 2-2 pdfpg 56
+#ifdef CPU_AM67
+ #define	NBALL	        2   // max number of cpu package balls assigned to a single GPIO
+ #define	GPIO0	        0
+ #define	GPIO1	        1
+ #define	NGPIO	        2
+ #define    GPIO_NPINS      128
+ #define    GPIO_BANK(gpio) ((gpio).bank)
+#endif
+
+// CPU_TDA4VM J721E_registers4.pdf table 2-2 pdfpg 56
+// CPU_AM67   J722S_Registers_Public_20250115.xlsx sheet 70_GPIO0
 #define	_GPIO_IEN		    0x008   // enable = 1
 #define	_GPIO_DIR		    0x010   // input = 1
 #define	_GPIO_OUT			0x014

@@ -173,9 +173,11 @@ static void webserver_collect_print_stats(int print)
 		kstr_free(reply);
 	    int cpufreq_kHz = 1000000, temp_deg_mC = 0;
 
-        #if defined(CPU_AM5729) || defined(CPU_TDA4VM) || defined(CPU_BCM2837)
+        #if defined(CPU_AM5729) || defined(CPU_AM67) || defined(CPU_TDA4VM) || defined(CPU_BCM2837)
 	        #ifdef CPU_TDA4VM
 	            cpufreq_kHz = 2000000;  // FIXME: /sys/devices/system/cpu/cpufreq/ is empty currently
+	        #elif defined(CPU_AM67)
+	            cpufreq_kHz = 1400000;  // FIXME: /sys/devices/system/cpu/cpufreq/ is empty currently
 	        #else
                 reply = read_file_string_reply("/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq");
                 sscanf(kstr_sp(reply), "%d", &cpufreq_kHz);
