@@ -375,7 +375,7 @@ void update_vars_from_config(bool called_at_init)
     snr_meas_interval_hrs = snr_interval[cfg_default_int("snr_meas_interval_hrs", 1, &up_cfg)];
     snr_local_time = cfg_default_bool("snr_local_time", true, &up_cfg);
     any_preempt_autorun = cfg_default_bool("any_preempt_autorun", true, &up_cfg);
-    cfg_default_int("ident_len", IDENT_LEN_MIN, &up_cfg);
+    cfg_default_int("ident_len", IDENT_LEN_NOM, &up_cfg);
     cfg_default_bool("show_geo", true, &up_cfg);
     cfg_default_bool("show_geo_city", true, &up_cfg);
     cfg_default_bool("show_user", true, &up_cfg);

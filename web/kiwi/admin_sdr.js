@@ -270,7 +270,7 @@ function config_html()
 				)
 			),
 			w3_div('w3-center w3-tspace-8',
-			   w3_input_get('', 'Name/callsign input field max length (16-64)', 'ident_len', 'config_ident_len_cb'),
+			   w3_input_get('', sprintf('Name/callsign input field max length (%d-%d)', kiwi.ident_min, kiwi.ident_max), 'ident_len', 'config_ident_len_cb'),
 				w3_div('w3-text-black',
 					'Used to limit the number of characters a user can enter into the name/callsign field at the top-right of the page.'
 				)
@@ -761,8 +761,7 @@ function config_zoom_cb(path, val, first)
 function config_ident_len_cb(path, val, first)
 {
    val = +val;
-   if (val < 16) val = 16;
-   if (val > 64) val = 64;
+   val = w3_clamp(val, kiwi.ident_min, kiwi.ident_max);
    admin_int_cb(path, val, first);
 }
 

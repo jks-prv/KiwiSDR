@@ -78,7 +78,8 @@ var kiwi = {
    no_admin_conns_pend: 0,
    foff_error_pend: 0,
    notify_seq: 0,
-   ident_min: 16,    // e.g. "wsprdaemon_v3.0a" is 16 chars
+   ident_min: 8,
+   ident_max: 64,
    
    // fixed height instead of content dependent so height is constant between different optbar types
    OPTBAR_CONTENT_HEIGHT: 150,
