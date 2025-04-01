@@ -46,6 +46,7 @@
 
 //#define ANTSW_PRF
 #ifdef ANTSW_PRF
+    // NB: call to "printf_highlight(0, "ant_switch")" below to get color on all printfs
     #define antsw_printf(fmt, ...) printf(fmt, ## __VA_ARGS__)
     #define antsw_rcprintf(rx_chan, fmt, ...) rcprintf(rx_chan, fmt, ## __VA_ARGS__)
 #else
@@ -125,6 +126,7 @@ void ant_switch_task_start(const char *cmd)
 void ant_switch_curl_cmd(char *antenna, int rx_chan);
 
 int ant_switch_setantenna(char *antenna, int rx_chan) {     // "1" .. "10", "g"
+    if (kiwi_emptyStr(antenna)) antenna = (char *) "g";
     antsw_printf("ant_switch_setantenna Q-UP: <%s>\n", antenna);
     ant_switch_task_start(antenna);
     ant_switch_curl_cmd(antenna, rx_chan);
@@ -132,6 +134,7 @@ int ant_switch_setantenna(char *antenna, int rx_chan) {     // "1" .. "10", "g"
 }
 
 int ant_switch_toggleantenna(char *antenna, int rx_chan) {  // "t1" .. "t10", "tg"
+    if (kiwi_emptyStr(antenna)) antenna = (char *) "g";
     char *cmd;
     asprintf(&cmd, "t%s", antenna);
     antsw_printf("ant_switch_toggleantenna Q-UP: <%s>\n", cmd);
@@ -139,6 +142,12 @@ int ant_switch_toggleantenna(char *antenna, int rx_chan) {  // "t1" .. "t10", "t
     kiwi_asfree(cmd);
     ant_switch_curl_cmd(antenna, rx_chan);
 	return 0;
+}
+
+static void ant_switch_request_status(int which)
+{
+    antsw_printf(MAGENTA "ant_switch_request_status: which=%d Q-UP: <s>" NONL, which);
+    ant_switch_task_start("s");
 }
 
 int ant_switch_validate_cmd(char *cmd) {
@@ -230,6 +239,8 @@ void ant_switch_find_default_ant(bool mark_as_default)
             if (mark_as_default) using_default = true;
 	        ant_switch_setantenna(ant, -1);
 	        kiwi_asfree(ant);
+            ant_switch_request_status(1);
+
 	        break;
 	    }
 	    kiwi_asfree(ant);
@@ -266,6 +277,7 @@ void ant_switch_select_default_antenna()
             using_default = false;
         }
         ant_switch_setantenna((char *) "g", -1);
+        ant_switch_request_status(2);
 	}
 }
 
@@ -286,12 +298,14 @@ void ant_switch_ReportAntenna(conn_t *conn)
             kiwi_strncpy(antsw.last_ant, selected_antennas, N_ANT);
             ant_switch_setantenna((char *) "g", -1);
             antsw_printf("ant_switch rx%d POST TSTORM-ON cur_selected_antennas=%s\n", rx_chan, selected_antennas);
+            ant_switch_request_status(3);
             NextTask("ant_switch_ReportAntenna tstorm");
         }
     } else {
         if (antsw.using_tstorm) {
             antsw.using_tstorm = false;
             ant_switch_setantenna(antsw.last_ant, -1);
+            ant_switch_request_status(4);
         }
         if (conn) {
             send_msg(conn, ANT_SWITCH_DEBUG_MSG, "MSG antsw_Thunderstorm=0");
@@ -301,8 +315,8 @@ void ant_switch_ReportAntenna(conn_t *conn)
     }
 
     // setup user notification of antenna change
-    static char last_selected_antennas[N_ANT];
-    if (strcmp(selected_antennas, last_selected_antennas) != 0) {
+    antsw_printf(YELLOW "<%s> cmp <%s>" NONL, selected_antennas, antsw.last_selected_antennas);
+    if (strcmp(selected_antennas, antsw.last_selected_antennas) != 0) {
         if (cfg_true("ant_switch.enable")) {
             char *s;
             if (strcmp(selected_antennas, "g") == 0)
@@ -313,7 +327,8 @@ void ant_switch_ReportAntenna(conn_t *conn)
             antsw_printf("ant_switch ext_notify_connected notify_rx_chan=%d seq=%d %s\n", antsw.notify_rx_chan, seq, s);
             ext_notify_connected(antsw.notify_rx_chan, seq++, s);
         }
-        kiwi_strncpy(last_selected_antennas, selected_antennas, N_ANT);
+        antsw_printf(RED "<%s>" NONL, selected_antennas);
+        kiwi_strncpy(antsw.last_selected_antennas, selected_antennas, N_ANT);
         NextTask("ant_switch_ReportAntenna ant chg");
     }
 
@@ -403,6 +418,9 @@ void ant_switch_notify_users()
     if (cfg_true("ant_switch.thunderstorm") && !antsw.using_tstorm) {
         ant_switch_ReportAntenna(NULL);
         using_default = false;
+    } else {
+        // process ant_switch_request_status() called from non-user cases
+        ant_switch_ReportAntenna(NULL);
     }
 }
 
@@ -416,13 +434,13 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
     if (kiwi_emptyStr(ant_cmd)) return;
     char *ccmd = strdup(ant_cmd);
     cfg_string_free(ant_cmd);
-    antsw_printf(CYAN "ant_switch: ccmd <%s>" NONL, ccmd);
+    antsw_printf("ant_switch: ccmd <%s>\n", ccmd);
 
     #define NKWDS 8
     char *cmd, *r_ccmd, *s;
     str_split_t kwds[NKWDS];
     n = kiwi_split((char *) ccmd, &r_ccmd, " ", kwds, NKWDS);
-    antsw_printf(CYAN "ant_switch: n=%d" NONL, n);
+    antsw_printf("ant_switch: n=%d\n", n);
 
     for (i = 0; i < n; i++) {
         s = kwds[i].str;
@@ -434,7 +452,7 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
 
         #if 0
             asprintf(&cmd, "echo '%s'", curl_arg);
-            antsw_printf(CYAN "ant_switch: <%s>" NONL, cmd);
+            antsw_printf("ant_switch: <%s>\n", cmd);
             non_blocking_cmd_system_child("antsw.curl", cmd, NO_WAIT);
             kiwi_asfree(cmd);
         #endif
@@ -489,7 +507,7 @@ bool ant_switch_msgs(char *msg, int rx_chan)
 	
     if (strcmp(msg, "SET antsw_GetAntenna") == 0) {
         antsw_printf("ant_switch SET antsw_GetAntenna Q-UP: <s>\n");
-        ant_switch_task_start("s");
+        ant_switch_request_status(0);
         return true;
     }
 
@@ -505,6 +523,7 @@ bool ant_switch_msgs(char *msg, int rx_chan)
                 } else {
                     ant_switch_toggleantenna(antenna, rx_chan);
                 }
+                // user will followup with a "SET antsw_GetAntenna" => "ant_switch_task_start("s")"
                 using_default = false;
             } else {
                 antsw_rcprintf(rx_chan, "ant_switch: Command not valid SET Antenna=%s\n", antenna);   
@@ -657,6 +676,14 @@ bool ant_switch_admin_msgs(conn_t *conn, char *cmd)
         if (antsw.backend_ok) {
             send_msg(conn, SM_NO_DEBUG, "ADM antsw_backend=%s antsw_ver=%d.%d antsw_nch=%d antsw_mix=%s antsw_ip_or_url=%s",
                 antsw.backend_s, antsw.ver_maj, antsw.ver_min, antsw.n_ch, antsw.mix, antsw.ip_or_url);
+        }
+        return true;
+    }
+
+    if (strcmp(cmd, "ADM antsw_GetCurrentAnt") == 0) {
+        antsw_printf(GREEN "ant_switch ADM antsw_current_ant=%s" NONL, antsw.last_selected_antennas);
+        if (antsw.backend_ok) {
+            send_msg(conn, SM_NO_DEBUG, "ADM antsw_current_ant=%s", antsw.last_selected_antennas);
         }
         return true;
     }

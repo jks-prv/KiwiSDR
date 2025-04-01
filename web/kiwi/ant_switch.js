@@ -522,9 +522,26 @@ function ant_switch_help()
 // admin interface
 ////////////////////////////////
 
+function ant_switch_config_focus()
+{
+   //console.log('### ant_switch_config_focus');
+   ant_sw.focus_interval =
+      setInterval(
+         function() {
+            ext_send('ADM antsw_GetCurrentAnt');      // replies with "antsw_current_ant="
+         },
+      2000);
+}
+
+function ant_switch_config_blur()
+{
+   //console.log('### ant_switch_config_blur');
+   kiwi_clearInterval(ant_sw.focus_interval);
+}
+
 function ant_switch_admin_msg(param)
 {
-   var s;
+   var i, j, s;
    ant_switch_log('ant_switch_admin_msg '+ param.join('='));
    
    switch (param[0]) {
@@ -610,6 +627,23 @@ function ant_switch_admin_msg(param)
          ant_sw.ip_or_url = ip_url;
          return true;
       
+      case "antsw_current_ant":
+         console.log('antsw_current_ant: '+ param[1]);
+         var gnd = (param[1] == 'g');
+         if (gnd) {
+            w3_innerHTML('id-antsw-cur0', 'antenna(s) grounded');
+         }
+         w3_hide2('id-antsw-cur0', !gnd);
+         
+         var a = param[1].split(',');
+         for (i = 1; i <= ant_sw.n_ant; i++) {
+            var sel = false;
+            for (j = 0; j <= a.length; j++) {
+               if (i == +a[j]) sel = true;
+            }
+            w3_hide2('id-antsw-cur'+ i, !sel);
+         }
+         return true;
 	}
 	
 	return false;
@@ -699,10 +733,12 @@ function ant_switch_config_html2(n_ch)
          );
          */
 
+   var style = ' w3-margin-L-16 w3-padding-LR-8 w3-normal w3-aqua w3-hide';
    for (var i = 1; i <= ant_sw.n_ant; i++) {
+      var ant = 'Antenna '+ i +' description'+ w3_span('id-antsw-cur'+ i + style, 'currently selected antenna');
       s +=
          w3_inline_percent('w3-margin-T-16 w3-valign-center/',
-            w3_input_get('w3-defer', 'Antenna '+ i +' description', 'ant_switch.ant'+ i +'desc', 'ant_switch_desc_cb', ''), 50,
+            w3_input_get('w3-defer', ant, 'ant_switch.ant'+ i +'desc', 'ant_switch_desc_cb', ''), 50,
             '&nbsp;', 3,
             w3_checkbox_get_param('w3-defer//w3-label-inline', 'Default<br>antenna', 'ant_switch.ant'+ i +'default', 'admin_bool_cb', false), 7,
             '&nbsp;', 3,
@@ -730,7 +766,12 @@ function ant_switch_config_html()
    if (ant_sw.denyswitching == '') ant_sw.denyswitching = ant_sw.EVERYONE;
 
    ext_admin_config('ant_switch', 'Antenna switch',
-      w3_div('id-antsw w3-text-teal', '<b>Antenna switch configuration</b>' + '<hr>' +
+      w3_div('id-antsw w3-text-teal',
+         '<b>Antenna switch configuration</b>' +
+         w3_link('w3-margin-left w3-link-darker-color', 'http://kiwisdr.com/info/#id-antsw', 'Click here') +
+         ' for more information.' +
+         '<hr>' +
+
          w3_div('',
             w3_inline('w3-gap-32/',
                w3_div('id-antsw-backends', '<b>Loading...</b>'),
@@ -800,7 +841,11 @@ function ant_switch_config_html()
                   w3_text('w3-margin-left w3-text-teal', 'cURL command to run when antenna switched to ground.')
                ),
 
-               w3_div('','<hr><b>Antenna buttons configuration</b><br>'),
+               '<hr>',
+               w3_inline('',
+                  w3_div('', '<b>Antenna buttons configuration</b>'),
+                  w3_div('id-antsw-cur0 w3-margin-L-16 w3-padding-LR-8 w3-aqua w3-hide')
+               ),
                w3_col_percent('w3-margin-T-16/',
                   'Leave antenna description field empty to hide antenna button from users. <br>' +
                   'For two-line descriptions use break sequence &lt;br&gt; between lines.', 50,
@@ -808,7 +853,7 @@ function ant_switch_config_html()
                
                   w3_link('w3-link-darker-color', 'http://kiwisdr.com/info/#id-antsw', 'Click here') +
                   ' for info about <br>' +
-                  'cURL command field.', 20,
+                  'the cURL command field.', 20,
                   '&nbsp;', 1,
 
                   'Overrides frequency scale offset value on<br>' +
