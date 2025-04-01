@@ -73,7 +73,8 @@ int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, 
 	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, rx_num, wf_num,
 	spi_clkg, spi_speed = SPI_48M, spi_mode = -1,
 	do_gps, do_sdr=1, wf_olap, meas, spi_delay=100, debian_ver, monitors_max, bg,
-	print_stats, ecpu_cmds, ecpu_tcmds, use_spidev, debian_maj, debian_min, test_flag, dx_print,
+	print_stats, ecpu_cmds, ecpu_tcmds, use_spidev, spidev_maj = -1, spidev_min = -1,
+	debian_maj, debian_min, test_flag, dx_print,
 	gps_debug, gps_var, gps_lo_gain, gps_cg_gain, use_foptim, is_locked, drm_nreg_chans;
 
 u4_t ov_mask, snd_intr_usec;
@@ -219,6 +220,7 @@ int main(int argc, char *argv[])
 		if (ARG("-ctrace")) { ARGL(web_caching_debug); } else
 		if (ARG("-ext")) kiwi.ext_clk = true; else
 		if (ARG("-use_spidev")) { ARGL(use_spidev); } else
+		if (ARG("-spidev")) { ARGL(spidev_maj); ARGL(spidev_min); printf("spidev%d.%d\n", spidev_maj, spidev_min); } else
 		if (ARG("-eeprom_reset")) eeprom_action = EE_RESET; else
 		if (ARG("-eeprom_fix")) eeprom_action = EE_FIX; else
 		if (ARG("-eeprom_test")) eeprom_action = EE_TEST; else

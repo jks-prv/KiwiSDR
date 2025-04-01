@@ -38,6 +38,7 @@ typedef struct {
 } spi_dev_ipc_t;
 
 typedef struct {
+    u64_t spi_bytes;
     spi_dev_ipc_t spi_dev_ipc;
     SPI_MISO dpump_miso;
     SPI_MISO gps_search_miso, gps_channel_miso[GPS_MAX_CHANS], gps_clocks_miso, gps_iqdata_miso, gps_glitches_miso[2];

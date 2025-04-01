@@ -112,7 +112,8 @@ extern int wf_sim, wf_real, wf_time, ev_dump, wf_flip, wf_exit, wf_start, down,
 	use_spidev, inactivity_timeout_mins, S_meter_cal, waterfall_cal, debug_v, debian_ver,
 	utc_offset, dst_offset, reg_kiwisdr_com_status, kiwi_reg_lo_kHz, kiwi_reg_hi_kHz,
 	debian_maj, debian_min, gps_debug, gps_var, gps_lo_gain, gps_cg_gain, use_foptim, web_caching_debug,
-	drm_nreg_chans, snr_meas_interval_hrs, snr_all, snr_HF, ant_connected;
+	drm_nreg_chans, snr_meas_interval_hrs, snr_all, snr_HF, ant_connected,
+	spidev_maj, spidev_min;
 
 extern char **main_argv;
 
