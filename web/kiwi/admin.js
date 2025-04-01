@@ -188,19 +188,28 @@ function mode_html()
    var bw = 245, bwpx = px(bw);
    var pw = 113, pwpx = px(pw);
    var ci = 0;
+   var wfs = dbgUs;
    var wb = 0;
    
+   var wfs1_s = '';
+   if (wfs)
+      wfs1_s += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Waterfall share', 'id-sidenav-fw', kiwi.RX8_WF8, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF8));
+
+   var wfs2_s = '';
+   if (wfs)
+      wfs2_s += w3_div('id-fw-wfs w3-flex w3-padding-TB-6');
+
    var s1 = '';
-   if (wb)
-      s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Wideband output', 'id-sidenav-fw', kiwi.RX_WB, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX_WB));
    if (admin.is_multi_core)
       s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Max channels', 'id-sidenav-fw', kiwi.RX14_WF0, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX14_WF0));
+   if (wb)
+      s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Wideband output', 'id-sidenav-fw', kiwi.RX_WB, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX_WB));
 
    var s2 = '';
-   if (wb)
-      s2 += w3_div('id-fw-wb w3-flex w3-padding-TB-6');
    if (admin.is_multi_core)
       s2 += w3_div('id-fw-14ch w3-flex w3-padding-TB-6');
+   if (wb)
+      s2 += w3_div('id-fw-wb w3-flex w3-padding-TB-6');
 
 	var s =
 	w3_div('id-mode w3-hide',
@@ -215,14 +224,14 @@ function mode_html()
             w3_sidenav('id-sidenav-fw|width:'+ bwpx +';border-collapse:collapse',
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Kiwi classic', 'id-sidenav-fw', kiwi.RX4_WF4, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX4_WF4)),
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More receivers', 'id-sidenav-fw', kiwi.RX8_WF2, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF2)),
-               w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Waterfall share', 'id-sidenav-fw', kiwi.RX8_WF8, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF8)),
+               wfs1_s,
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More bandwidth', 'id-sidenav-fw', kiwi.RX3_WF3, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX3_WF3)),
                s1
             ),
             w3_div('w3-margin-left w3-left',
                w3_div('id-fw-4ch w3-flex w3-padding-TB-6'),
                w3_div('id-fw-8ch w3-flex w3-padding-TB-6'),
-               w3_div('id-fw-wfs w3-flex w3-padding-TB-6'),
+               wfs2_s,
                w3_div('id-fw-3ch w3-flex w3-padding-TB-6'),
                s2
             )
@@ -231,50 +240,56 @@ function mode_html()
 		   w3_div('w3-clear', ' '),      // don't quite understand why this is needed, but it is
 		   w3_div('w3-margin-T-16', '<hr>'),
 
-         w3_col_percent('w3-section/ w3-hspace-16',
-            w3_div('w3-text-black',
-               w3_text('w3-bold w3-margin-B-8 w3-text-teal', 'Trade-offs: receiver channels, audio bandwidth and waterfalls'),
+         w3_div('w3-text-black',
+            w3_text('w3-bold w3-margin-B-8 w3-text-teal', 'Trade-offs: receiver channels, audio bandwidth and waterfalls'),
 
-               w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
-               w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
-               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf),  w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
-               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wfs), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 11-level zoom')),
-               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12 kHz max bandwidth ')),
-
-               'The original Kiwi FPGA with its 4 tuneable audio/waterfall receiver channels and 12 GPS channels was completely full. ' +
-               'But it is now possible to load a different FPGA configuration where 2 of the waterfalls have been traded for ' +
-               'adding more audio-only receiver channels. '
-            ), 48,
-   
-            w3_div('w3-text-black', ' '), 4,
-   
-            w3_div('w3-text-black',
-               'Having more receiver channels per Kiwi is especially important with the recently added features that are channel intensive. ' +
-               'Namely the TDoA service, WSPR/FT8 autorun and external connection via the kiwirecorder program for using other software such ' +
-               'as WSJT-X and Dream (DRM). When these kinds of connections are made channels rx2 - rx7 will be used first ' +
-               'leaving rx0 and rx1 available for normal browser connections where it is desirable to view the waterfall. ' +
-               'However rx0 and rx1 will be used last if necessary. The configurable TDoA channel limit still applies.<br><br>' +
-
-               'To compensate for lack of the waterfall/spectrum on the new channels an audio-bandwidth FFT is presented instead. ' +
-               'This requires no additional FPGA resources.'
-            ), 48
+            w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
+            w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
+            w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf),  w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
+            wfs?
+               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wfs), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 11-level zoom, shared hardware architecture'))
+               : '',
+            w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12/20 kHz max bandwidth'))
          ),
 		   w3_div('w3-margin-T-16', '<hr>'),
-		   
-         w3_col_percent('w3-section/ w3-hspace-16',
-            w3_div('w3-text-black',
-               'And now a third option "More bandwidth". The audio bandwidth is increased from 12 to 20 kHz. ' +
-               'This supports wide passbands for hi-fidelity listening of AM BCB and SW stations. ' +
-               'And also wide IQ bandwidths for external applications processing large parts of the spectrum. '
-            ), 48,
    
-            w3_div('w3-text-black', ' '), 4,
-   
-            w3_div('w3-text-black',
-               'In exchange the number of channels must drop from four to three.'
-            ), 48
+         w3_div('w3-width-half w3-text-black',
+            'Description of the different modes:' +
+            '<ul>' +
+            
+            '<li><b>Kiwi classic</b><br>' +
+            'The original Kiwi FPGA firmware, with its 4 tuneable audio/waterfall receiver channels and 12 GPS channels. ' +
+            'The other modes were developed later on, where some of the waterfalls and GPS channels are traded for ' +
+            'adding more audio channels.' +
+            '<br><br></li>' +
+            
+            '<li><b>More receivers</b><br>' +
+            'Having more receiver channels per Kiwi is especially important with the features that are channel intensive. ' +
+            'Like the TDoA service, WSPR/FT8 autorun and external connections via the kiwirecorder program for other software such ' +
+            'as wsprdaemon. When these kinds of connections are made in "more receivers" mode channels rx2 - rx7 will be used first. ' +
+            'Leaving rx0 and rx1 available for normal browser connections where it is desirable to view the waterfall. ' +
+            'However rx0 and rx1 will be used last if necessary. A user connection on rx2 - rx7 will show an audio-bandwidth FFT in place of ' +
+            'the usual waterfall. This works because it requires no additional FPGA resources.' +
+            '<br><br></li>' +
+
+            (wfs?
+               ('<li><b>Waterfall share</b><br>' +
+               'This is an 8 channel mode in which the two waterfall FPGA cores of the "more receivers" mode above are shared across all ' +
+               'receiver channels. This has an update speed penalty when many channels are using high zoom levels. Also, the ' +
+               'maximum zoom level is limited to z11 (span 15 kHz) instead of z14 (span 1.8 kHz) ' +
+               '<br><br></li>')
+               : '') +
+            
+            '<li><b>More bandwidth</b><br>' +
+            'In this mode the audio bandwidth is increased from 12 to 20 kHz. ' +
+            'This supports wide passbands for hi-fidelity listening of AM BCB and SW stations. ' +
+            'And also wide IQ bandwidths for external applications processing large parts of the spectrum. ' +
+            'In exchange the number of channels must drop from four to three.' +
+            '</li>' +
+            
+            '</ul>'
          ),
-		   w3_div('w3-margin-T-16', '<hr>')
+         w3_div('w3-margin-T-16', '<hr>')
       )
 	);
 	
@@ -1777,7 +1792,7 @@ function network_html()
    }
 
    var spd_s;
-   if (kiwi.platform == kiwi.PLATFORM_BB_AI64) {
+   if (kiwi.platform == kiwi.PLATFORM_BBAI_64) {
       network.ethernet_speed_s[network.ESPEED_10M][network.ESPEED_ENA] = 0;
       spd_s = '10 Mbps setting not available <br> on BBAI-64.';
    } else {

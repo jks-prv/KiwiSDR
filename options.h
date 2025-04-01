@@ -25,3 +25,5 @@ Boston, MA  02110-1301, USA.
 //#define OPTION_HONEY_POT
 //#define OPTION_GPS_TUNE
 //#define OPTION_MONITOR_BOOT_BTN
+//#define OPTION_GPS_FFT_MEAS
+//#define OPTION_WF_FFT_MEAS

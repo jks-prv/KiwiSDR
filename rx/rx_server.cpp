@@ -166,6 +166,8 @@ void rx_server_init()
     #ifdef USE_SDR
         spi_set(CmdSetOVMask, 0, ov_mask);
     #endif
+    
+    c2s_waterfall_once();
 }
 
 void rx_server_remove(conn_t *c)

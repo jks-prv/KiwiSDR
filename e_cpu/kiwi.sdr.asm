@@ -19,7 +19,7 @@
 ; http://www.holmea.demon.co.uk/GPS/Main.htm
 ; ============================================================================
 
-; Copyright (c) 2014-2016 John Seamons, ZL4VO/KF6VO
+; Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 
 ; ============================================================================
@@ -219,6 +219,13 @@ CmdGetWFContSamps:
 				FreezeTOS
 				wrReg2	WF_SAMPLER_RST
 				br		getWFSamples2
+
+CmdSetWFOffset:	
+				rdReg	HOST_RX				; wf_chan
+				wrReg2	SET_WF_CHAN         ;
+                rdReg	HOST_RX				; offset
+				wrReg2	SET_WF_OFFSET		;
+				ret
 
 CmdSetWFFreq:	rdReg	HOST_RX				; wf_chan
 				wrReg2	SET_WF_CHAN			;

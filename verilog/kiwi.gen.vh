@@ -45,11 +45,11 @@
 `define DEF_FPGA_ID_OTHER 1
 	localparam NUM_CMDS_BASE = 13;    // DEFp 0xd
 `define DEF_NUM_CMDS_BASE 1
-	localparam NUM_CMDS_SDR = 14;    // DEFp 0xe
+	localparam NUM_CMDS_SDR = 15;    // DEFp 0xf
 `define DEF_NUM_CMDS_SDR 1
 	localparam NUM_CMDS_GPS = 17;    // DEFp 0x11
 `define DEF_NUM_CMDS_GPS 1
-	localparam NUM_CMDS = 44;    // DEFp 0x2c
+	localparam NUM_CMDS = 45;    // DEFp 0x2d
 `define DEF_NUM_CMDS 1
 `define SPI_32 1    // DEFh 0x1
 	localparam SPIBUF_W = 2048;    // DEFp 0x800
@@ -134,8 +134,6 @@
 `define DEF_RX1_STAGES 1
 	localparam RX2_STAGES = 5;    // DEFp 0x5
 `define DEF_RX2_STAGES 1
-	localparam MAX_ZOOM = 14;    // DEFp 0xe
-`define DEF_MAX_ZOOM 1
 	localparam NWF_FFT = 8192;    // DEFp 0x2000
 `define DEF_NWF_FFT 1
 	localparam NWF_IQW = 2;    // DEFp 0x2
@@ -155,7 +153,6 @@
 `define USE_WF_1CIC 1    // DEFh 0x1
 `define USE_WF_CIC24 1    // DEFh 0x1
 //`define USE_WF_MEM24    // DEFh 0x0
-//`define USE_WF_NEW    // DEFh 0x0
 	localparam WF1_STAGES = 5;    // DEFp 0x5
 `define DEF_WF1_STAGES 1
 	localparam WF2_STAGES = 5;    // DEFp 0x5
@@ -256,8 +253,8 @@
 	localparam SET_WF_CHAN = 6;    // DEFb: bit number for value: 0x40
 	localparam SET_WF_FREQ = 7;    // DEFb: bit number for value: 0x80
 	localparam SET_WF_DECIM = 8;    // DEFb: bit number for value: 0x100
-	localparam WF_SAMPLER_RST = 9;    // DEFb: bit number for value: 0x200
-	localparam WRREG2_400 = 10;    // DEFb: bit number for value: 0x400
+	localparam SET_WF_OFFSET = 9;    // DEFb: bit number for value: 0x200
+	localparam WF_SAMPLER_RST = 10;    // DEFb: bit number for value: 0x400
 	localparam HOST_RST = 0;    // DEFb: bit number for value: 0x1
 	localparam HOST_RDY = 1;    // DEFb: bit number for value: 0x2
 	localparam GET_MEMORY = 2;    // DEFb: bit number for value: 0x4

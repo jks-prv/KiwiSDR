@@ -1,3 +1,5 @@
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
 `default_nettype none
 
 // IQ sampler, 8K x 2 x 16-bit, 8 36kb BRAMs
@@ -16,6 +18,7 @@ module IQ_SAMPLER_8K_32B (
     input  wire rd_sync,			// set rd_addr to (wr_addr + 15), +15 is crucial look-ahead to previous buffer contents
     input  wire rd_i,
     input  wire rd_q,
+    input  wire [12:0] rd_offset,
     output wire [15:0] rd_iq
     );
         
@@ -48,7 +51,8 @@ module IQ_SAMPLER_8K_32B (
             rd_addr <= 0;
         else
         if (rd_sync)
-        	rd_addr <= { (sync_wr_addr[12:9] + 4'd1), sync_wr_addr[8:0] };
+        	//rd_addr <= { (sync_wr_addr[12:9] + 4'd1), sync_wr_addr[8:0] };
+        	rd_addr <= sync_wr_addr + rd_offset;
         else begin
             rd_addr <= rd_next;
 		end
@@ -56,6 +60,7 @@ module IQ_SAMPLER_8K_32B (
 	wire [31:0] rd_diq;
 	assign rd_iq = rd_i? rd_diq[31 -:16] : rd_diq[15 -:16];
 	
+	// done as an 8kx32b (7.5 BRAM) rather than 8kx16bx2 (8 BRAM)
 	ipcore_bram_8k_32b iq_samp (
 		.clka	(wr_clk),			.clkb	(rd_clk),
 		.wea	(wr_en),

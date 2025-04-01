@@ -55,13 +55,8 @@ Boston, MA  02110-1301, USA.
 
 #ifdef USE_SDR
 
-//#define WF_INFO
-//#define WF_APER_INFO
-//#define WF_SPEC_INV_DEBUG
-
-//#define SHOW_MAX_MIN_IQ
-//#define SHOW_MAX_MIN_PWR
-//#define SHOW_MAX_MIN_DB
+int wf_rd_offset = WF_RD_OFFSET;
+int wf_slowdown;
 
 #ifdef WF_SHMEM_DISABLE
     static wf_shmem_t wf_shmem;
@@ -105,6 +100,22 @@ static str_hashes_t wf_cmd_hashes[] = {
 
 str_hash_t wf_cmd_hash;
 
+void c2s_waterfall_once()
+{
+	// Do this here, rather than the c2s_waterfall_init or the beginning of c2s_waterfall(),
+	// because it takes too long and causes the data pump to overrun.
+	// And also uses a huge amount of stack space meaning it must run on main task.
+	//
+	// NB: Using fft_inst[0] here is just for fftwf_plan_dft_1d() setup purposes.
+	// The actual channel-specific buffer values are specified by fftwf_execute_dft() later on.
+    fft_t* fft = &WF_SHMEM->fft_inst[0];
+    u4_t plan = bg? FFTW_MEASURE : FFTW_ESTIMATE;
+	fftwf_set_timelimit(10);
+    if (bg) printf("WF: FFTW_MEASURE...\n");
+    WF_SHMEM->hw_dft_plan = fftwf_plan_dft_1d(WF_C_NSAMPS, fft->hw_c_samps, fft->hw_fft, FFTW_FORWARD, plan);
+    if (bg) printf("WF: ...FFTW_MEASURE\n");
+}
+
 void c2s_waterfall_init()
 {
 	int i;
@@ -112,13 +123,6 @@ void c2s_waterfall_init()
     wf_cmd_hash.max_hash_len = 9;
     str_hash_init("wf", &wf_cmd_hash, wf_cmd_hashes);
 
-	// do these here, rather than the beginning of c2s_waterfall(), because they take too long
-	// and cause the data pump to overrun
-	for (i=0; i < MAX_WF_CHANS; i++) {
-	    fft_t *fft = &WF_SHMEM->fft_inst[i];
-		fft->hw_dft_plan = fftwf_plan_dft_1d(WF_C_NSAMPS, fft->hw_c_samps, fft->hw_fft, FFTW_FORWARD, FFTW_ESTIMATE);
-	}
-	
 	const float adc_scale_decim = powf(2, -16);		// gives +/- 0.5 float samples
 	//const float adc_scale_decim = powf(2, -15);		// gives +/- 1.0 float samples
 
@@ -150,7 +154,8 @@ void c2s_waterfall_init()
                     - 0.01168 * cos( (3.0*K_2PI*i)/(float)(WF_C_NSAMPS-1) ));
                 break;
 
-            case WINF_WF_NONE: default:
+            case WINF_WF_NONE:
+            default:
                 break;
             }
         }
@@ -215,8 +220,8 @@ void c2s_waterfall_setup(void *param)
 
     // If not wanting a wf (!conn->isWF_conn) send wf_chans=0 to force audio FFT to be used.
     // But need to send actual value via wf_chans_real for use elsewhere.
-	send_msg(conn, SM_WF_DEBUG, "MSG wf_fft_size=1024 wf_fps=%d wf_fps_max=%d zoom_max=%d rx_chans=%d wf_chans=%d wf_chans_real=%d wf_cal=%d wf_setup",
-		WF_SPEED_FAST, WF_SPEED_MAX, MAX_ZOOM, rx_chans, conn->isWF_conn? wf_chans:0, wf_chans, waterfall_cal);
+	send_msg(conn, SM_WF_DEBUG, "MSG wf_fft_size=1024 wf_fps=%d wf_fps_max=%d zoom_max=%d rx_chans=%d wf_chans=%d wf_chans_real=%d wf_share=%d wf_cal=%d wf_setup",
+		WF_SPEED_FAST, WF_SPEED_MAX, MAX_ZOOM, rx_chans, conn->isWF_conn? wf_chans:0, wf_chans, kiwi.wf_share, waterfall_cal);
 	if (do_gps && !do_sdr) send_msg(conn, SM_WF_DEBUG, "MSG gps");
 
     dx_last_community_download();
@@ -239,6 +244,7 @@ void c2s_waterfall(void *param)
 	
 	wf_inst_t *wf = &WF_SHMEM->wf_inst[rx_chan];
 	memset(wf, 0, sizeof(wf_inst_t));
+	wf->tid = TaskID();
 	wf->conn = conn;
 	wf->rx_chan = rx_chan;
 	wf->tr_cmds = 0;
@@ -253,7 +259,7 @@ void c2s_waterfall(void *param)
 	wf->scale = 1;
 	wf->wband = -1;
 	wf->compression = true;
-	wf->isWF = (rx_chan < wf_chans && conn->isWF_conn);
+	wf->isWF = (rx_chan < (kiwi.wf_share? rx_chans : wf_chans) && conn->isWF_conn);
 	wf->isFFT = !wf->isWF;
     wf->mark = timer_ms();
     wf->prev_start = wf->prev_zoom = -1;
@@ -297,7 +303,7 @@ void c2s_waterfall(void *param)
             wf->off_freq_inv = ((float) MAX_START(wf->zoom) - wf->start_f) * wf->HZperStart;
 			wf->i_offset = (u64_t) (s64_t) ((wf->spectral_inversion? wf->off_freq_inv : wf->off_freq) / conn->adc_clock_corrected * pow(2,48));
 			wf->i_offset = -wf->i_offset;
-			if (wf->isWF)
+			if (wf->isWF && !kiwi.wf_share)
 			    spi_set3(CmdSetWFFreq, rx_chan, (wf->i_offset >> 16) & 0xffffffff, wf->i_offset & 0xffff);
 			//printf("WF%d freq updated due to ADC clock correction\n", rx_chan);
 		}
@@ -365,7 +371,7 @@ void c2s_waterfall(void *param)
 		}
 
         // FIXME: until we figure out if no WF cmds are needed when no wf is present just occasionally wake up and check
-		if (rx_chan >= wf_num) {
+		if (!kiwi.wf_share && rx_chan >= wf_num) {
 			TaskSleepMsec(500);
 			continue;
 		}
@@ -411,11 +417,7 @@ void c2s_waterfall(void *param)
 		wf->fft_used = WF_C_NFFT / WF_USING_HALF_FFT;		// the result is contained in the first half of a complex FFT
 		
 		// if any CIC is used (z != 0) only look at half of it to avoid the aliased images
-		#ifdef USE_WF_NEW
-			wf->fft_used /= WF_USING_HALF_CIC;
-		#else
-			if (wf->zoom != 0) wf->fft_used /= WF_USING_HALF_CIC;
-		#endif
+		if (wf->zoom != 0) wf->fft_used /= WF_USING_HALF_CIC;
 		
 		float span = conn->adc_clock_corrected / 2 / (1 << wf->zoom);
 		float disp_fs = ui_srate_Hz / (1 << wf->zoom);
@@ -430,40 +432,25 @@ void c2s_waterfall(void *param)
 		if (wf->new_map) {
 			assert(wf->fft_used <= MAX_FFT_USED);
 
-            #ifdef USE_WF_NEW
-                #define WF_FFT_UNWRAP_NEEDED
-            #endif
-
 			wf->fft_used_limit = 0;
 
 			if (wf->fft_used >= wf->plot_width) {
 				// FFT >= plot
 
-                #ifdef WF_FFT_UNWRAP_NEEDED
-                    // IQ reverse unwrapping (X)
-                    #error spectral_inversion
-                    for (i=wf->fft_used/2,j=0; i<wf->fft_used; i++,j++) {
-                        wf->fft2wf_map[i] = wf->plot_width * j/wf->fft_used;
-                    }
-                    for (i=0; i<wf->fft_used/2; i++,j++) {
-                        wf->fft2wf_map[i] = wf->plot_width * j/wf->fft_used;
-                    }
-                #else
-                    // no unwrap
-                    #ifdef WF_SPEC_INV_DEBUG
-                        real_printf("$INV NORMAL_SAMPLE SETUP %s z%d fft_used %d plot_width %d\n",
-                        wf->spectral_inversion? "REV":"NORM", wf->zoom, wf->fft_used, wf->plot_width);
-                    #endif
-                    for (i=0; i < wf->fft_used; i++) {
-                        j = wf->plot_width * i/wf->fft_used;
-                        if (wf->spectral_inversion)
-                            j = (j < WF_WIDTH)? (WF_WIDTH-1 - j) : -1;
-                        wf->fft2wf_map[i] = j;
-                        #ifdef WF_SPEC_INV_DEBUG
-                            real_printf("%d|%.2f=%d ", i, (float)i/wf->fft_used, j);
-                        #endif
-                    }
+                // no unwrap
+                #ifdef WF_SPEC_INV_DEBUG
+                    real_printf("$INV NORMAL_SAMPLE SETUP %s z%d fft_used %d plot_width %d\n",
+                    wf->spectral_inversion? "REV":"NORM", wf->zoom, wf->fft_used, wf->plot_width);
                 #endif
+                for (i=0; i < wf->fft_used; i++) {
+                    j = wf->plot_width * i/wf->fft_used;
+                    if (wf->spectral_inversion)
+                        j = (j < WF_WIDTH)? (WF_WIDTH-1 - j) : -1;
+                    wf->fft2wf_map[i] = j;
+                    #ifdef WF_SPEC_INV_DEBUG
+                        real_printf("%d|%.2f=%d ", i, (float)i/wf->fft_used, j);
+                    #endif
+                }
                 //for (i=0; i<wf->fft_used; i++) printf("%d>%d ", i, wf->fft2wf_map[i]);
 
                 // Not like above where fft2wf_map[] can map multiple FFT values per pixel for use
@@ -492,20 +479,11 @@ void c2s_waterfall(void *param)
 			} else {
 				// FFT < plot
 
-				#ifdef WF_FFT_UNWRAP_NEEDED
-					#error spectral_inversion
-					for (i=0; i<wf->plot_width_clamped; i++) {
-						int t = wf->fft_used * i/wf->plot_width;
-						if (t >= wf->fft_used/2) t -= wf->fft_used/2; else t += wf->fft_used/2;
-						wf->wf2fft_map[i] = t;
-					}
-				#else
-					// no unwrap
-					for (i=0; i<wf->plot_width_clamped; i++) {
-					    j = wf->spectral_inversion? (wf->plot_width-1 - i) : i;
-						wf->wf2fft_map[i] = wf->fft_used * j/wf->plot_width;
-					}
-				#endif
+                // no unwrap
+                for (i=0; i<wf->plot_width_clamped; i++) {
+                    j = wf->spectral_inversion? (wf->plot_width-1 - i) : i;
+                    wf->wf2fft_map[i] = wf->fft_used * j/wf->plot_width;
+                }
 				//for (i=0; i<wf->plot_width_clamped; i++) printf("%d:%d ", i, wf->wf2fft_map[i]);
 			}
 			//printf("\n");
@@ -599,9 +577,8 @@ void c2s_waterfall(void *param)
 void sample_wf(int rx_chan)
 {
 	wf_inst_t *wf = &WF_SHMEM->wf_inst[rx_chan];
-    int k;
-    fft_t *fft = &WF_SHMEM->fft_inst[rx_chan];
-    u4_t now, diff;
+    int i, k;
+    u4_t now, now2, diff;
     u64_t now64, deadline;
     
     #ifdef SHOW_MAX_MIN_IQ
@@ -617,19 +594,22 @@ void sample_wf(int rx_chan)
 
     // create waterfall
     
+    #define DESIRED_SCALE 2         // makes >= z11 overlapped
+    //#define DESIRED_SCALE 1.25    // makes >= z10 overlapped, but z10 has too much glitching
     assert(wf_fps[wf->speed] != 0);
     int desired = 1000 / wf_fps[wf->speed];
+    int desired_scaled = desired * DESIRED_SCALE;
 
     // desired frame rate greater than what full sampling can deliver, so start overlapped sampling
-    if (wf->check_overlapped_sampling) {
+    if (wf->check_overlapped_sampling && !kiwi.wf_share) {
         wf->check_overlapped_sampling = false;
 
-        if (wf->samp_wait_ms >= 2*desired) {
+        if (wf->samp_wait_ms >= desired_scaled) {
             wf->overlapped_sampling = true;
             
             #ifdef WF_INFO
-            if (!bg) printf("---- WF%d OLAP z%d samp_wait %d >= %d(2x) desired %d\n",
-                rx_chan, wf->zoom, wf->samp_wait_ms, 2*desired, desired);
+            if (!bg) printf("---- WF%d OLAP z%d samp_wait %d >= %d(%d) desired\n",
+                rx_chan, wf->zoom, wf->samp_wait_ms, desired_scaled , desired);
             #endif
             
             evWFC(EC_TRIG1, EV_WF, -1, "WF", "OVERLAPPED CmdWFReset");
@@ -639,14 +619,54 @@ void sample_wf(int rx_chan)
             wf->overlapped_sampling = false;
 
             #ifdef WF_INFO
-            if (!bg) printf("---- WF%d NON-OLAP z%d samp_wait %d < %d(2x) desired %d\n",
-                rx_chan, wf->zoom, wf->samp_wait_ms, 2*desired, desired);
+            if (!bg) printf("---- WF%d NON-OLAP z%d samp_wait %d < %d(%d) desired\n",
+                rx_chan, wf->zoom, wf->samp_wait_ms, desired_scaled, desired);
             #endif
         }
     }
     
     SPI_CMD first_cmd;
-    if (wf->overlapped_sampling) {
+
+    if (kiwi.wf_share) {
+        do {
+            for (i = 0; i < wf_chans; i++) {
+                if (!WF_SHMEM->wf_lock[i]) {
+                    WF_SHMEM->wf_lock[i] = true;
+                    wf->hw_chan = i;
+                    break;
+                }
+            }
+            if (i < wf_chans) break;
+
+            // enforce round-robin scheduling via lock_seq
+            wf->lock_seq = WF_SHMEM->lock_seq;
+            WF_SHMEM->lock_seq++;
+            wf->lock_wait = true;
+            //real_printf(CYAN "Lt-%d" NORM, wf->tid); fflush(stdout);
+            TaskSleepReason("wf_lock");
+            //real_printf(CYAN "Ct-%d" NORM, wf->tid); fflush(stdout);
+            wf->lock_wait = false;
+        } while(1);
+        
+        //real_printf("L%d ", wf->hw_chan); fflush(stdout);
+        //real_printf("%s%d%s", COLORS[rx_chan], rx_chan, NORM); fflush(stdout);
+        //real_printf("%s%d%d%s ", COLORS[wf->hw_chan], rx_chan, wf->hw_chan, NORM); fflush(stdout);
+        //real_printf("%s%d%dD%d%s ", COLORS[wf->hw_chan], rx_chan, wf->hw_chan, wf->decim, NORM); fflush(stdout);
+        
+        if (wf->isWF) {
+			if (wf->trigger) {
+			    real_printf(GREEN "%d%dD%dT%012llx " NORM, rx_chan, wf->hw_chan, wf->decim, wf->i_offset);
+			}
+            spi_set(CmdSetWFDecim, wf->hw_chan, wf->decim);
+            spi_set3(CmdSetWFFreq, wf->hw_chan, (wf->i_offset >> 16) & 0xffffffff, wf->i_offset & 0xffff);
+            spi_set(CmdSetWFOffset, wf->hw_chan, wf_rd_offset);
+        }
+    } else {
+        wf->hw_chan = rx_chan;
+    }
+    
+    if (wf->overlapped_sampling && !kiwi.wf_share /* jksx test later */) {
+
         //
         // Start reading immediately at synchronized write address plus a small offset to get to
         // the old part of the buffer.
@@ -659,18 +679,27 @@ void sample_wf(int rx_chan)
         first_cmd = CmdGetWFContSamps;
     } else {
         evWFC(EC_TRIG1, EV_WF, -1, "WF", "NON-OVERLAPPED CmdWFReset");
-        spi_set(CmdWFReset, rx_chan, WF_SAMP_RD_RST | WF_SAMP_WR_RST);
+        spi_set(CmdWFReset, wf->hw_chan, WF_SAMP_RD_RST | WF_SAMP_WR_RST);
+        if (wf->trigger) {
+            real_printf(MAGENTA "%d%dRST " NORM, rx_chan, wf->hw_chan);
+        }
         deadline = timer_us64() + wf->chunk_wait_us*2;
         first_cmd = CmdGetWFSamples;
     }
 
     SPI_MISO *miso = &SPI_SHMEM->wf_miso[rx_chan];
+    if (wf->trigger) {
+        real_printf(CYAN "%d%dM%p " NORM, rx_chan, wf->hw_chan, miso);
+        wf->trigger = false;
+    }
     s4_t ii, qq;
     iq_t *iqp;
 
     int chunk, sn;
     int n_chunks = WF_SHMEM->n_chunks;
-
+    float *window = WF_SHMEM->window_function[wf->window_func];
+    fft_t *fft = &WF_SHMEM->fft_inst[wf->hw_chan];
+    
     for (chunk=0, sn=0; sn < WF_C_NSAMPS; chunk++) {
         assert(chunk < n_chunks);
 
@@ -691,17 +720,21 @@ void sample_wf(int rx_chan)
         }
     
         if (chunk == 0) {
-            spi_get_noduplex(first_cmd, miso, NWF_SAMPS * sizeof(iq_t), rx_chan);
+            //#define WF_MEAS_OLAP
+            #ifdef WF_MEAS_OLAP
+                if (wf->overlapped_sampling && rx_chan == 0 && wf->zoom >= 10) now2 = timer_us();
+            #endif
+            
+            spi_get_noduplex(first_cmd, miso, NWF_SAMPS * sizeof(iq_t), wf->hw_chan);
         } else
         if (chunk < n_chunks-1) {
-            spi_get_noduplex(CmdGetWFSamples, miso, NWF_SAMPS * sizeof(iq_t), rx_chan);
+            spi_get_noduplex(CmdGetWFSamples, miso, NWF_SAMPS * sizeof(iq_t), wf->hw_chan);
         }
 
         evWFC(EC_EVENT, EV_WF, -1, "WF", evprintf("%s SAMPLING chunk %d",
             wf->overlapped_sampling? "OVERLAPPED":"NON-OVERLAPPED", chunk));
         
         iqp = (iq_t*) &(miso->word[0]);
-	    float *window = WF_SHMEM->window_function[wf->window_func];
         
         for (k=0; k<NWF_SAMPS; k++) {
             if (sn >= WF_C_NSAMPS) break;
@@ -721,7 +754,20 @@ void sample_wf(int rx_chan)
             fft->hw_c_samps[sn][Q] = fq;
             sn++;
         }
+
+        #if 1
+            if (wf->overlapped_sampling && chunk == n_chunks/2 && wf->zoom >= 10 && wf_slowdown) {
+                WFSleepReasonMsec("slow down", wf_slowdown);
+                //if (rx_chan == 0) { real_printf("%d", chunk); fflush(stdout); }
+            }
+        #endif
     }
+    
+    #ifdef WF_MEAS_OLAP
+        if (wf->overlapped_sampling && rx_chan == 0 && wf->zoom >= 10) {
+            real_printf("%.3f ", (float) (timer_us() - now2) / 1e3f); fflush(stdout);
+        }
+    #endif
 
     #ifndef EV_MEAS_WF
         static int wf_cnt;
@@ -816,6 +862,28 @@ void sample_wf(int rx_chan)
             last_time[rx_chan] = now;
         #endif
     //}
+    
+    if (kiwi.wf_share) {
+        WF_SHMEM->wf_lock[wf->hw_chan] = false;
+        //real_printf("U%d ", wf->hw_chan); fflush(stdout);
+        
+        // find lowest lock_seq waiter and wake them up
+        u4_t min_seq = 0xffffffff;
+        wf_inst_t *min_w = NULL;
+        for (i = 0; i < rx_chans; i++) {
+	        wf_inst_t *w = &WF_SHMEM->wf_inst[i];
+            if (w->lock_wait && w->lock_seq < min_seq) {
+                min_seq = w->lock_seq;
+                min_w = w;
+            }
+        }
+        if (min_w) {
+            //real_printf(MAGENTA "Ut-%d" NORM, min_w->tid); fflush(stdout);
+            TaskWakeup(min_w->tid);
+        } else {
+            //real_printf(GREY "n" NORM); fflush(stdout);
+        }
+    }
 
     now = timer_ms();
     int actual = now - wf->mark;
@@ -842,115 +910,13 @@ void sample_wf(int rx_chan)
     }
 }
 
-static void aperture_auto(wf_inst_t *wf, u1_t *bp)
-{
-    int i, j, rx_chan = wf->rx_chan;
-    if (wf->need_autoscale <= wf->done_autoscale) return;
-    bool single_shot = (wf->aper_algo == OFF);
-
-    // FIXME: for audio FFT needs to be further limited to just passband
-    int start = 0, stop = APER_PWR_LEN, len;
-    if (rx_chan >= wf_chans) start = 256, stop = 768;   // audioFFT
-    
-    if (wf->avg_clear) {
-        for (i = start; i < stop; i++)
-            wf->avg_pwr[i] = dB_wire_to_dBm(bp[i]);
-        wf->report_sec = timer_sec();
-        wf->last_noise = wf->last_signal = -1;
-        wf->avg_clear = 0;
-    } else {
-        int algo = wf->aper_algo;
-        float param = wf->aper_param;
-        
-        if (single_shot) {
-            algo = MMA;
-            param = 8.0;
-        }
-        
-        switch (algo) {
-        
-        case IIR:
-            for (i = start; i < stop; i++) {
-                float pwr = dB_wire_to_dBm(bp[i]);
-                float iir_gain = 1.0 - expf(-param * pwr/255.0);
-                if (iir_gain <= 0.01) iir_gain = 0.01;  // enforce minimum decay rate
-                wf->avg_pwr[i] += (pwr - wf->avg_pwr[i]) * iir_gain;
-            }
-            break;
-
-        case MMA:
-            for (i = start; i < stop; i++) {
-                float pwr = dB_wire_to_dBm(bp[i]);
-                wf->avg_pwr[i] = ((wf->avg_pwr[i] * (param-1)) + pwr) / param;
-            }
-            break;
-
-        case EMA:
-            for (i = start; i < stop; i++) {
-                float pwr = dB_wire_to_dBm(bp[i]);
-                wf->avg_pwr[i] += (pwr - wf->avg_pwr[i]) / param;
-            }
-            break;
-        }
-    }
-    
-    u4_t now = timer_sec();
-    int delay = single_shot? 1 : 3;
-    if (now < wf->report_sec + delay) return;
-    wf->report_sec = now;
-
-    wf->done_autoscale++;
-
-    #define RESOLUTION_dB 5
-    int band[APER_PWR_LEN];
-    len = 0;
-    for (i = start; i < stop; i++) {
-        int b = ((int) floorf(wf->avg_pwr[i] / RESOLUTION_dB)) * RESOLUTION_dB;
-        if (b <= -190) continue;    // disregard masked areas
-        band[len] = b;
-        len++;
-    }
-    
-    int max_count = 0, max_dBm = -999, min_dBm;
-    if (len) {
-        qsort(band, len, sizeof(int), qsort_intcomp);
-        int last = band[0], same = 0;
-
-        for (i = 0; i <= len; i++) {
-            if (i == len || band[i] != last) {
-                #ifdef WF_APER_INFO
-                    //printf("%4d: %d\n", last, same);
-                #endif
-                if (same > max_count) max_count = same, min_dBm = last;
-                if (last > max_dBm) max_dBm = last;
-                if (i == len) break;
-                same = 1;
-                last = band[i];
-            } else {
-                same++;
-            }
-        }
-    } else {
-        max_dBm = -110;
-        min_dBm = -120;
-    }
-
-    #ifdef WF_APER_INFO
-        printf("### APER_AUTO n/d=%d/%d rx%d algo=%d max_count=%d dBm=%d:%d\n",
-            wf->need_autoscale, wf->done_autoscale, rx_chan, wf->aper_algo, max_count, min_dBm, max_dBm);
-    #endif
-    if (max_dBm < -80) max_dBm = -80;
-    wf->signal = max_dBm;   // headroom applied on js side
-    wf->noise = min_dBm;
-}
-
 void compute_frame(int rx_chan)
 {
 	wf_inst_t *wf = &WF_SHMEM->wf_inst[rx_chan];
 	int i;
 	wf_pkt_t *out = &wf->out;
 	float pwr[MAX_FFT_USED];
-    fft_t *fft = &WF_SHMEM->fft_inst[rx_chan];
+    fft_t *fft = &WF_SHMEM->fft_inst[wf->hw_chan];
     
     // don't use compression for zoom level zero because of bad interaction
     // of narrow strong carriers with compression algorithm
@@ -960,7 +926,16 @@ void compute_frame(int rx_chan)
 
 	//NextTask("FFT1");
 	evWF(EC_EVENT, EV_WF, -1, "WF", "compute_frame: FFT start");
-	fftwf_execute(fft->hw_dft_plan);
+    #ifdef OPTION_WF_FFT_MEAS
+        static u4_t loopct;
+        bool meas = ((loopct++ & 0xf) == 0);
+        u4_t us;
+        if (meas) us = timer_us();
+        fftwf_execute_dft(WF_SHMEM->hw_dft_plan, fft->hw_c_samps, fft->hw_fft);
+        if (meas) { real_printf("WF%.3f ", (float)(timer_us() - us)/1e3); fflush(stdout); }
+    #else
+        fftwf_execute_dft(WF_SHMEM->hw_dft_plan, fft->hw_c_samps, fft->hw_fft);
+    #endif
 	evWF(EC_EVENT, EV_WF, -1, "WF", "compute_frame: FFT done");
 	//NextTask("FFT2");
 
@@ -1289,7 +1264,7 @@ void compute_frame(int rx_chan)
 	evWF(EC_EVENT, EV_WF, -1, "WF", "compute_frame: fill out buf");
 
     if (wf->aper == AUTO)
-        aperture_auto(wf, buf_p);
+        rx_waterfall_aperture_auto(wf, buf_p);
 
 	ima_adpcm_state_t adpcm_wf;
 	

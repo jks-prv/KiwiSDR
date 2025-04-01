@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -35,10 +35,11 @@ typedef enum { ESPEED_AUTO = 0, ESPEED_10M = 1, ESPEED_100M = 2 } espeed_e;
 #define FW_SEL_SDR_RX3_WF3  2
 #define FW_SEL_SDR_RX14_WF0 3
 #define FW_SEL_SDR_WB       4
-#define N_FW_SEL            5
+#define FW_SEL_SDR_RX8_WF8  5
+#define N_FW_SEL            6
 
 #define MAX_RX_CHANS    16      // must be pow2, see coroutines.h:CTF_CHANNEL
-#define MAX_WF_CHANS    4
+#define MAX_WF_CHANS    4       // max WF DDCs
 #define MAX_WB_CHANS    1
 #define MAX_NRX_BUFS    16      // for RXBUF_SIZE_14CH
 #define MAX_NRX_SAMPS   226     // for nch = 3

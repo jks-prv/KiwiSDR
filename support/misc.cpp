@@ -848,24 +848,25 @@ u4_t pos_wrap_diff(u4_t next, u4_t prev, u4_t size)
 #define N_TO_UNITS 16
 static char toUnits_buf[4][N_TO_UNITS];
 
-char *toUnits(int num, int instance)
+char *toUnits(int num, int instance, const char *suffix)
 {
     char *cp = toUnits_buf[instance];
     float nf;
+    if (suffix == NULL) suffix = "";
     
     if (num < 1000) {
-        kiwi_snprintf_ptr(cp, N_TO_UNITS, "%d", num);
+        kiwi_snprintf_ptr(cp, N_TO_UNITS, "%d%s", num, suffix);
     } else
     if (num < 1000000) {
         nf = num / 1e3;
-        kiwi_snprintf_ptr(cp, N_TO_UNITS, "%.1fk", nf);
+        kiwi_snprintf_ptr(cp, N_TO_UNITS, "%.1fk%s", nf, suffix);
     } else
     if (num < 1000000000) {
         nf = num / 1e6;
-        kiwi_snprintf_ptr(cp,  N_TO_UNITS,"%.1fM", nf);
+        kiwi_snprintf_ptr(cp,  N_TO_UNITS,"%.1fM%s", nf, suffix);
     } else {
         nf = num / 1e9;
-        kiwi_snprintf_ptr(cp, N_TO_UNITS, "%.1fG", nf);
+        kiwi_snprintf_ptr(cp, N_TO_UNITS, "%.1fG%s", nf, suffix);
     }
 
     return cp;

@@ -1438,11 +1438,10 @@ function audio_stats()
    }
    
    if (isNaN(out_sps)) out_sps = 0;
+   update_wf_stats();
    w3_innerHTML('id-status-audio',
-      w3_text('w3-text-css-orange', 'WF'),
-      w3_text('', kiwi.wf_fps.toFixed(0) +' fps'),
       w3_text('w3-text-css-orange', 'Audio'),
-      w3_text('', (out_sps/1000).toFixed(1) +'k, Qlen '+ audio_prepared_buffers.length)
+      w3_text('', (out_sps/1000).toFixed(1) +' kb/s, Qlen '+ audio_prepared_buffers.length)
    );
 
 	audio_stat_input_size = 0;

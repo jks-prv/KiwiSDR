@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 module receiver (
 	input wire		   adc_clk,
@@ -49,15 +49,16 @@ module receiver (
 	
 `include "kiwi.gen.vh"
 
-	wire set_rx_chan_C  =  wrReg2 & op_11[SET_RX_CHAN];
-	wire freq_l         =  wrReg2 & op_11[FREQ_L];
-	wire set_rx_freqH_C = (wrReg2 & op_11[SET_RX_FREQ]) && !freq_l;
-	wire set_rx_freqL_C = (wrReg2 & op_11[SET_RX_FREQ]) &&  freq_l;
+	wire set_rx_chan_C   =  wrReg2 & op_11[SET_RX_CHAN];
+	wire freq_l          =  wrReg2 & op_11[FREQ_L];
+	wire set_rx_freqH_C  = (wrReg2 & op_11[SET_RX_FREQ]) && !freq_l;
+	wire set_rx_freqL_C  = (wrReg2 & op_11[SET_RX_FREQ]) &&  freq_l;
 	
-	wire set_wf_chan_C  =  wrReg2 & op_11[SET_WF_CHAN];
-	wire set_wf_freqH_C = (wrReg2 & op_11[SET_WF_FREQ]) && !freq_l;
-	wire set_wf_freqL_C = (wrReg2 & op_11[SET_WF_FREQ]) &&  freq_l;
-	wire set_wf_decim_C =  wrReg2 & op_11[SET_WF_DECIM];
+	wire set_wf_chan_C   =  wrReg2 & op_11[SET_WF_CHAN];
+	wire set_wf_freqH_C  = (wrReg2 & op_11[SET_WF_FREQ]) && !freq_l;
+	wire set_wf_freqL_C  = (wrReg2 & op_11[SET_WF_FREQ]) &&  freq_l;
+	wire set_wf_decim_C  =  wrReg2 & op_11[SET_WF_DECIM];
+	wire set_wf_offset_C =  wrReg2 & op_11[SET_WF_OFFSET];
 
 	// The FREEZE_TOS event starts the process of latching and synchronizing of the ecpu TOS data
 	// from the cpu_clk to the adc_clk domain. This is needed by subsequent wrReg instructions
@@ -310,6 +311,7 @@ module receiver (
 		.wf_dout_C			(wfn_dout_C),
 
 		.cpu_clk			(cpu_clk),
+		.tos_C              (tos[12:0]),
 		.freeze_tos_A       (freeze_tos_A),
 
 		.samp_wf_rd_rst_C   (samp_wf_rd_rst_C),
@@ -317,6 +319,7 @@ module receiver (
 		.set_wf_freqH_C		(set_wf_freqH_C),
 		.set_wf_freqL_C		(set_wf_freqL_C),
 		.set_wf_decim_C		(set_wf_decim_C),
+		.set_wf_offset_C    (set_wf_offset_C),
 		.rst_wf_sampler_C	(rst_wf_sampler_C),
 		.get_wf_samp_i_C	(get_wf_samp_i_C),
 		.get_wf_samp_q_C	(get_wf_samp_q_C)

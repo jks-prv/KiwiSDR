@@ -121,4 +121,4 @@ void set_cpu_affinity(int cpu);
 
 u4_t pos_wrap_diff(u4_t next, u4_t prev, u4_t size);
 
-char *toUnits(int num, int instance = 0);
+char *toUnits(int num, int instance = 0, const char *suffix = NULL);

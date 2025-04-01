@@ -305,7 +305,8 @@ void c2s_sound(void *param)
 	    // norm_nrx_samps typ: rx8:85 rx4:(170-85)=85 rx14:48 rx3:323.207
 	    case FW_SEL_SDR_RX4_WF4:
 	    case FW_SEL_SDR_WB:       norm_nrx_samps = nrx_samps - ref_nrx_samps; break;
-	    case FW_SEL_SDR_RX8_WF2:  norm_nrx_samps = nrx_samps; break;
+	    case FW_SEL_SDR_RX8_WF2:
+	    case FW_SEL_SDR_RX8_WF8:  norm_nrx_samps = nrx_samps; break;
 	    case FW_SEL_SDR_RX14_WF0: norm_nrx_samps = nrx_samps; break;    // FIXME: this is now the smallest buffer size
 	    case FW_SEL_SDR_RX3_WF3:  const double target = 15960.828e-6;      // empirically measured using GPS 1 PPS input
 	                              norm_nrx_samps = (int) (target * SND_RATE_3CH);

@@ -39,6 +39,14 @@ Boston, MA  02110-1301, USA.
 #include "dx.h"
 #include "non_block.h"
 
+//#define WF_INFO
+//#define WF_APER_INFO
+//#define WF_SPEC_INV_DEBUG
+
+//#define SHOW_MAX_MIN_IQ
+//#define SHOW_MAX_MIN_PWR
+//#define SHOW_MAX_MIN_DB
+
 #define	CMD_ZOOM	0x01
 #define	CMD_START	0x02
 #define	CMD_DB		0x04
@@ -47,4 +55,8 @@ Boston, MA  02110-1301, USA.
 
 extern str_hash_t wf_cmd_hash;
 
+#define WF_RD_OFFSET 512
+extern int wf_rd_offset, wf_slowdown;
+
 void rx_waterfall_cmd(conn_t *conn, int n, char *cmd);
+void rx_waterfall_aperture_auto(wf_inst_t *wf, u1_t *bp);

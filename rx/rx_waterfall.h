@@ -51,15 +51,9 @@ Boston, MA  02110-1301, USA.
 #define TR_WF_CMDS      0
 #define SM_WF_DEBUG		false
 
-#ifdef USE_WF_NEW
-#define	WF_USING_HALF_FFT	1	// the result is contained in the first half of the complex FFT
-#define	WF_USING_HALF_CIC	1	// only use half of the remaining FFT after a CIC
-#define	WF_BETTER_LOOKING	1	// increase in FFT size for better looking display
-#else
 #define	WF_USING_HALF_FFT	2	// the result is contained in the first half of the complex FFT
 #define	WF_USING_HALF_CIC	2	// only use half of the remaining FFT after a CIC
 #define	WF_BETTER_LOOKING	2	// increase in FFT size for better looking display
-#endif
 
 #define WF_OUTPUT	1024	// conceptually same as WF_WIDTH although not required
 #define WF_C_NFFT	(WF_OUTPUT * WF_USING_HALF_FFT * WF_USING_HALF_CIC * WF_BETTER_LOOKING)	// worst case FFT size needed
@@ -69,12 +63,12 @@ Boston, MA  02110-1301, USA.
 
 #define MAX_FFT_USED	MAX(WF_C_NFFT / WF_USING_HALF_FFT, WF_WIDTH)
 
+#define MAX_ZOOM        (kiwi.wf_share ? 11 : 14)
 #define	MAX_START(z)	((WF_WIDTH << MAX_ZOOM) - (WF_WIDTH << (MAX_ZOOM - z)))
 
 struct fft_t {
-	fftwf_plan hw_dft_plan;
-	fftwf_complex hw_c_samps[sizeof(fftwf_complex) * (WF_C_NSAMPS)];
-	fftwf_complex hw_fft[sizeof(fftwf_complex) * (WF_C_NFFT)];
+	fftwf_complex hw_c_samps[WF_C_NSAMPS];
+	fftwf_complex hw_fft[WF_C_NFFT];
 };
 
 struct wf_pkt_t {
@@ -128,7 +122,7 @@ static const char *interp_s[] = { "max", "min", "last", "drop", "cma" };
 
 struct wf_inst_t {
 	conn_t *conn;
-	int rx_chan;
+	int rx_chan, hw_chan;
 	int fft_used, plot_width, plot_width_clamped;
 	int maxdb, mindb, send_dB;
 	float fft_scale[WF_WIDTH], fft_scale_div2[WF_WIDTH], fft_offset;
@@ -146,11 +140,16 @@ struct wf_inst_t {
 	int window_func;
 	bool trigger;
 	
+	tid_t tid;
+	u4_t lock_seq;
+	bool lock_wait;
+	
 	int tr_cmds;
 	u4_t cmd_recv;
 	float cf, HZperStart;
 	float off_freq, off_freq_inv;
 	u64_t i_offset;
+    u4_t decim;
 	bool new_scale_mask;
 	bool spectral_inversion;
 	u4_t aper_pan_timer;
@@ -183,18 +182,21 @@ struct wf_inst_t {
     int last_noise, last_signal;
 };
 
-#define WINF_WF_HANNING          0
-#define WINF_WF_HAMMING          1
-#define WINF_WF_BLACKMAN_HARRIS  2
-#define WINF_WF_NONE             3
+#define WINF_WF_HANNING         0
+#define WINF_WF_HAMMING         1
+#define WINF_WF_BLACKMAN_HARRIS 2
+#define WINF_WF_NONE            3
 #define N_WF_WINF               4
 
 struct wf_shmem_t {
     wf_inst_t wf_inst[MAX_RX_CHANS];        // NB: MAX_RX_CHANS even though there may be fewer MAX_WF_CHANS
     fft_t fft_inst[MAX_WF_CHANS];           // NB: MAX_WF_CHANS not MAX_RX_CHANS
+	fftwf_plan hw_dft_plan;
     float window_function[N_WF_WINF][WF_C_NSAMPS];
     float CIC_comp[WF_C_NSAMPS];
     int n_chunks;
+    u1_t wf_lock[MAX_WF_CHANS];
+    u4_t lock_seq;
 };     
 
 #include "shmem_config.h"
