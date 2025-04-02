@@ -525,6 +525,7 @@ function ant_switch_help()
 function ant_switch_config_focus()
 {
    //console.log('### ant_switch_config_focus');
+   kiwi_clearInterval(ant_sw.focus_interval);
    ant_sw.focus_interval =
       setInterval(
          function() {
@@ -628,12 +629,16 @@ function ant_switch_admin_msg(param)
          return true;
       
       case "antsw_current_ant":
-         console.log('antsw_current_ant: '+ param[1]);
+         //console.log('antsw_current_ant: '+ param[1]);
+         var gnd_el = w3_el('id-antsw-cur0');
+         if (!gnd_el) return;
+         ant_sw.status = param[1];
          var gnd = (param[1] == 'g');
+         
          if (gnd) {
-            w3_innerHTML('id-antsw-cur0', 'antenna(s) grounded');
+            w3_innerHTML(gnd_el, 'antenna(s) grounded');
          }
-         w3_hide2('id-antsw-cur0', !gnd);
+         w3_hide2(gnd_el, !gnd);
          
          var a = param[1].split(',');
          for (i = 1; i <= ant_sw.n_ant; i++) {
@@ -879,4 +884,6 @@ function ant_switch_config_html()
          ext_send('ADM antsw_GetInfo');
       }, 3000
    );
+
+   ant_sw.isConfigured = true;
 }

@@ -51,7 +51,7 @@ function status_html()
 {
    var s2 = admin_sdr_mode?
       (
-         w3_div('w3-container w3-section',
+         w3_div('w3-section',
             w3_text('w3-text-black',
                'Your Kiwi <i>may</i> restart during the nightly update window for the following reasons. ' +
                'The restart will not occur when there are active user connections. <br>' +
@@ -70,8 +70,8 @@ function status_html()
 
    var s3 = admin_sdr_mode?
 		(
-         w3_div('id-msg-errors w3-container') + 
-         w3_div('w3-container w3-section',
+         w3_div('id-msg-errors') + 
+         w3_div('w3-section',
             w3_inline('',
                w3_div('', 'Realtime response histograms:'),
                w3_button('w3-padding-smaller w3-aqua|margin-left:10px', 'Reset', 'status_dpump_hist_reset_cb')
@@ -85,18 +85,19 @@ function status_html()
       ) : '';
    
 	var s =
-      w3_div('id-status w3-hide',
-         w3_div('id-problems w3-container') +
-         w3_div('id-msg-config w3-container') +
-         w3_div('id-msg-debian w3-container') +
-         w3_div('id-msg-gps w3-container') +
-         w3_div('id-msg-snr w3-container') +
-         w3_div('w3-container', 'Browser: '+ navigator.userAgent) +
+      w3_divs('id-status w3-hide/w3-container',
+         w3_div('id-problems') +
+         w3_div('id-msg-config') +
+         w3_div('id-msg-debian') +
+         w3_div('id-msg-gps') +
+         w3_div('id-msg-snr') +
+         w3_div('id-msg-antsw w3-hide') +
+         w3_div('', 'Browser: '+ navigator.userAgent) +
          '<hr>' +
-         w3_div('id-msg-stats-cpu w3-container') +
-         w3_div('id-msg-stats-xfer w3-container') +
+         w3_div('id-msg-stats-cpu') +
+         w3_div('id-msg-stats-xfer') +
          '<hr>' +
-         w3_div('id-users-list w3-container') +
+         w3_div('id-users-list') +
          '<hr>' +
          s2 + s3
       );
@@ -121,7 +122,20 @@ function status_focus()
    }
 
    kiwi_clearInterval(admin.status_interval);
-	admin.status_interval = setInterval(function() { msg_send('SET xfer_stats'); }, 1000);
+	admin.status_interval =
+	   setInterval(
+	      function() {
+	         msg_send('SET xfer_stats');
+	         ext_send('ADM antsw_GetCurrentAnt');
+	         
+	         var hide = true;
+	         if (ant_sw && isNonEmptyString(ant_sw.status) && isFunction(ant_switch_disabled) && !ant_switch_disabled()) {
+	            w3_innerHTML('id-msg-antsw', 'Antennas selected: '+ ant_sw.status);
+	            hide = false;
+	         }
+	         w3_hide2('id-msg-antsw', hide);
+	      },
+	   1000);
 }
 
 function status_blur()
