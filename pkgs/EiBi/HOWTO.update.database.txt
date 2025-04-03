@@ -7,31 +7,19 @@ Instead, use the wget/iconv combination shown. Multiple browsers have this same 
 
 Download .csv and README.TXT files as follows.
 Change Makefile:ABYY to whatever is current on eibispace.de webpage (e.g. "b24")
-Run "make fetch"
+Run "make" (m)
 Verify grep output to make sure correct accented chars: 690;0000-2400;;B;Rádio Clube do Pará;P;B;be;1;;
 
-Added ALE back manually (from A21) using BBedit:
-Makefile does "cat eibi.csv ALE.kiwi.csv > sked-current.csv"
-Sort sked-current.csv file by freq:
-	Text > Apply text transform > Sort lines
-		> Configure (numbers match by value; sort using pattern; type:"[0-9.]+;" entire match; OK)
-		> THEN SELECT THE SINGLE FILE WITH: Apply to: > Choose > open text documents > (drop down) > select sked-current.csv
-		    SELECTION IS TRICKY HERE W/ LATEST BBEDIT. DOUBLE CHECK FILENAME!!!
-            *** otherwise it will apply to the file last time sort was done!
-            *** make sure multiple files are not selected!
-      > Apply
-		> Put back top header line (the one beginning with "kHz:")
-			It gets incorrectly sorted a few dozen lines down the list
-			If this _isn't_ true then sort may have not worked!
-
-make run (mr)
-Will update dx/EiBi.h file
+Note that adds ALE back manually (from A21)
+Makefile does "cat eibi.csv ALE.kiwi.csv > sked-current.csv" and then sorts by freq.
+Will update dx/EiBi.h file.
 Check that "Rádio Clube do Pará" appears correctly in EiBi.h
 
-openwebrx.js:dx.db_s: "EiBi-[AB]yy" string will be automatically updated now.
+openwebrx.js:dx.db_s: "EiBi-[AB]yy" string is automatically updated.
 
 
 History:
+
 A24 updated 5/2/2024
     ====> 1 16.30 VTX1 Indian Navy
     ====> 5 20.50 RJH99 Nizhni Novgorod
@@ -78,3 +66,33 @@ B24 updated 11/5/2024
        12341  186746 1245460 ../../dx/EiBi.h
        13227  200798 1338724 EiBi.h.prev
        25568  387544 2584184 total
+
+A25 updated 4/3/2025
+    ====> 1 16.30 VTX1 Indian Navy
+    ====> 5 20.50 RJH99 Nizhni Novgorod
+    ====> 73 2182.00 Stockholm Radio
+    
+    
+    ident_dict_n=823 ident_size=15173
+    types_total=5119
+     1842 bcast
+      369 util
+       64 time
+     1167 ale
+      124 hfdl
+       82 milcom
+      119 cw
+       21 fsk
+       80 fax
+      580 aero
+      335 marine
+      336 spy
+    entries=10843 max_ident=26 max_same_freq_diff_ident=73(2182.00)
+    VERIFY: There should be matches for Rádio Clube do Pará below
+      {   690.00,    0, 2400,   _|0xfe00|BCST| AM,   36, "BRA", "P",   "B"   },  //  -bcast Rádio Clube do Pará
+      {  4885.00,    0, 2400,   _|0xfe00|BCST| AM,   36, "BRA", "P",   "B"   },  //  -bcast Rádio Clube do Pará
+      /*   36 */ "Rádio Clube do Pará",
+    wc ../../dx/EiBi.h EiBi.h.prev
+       11693  176748 1179328 ../../dx/EiBi.h
+       11693  176748 1179328 EiBi.h.prev
+       23386  353496 2358656 total
