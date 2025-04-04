@@ -577,6 +577,14 @@ make_binary:
 	            @echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
 	            @cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
 	            @echo "================"
+            else ifneq ($(PVT_EXT_DIRS),)
+	            @echo "   => extensions present: compiling from sources"
+	            @echo "================"
+	            @make $(MAKE_ARGS) make_all
+	            @echo "================"
+	            @echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
+	            @cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
+	            @echo "================"
             else ifeq ($(HAS_KIWI_BIN),true)
 	            @echo "   => exists: not compiling from sources"
 	            @echo "   => cp $(PLAT_KIWI_BIN) $(BUILD_DIR)/kiwi.bin"
@@ -628,6 +636,7 @@ build_makefile_inc:
 	@echo CPU = $(CPU)
 	@echo PLAT = $(PLAT)
 	@echo PLATFORMS = $(PLATFORMS)
+	@echo RX_CFG = $(shell grep RX_CFG verilog/kiwi.cfg.vh | cut -d\  -f 4 | tr -d ';')
 	@echo BINARY_DISTRO = $(BINARY_DISTRO)
 	@echo REBASE_DISTRO = $(REBASE_DISTRO)
 	@echo DEBUG = $(DEBUG)
@@ -1261,11 +1270,13 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    @touch $(FORCE_REBOOT)
 
     ifeq ($(BYAI),true)
-        DTS = k3-am67a-beagley-ai.dts k3-am62p-main.dtsi
-        DTS2 = 
+        DTS = k3-am67a-beagley-ai.dts
+        DTS2 = k3-am67a-beagley-ai-spidev2.dts k3-am67a-beagley-ai-mcu_spi0.dts
+        #DTS2 = k3-am67a-beagley-ai-spidev2.dts
         DIR_DTS  = platform/beagleY_AI/$(DEB)
         DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)-*)
         DIR_DTB  = $(DIR_DTB_BASE)/src/arm64/ti
+        DIR_DTB2 = $(DIR_DTB_BASE)/src/arm64/overlays
         ifeq ($(DEBIAN_12_AND_LATER),true)
             DEB := "D12+"
         endif
@@ -1274,6 +1285,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	        @echo "BYAI: install Kiwi device tree to configure SPI and GPIO pins"
             ifeq ($(DEBIAN_12_AND_LATER),true)
 	            @cp -v $(DTS_DEP_SRC) $(DIR_DTB)
+	            @cp -v $(DTS_DEP_SRC2) $(DIR_DTB2)
 	            (cd $(DIR_DTB_BASE); make)
 	            (cd $(DIR_DTB_BASE); make install_arm64)
         endif
@@ -1505,6 +1517,18 @@ make_install_binary:
 	        @echo "make_install_binary: $(PLAT_KIWID_BIN)"
             ifeq ($(MAKE_FORCE),true)
 	            @echo "   => make force: installing from sources"
+	            @echo "================"
+	            @# don't use MAKE_ARGS here!
+	            @make make_install
+	            @echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)"
+	            @cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
+	            @sum $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
+	            @echo "================"
+	            @make make_install_files
+#	            @echo "NB: may reboot at this point due to DO_ONCE FORCE_REBOOT"
+	            @echo "================"
+            else ifneq ($(PVT_EXT_DIRS),)
+	            @echo "   => extensions present: installing from sources"
 	            @echo "================"
 	            @# don't use MAKE_ARGS here!
 	            @make make_install
