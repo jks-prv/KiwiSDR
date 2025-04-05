@@ -29,8 +29,10 @@
 		mmc1 = &sdhci1;
 		mmc2 = &sdhci2;
 		rtc0 = &rtc;
-		spi0 = &spi_gpio;
+		//spi0 = &spi_gpio;
 		spi2 = &main_spi2;
+		//spi0 = &mcu_spi0;
+		//spi0 = &main_spi0;
 		usb0 = &usb0;
 		usb1 = &usb1;
 		i2c1 = &mcu_i2c0;
@@ -599,16 +601,6 @@
 			J722S_IOPAD(0x0090, PIN_INPUT, 2) /* (P27) GPMC0_BE0n_CLE.MCASP1_ACLKX */
 			J722S_IOPAD(0x0098, PIN_INPUT, 2) /* (V21) GPMC0_WAIT0.MCASP1_AFSX */
 			J722S_IOPAD(0x008c, PIN_INPUT, 2) /* (N23) GPMC0_WEn.MCASP1_AXR0 */
-		>;
-	};
-
-	main_mcspi2_pins_default: main-mcspi2-default-pins {
-		pinctrl-single,pins = <
-			J722S_IOPAD(0x1B0, PIN_INPUT, 1) /* (F24) MCASP0_ACLKR.SPI2_CLK */
-			J722S_IOPAD(0x1AC, PIN_INPUT, 1) /* (C27) MCASP0_AFSR.SPI2_CS0 */
-			J722S_IOPAD(0x198, PIN_INPUT, 1) /* (A26) MCASP0_AXR2.SPI2_D1 */
-			J722S_IOPAD(0x1A4, PIN_INPUT, 1) /* (D25) MCASP0_ACLKX.SPI2_CS1 */
-			J722S_IOPAD(0x194, PIN_INPUT, 1) /* (A25) MCASP0_AXR3.SPI2_D0 */
 		>;
 	};
 };
@@ -1279,61 +1271,4 @@ csi0_i2c: &main_i2c2 {
 	>;
 	tx-num-evt = <32>;
 	rx-num-evt = <32>;
-};
-
-&main_spi2 {
-	status = "okay";
-    pinctrl-names = "default";
-    pinctrl-0 = <&main_mcspi2_pins_default>;
-    ti,spi-num-cs = <2>;
-    num-chipselects = <2>;
-    ti,pindir-d0-in-d1-out;
-    //ti,pindir-d0-out-d1-in;
-
-    // see k3-psil-am62p.c for tx/rx thread ID values
-    // cs[23] (tx/rx[23]) not specified
-    
-    // 
-    //dmas = <&main_bcdma 0 0xc308 0>, <&main_bcdma 0 0xc309 0>,
-    //       <&main_bcdma 0 0x4308 0>, <&main_bcdma 0 0x4309 0>;
-    //dma-names = "tx0", "tx1", "rx0", "rx1";
-
-    // Invalid channel asel: 49929(0xc309)
-    //dmas = <&main_pktdma 0 0xc308 0>, <&main_pktdma 0 0xc309 0>,
-    //       <&main_pktdma 0 0x4308 0>, <&main_pktdma 0 0x4309 0>;
-    //dma-names = "tx0", "tx1", "rx0", "rx1";
-
-    //dmas = <&main_pktdma 0 0xc308 0>, <&main_pktdma 0 0x4308 0>;
-    //dma-names = "tx0", "rx0";
-
-    //dmas = <&main_pktdma 0 0xc300 0>, <&main_pktdma 0 0x4300 0>;
-    //dma-names = "tx0", "rx0";
-
-    // Invalid channel asel: 49921(0xc301)
-    //dmas = <&main_pktdma 0 0xc300 0>, <&main_pktdma 0 0xc301 0>,
-    //       <&main_pktdma 0 0x4300 0>, <&main_pktdma 0 0x4301 0>;
-    //dma-names = "tx0", "tx1", "rx0", "rx1";
-
-    // Invalid channel asel: 49921(0xc301) ??
-    //dmas = <&main_pktdma 0 0xc302 0>, <&main_pktdma 0 0xc305 0>,
-    //       <&main_pktdma 0 0x4302 0>, <&main_pktdma 0 0x4305 0>;
-    //dma-names = "tx0", "tx1", "rx0", "rx1";
-
-    channel@0 {
-        symlink = "hat/spi/2.0";
-        compatible = "rohm,dh2228fv";
-        reg = <0>;	/* CE0 */
-        #address-cells = <1>;
-        #size-cells = <0>;
-        spi-max-frequency = <50000000>;
-    };
-
-    channel@1 {
-        symlink = "hat/spi/2.1";
-        compatible = "rohm,dh2228fv";
-        reg = <1>;	/* CE1 */
-        #address-cells = <1>;
-        #size-cells = <0>;
-        spi-max-frequency = <50000000>;
-    };
 };

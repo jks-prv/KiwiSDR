@@ -1,0 +1,78 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include "ti/k3-pinctrl.h"
+
+/*
+ * Helper to show loaded overlays under: /proc/device-tree/chosen/overlays/
+ */
+&{/chosen} {
+    overlays {
+        k3-am67a-beagley-ai-mcu_spi0.kernel = __TIMESTAMP__;
+    };
+};
+
+/ {
+    compatible = "beagle,am67a-beagley-ai", "ti,j722s";
+    
+    fragment@0 {
+        target = <&mcu_pmx0>;
+        __overlay__ {
+            mcu_spi0_pins_default: mcu_spi0-default-pins {
+                pinctrl-single,pins = <
+                    J722S_MCU_IOPAD(0x0008, PIN_INPUT,  0) /* (A9)  MCU_SPI0_CLK */
+                    J722S_MCU_IOPAD(0x0000, PIN_OUTPUT, 0) /* (C12) MCU_SPI0_CS0 */
+                    J722S_MCU_IOPAD(0x0024, PIN_OUTPUT, 2) /* (B3)  WKUP_UART0_RXD.MCU_SPI0_CS2 */
+                    J722S_MCU_IOPAD(0x000c, PIN_INPUT,  0) /* (B12) MCU_SPI0_D0 */
+                    J722S_MCU_IOPAD(0x0010, PIN_INPUT,  0) /* (C11) MCU_SPI0_D1 */
+                >;
+            };
+        };
+    };
+    
+
+    fragment@1 {
+        target = <&mcu_spi0>;
+        __overlay__ {
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&mcu_spi0_pins_default>;
+
+            ti,hwmods = "mcu_mcspi0";
+            //ti,spi-num-cs = <3>;
+            ti,spi-num-cs = <1>;
+            
+            //ti,pindir-d0-in-d1-out;
+            ti,pindir-d0-out-d1-in;
+
+            channel@0 {
+                symlink = "hat/spi/0.0";
+                compatible = "rohm,dh2228fv";
+                reg = <0>;	/* CE0 */
+                spi-max-frequency = <50000000>;
+                status = "okay";
+            };
+
+            // MCU_SPI0_CS1 doesn't appear on header
+            //channel@1 {
+            //    //symlink = "hat/spi/0.1";
+            //    compatible = "rohm,dh2228fv";
+            //    reg = <1>;	/* CE1 */
+            //    spi-max-frequency = <50000000>;
+            //    status = "okay";
+            //};
+
+            //channel@2 {
+            //    symlink = "hat/spi/0.2";
+            //    compatible = "rohm,dh2228fv";
+            //    reg = <2>;	/* CE1 */
+            //    spi-max-frequency = <50000000>;
+            //    status = "okay";
+            //};
+        };
+    };
+};

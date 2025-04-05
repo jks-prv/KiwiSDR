@@ -1,0 +1,79 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * DT Overlay for spidev2.0 & spidev2.1 (mcspi) on BeagleY-AI board.
+ *
+ * Copyright (C) 2023 Texas Instruments Incorporated - https://www.ti.com/
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include "ti/k3-pinctrl.h"
+
+/*
+ * Helper to show loaded overlays under: /proc/device-tree/chosen/overlays/
+ */
+&{/chosen} {
+	overlays {
+		k3-am67a-beagley-ai-spidev2.kernel = __TIMESTAMP__;
+	};
+};
+
+/ {
+    compatible = "beagle,am67a-beagley-ai", "ti,j722s";
+
+    fragment@0 {
+        target = <&main_pmx0>;
+        __overlay__ {
+            overlay_main_mcspi2_pins_default: overlay-main-mcspi2-default-pins {
+                pinctrl-single,pins = <
+                    J722S_IOPAD(0x1B0, PIN_OUTPUT, 1) /* (F24) MCASP0_ACLKR.SPI2_CLK */
+                    J722S_IOPAD(0x1AC, PIN_OUTPUT, 1) /* (C27) MCASP0_AFSR.SPI2_CS0 */
+                    J722S_IOPAD(0x198, PIN_INPUT,  1) /* (A26) MCASP0_AXR2.SPI2_D1 */
+                    J722S_IOPAD(0x1A4, PIN_OUTPUT, 1) /* (D25) MCASP0_ACLKX.SPI2_CS1 */
+                    J722S_IOPAD(0x194, PIN_INPUT,  1) /* (A25) MCASP0_AXR3.SPI2_D0 */
+                >;
+            };
+        };
+    };
+
+    fragment@1 {
+        target = <&main_spi2>;
+        __overlay__ {
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&overlay_main_mcspi2_pins_default>;
+        
+            compatible = "ti,am654-mcspi","ti,omap2-mcspi","ti,omap4-mcspi";
+            ti,hwmods = "mcspi2";
+            ti,spi-num-cs = <2>;
+            ti,pindir-d0-in-d1-out;
+            //ti,pindir-d0-out-d1-in;
+        
+            // see k3-psil-am62p.c for tx/rx thread ID values
+            // only cs[01] (tx/rx[01]) specified here
+            dmas = <&main_pktdma 0xc308 0>, <&main_pktdma 0x4308 0>,
+                   <&main_pktdma 0xc309 0>, <&main_pktdma 0x4309 0>;
+            dma-names = "tx0", "rx0", "tx1", "rx1";
+        
+            channel@0 {
+                symlink = "hat/spi/2.0";
+                compatible = "rohm,dh2228fv";
+                reg = <0>;	/* CS0 */
+                spi-max-frequency = <50000000>;
+            };
+        
+            channel@1 {
+                symlink = "hat/spi/2.1";
+                compatible = "rohm,dh2228fv";
+                reg = <1>;	/* CS1 */
+                spi-max-frequency = <50000000>;
+            };
+        };
+    };
+};
