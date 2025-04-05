@@ -772,10 +772,13 @@ void stat_task(void *param)
             cull_zombies();
 		}
 		
-		static u64_t last_spi_bytes;
-		u64_t spi_bytes = SPI_SHMEM->spi_bytes;
-		printf("SPI: %s\n", toUnits(spi_bytes - last_spi_bytes, 0, "B/s"));
-		last_spi_bytes = spi_bytes;
+		//#define SPI_XFER_STATS
+		#ifdef SPI_XFER_STATS
+            static u64_t last_spi_bytes;
+            u64_t spi_bytes = SPI_SHMEM->spi_bytes;
+            printf("SPI: %s\n", toUnits(spi_bytes - last_spi_bytes, 0, "B/s"));
+            last_spi_bytes = spi_bytes;
+        #endif
 
 		NextTask("stat task");
 		eeprom_test();
