@@ -202,7 +202,9 @@ function mode_html()
    var bw = 245, bwpx = px(bw);
    var pw = 113, pwpx = px(pw);
    var ci = 0;
+   
    var wfs = dbgUs;
+   var max = (admin.is_multi_core);
    var wb = 0;
    
    var wfs1_s = '';
@@ -214,13 +216,13 @@ function mode_html()
       wfs2_s += w3_div('id-fw-wfs w3-flex w3-padding-TB-6');
 
    var s1 = '';
-   if (admin.is_multi_core)
+   if (max)
       s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Max channels', 'id-sidenav-fw', kiwi.RX14_WF0, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX14_WF0));
    if (wb)
       s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Wideband output', 'id-sidenav-fw', kiwi.RX_WB, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX_WB));
 
    var s2 = '';
-   if (admin.is_multi_core)
+   if (max)
       s2 += w3_div('id-fw-14ch w3-flex w3-padding-TB-6');
    if (wb)
       s2 += w3_div('id-fw-wb w3-flex w3-padding-TB-6');
@@ -300,6 +302,13 @@ function mode_html()
             'And also wide IQ bandwidths for external applications processing large parts of the spectrum. ' +
             'In exchange the number of channels must drop from four to three.' +
             '</li>' +
+            
+            (max?
+               ('<br><li><b>Max channels</b><br>' +
+               'For custom Kiwi setups using more powerful BeagleBones (e.g. BBAI, BBAI-64) this mode ' +
+               'maximizes the number of receiver channels. The trade off is that no waterfalls are available. ' +
+               '</li>')
+               : '') +
             
             '</ul>'
          ),
