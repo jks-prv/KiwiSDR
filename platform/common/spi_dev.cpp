@@ -124,7 +124,6 @@ static void _spi_dev(SPI_SEL sel, SPI_MOSI *mosi, int tx_xfers, SPI_MISO *miso, 
 		spi_tr.tx_buf = (unsigned long) txb;
 		spi_tr.rx_buf = (unsigned long) rxb;
 		spi_tr.len = spi_bytes;
-		spi_tr.word_delay_usecs = 0;
 		spi_tr.delay_usecs = 0;
 		spi_tr.speed_hz = speed;
 		spi_tr.bits_per_word = SPI_BPW;		// zero also means 8-bits?
