@@ -778,10 +778,17 @@ void c2s_admin(void *param)
 // backup
 ////////////////////////////////
 
-            i = strcmp(cmd, "SET microSD_write");
+            i = strcmp(cmd, "SET sd_backup");
             if (i == 0) {
-                mprintf_ff("ADMIN: received microSD_write\n");
+                mprintf_ff("ADMIN: received sd_backup\n");
                 sd_backup(conn, true);
+                continue;
+            }
+
+            i = strcmp(cmd, "SET sd_upgrade");
+            if (i == 0) {
+                mprintf_ff("ADMIN: received sd_upgrade\n");
+                sd_upgrade(conn);
                 continue;
             }
 
@@ -1457,13 +1464,11 @@ void c2s_admin(void *param)
             if (i == 0) {
                 if (gps.StatLat) {
                     latLon_t loc;
-                    char grid6[6 + SPACE_FOR_NULL];
+                    char grid6[LEN_GRID6];
                     loc.lat = gps.sgnLat;
                     loc.lon = gps.sgnLon;
-                    if (latLon_to_grid6(&loc, grid6) == 0) {
-                        grid6[6] = '\0';
-                        send_msg_encoded(conn, "ADM", "get_gps_info_cb", "{\"grid\":\"%s\"}", grid6);
-                    }
+                    latLon_to_grid6(&loc, grid6);
+                    send_msg_encoded(conn, "ADM", "get_gps_info_cb", "{\"grid\":\"%s\"}", grid6);
                 }
                 continue;
             }
@@ -1504,13 +1509,10 @@ void c2s_admin(void *param)
             
                 if (gps.StatLat) {
                     latLon_t loc;
-                    char grid6[6 + SPACE_FOR_NULL];
+                    char grid6[LEN_GRID6];
                     loc.lat = gps.sgnLat;
                     loc.lon = gps.sgnLon;
-                    if (latLon_to_grid6(&loc, grid6))
-                        grid6[0] = '\0';
-                    else
-                        grid6[6] = '\0';
+                    latLon_to_grid6(&loc, grid6);
                     sb = kstr_asprintf(sb, ",\"lat\":\"%.6f\",\"lon\":\"%.6f\",\"grid\":\"%s\"",
                         gps.sgnLat, gps.sgnLon, grid6);
                 }

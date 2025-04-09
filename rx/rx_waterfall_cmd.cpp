@@ -156,53 +156,45 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
             #define CIC2_DECIM 0x0100
             u2_t decim, r1, r2;
             
-            #ifdef USE_WF_NEW
-                // currently 11-levels of zoom: z0-z10, MAX_ZOOM == 10
-                // z0-10: R = 2,4,8,16,32,64,128,256,512,1024,2048 for MAX_ZOOM == 10
-                r1 = wf->zoom + 1;
-                r2 = 1;		// R2 = 1
-                decim = ?;
-            #else
-                // NB: because we only use half of the FFT with CIC can zoom one level less
-                int zm1 = (WF_USING_HALF_CIC == 2)? (wf->zoom? (wf->zoom-1) : 0) : wf->zoom;
+            // NB: because we only use half of the FFT with CIC can zoom one level less
+            int zm1 = (WF_USING_HALF_CIC == 2)? (wf->zoom? (wf->zoom-1) : 0) : wf->zoom;
 
-                #ifdef USE_WF_1CIC
+            #ifdef USE_WF_1CIC
+    
+                // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
+                if (zm1 == 0) {
+                    // z0-1: R = 1,1
+                    r1 = 0;
+                } else {
+                    // z2-14: R = 2,4,8,16,32,64,128,256,512,1k,2k,4k,8k for MAX_ZOOM = 14
+                    r1 = zm1;
+                }
         
-                    // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
-                    if (zm1 == 0) {
-                        // z0-1: R = 1,1
-                        r1 = 0;
-                    } else {
-                        // z2-14: R = 2,4,8,16,32,64,128,256,512,1k,2k,4k,8k for MAX_ZOOM = 14
-                        r1 = zm1;
-                    }
-            
-                    // hardware limitation
-                    assert(r1 >= 0 && r1 <= 15);
-                    assert(WF_1CIC_MAXD <= 32768);
-                    decim = CIC1_DECIM << r1;
-                #else
-                    // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
-                    if (zm1 == 0) {
-                        // z0-1: R = 1 (R1 = R2 = 1)
-                        r1 = r2 = 0;
-                    } else
-                    if (zm1 <= WF_2CIC_POW2) {
-                        // z2-8: R = 2,4,8,16,32,64,128 (R1 = 1; R2 = 2,4,8,16,32,64,128)
-                        r1 = 0;
-                        r2 = zm1;
-                    } else {
-                        // z9-14: R = 128,256,512,1k,2k,4k (R1 = 2,4,8,16,32,64; R2 = 128)
-                        r1 = zm1 - WF_2CIC_POW2;
-                        r2 = WF_2CIC_POW2;
-                    }
-            
-                    // hardware limitation
-                    assert(r1 >= 0 && r1 <= 7);
-                    assert(r2 >= 0 && r2 <= 7);
-                    assert(WF_2CIC_MAXD <= 127);
-                    decim = (CIC2_DECIM << r2) | (CIC1_DECIM << r1);
-                #endif
+                // hardware limitation
+                assert(r1 >= 0 && r1 <= 15);
+                assert(WF_1CIC_MAXD <= 16384);
+                decim = CIC1_DECIM << r1;
+            #else
+                // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
+                if (zm1 == 0) {
+                    // z0-1: R = 1 (R1 = R2 = 1)
+                    r1 = r2 = 0;
+                } else
+                if (zm1 <= WF_2CIC_POW2) {
+                    // z2-8: R = 2,4,8,16,32,64,128 (R1 = 1; R2 = 2,4,8,16,32,64,128)
+                    r1 = 0;
+                    r2 = zm1;
+                } else {
+                    // z9-14: R = 128,256,512,1k,2k,4k (R1 = 2,4,8,16,32,64; R2 = 128)
+                    r1 = zm1 - WF_2CIC_POW2;
+                    r2 = WF_2CIC_POW2;
+                }
+        
+                // hardware limitation
+                assert(r1 >= 0 && r1 <= 7);
+                assert(r2 >= 0 && r2 <= 7);
+                assert(WF_2CIC_MAXD <= 127);
+                decim = (CIC2_DECIM << r2) | (CIC1_DECIM << r1);
             #endif
             
             float samp_wait_us =  WF_C_NSAMPS * (1 << zm1) / conn->adc_clock_corrected * 1000000.0;
@@ -217,11 +209,16 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
         
             if (wf->nb_enable[NB_BLANKER] && wf->nb_enable[NB_WF]) wf->nb_param_change[NB_BLANKER] = true;
         
-            // when zoom changes reevaluate if overlapped sampling might be needed
+            // when zoom changes re-evaluate if overlapped sampling might be needed
             wf->check_overlapped_sampling = true;
         
-            if (wf->isWF)
-                spi_set(CmdSetWFDecim, rx_chan, decim);
+            if (wf->isWF) {
+                wf->decim = decim;
+                if (!kiwi.wf_share) {
+                    spi_set(CmdSetWFDecim, rx_chan, decim);
+                    spi_set(CmdSetWFOffset, rx_chan, wf_rd_offset);
+                }
+            }
         
             // We've seen cases where the wf connects, but the sound never does.
             // So have to check for conn->other being valid.
@@ -248,11 +245,6 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
         wf->off_freq = wf->start_f * wf->HZperStart;
         wf->off_freq_inv = ((float) maxstart - wf->start_f) * wf->HZperStart;
     
-        #ifdef USE_WF_NEW
-            #error spectral_inversion
-            wf->off_freq += conn->adc_clock_corrected / (4 << wf->zoom);
-        #endif
-    
         wf->i_offset = (u64_t) (s64_t) ((wf->spectral_inversion? wf->off_freq_inv : wf->off_freq) / conn->adc_clock_corrected * pow(2,48));
         wf->i_offset = -wf->i_offset;
 
@@ -261,8 +253,15 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
             wf->zoom, wf->off_freq/kHz, wf->i_offset);
         #endif
     
-        if (wf->isWF)
+        /*
+        if (wf->isWF && kiwi.wf_share) {
+            wf->trigger = true;
+			real_printf(BLUE "%d%dD%dT%012llx " NORM, rx_chan, wf->hw_chan, wf->decim, wf->i_offset);
+		}
+		*/
+        if (wf->isWF && !kiwi.wf_share)
             spi_set3(CmdSetWFFreq, rx_chan, (wf->i_offset >> 16) & 0xffffffff, wf->i_offset & 0xffff);
+
         //jksd
         //printf("START s=%d ->s=%d\n", wf->start_f, wf->start);
         //wf->prev_start = (wf->start == -1)? wf->start_f : wf->start;
@@ -432,4 +431,106 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
             strlen(cmd), cmd[0], cmd[1], cmd[2], cmd, conn->remote_ip);
         conn->unknown_cmd_recvd++;
     }
+}
+
+void rx_waterfall_aperture_auto(wf_inst_t *wf, u1_t *bp)
+{
+    int i, j, rx_chan = wf->rx_chan;
+    if (wf->need_autoscale <= wf->done_autoscale) return;
+    bool single_shot = (wf->aper_algo == OFF);
+
+    // FIXME: for audio FFT needs to be further limited to just passband
+    int start = 0, stop = APER_PWR_LEN, len;
+    if (wf->isFFT) start = 256, stop = 768;     // audioFFT
+    
+    if (wf->avg_clear) {
+        for (i = start; i < stop; i++)
+            wf->avg_pwr[i] = dB_wire_to_dBm(bp[i]);
+        wf->report_sec = timer_sec();
+        wf->last_noise = wf->last_signal = -1;
+        wf->avg_clear = 0;
+    } else {
+        int algo = wf->aper_algo;
+        float param = wf->aper_param;
+        
+        if (single_shot) {
+            algo = MMA;
+            param = 8.0;
+        }
+        
+        switch (algo) {
+        
+        case IIR:
+            for (i = start; i < stop; i++) {
+                float pwr = dB_wire_to_dBm(bp[i]);
+                float iir_gain = 1.0 - expf(-param * pwr/255.0);
+                if (iir_gain <= 0.01) iir_gain = 0.01;  // enforce minimum decay rate
+                wf->avg_pwr[i] += (pwr - wf->avg_pwr[i]) * iir_gain;
+            }
+            break;
+
+        case MMA:
+            for (i = start; i < stop; i++) {
+                float pwr = dB_wire_to_dBm(bp[i]);
+                wf->avg_pwr[i] = ((wf->avg_pwr[i] * (param-1)) + pwr) / param;
+            }
+            break;
+
+        case EMA:
+            for (i = start; i < stop; i++) {
+                float pwr = dB_wire_to_dBm(bp[i]);
+                wf->avg_pwr[i] += (pwr - wf->avg_pwr[i]) / param;
+            }
+            break;
+        }
+    }
+    
+    u4_t now = timer_sec();
+    int delay = single_shot? 1 : 3;
+    if (now < wf->report_sec + delay) return;
+    wf->report_sec = now;
+
+    wf->done_autoscale++;
+
+    #define RESOLUTION_dB 5
+    int band[APER_PWR_LEN];
+    len = 0;
+    for (i = start; i < stop; i++) {
+        int b = ((int) floorf(wf->avg_pwr[i] / RESOLUTION_dB)) * RESOLUTION_dB;
+        if (b <= -190) continue;    // disregard masked areas
+        band[len] = b;
+        len++;
+    }
+    
+    int max_count = 0, max_dBm = -999, min_dBm;
+    if (len) {
+        qsort(band, len, sizeof(int), qsort_intcomp);
+        int last = band[0], same = 0;
+
+        for (i = 0; i <= len; i++) {
+            if (i == len || band[i] != last) {
+                #ifdef WF_APER_INFO
+                    //printf("%4d: %d\n", last, same);
+                #endif
+                if (same > max_count) max_count = same, min_dBm = last;
+                if (last > max_dBm) max_dBm = last;
+                if (i == len) break;
+                same = 1;
+                last = band[i];
+            } else {
+                same++;
+            }
+        }
+    } else {
+        max_dBm = -110;
+        min_dBm = -120;
+    }
+
+    #ifdef WF_APER_INFO
+        printf("### APER_AUTO n/d=%d/%d rx%d algo=%d max_count=%d dBm=%d:%d\n",
+            wf->need_autoscale, wf->done_autoscale, rx_chan, wf->aper_algo, max_count, min_dBm, max_dBm);
+    #endif
+    if (max_dBm < -80) max_dBm = -80;
+    wf->signal = max_dBm;   // headroom applied on js side
+    wf->noise = min_dBm;
 }

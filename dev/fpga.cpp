@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015-2022 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -130,22 +130,27 @@ void printmem(const char *str, u2_t addr)
 void fpga_panic(int code, const char *s)
 {
     lprintf("FPGA panic: code=%d %s\n", code, s);
-    led_clear(0);
     
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            led_set(1,0,1,0, 500);
-            led_set(0,1,0,1, 500);
+    #ifdef DEBUG
+    #else
+        led_clear(0);
+        
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                led_set(1,0,1,0, 500);
+                led_set(0,1,0,1, 500);
+            }
+            led_clear(1000);
+            #define LB(c,v) (((c) & (v))? 1:0)
+            led_set(LB(code,8), LB(code,4), LB(code,2), LB(code,1), 5000);
+            led_clear(1000);
         }
+        
+        led_flash_all(32);
         led_clear(1000);
-        #define LB(c,v) (((c) & (v))? 1:0)
-        led_set(LB(code,8), LB(code,4), LB(code,2), LB(code,1), 5000);
-        led_clear(1000);
-    }
+        led_set_debian();
+    #endif
     
-    led_flash_all(32);
-    led_clear(1000);
-    led_set_debian();
     panic("FPGA panic");
 }
 
@@ -301,8 +306,12 @@ void fpga_init() {
             if (!first) real_printf("after spi_dev SPI2_CH0CONF=0x%08x SPI2_CH0CTRL=0x%08x\n", SPI0_CONF, SPI0_CTRL);
             first = 1;
         #endif
-    }
 
+        #if 0 && defined(TEST_FLAG_SPI_RFI)
+            kiwi_exit(0);
+        #endif
+    }
+    
 	// keep clocking until config/startup finishes
 	n = sizeof(zeros.bytes);
     spi_dev(SPI_FPGA, &zeros, SPI_B2X(n), &readback, SPI_B2X(n));

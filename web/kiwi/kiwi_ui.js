@@ -251,7 +251,10 @@ function sd_backup_blur()
 
 function sd_backup_click_cb(id, idx)
 {
-   console.log('sd_backup_click_cb debian_maj='+ kiwi.debian_maj);
+   kiwi.sd_upgrade = (+idx != 0);
+   console.log('sd_backup_click_cb debian_maj='+ kiwi.debian_maj +' upgrade='+ kiwi.sd_upgrade);
+   kiwi.sd_progress_msg = kiwi.sd_upgrade? 'creating SD card' : 'formatting SD card';
+   
    /*
       if (!dbgUs && (kiwi.debian_maj == 11 || (kiwi.debian_maj == 12 && kiwi.debian_min < 4))) {
          w3_innerHTML('id-sd-backup-msg', 'SD write not supported yet');
@@ -260,7 +263,7 @@ function sd_backup_click_cb(id, idx)
    */
    
    kiwi.backup_size = kiwi.backup_progress = null;
-   w3_innerHTML('id-sd-backup-msg', 'formatting micro-SD card');
+   w3_innerHTML('id-sd-backup-msg', kiwi.sd_progress_msg);
    w3_color('id-sd-backup-msg', '');
    
 	w3_innerHTML('id-sd-progress-text', '');
@@ -271,57 +274,69 @@ function sd_backup_click_cb(id, idx)
 
 	w3_innerHTML('id-sd-backup-icon', kiwi.sd_backup_icon);
 
-	ext_send("SET microSD_write");
+	ext_send('SET '+ (kiwi.sd_upgrade? 'sd_upgrade' : 'sd_backup'));
 }
 
 function sd_backup_progress()
 {
+   var pct;
+	kiwi.sd_progress++;
+	var secs = (kiwi.sd_progress % 60).toFixed(0).leadingZeros(2);
+	var mins = Math.floor(kiwi.sd_progress / 60).toFixed(0);
+	w3_innerHTML('id-sd-backup-time', mins +':'+ secs);
+
    if (kiwi.backup_size && kiwi.backup_progress) {
       if (kiwi.backup_size == 1) {
 		   w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = '100%';
-         w3_innerHTML('id-sd-backup-msg', 'finalizing micro-SD card');
+         w3_innerHTML('id-sd-backup-msg', 'finalizing SD card');
       } else {
-         var pct = ((kiwi.backup_progress / kiwi.backup_size) * 100).toFixed(0);
+         pct = ((kiwi.backup_progress / kiwi.backup_size) * 100).toFixed(0);
          if (pct == 0) pct = 1;
          if (pct <= 99) {	// stall updates until we actually finish in case SD is writing slowly
             w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = pct +'%';
          }
          w3_innerHTML('id-sd-backup-msg', 'copied '+ kiwi.backup_progress.toFixed(0) +' of '+ kiwi.backup_size.toFixed(0) +' MB');
       }
+   } else
+   if (kiwi.sd_upgrade) {
+      pct = ((kiwi.sd_progress / (20*60)) * 100).toFixed(0);
+      if (pct == 0) pct = 1;
+      if (pct <= 99) {	// stall updates until we actually finish in case SD is writing slowly
+         w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = pct +'%';
+      }
    } else {
-      w3_innerHTML('id-sd-backup-msg', 'formatting micro-SD card');
+      w3_innerHTML('id-sd-backup-msg', kiwi.sd_progress_msg);
    }
-
-	kiwi.sd_progress++;
-	var secs = (kiwi.sd_progress % 60).toFixed(0).leadingZeros(2);
-	var mins = Math.floor(kiwi.sd_progress / 60).toFixed(0);
-	w3_innerHTML('id-sd-backup-time', mins +':'+ secs);
 }
 
-function sd_backup_write_done(err)
+function sd_done(err)
 {
-	var msg = 'backup complete';
 	var e;
 	switch (err) {
-	   case  0: e = null; break;
-	   case  1: e = 'no SD card inserted?'; break;
+	   case -1: e = 'Upgrade SD card creation complete'; break;
+	   case  0: e = 'Backup complete'; break;
+	   case  1: e = 'No SD card inserted?'; break;
 	   case 15: e = 'SD card I/O error'; break;
 	   case 30: e = 'SD card already mounted?'; break;
 	   case 31: e = 'SD card format error'; break;
 	   case 87: e = 'Backups not supported on this version of Debian'; break;
-	   case 88: e = '(BBAI-64) must first update to latest Debian version'; break;
+	   case 88: e = '(BBAI-64) Must first update to latest Debian version'; break;
 	   case 89: e = 'SD card flasher enable failed!'; break;
+	   case 90: e = 'Already running Debian 11 or later?'; break;
+	   case 91: e = 'Kiwi must use BeagleBone Green or Black'; break;
+	   case 92: e = 'Not enough free disk space'; break;
+	   case 93: e = 'Image file checksum failed'; break;
 	   default: e = 'code '+ err; break;
 	}
-	if (e) msg = '<b>ERROR: '+ e +'</b>';
+	if (err > 0) e = '<b>ERROR: '+ e +'</b>';
 
-	if (!err) {
+	if (err <= 0) {
 		// force to max in case we never made it during updates
 		w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = '100%';
 	}
 	kiwi_clearInterval(kiwi.sd_interval);
 	w3_innerHTML('id-sd-backup-icon', '');
-   w3_innerHTML('id-sd-backup-msg', msg);
-   w3_color('id-sd-backup-msg', 'red', null, err);
+   w3_innerHTML('id-sd-backup-msg', e);
+   w3_color('id-sd-backup-msg', 'red', null, err > 0);
 }
 

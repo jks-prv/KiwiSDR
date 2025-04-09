@@ -125,7 +125,7 @@ function mfg_html()
 
       /*
          w3_div('w3-valign',
-            w3_button('w3-aqua', 'Click to write micro-SD card', 'sd_backup_click_cb'),
+            w3_button('w3-aqua', 'Click to write SD card', 'sd_backup_click_cb'),
 
             w3_div('w3-margin-L-64',
                w3_div('id-sd-progress-container w3-progress-container w3-round-large w3-css-lightGray w3-show-inline-block',
@@ -202,8 +202,8 @@ function mfg_recv(data)
                w3_show('id-mfg-not-kiwi1');
 			   break;
 
-			case "microSD_done":
-				sd_backup_write_done(parseFloat(param[1]));
+			case "sd_done":
+				sd_done(parseFloat(param[1]));
 				break;
 
 			case "dna":

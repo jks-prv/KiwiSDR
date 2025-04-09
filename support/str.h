@@ -91,6 +91,7 @@ enum { KCLEAN_DELETE = 1, KCLEAN_REPL_SPACE = 2 };
 char *kiwi_str_clean(char *s, int type);
 
 extern char ASCII[256][8];
+extern char COLORS[8][16];
 
 #define STR_HASH_MISS 0
 

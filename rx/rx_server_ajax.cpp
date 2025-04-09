@@ -621,30 +621,14 @@ fail:
 	//	OKAY, used by kiwisdr.com and Priyom Pavlova at the moment
 	//	Returns '\n' delimited keyword=value pairs
 	case AJAX_STATUS: {
-		const char *s1, *s3, *s4 = NULL, *s5, *s6, *s7, *gps_loc;
-		char *s4a = NULL, *ipinfo_lat_lon = NULL;
+		const char *s1, *s3, *s5, *s6, *s7;
+		char *loc, *grid;
+		bool loc_free, grid_free;
 		
-		// if location hasn't been changed from the default try using ipinfo lat/log
-		// or, failing that, put us in Antarctica to be noticed
-		if (kiwi_nonEmptyStr(kiwi.latlon_s)) {
-		    s4a = strdup(kiwi.latlon_s);
-            gps_loc = s4a;
-		} else {
-            s4 = cfg_string("rx_gps", NULL, CFG_OPTIONAL);
-            if (gps_isValid(s4)) {
-                gps_loc = s4;
-            } else {
-                #ifdef USE_GPS
-                    if (kiwi.ipinfo_ll_valid) {
-                        asprintf(&ipinfo_lat_lon, "(%f, %f)", kiwi.ipinfo_lat, kiwi.ipinfo_lon);
-                        gps_loc = ipinfo_lat_lon;
-                    } else
-                #endif
-                {
-                    gps_loc = "(-69.0, 90.0)";		// Antarctica
-                }
-            }
-        }
+        get_location_grid(&loc, &loc_free, &grid, &grid_free);
+        if (!loc) loc = (char *) "(-69.0, 90.0)";     // put us in Antarctica to be noticed
+        if (!grid) grid = (char *) "(none)";
+        printf("AJAX_STATUS loc=<%s> grid=<%s>\n", loc, grid);
 		
 		// append location to name if none of the keywords in location appear in name
 		s1 = cfg_string("rx_name", NULL, CFG_OPTIONAL);
@@ -657,16 +641,16 @@ fail:
 		
 			// hack to include location description in name
 			#define NKWDS 8
-			char *loc, *r_loc;
+			char *t_loc, *r_loc;
 			str_split_t kwds[NKWDS];
-			loc = strdup(s5);
-			n = kiwi_split((char *) loc, &r_loc, ",;-:/()[]{}<>| \t\n", kwds, NKWDS);
+			t_loc = strdup(s5);
+			n = kiwi_split((char *) t_loc, &r_loc, ",;-:/()[]{}<>| \t\n", kwds, NKWDS);
 			for (i=0; i < n; i++) {
 				//printf("KW%d: <%s> '%s'\n", i, kwds[i].str, ASCII[kwds[i].delim]);
 				if (strcasestr(name, kwds[i].str))
 					break;
 			}
-			kiwi_asfree(loc); kiwi_ifree(r_loc, "AJAX_STATUS r_loc");
+			kiwi_asfree(t_loc); kiwi_ifree(r_loc, "AJAX_STATUS r_loc");
 			if (i == n) {
 				char *name2;
 				asprintf(&name2, "%s | %s", name, s5);
@@ -742,7 +726,7 @@ fail:
 			"bands=%.0f-%.0f\nfreq_offset=%.3f\n"
 			"users=%d\nusers_max=%d\npreempt=%d\n"
 			"avatar_ctime=%u\n"
-			"gps=%s\ngps_good=%d\nfixes=%d\nfixes_min=%d\nfixes_hour=%d\n"
+			"gps=%s\ngrid=%s\ngps_good=%d\nfixes=%d\nfixes_min=%d\nfixes_hour=%d\n"
 			"tdoa_id=%s\ntdoa_ch=%d\n"
 			"asl=%d\n"
 			"loc=%s\n"
@@ -788,7 +772,7 @@ fail:
 			(float) kiwi_reg_lo_kHz * kHz, (float) kiwi_reg_hi_kHz * kHz, freq.offset_kHz,
 			users, users_max, preempt,
 			avatar_ctime,
-			gps_loc,
+			loc, grid,
 			#ifdef USE_GPS
 			    gps.good, gps.fixes, gps.fixes_min, gps.fixes_hour,
 			#else
@@ -815,10 +799,9 @@ fail:
 			);
 
 		kiwi_asfree(name);
-		kiwi_asfree(ipinfo_lat_lon);
 		cfg_string_free(s3);
-		cfg_string_free(s4);
-		kiwi_asfree(s4a);
+		if (loc_free) cfg_string_free(loc);
+		if (grid_free) cfg_string_free(grid);
 		cfg_string_free(s5);
 		cfg_string_free(s6);
 		cfg_string_free(s7);

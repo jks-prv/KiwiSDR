@@ -51,7 +51,7 @@ function status_html()
 {
    var s2 = admin_sdr_mode?
       (
-         w3_div('w3-container w3-section',
+         w3_div('w3-section',
             w3_text('w3-text-black',
                'Your Kiwi <i>may</i> restart during the nightly update window for the following reasons. ' +
                'The restart will not occur when there are active user connections. <br>' +
@@ -70,8 +70,8 @@ function status_html()
 
    var s3 = admin_sdr_mode?
 		(
-         w3_div('id-msg-errors w3-container') + 
-         w3_div('w3-container w3-section',
+         w3_div('id-msg-errors') + 
+         w3_div('w3-section',
             w3_inline('',
                w3_div('', 'Realtime response histograms:'),
                w3_button('w3-padding-smaller w3-aqua|margin-left:10px', 'Reset', 'status_dpump_hist_reset_cb')
@@ -85,18 +85,19 @@ function status_html()
       ) : '';
    
 	var s =
-      w3_div('id-status w3-hide',
-         w3_div('id-problems w3-container') +
-         w3_div('id-msg-config w3-container') +
-         w3_div('id-msg-debian w3-container') +
-         w3_div('id-msg-gps w3-container') +
-         w3_div('id-msg-snr w3-container') +
-         w3_div('w3-container', 'Browser: '+ navigator.userAgent) +
+      w3_divs('id-status w3-hide/w3-container',
+         w3_div('id-problems') +
+         w3_div('id-msg-config') +
+         w3_div('id-msg-debian') +
+         w3_div('id-msg-gps') +
+         w3_div('id-msg-snr') +
+         w3_div('id-msg-antsw w3-hide') +
+         w3_div('', 'Browser: '+ navigator.userAgent) +
          '<hr>' +
-         w3_div('id-msg-stats-cpu w3-container') +
-         w3_div('id-msg-stats-xfer w3-container') +
+         w3_div('id-msg-stats-cpu') +
+         w3_div('id-msg-stats-xfer') +
          '<hr>' +
-         w3_div('id-users-list w3-container') +
+         w3_div('id-users-list') +
          '<hr>' +
          s2 + s3
       );
@@ -121,7 +122,20 @@ function status_focus()
    }
 
    kiwi_clearInterval(admin.status_interval);
-	admin.status_interval = setInterval(function() { msg_send('SET xfer_stats'); }, 1000);
+	admin.status_interval =
+	   setInterval(
+	      function() {
+	         msg_send('SET xfer_stats');
+	         ext_send('ADM antsw_GetCurrentAnt');
+	         
+	         var hide = true;
+	         if (ant_sw && isNonEmptyString(ant_sw.status) && isFunction(ant_switch_disabled) && !ant_switch_disabled()) {
+	            w3_innerHTML('id-msg-antsw', 'Antennas selected: '+ ant_sw.status);
+	            hide = false;
+	         }
+	         w3_hide2('id-msg-antsw', hide);
+	      },
+	   1000);
 }
 
 function status_blur()
@@ -179,27 +193,39 @@ function status_user_kick_cb(id, idx)
 
 var mode_icon_snd12 = w3_icon('w3-text-blue', 'fa-volume-up', 28) +'&nbsp;';
 var mode_icon_snd20 = w3_icon('w3-text-red', 'fa-volume-up', 28) +'&nbsp;';
-var mode_icon_fft = w3_icon('w3-text-green', 'fa-bar-chart', 28) +'&nbsp;';
-var mode_icon_wf = w3_icon('w3-text-amber', 'fa-area-chart', 28) +'&nbsp;';
+var mode_icon_fft   = w3_icon('w3-text-green', 'fa-bar-chart', 28) +'&nbsp;';
+var mode_icon_wf    = w3_icon('w3-text-amber', 'fa-area-chart', 28) +'&nbsp;';
+var mode_icon_wfs   = w3_icon('', 'fa-area-chart fa-gradient', 28) +'&nbsp;';
 
 function mode_html()
 {
    var bw = 245, bwpx = px(bw);
    var pw = 113, pwpx = px(pw);
    var ci = 0;
+   
+   var wfs = dbgUs;
+   var max = (admin.is_multi_core);
    var wb = 0;
    
+   var wfs1_s = '';
+   if (wfs)
+      wfs1_s += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Waterfall share', 'id-sidenav-fw', kiwi.RX8_WF8, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF8));
+
+   var wfs2_s = '';
+   if (wfs)
+      wfs2_s += w3_div('id-fw-wfs w3-flex w3-padding-TB-6');
+
    var s1 = '';
+   if (max)
+      s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Max channels', 'id-sidenav-fw', kiwi.RX14_WF0, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX14_WF0));
    if (wb)
       s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Wideband output', 'id-sidenav-fw', kiwi.RX_WB, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX_WB));
-   if (admin.is_multi_core)
-      s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Max channels', 'id-sidenav-fw', kiwi.RX14_WF0, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX14_WF0));
 
    var s2 = '';
+   if (max)
+      s2 += w3_div('id-fw-14ch w3-flex w3-padding-TB-6');
    if (wb)
       s2 += w3_div('id-fw-wb w3-flex w3-padding-TB-6');
-   if (admin.is_multi_core)
-      s2 += w3_div('id-fw-14ch w3-flex w3-padding-TB-6');
 
 	var s =
 	w3_div('id-mode w3-hide',
@@ -214,12 +240,14 @@ function mode_html()
             w3_sidenav('id-sidenav-fw|width:'+ bwpx +';border-collapse:collapse',
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Kiwi classic', 'id-sidenav-fw', kiwi.RX4_WF4, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX4_WF4)),
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More receivers', 'id-sidenav-fw', kiwi.RX8_WF2, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF2)),
+               wfs1_s,
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More bandwidth', 'id-sidenav-fw', kiwi.RX3_WF3, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX3_WF3)),
                s1
             ),
             w3_div('w3-margin-left w3-left',
                w3_div('id-fw-4ch w3-flex w3-padding-TB-6'),
                w3_div('id-fw-8ch w3-flex w3-padding-TB-6'),
+               wfs2_s,
                w3_div('id-fw-3ch w3-flex w3-padding-TB-6'),
                s2
             )
@@ -228,49 +256,63 @@ function mode_html()
 		   w3_div('w3-clear', ' '),      // don't quite understand why this is needed, but it is
 		   w3_div('w3-margin-T-16', '<hr>'),
 
-         w3_col_percent('w3-section/ w3-hspace-16',
-            w3_div('w3-text-black',
-               w3_text('w3-bold w3-margin-B-8 w3-text-teal', 'Trade-offs: receiver channels, audio bandwidth and waterfalls'),
+         w3_div('w3-text-black',
+            w3_text('w3-bold w3-margin-B-8 w3-text-teal', 'Trade-offs: receiver channels, audio bandwidth and waterfalls'),
 
-               w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
-               w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
-               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
-               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12 kHz max bandwidth ')),
-
-               'The original Kiwi FPGA with its 4 tuneable audio/waterfall receiver channels and 12 GPS channels was completely full. ' +
-               'But it is now possible to load a different FPGA configuration where 2 of the waterfalls have been traded for ' +
-               'adding more audio-only receiver channels. '
-            ), 48,
-   
-            w3_div('w3-text-black', ' '), 4,
-   
-            w3_div('w3-text-black',
-               'Having more receiver channels per Kiwi is especially important with the recently added features that are channel intensive. ' +
-               'Namely the TDoA service, WSPR/FT8 autorun and external connection via the kiwirecorder program for using other software such ' +
-               'as WSJT-X and Dream (DRM). When these kinds of connections are made channels rx2 - rx7 will be used first ' +
-               'leaving rx0 and rx1 available for normal browser connections where it is desirable to view the waterfall. ' +
-               'However rx0 and rx1 will be used last if necessary. The configurable TDoA channel limit still applies.<br><br>' +
-
-               'To compensate for lack of the waterfall/spectrum on the new channels an audio-bandwidth FFT is presented instead. ' +
-               'This requires no additional FPGA resources.'
-            ), 48
+            w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
+            w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
+            w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf),  w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
+            wfs?
+               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wfs), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 11-level zoom, shared hardware architecture'))
+               : '',
+            w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12/20 kHz max bandwidth'))
          ),
 		   w3_div('w3-margin-T-16', '<hr>'),
-		   
-         w3_col_percent('w3-section/ w3-hspace-16',
-            w3_div('w3-text-black',
-               'And now a third option "More bandwidth". The audio bandwidth is increased from 12 to 20 kHz. ' +
-               'This supports wide passbands for hi-fidelity listening of AM BCB and SW stations. ' +
-               'And also wide IQ bandwidths for external applications processing large parts of the spectrum. '
-            ), 48,
    
-            w3_div('w3-text-black', ' '), 4,
-   
-            w3_div('w3-text-black',
-               'In exchange the number of channels must drop from four to three.'
-            ), 48
+         w3_div('w3-width-half w3-text-black',
+            'Description of the different modes:' +
+            '<ul>' +
+            
+            '<li><b>Kiwi classic</b><br>' +
+            'The original Kiwi FPGA firmware, with its 4 tuneable audio/waterfall receiver channels and 12 GPS channels. ' +
+            'The other modes were developed later on, where some of the waterfalls and GPS channels are traded for ' +
+            'adding more audio channels.' +
+            '<br><br></li>' +
+            
+            '<li><b>More receivers</b><br>' +
+            'Having more receiver channels per Kiwi is especially important with the features that are channel intensive. ' +
+            'Like the TDoA service, WSPR/FT8 autorun and external connections via the kiwirecorder program for other software such ' +
+            'as wsprdaemon. When these kinds of connections are made in "more receivers" mode channels rx2 - rx7 will be used first. ' +
+            'Leaving rx0 and rx1 available for normal browser connections where it is desirable to view the waterfall. ' +
+            'However rx0 and rx1 will be used last if necessary. A user connection on rx2 - rx7 will show an audio-bandwidth FFT in place of ' +
+            'the usual waterfall. This works because it requires no additional FPGA resources.' +
+            '<br><br></li>' +
+
+            (wfs?
+               ('<li><b>Waterfall share</b><br>' +
+               'This is an 8 channel mode in which the two waterfall FPGA cores of the "more receivers" mode above are shared across all ' +
+               'receiver channels. This has an update speed penalty when many channels are using high zoom levels. Also, the ' +
+               'maximum zoom level is limited to z11 (span 15 kHz) instead of z14 (span 1.8 kHz) ' +
+               '<br><br></li>')
+               : '') +
+            
+            '<li><b>More bandwidth</b><br>' +
+            'In this mode the audio bandwidth is increased from 12 to 20 kHz. ' +
+            'This supports wide passbands for hi-fidelity listening of AM BCB and SW stations. ' +
+            'And also wide IQ bandwidths for external applications processing large parts of the spectrum. ' +
+            'In exchange the number of channels must drop from four to three.' +
+            '</li>' +
+            
+            (max?
+               ('<br><li><b>Max channels</b><br>' +
+               'For custom Kiwi setups using more powerful BeagleBones (e.g. BBAI, BBAI-64) this mode ' +
+               'maximizes the number of receiver channels. The trade off is that no waterfalls are available. ' +
+               '</li>')
+               : '') +
+            
+            '</ul>'
          ),
-		   w3_div('w3-margin-T-16', '<hr>')
+         w3_div('w3-margin-T-16', '<hr>')
       )
 	);
 	
@@ -307,8 +349,9 @@ function mode_focus()
    w3_innerHTML('id-fw-hdr', s);
 
    //var rx12wf = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, mode_icon_fft, '<br>', mode_icon_wf);
-   var rx12_wf = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wf);
-   var rx20_wf = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd20, '<br>', mode_icon_wf);
+   var rx12_wf  = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wf);
+   var rx12_wfs = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wfs);
+   var rx20_wf  = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd20, '<br>', mode_icon_wf);
    
    var rx12_afft = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_fft);
    
@@ -321,6 +364,10 @@ function mode_focus()
    for (i = 0; i < 2; i++) s += rx12_wf;
    for (i = 2; i < 8; i++) s += rx12_afft;
    w3_innerHTML('id-fw-8ch', s);
+
+   s = '';
+   for (i = 0; i < 8; i++) s += rx12_wfs;
+   w3_innerHTML('id-fw-wfs', s);
 
    s = '';
    for (i = 0; i < 3; i++) s += rx20_wf;
@@ -1643,27 +1690,38 @@ function backup_html()
    
 	var s =
       w3_div('id-backup w3-hide',
-         w3_div('w3-margin-bottom w3-text-teal w3-bold', 'Backup complete contents of KiwiSDR by writing Beagle filesystem onto a user provided micro-SD card'),
 
          w3_div('id-sd-backup-container', 
-            w3_div('w3-container w3-text w3-red', 'WARNING: after SD card is written immediately remove from Beagle.<br>Otherwise on next reboot Beagle will be re-flashed from SD card.'),
-            '<hr>',
-
-            w3_div('w3-container w3-valign',
-               w3_button('w3-aqua w3-margin', 'Click to write micro-SD card', 'sd_backup_click_cb'),
+            w3_inline_percent('w3-margin-right/w3-container w3-valign',
+               w3_div('',
+                  w3_div('w3-margin-bottom w3-text-teal w3-bold',
+                     'Backup complete contents of KiwiSDR by writing Beagle filesystem onto a user provided SD card'),
+                  w3_button('w3-aqua', 'Click to write backup SD card', 'sd_backup_click_cb', /* backup */ 0)
+               ), 22,
 
                w3_div('w3-margin-L-64',
-                  w3_div('id-sd-progress-container w3-progress-container w3-round-large w3-css-lightGray w3-show-inline-block',
-                     w3_div('id-sd-progress w3-progressbar w3-round-large w3-light-green w3-width-zero',
-                        w3_div('id-sd-progress-text w3-container')
+                  w3_div('w3-container w3-text w3-red',
+                     'WARNING: after SD card is written immediately remove from Beagle.<br>Otherwise on next reboot Beagle will be re-flashed from SD card.'),
+
+                  w3_inline('|margin-top:45px/',
+                     w3_div('id-sd-progress-container w3-progress-container w3-round-large w3-css-lightGray w3-show-inline-block',
+                        w3_div('id-sd-progress w3-progressbar w3-round-large w3-light-green w3-width-zero',
+                           w3_div('id-sd-progress-text w3-container')
+                        )
+                     ),
+            
+                     w3_inline('/w3-margin-left',
+                        w3_div('id-sd-backup-time'),
+                        w3_div('id-sd-backup-icon'),
+                        w3_div('id-sd-backup-msg')
                      )
-                  ),
-         
-                  w3_inline('w3-margin-T-8/',
-                     w3_div('id-sd-backup-time'),
-                     w3_div('id-sd-backup-icon w3-margin-left'),
-                     w3_div('id-sd-backup-msg w3-margin-left')
                   )
+               ), 56,
+               
+               w3_div('',
+                  w3_div('w3-margin-bottom w3-text-teal w3-bold',
+                     'Create a Debian 11 upgrade SD card which includes all Kiwi customizations in kiwi.config directory.'),
+                  w3_button('w3-aqua', 'Click to write upgrade SD card', 'sd_backup_click_cb', /* upgrade */ 1)
                )
             ),
             '<hr>',
@@ -1676,7 +1734,7 @@ function backup_html()
 
 function backup_focus()
 {
-	w3_width_height('id-sd-progress-container', 300);
+	w3_width_height('id-sd-progress-container', 200);
 	w3_width_height('id-output-msg', null, 400);
 	
    sd_backup_focus();
@@ -1757,7 +1815,7 @@ function network_html()
    }
 
    var spd_s;
-   if (kiwi.platform == kiwi.PLATFORM_BB_AI64) {
+   if (kiwi.platform == kiwi.PLATFORM_BBAI_64) {
       network.ethernet_speed_s[network.ESPEED_10M][network.ESPEED_ENA] = 0;
       spd_s = '10 Mbps setting not available <br> on BBAI-64.';
    } else {
@@ -1860,7 +1918,7 @@ function network_html()
                )
             ),
          
-            w3_div('w3-center w3-text-teal|widthx:300px',
+            w3_div('w3-center w3-text-teal',
                w3_select('w3-width-auto', 'Power on restart delay (secs)', '', 'adm.restart_delay', adm.restart_delay, network.restart_delay_s, 'admin_select_cb'),
                w3_text('w3-block w3-center w3-text-black',
                   'On a power on of the Kiwi, how long to <br>' +
@@ -4702,8 +4760,8 @@ function admin_recv(data)
 				log_update(param[1]);
 				break;
 
-			case "microSD_done":
-				sd_backup_write_done(parseFloat(param[1]));
+			case "sd_done":
+				sd_done(parseFloat(param[1]));
 				break;
 
 			case "domain_check_result":

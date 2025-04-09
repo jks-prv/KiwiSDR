@@ -176,7 +176,7 @@ void GPSstat(STAT st, double d, int i, int j, int k, int m, double d2) {
                 if (gps.sgnLon < 10) delta = 3;
                 if (gps.sgnLon > 170) delta = -3;
                 latLon_t loc;
-                char grid6[6 + SPACE_FOR_NULL];
+                char grid6[LEN_GRID6];
                 loc.lat = gps.sgnLat;
                 loc.lon = gps.sgnLon;
                 latLon_to_grid6(&loc, grid6);

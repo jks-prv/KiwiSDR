@@ -32,6 +32,7 @@
 #include "e1bcode.h"
 #include "debug.h"
 #include "simd.h"
+#include "options.h"
 
 #include <stdio.h>
 #include <sys/file.h>
@@ -236,9 +237,12 @@ void SearchInit() {
         kiwi_exit(0);
 	#endif
 
-	printf("DECIM %d FFT %d planning..\n", DECIM, FFT_LEN);
-    fwd_plan = fftwf_plan_dft_1d(FFT_LEN, fwd_buf, fwd_buf, FFTW_FORWARD,  FFTW_ESTIMATE);
-    rev_plan = fftwf_plan_dft_1d(FFT_LEN, rev_buf, rev_buf, FFTW_BACKWARD, FFTW_ESTIMATE);
+    u4_t plan = bg? FFTW_MEASURE : FFTW_ESTIMATE;
+	printf("DECIM %d FFT %d %s planning..\n", DECIM, FFT_LEN, bg? "FFTW_MEASURE" : "FFTW_ESTIMATE");
+	fftwf_set_timelimit(10);
+    fwd_plan = fftwf_plan_dft_1d(FFT_LEN, fwd_buf, fwd_buf, FFTW_FORWARD,  plan);
+    rev_plan = fftwf_plan_dft_1d(FFT_LEN, rev_buf, rev_buf, FFTW_BACKWARD, plan);
+    printf("..planning\n");
 
     for (sp = Sats; sp->prn != -1; sp++) {
         if (sp->type != Navstar && sp->type != QZSS) continue;
@@ -444,7 +448,16 @@ static void Sample() {
     
     assert(nsamples == NSAMPLES/DECIM && nsamples == FFT_LEN);
 	NextTask("samp4");
-	fftwf_execute(fwd_plan); // Transform to frequency domain
+    #ifdef OPTION_GPS_FFT_MEAS
+        static u4_t loopct;
+        bool meas = ((loopct++ & 0x3ff) == 0);
+        u4_t us;
+        if (meas) us = timer_us();
+        fftwf_execute(fwd_plan); // Transform to frequency domain
+        if (meas) { real_printf("GF%.3f ", (float)(timer_us() - us)/1e3); fflush(stdout); }
+    #else
+        fftwf_execute(fwd_plan); // Transform to frequency domain
+    #endif
     NextTask("samp5");
 }
 
@@ -476,12 +489,19 @@ static float Correlate(int sat, const fftwf_complex *data, int *max_snr_dop, int
                 prod[i][1] = data[i][0]*code[sat][j][1] - data[i][1]*code[sat][j][0];
             }
 		#endif
+		
         NextTaskP("corr FFT LONG RUN", NT_LONG_RUN);
-        //u4_t us = timer_us();
-		fftwf_execute(rev_plan);
-        //u4_t us2 = timer_us();
+        #ifdef OPTION_GPS_FFT_MEAS
+            static u4_t loopct;
+            bool meas = ((loopct++ & 0x3ff) == 0);
+            u4_t us;
+            if (meas) us = timer_us();
+		    fftwf_execute(rev_plan);
+		    if (meas) { real_printf("GR%.3f ", (float)(timer_us() - us)/1e3); fflush(stdout); }
+        #else
+		    fftwf_execute(rev_plan);
+		#endif
         NextTask("corr FFT end");
-        //printf("Correlate FFT %.1f msec\n", (float)(us2-us)/1e3);
 
         for (i=0; i < SAMPLE_RATE/1000*code_period_ms; i++) {		// 1 msec of samples
             const float pwr = prod[i][0]*prod[i][0] + prod[i][1]*prod[i][1];

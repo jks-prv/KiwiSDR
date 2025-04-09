@@ -114,11 +114,11 @@ typedef struct {
 
 bool gps_isValid(const char *lat_lon);
 bool grid_to_latLon(const char *grid, latLon_t *loc);
-int latLon_to_grid6(latLon_t *loc, char *grid);
+void latLon_to_grid6(latLon_t *loc, char *grid);
 int grid_to_distance_km(latLon_t *r_loc, char *grid);
 
 void set_cpu_affinity(int cpu);
 
 u4_t pos_wrap_diff(u4_t next, u4_t prev, u4_t size);
 
-char *toUnits(int num, int instance = 0);
+char *toUnits(int num, int instance = 0, const char *suffix = NULL);

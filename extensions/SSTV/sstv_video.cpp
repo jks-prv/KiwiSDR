@@ -341,6 +341,7 @@ bool sstv_video_get(sstv_chan_t *e, const char *from, int Skip, bool Redraw)
     
             // Lower bound to -20 dB
             SNR = ((Psignal / Pnoise < .01) ? -20 : 10 * SSTV_MLOG10(Psignal / Pnoise));
+            //printf("SSTV snr=%.1f\n", SNR);
     
             NextSNRtime += 256;
         }

@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "kiwi.h"
 #include "types.h"
@@ -87,6 +87,7 @@ static void get_TZ(void *param)
 		}
 	
 	    #ifdef USE_GPS
+	        // use hires to determine timezone in case location straddles a TZ boundary
             if (!haveLatLon && gps.StatLat) {
                 lat = gps.sgnLat; lon = gps.sgnLon;
                 lprintf("TIMEZONE: lat/lon from GPS: (%f, %f)\n", lat, lon);
@@ -96,8 +97,7 @@ static void get_TZ(void *param)
 		
 		// lowest priority since it will be least accurate
 		if (!haveLatLon && kiwi.ipinfo_ll_valid) {
-			lat = kiwi.ipinfo_lat; lon = kiwi.ipinfo_lon;
-			lprintf("TIMEZONE: lat/lon from ipinfo: (%f, %f)\n", lat, lon);
+			lprintf("TIMEZONE: lat/lon from ipinfo: %s\n", kiwi.ipinfo_loc);
 			haveLatLon = true;
 		}
 		
@@ -217,8 +217,9 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
     int dom_stat = (dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
 
     const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
-    int add_nat = (admcfg_bool("auto_add_nat", NULL, CFG_OPTIONAL) == true)? 1:0;
-    bool kiwisdr_com_reg = (admcfg_bool("kiwisdr_com_register", NULL, CFG_OPTIONAL) == true);
+    int add_nat = admcfg_true("auto_add_nat")? 1:0;
+    int dhcp = admcfg_true("use_static")? 0:1;
+    bool kiwisdr_com_reg = admcfg_true("kiwisdr_com_register");
 
     const char *admin_email = cfg_string("admin_email", NULL, CFG_OPTIONAL);
     char *email = kiwi_str_encode((char *) admin_email);
@@ -231,14 +232,14 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         "\"%s/php/my_kiwi.php?auth=308bb2580afb041e0514cd0d4f21919c&"
         "url=http://%s:%d&mac=%s&add_nat=%d&"
         "pub=%s&pvt=%s&"
-        "port=%d&jq=%d&"
+        "port=%d&dhcp=%d&jq=%d&"
         "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
         "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&vr=%x&up=%d"
         "%s\"",
         kiwisdr_com,
         server_url, server_port, net.mac, add_nat,
         net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
-        net.use_ssl? net.port_http_local : net.port, kiwi_file_exists("/usr/bin/jq"),
+        net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
         email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
         dom_sel, dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
         net.serno, kiwisdr_com_reg? 1:0, kiwi.vr, timer_sec(),
@@ -286,7 +287,7 @@ static void misc_NET(void *param)
     
     // DUC
 	system("killall -q noip2");
-	if (admcfg_bool("duc_enable", NULL, CFG_REQUIRED) == true) {
+	if (admcfg_true("duc_enable")) {
 		lprintf("starting noip.com DUC\n");
 		DUC_enable_start = true;
 		
@@ -470,8 +471,7 @@ static void misc_NET(void *param)
     
     NET_WAIT_COND("my_kiwi", "misc_NET", net.pvt_valid && net.pub_valid);
     
-    bool my_kiwi = admcfg_bool("my_kiwi", NULL, CFG_REQUIRED);
-    if (my_kiwi) {
+    if (admcfg_true("my_kiwi")) {
         my_kiwi_register(true, root_pwd_unset, debian_pwd_default);
     }
 }
@@ -561,7 +561,13 @@ static bool ipinfo_json(int https, const char *url, const char *path, const char
         }
         
         if (kiwi.ipinfo_ll_valid) {
-            lprintf("IPINFO: lat/lon = (%f, %f) from %s\n", kiwi.ipinfo_lat, kiwi.ipinfo_lon, url);
+			lat = kiwi.ipinfo_lat; lon = kiwi.ipinfo_lon;
+            asprintf(&kiwi.ipinfo_loc, "(%f, %f)", lat, lon);
+            latLon_t loc;
+            loc.lat = lat;
+            loc.lon = lon;
+            latLon_to_grid6(&loc, kiwi.ipinfo_grid6);
+            lprintf("IPINFO: lat/lon=%s grid=%s from %s\n", kiwi.ipinfo_loc, kiwi.ipinfo_grid6, url);
         }
     }
 
@@ -673,7 +679,7 @@ void UPnP_port(nat_delete_e nat_delete)
     // Attempt to open NAT port in local network router using UPnP (if router supports IGD).
     // Saves Kiwi admin the hassle of figuring out how to do this manually on their router.
     net.auto_nat = 0;
-    bool add_nat = admcfg_bool("auto_add_nat", NULL, CFG_REQUIRED);
+    bool add_nat = admcfg_true("auto_add_nat");
     printf("UPnP_port: auto_add_nat=%d\n", add_nat);
     if (debian_ver == 7 && net.pvt_valid == IPV6) {
         lprintf("auto NAT: not with Debian 7 and IPV6\n");
@@ -906,15 +912,16 @@ static void reg_public(void *param)
 
 	while (1) {
         const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
+        //char *server_enc = kiwi_str_encode((char *) server_url);
 
         const char *admin_email = cfg_string("admin_email", NULL, CFG_OPTIONAL);
         char *email = kiwi_str_encode((char *) admin_email);
         cfg_string_free(admin_email);
 
-        int add_nat = (admcfg_bool("auto_add_nat", NULL, CFG_OPTIONAL) == true)? 1:0;
-        //char *server_enc = kiwi_str_encode((char *) server_url);
+        int add_nat = admcfg_true("auto_add_nat")? 1:0;
+        int dhcp = admcfg_true("use_static")? 0:1;
 
-        bool kiwisdr_com_reg = (admcfg_bool("kiwisdr_com_register", NULL, CFG_OPTIONAL) == true);
+        bool kiwisdr_com_reg = admcfg_true("kiwisdr_com_register");
 
         // proxy always uses port 8073
 	    int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
@@ -926,20 +933,20 @@ static void reg_public(void *param)
             "\"%s/php/update.php?"
             "url=http://%s:%d&mac=%s&add_nat=%d&"
             "pub=%s&pvt=%s&"
-            "port=%d&jq=%d&"
+            "port=%d&dhcp=%d&jq=%d&"
             "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
             "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&up=%d"
             "\" 2>&1",
             kiwisdr_com,
             server_url, server_port, net.mac, add_nat,
             net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
-            net.use_ssl? net.port_http_local : net.port, kiwi_file_exists("/usr/bin/jq"),
+            net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
             email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
             dom_sel, dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
             net.serno, kiwisdr_com_reg? 1:0, timer_sec()
             );
     
-		bool server_enabled = (!down && admcfg_bool("server_enabled", NULL, CFG_REQUIRED) == true);
+		bool server_enabled = (!down && admcfg_true("server_enabled"));
         bool send_deregister = false;
         static bool last_reg;
         if (last_reg && !kiwisdr_com_reg) {     // reg=1 => reg=0 transition
@@ -999,7 +1006,7 @@ void file_GET(void *param)
 	
 	// IP blacklist
 	
-	bool ip_blacklist_auto_download = (admcfg_bool("ip_blacklist_auto_download", NULL, CFG_REQUIRED) == true);
+	bool ip_blacklist_auto_download = admcfg_true("ip_blacklist_auto_download");
     
     if (ip_blacklist_auto_download) {
         restart |= ip_blacklist_get(download_diff_restart);

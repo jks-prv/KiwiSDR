@@ -18,7 +18,7 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-// Copyright (c) 2015-2022 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -95,6 +95,13 @@ static bool init;
  static u4_t gpio_pmux_reg_off[NGPIO][GPIO_NPINS];      // initialized via loop below
 #endif
 
+#ifdef CPU_AM67
+ static u4_t gpio_base[NGPIO] = { GPIO0_BASE };
+
+ // currently ignores second ball assignments since not needed by kiwi
+ static u4_t gpio_pmux_reg_off[NGPIO][GPIO_NPINS];      // initialized via loop below
+#endif
+
 pin_t eeprom_pins[EE_NPINS];
 
 //					  { bank, bit, pin, eeprom_offset }
@@ -160,6 +167,26 @@ gpio_t GPIO_NONE	= { 0xff, 0xff, 0xff, 0xff };
     gpio_t P926 		= { GPIO0, 118, PIN(P9, 26), 110 };
 #endif
 
+// BBYAI-FIXME
+#ifdef CPU_AM67
+//                        { bank,  bit, pin,          eeprom_offset }
+    gpio_t SPIn_SCLK	= { GPIO1,  14, PIN(P9, 22),  88 };
+    gpio_t SPIn_MISO	= { GPIO1,   7, PIN(P9, 21),  90 }; // d0
+    gpio_t SPIn_MOSI	= { GPIO1,   8, PIN(P9, 18),  92 }; // d1
+    gpio_t SPIn_CS0		= { GPIO1,  13, PIN(P9, 17),  94 };
+    gpio_t SPIn_CS1		= { GPIO0,   0, PIN(P9, 16), 158 }; // not the actual spi_cs1 from hardware, but our PIO emulation
+
+    gpio_t FPGA_PGM		= { GPIO0,   0, PIN(P9, 12), 160 };
+    gpio_t FPGA_INIT	= { GPIO0,   0, PIN(P9, 14), 156 };
+
+    gpio_t P911 		= { GPIO0,   0, PIN(P9, 11), 124 };
+    gpio_t P913 		= { GPIO0,   0, PIN(P9, 13), 118 };
+    gpio_t P915 		= { GPIO0,   0, PIN(P9, 15), 152 };
+    gpio_t CMD_READY    = { GPIO0,   0, PIN(P9, 23), 154 };
+    gpio_t SND_INTR		= { GPIO0,   0, PIN(P9, 24), 112 };
+    gpio_t P926 		= { GPIO0,   0, PIN(P9, 26), 110 };
+#endif
+
 
 // P8 connector
 
@@ -219,11 +246,30 @@ gpio_t GPIO_NONE	= { 0xff, 0xff, 0xff, 0xff };
     gpio_t P826			= { GPIO0,  51, PIN(P8, 26), 162 };
 #endif
 
+// BBYAI-FIXME
+#ifdef CPU_AM67
+//                        { bank,  bit, pin,         eeprom_offset }
+    gpio_t JTAG_TCK		= { GPIO0,   0, PIN(P8,  9), 172 };
+    gpio_t JTAG_TMS		= { GPIO0,   0, PIN(P8, 10), 174 };
+    gpio_t JTAG_TDI		= { GPIO0,   0, PIN(P8,  7), 170 };
+    gpio_t JTAG_TDO		= { GPIO0,   0, PIN(P8,  8), 176 };
+    gpio_t P811			= { GPIO0,   0, PIN(P8, 11), 146 };
+    gpio_t P812			= { GPIO0,   0, PIN(P8, 12), 144 };
+    gpio_t P813			= { GPIO0,   0, PIN(P8, 13), 118 };
+    gpio_t P814			= { GPIO0,   0, PIN(P8, 14), 120 };
+    gpio_t P815			= { GPIO0,   0, PIN(P8, 15), 150 };
+    gpio_t P816			= { GPIO0,   0, PIN(P8, 16), 148 };
+    gpio_t P817			= { GPIO0,   0, PIN(P8, 17), 122 };
+    gpio_t P818			= { GPIO0,   0, PIN(P8, 18), 168 };
+    gpio_t P819			= { GPIO0,   0, PIN(P8, 19), 116 };
+    gpio_t P826			= { GPIO0,   0, PIN(P8, 26), 162 };
+#endif
+
 static char pmux_deco_s[4][128];
 
 static char *pmux_deco(int i, u4_t pmux, gpio_t gpio)
 {
-    #ifdef CPU_TDA4VM
+    #if defined(CPU_TDA4VM) || defined(CPU_AM67)
         int drive = pmux & PMUX_DRIVE;
         kiwi_snprintf_buf(pmux_deco_s[i], "<%s, %s, %s, %s, m%-2d>",
             (drive == PMUX_NOM)? " NOM" : ((drive == PMUX_FAST)? "FAST" : "SLOW"),
@@ -353,6 +399,8 @@ static bool check_pmux(const char *name, gpio_t gpio, gpio_dir_e dir, u4_t pmux_
     pmux_pin_attr = 0;
 #endif
 
+// BYAI-FIXME
+//#if defined(CPU_TDA4VM) || defined(CPU_AM67)
 #ifdef CPU_TDA4VM
     pmux_reg_off = gpio_pmux_reg_off[gpio.bank][gpio.bit];
     check(pmux_reg_off != 0);
@@ -493,7 +541,7 @@ void peri_init()
 #ifdef CPU_AM5729
     if (1) {
 #endif
-#ifdef CPU_TDA4VM
+#if defined(CPU_TDA4VM) || defined(CPU_AM67)
     if (0) {
 #endif
 		spi_m = (volatile u4_t *) mmap(
@@ -545,10 +593,15 @@ void peri_init()
 	#endif
 #endif
 	
-#ifdef CPU_TDA4VM
+#if defined(CPU_TDA4VM) || defined(CPU_AM67)
     u4_t pin, reg;
     for (pin = reg = 0; pin < GPIO_NPINS; pin++, reg += 4) {
-        if (reg == 0x48) reg += 4;      // skip 0x48, see data sheet table 6-125 pg 139
+        // TDA4VM: skip PADCONFIG18 0x48, see data sheet table 6-125 pdfpg 139
+        // i.e. PADCONFIG17 = GPIO0_17, but PADCONFIG19 @0x4c = GPIO0_18
+        // NOT true for CPU_AM67, i.e. PADCONFIG18 @0x48 = GPIO0_18 (there is no hole)
+        #ifdef CPU_TDA4VM
+            if (reg == 0x48) reg += 4;
+        #endif
         gpio_pmux_reg_off[GPIO0][pin] = reg;
     }
     
@@ -602,9 +655,10 @@ void peri_init()
     if (debian_ver >= 9)
         lprintf("checking GPIO pmux settings..\n");
 
-#if defined(CPU_AM5729) || defined(CPU_TDA4VM)
+#if defined(CPU_AM5729) || defined(CPU_TDA4VM) || defined(CPU_AM67)
     // BBAI has always used Debian >= 9
     // BBAI-64 has always used Debian >= 11
+    // BYAI has always used Debian >= 12
     devio_check(SPIn_SCLK, GPIO_DIR_OUT, PMUX_IO_PU  | PMUX_SPI, PMUX_SLOW | PMUX_IO_PU  | PMUX_SPI);
     //devio_check(SPIn_MISO, GPIO_DIR_IN,  PMUX_IN_PD  | PMUX_SPI, PMUX_NONE);
     //devio_check(SPIn_MOSI, GPIO_DIR_OUT, PMUX_OUT_PD | PMUX_SPI, PMUX_SLOW | PMUX_OUT_PD | PMUX_SPI);

@@ -18,6 +18,8 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+
 #pragma once
 
 #include "kiwi.h"
@@ -56,6 +58,7 @@ typedef enum { // Embedded CPU commands, order must match 'Commands:' table in .
     CmdClrRXOvfl,
     CmdSetWFFreq,
 	CmdSetWFDecim,
+	CmdSetWFOffset,
     CmdWFReset,
     CmdGetWFSamples,
     CmdGetWFContSamps,
@@ -103,6 +106,7 @@ typedef enum { // Embedded CPU commands, order must match 'Commands:' table in .
     CmdClrRXOvfl = 0,
     CmdSetWFFreq = 0,
 	CmdSetWFDecim = 0,
+	CmdSetWFOffset = 0,
     CmdWFReset = 0,
     CmdGetWFSamples = 0,
     CmdGetWFContSamps = 0,
@@ -160,6 +164,7 @@ static const char *cmds[] = {
     "CmdClrRXOvfl",
     "CmdSetWFFreq",
     "CmdSetWFDecim",
+    "CmdSetWFOffset",
     "CmdWFReset",
     "CmdGetWFSamples",
     "CmdGetWFContSamps",

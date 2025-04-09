@@ -79,6 +79,7 @@ typedef struct {
 
 	#define N_ANT N_SHMEM_STATUS_STR_SMALL
 	char last_ant[N_ANT];
+	char last_selected_antennas[N_ANT];
 } antsw_t;
 
 extern antsw_t antsw;

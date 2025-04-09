@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2022 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -42,6 +42,7 @@ Boston, MA  02110-1301, USA.
 #include "debug.h"
 #include "fpga.h"
 #include "rx_util.h"
+#include "rx_waterfall_cmd.h"
 
 #include "other.gen.h"
 
@@ -72,7 +73,8 @@ int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, 
 	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, rx_num, wf_num,
 	spi_clkg, spi_speed = SPI_48M, spi_mode = -1,
 	do_gps, do_sdr=1, wf_olap, meas, spi_delay=100, debian_ver, monitors_max, bg,
-	print_stats, ecpu_cmds, ecpu_tcmds, use_spidev, debian_maj, debian_min, test_flag, dx_print,
+	print_stats, ecpu_cmds, ecpu_tcmds, use_spidev, spidev_maj = -1, spidev_min = -1,
+	debian_maj, debian_min, test_flag, dx_print,
 	gps_debug, gps_var, gps_lo_gain, gps_cg_gain, use_foptim, is_locked, drm_nreg_chans;
 
 u4_t ov_mask, snd_intr_usec;
@@ -148,11 +150,15 @@ int main(int argc, char *argv[])
 	#endif
 	
 	#ifdef PLATFORM_beaglebone_ai
-	    kiwi.platform = PLATFORM_BB_AI;
+	    kiwi.platform = PLATFORM_BBAI;
 	#endif
 	
 	#ifdef PLATFORM_beaglebone_ai64
-	    kiwi.platform = PLATFORM_BB_AI64;
+	    kiwi.platform = PLATFORM_BBAI_64;
+	#endif
+	
+	#ifdef PLATFORM_beagleY_ai
+	    kiwi.platform = PLATFORM_BYAI;
 	#endif
 	
 	#ifdef PLATFORM_raspberrypi
@@ -180,6 +186,8 @@ int main(int argc, char *argv[])
 		if (ARG("-fw")) { ARGL(fw_sel_override); printf("firmware select override: %d\n", fw_sel_override); } else
 		if (ARG("-fw_test")) { ARGL(fw_test); printf("firmware test: %d\n", fw_test); } else
 		if (ARG("-wb")) { ARGL(wb_sel_override); printf("wideband rate override: %d\n", wb_sel_override); } else
+		if (ARG("-rdoff")) { ARGL(wf_rd_offset); printf("WF rd_offset: %d\n", wf_rd_offset); } else
+		if (ARG("-wfsd")) { ARGL(wf_slowdown); printf("WF slowdown: %d\n", wf_slowdown); } else
 
 		if (ARG("-kiwi_reg")) kiwi_reg_debug = TRUE; else
 		if (ARG("-cmd_debug")) cmd_debug = TRUE; else
@@ -212,6 +220,7 @@ int main(int argc, char *argv[])
 		if (ARG("-ctrace")) { ARGL(web_caching_debug); } else
 		if (ARG("-ext")) kiwi.ext_clk = true; else
 		if (ARG("-use_spidev")) { ARGL(use_spidev); } else
+		if (ARG("-spidev")) { ARGL(spidev_maj); ARGL(spidev_min); printf("spidev%d.%d\n", spidev_maj, spidev_min); } else
 		if (ARG("-eeprom_reset")) eeprom_action = EE_RESET; else
 		if (ARG("-eeprom_fix")) eeprom_action = EE_FIX; else
 		if (ARG("-eeprom_test")) eeprom_action = EE_TEST; else
@@ -379,6 +388,18 @@ int main(int argc, char *argv[])
         rx2_decim = RX2_STD_DECIM;
         nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
         lprintf("firmware: SDR_RX8_WF2\n");
+    } else
+    if (fw_sel == FW_SEL_SDR_RX8_WF8) {
+        fpga_id = FPGA_ID_RX8_WF2;
+        rx_chans = 8;
+        wf_chans = 2;
+        kiwi.wf_share = true;
+        snd_rate = SND_RATE_8CH;
+        rx_decim = RX_DECIM_8CH;
+        rx1_decim = RX1_STD_DECIM;
+        rx2_decim = RX2_STD_DECIM;
+        nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
+        lprintf("firmware: SDR_RX8_WF2 (wf_share)\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX3_WF3) {
         fpga_id = FPGA_ID_RX3_WF3;

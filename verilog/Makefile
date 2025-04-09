@@ -46,6 +46,7 @@ cv2_dev:
 cv: $(GEN_VERILOG)
 	@echo V_PROJ = $(V_PROJ)
 	@echo V_DIR = $(V_DIR)
+	@echo RX_CFG = $(shell grep RX_CFG verilog/kiwi.cfg.vh | cut -d\  -f 4 | tr -d ';')
 	rsync -av --delete $(addprefix --exclude , $(EXCLUDE_CV)) verilog/ $(V_DIR)/$(V_PROJ)
 	rsync -av --delete $(addprefix --exclude , $(EXCLUDE_CV)) verilog.Vivado.$(VIVADO_VER).ip/ $(V_DIR)/$(V_PROJ).Vivado.$(VIVADO_VER).ip
 	make cv2_dev V_SRC_DIR=$(V_SRC_DIR)
@@ -115,7 +116,7 @@ cv:
 	rsync -av --delete --exclude .DS_Store $(V_SRC_DIR)/$(V_PROJ).Vivado.$(VIVADO_VER).ip/ ../import_ip
 	make cv2_host V_SRC_DIR=$(V_SRC_DIR)
 
-RX_CFG = $(shell grep RX_CFG kiwi.cfg.vh | cut -d\  -f 4 | tr -d ';')
+RX_CFG := $(shell grep RX_CFG kiwi.cfg.vh | cut -d\  -f 4 | tr -d ';')
 ifeq ($(RX_CFG),4)
     CFG = rx4.wf4
 else ifeq ($(RX_CFG),8)

@@ -799,10 +799,9 @@ static void dump_info_handler(int arg)
         latLon_t loc;
         loc.lat = gps.sgnLat;
         loc.lon = gps.sgnLon;
-        char grid6[LEN_GRID];
-        if (latLon_to_grid6(&loc, grid6) == 0) {
-            sb = kstr_asprintf(sb, ", \"grid\": \"%.6s\"", grid6);
-        }
+        char grid6[LEN_GRID6];
+        latLon_to_grid6(&loc, grid6);
+        sb = kstr_asprintf(sb, ", \"grid\": \"%.6s\"", grid6);
 
         sb = kstr_asprintf(sb, ", \"fixes\": %d, \"fixes_min\": %d }", gps.fixes, gps.fixes_min);
     #endif
@@ -1025,13 +1024,13 @@ char *rx_users(bool isAdmin)
                 const char *ip = isAdmin? c->remote_ip : "";
                 asprintf(&sb2, "%s{\"i\":%d,\"n\":\"%s\",\"g\":\"%s\",\"f\":%d,"
                     "\"m\":\"%s\",\"z\":%d,"
-                    "\"wf\":%d,"
+                    "\"wf\":%d,\"fc\":%d,"
                     "\"t\":\"%d:%02d:%02d\",\"rt\":%d,\"rn\":%d,\"rs\":\"%d:%02d:%02d\","
                     "\"e\":\"%s\",\"a\":\"%s\",\"c\":%.1f,\"fo\":%.3f,\"ca\":%d,"
                     "\"nc\":%d,\"ns\":%d}",
                     need_comma? ",":"", i, user? user:"", geo? geo:"", c->freqHz,
                     rx_enum2mode(c->mode), c->zoom,
-                    (c->type == STREAM_WATERFALL)? 1:0,
+                    (c->type == STREAM_WATERFALL)? 1:0, (int) floorf(waterfall_fps[i]),
                     hr, min, sec, rtype, rn, r_hr, r_min, r_sec,
                     ext? ext:"", ip,
                     #ifdef USE_SDR
@@ -1290,6 +1289,77 @@ void SNR_meas(void *param)
     } while (1);
 }
 
+// caller must cfg_string_free() if free_* true
+void get_location_grid(char **loc, bool *free_loc, char **grid, bool *free_grid)
+{
+    char *s;
+    
+    if (loc && free_loc) {
+        *free_loc = false;
+        
+        // use auto-updated GPS location
+        if ((cfg_true("GPS_update_web_lores") || cfg_true("GPS_update_web_hires")) && kiwi_nonEmptyStr(kiwi.gps_latlon)) {
+            *loc = kiwi.gps_latlon;
+            //printf("L-auto <%s>\n", *loc);
+        } else {
+            // use configured location
+            // if location hasn't been changed from the default try using ipinfo lat/log
+            s = (char *) cfg_string("rx_gps", NULL, CFG_OPTIONAL);
+            if (s) *free_loc = true;
+
+            if (gps_isValid(s)) {
+                *loc = s;
+                //printf("L-cfg <%s>\n", *loc);
+            } else {
+                if (s) {
+                    cfg_string_free(s);
+                    *free_loc = false;
+                }
+                
+                // use location from ipinfo
+                if (kiwi.ipinfo_ll_valid) {
+                    *loc = kiwi.ipinfo_loc;
+                    //printf("L-ipinfo <%s>\n", *loc);
+                } else {
+                    *loc = NULL;
+                    //printf("L-NONE\n");
+                }
+            }
+        }
+    }
+
+    if (grid && free_grid) {
+        *free_grid = false;
+        
+        // use auto-updated GPS grid
+        if (gps.StatLat && cfg_true("GPS_update_web_grid") && kiwi_nonEmptyStr(kiwi.gps_grid6)) {
+            *grid = kiwi.gps_grid6;
+            //printf("G-auto <%s>\n", *grid);
+        } else {
+            // use configured grid
+            s = (char *) cfg_string("rx_grid", NULL, CFG_OPTIONAL);
+            if (s) *free_grid = true;
+            if (kiwi_nonEmptyStr(s)) {
+                *grid = s;
+                //printf("G-cfg <%s>\n", *grid);
+            } else {
+                if (s) {
+                    cfg_string_free(s);
+                    *free_grid = false;
+                }
+                // use grid from ipinfo
+                if (kiwi.ipinfo_ll_valid && kiwi_nonEmptyStr(kiwi.ipinfo_grid6)) {
+                    *grid = kiwi.ipinfo_grid6;
+                    //printf("G-ipinfo <%s>\n", *grid);
+                } else {
+                    *grid = NULL;
+                    //printf("G-NONE\n");
+                }
+            }
+        }
+    }
+}
+
 void on_GPS_solution()
 {
     //printf("on_GPS_solution: WSPR_auto=%d FT8_auto=%d haveLat=%d\n", wspr_c.GPS_update_grid, ft8_conf.GPS_update_grid, (gps.StatLat != 0));
@@ -1297,18 +1367,14 @@ void on_GPS_solution()
         latLon_t loc;
         loc.lat = gps.sgnLat;
         loc.lon = gps.sgnLon;
-        bool grid_ok = (latLon_to_grid6(&loc, kiwi.grid6) == 0);    // see also gps/stat.cpp::TEST_MM
-        if (wspr_c.GPS_update_grid || ft8_conf.GPS_update_grid) {
-            if (grid_ok) {
-                if (wspr_c.GPS_update_grid)
-                    wspr_update_rgrid(kiwi.grid6);
-                if (ft8_conf.GPS_update_grid)
-                    ft8_update_rgrid(kiwi.grid6);
-            }
-        }
+        char grid6[LEN_GRID6];
+        latLon_to_grid6(&loc, grid6);       // see also gps/stat.cpp::TEST_MM (-mm flag)
+        if (cfg_true("GPS_update_web_grid")) kiwi_strncpy(kiwi.gps_grid6, grid6, LEN_GRID6);
+        if (wspr_c.GPS_update_grid) wspr_update_rgrid(grid6);
+        if (ft8_conf.GPS_update_grid) ft8_update_rgrid(grid6);
         
         int res = cfg_true("GPS_update_web_hires")? 6:2;
-        kiwi_snprintf_buf(kiwi.latlon_s, "(%.*f, %.*f)", res, gps.sgnLat, res, gps.sgnLon);
-        //printf("on_GPS_solution: %s %s\n", kiwi.grid6, kiwi.latlon_s);
+        kiwi_snprintf_buf(kiwi.gps_latlon, "(%.*f, %.*f)", res, gps.sgnLat, res, gps.sgnLon);
+        //printf("on_GPS_solution: %s %s\n", kiwi.gps_grid6, kiwi.gps_latlon);
     }
 }

@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 806
+VERSION_MIN = 807
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -9,7 +9,7 @@ BINARY_DISTRO := true
 #
 # Makefile for KiwiSDR project
 #
-# Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+# Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 #
 # This Makefile can be run on both a build machine (I use a MacBook Pro) and the
 # BeagleBone Black target (Debian release).
@@ -52,7 +52,10 @@ REPO := https://github.com/$(REPO_GIT)
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 
 	# enough parallel make jobs to overcome core stalls from filesystem or nfs delays
-	ifeq ($(BBAI_64),true)
+	ifeq ($(BYAI),true)
+	    # 4 GB DRAM
+		MAKE_ARGS := -j 4
+	else ifeq ($(BBAI_64),true)
 	    # 4 GB DRAM
 		MAKE_ARGS := -j 2
 	else ifeq ($(BBAI),true)
@@ -116,6 +119,7 @@ debug: check_detect make_prereq
 check_detect:
     ifeq ($(BAD_DEV_DETECT),true)
 	    @echo "bad device detect"
+	    @echo "BYAI = $(BYAI)"
 	    @echo "BBAI_64 = $(BBAI_64)"
 	    @echo "BBAI = $(BBAI)"
 	    @echo "RPI = $(RPI)"
@@ -319,11 +323,7 @@ else
 	    LIBS += -lcrypt
 	endif
 
-	ifeq ($(BBAI_64),true)
-		CMD_DEPS += /usr/bin/cpufreq-info
-	endif
-
-	ifeq ($(BBAI),true)
+	ifeq ($(or $(BYAI), $(BBAI_64), $(BBAI)),true)
 		CMD_DEPS += /usr/bin/cpufreq-info
 	endif
 
@@ -345,151 +345,151 @@ endif
 # some of these are prefixed with "-" to keep update from failing if there is damage to /var/lib/dpkg/info
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 
-# runs only once per update of the .keyringN.dep filename
-KEYRING := $(DIR_CFG)/.keyring4.dep
-$(KEYRING):
-	@echo "KEYRING.."
-ifeq ($(DEBIAN_VERSION),7)
-	@echo "switch to using Debian 7 (Wheezy) archive repo"
-	-cp /etc/apt/sources.list /etc/apt/sources.list.orig
-	-sed -e 's/ftp\.us/archive/' < /etc/apt/sources.list >/tmp/sources.list
-	-mv /tmp/sources.list /etc/apt/sources.list
-endif
-ifeq ($(DEBIAN_VERSION),8)
-	@echo "switch to using Debian 8 (Jessie) archive repo"
-	-cp /etc/apt/sources.list /etc/apt/sources.list.orig
-	-cp unix_env/sources.D8.new.list /etc/apt/sources.list
-	-cp unix_env/sources.D8.new.list /etc/apt/
-	-cp unix_env/sources.D8.upgrade.list /etc/apt/
-endif
-ifeq ($(DEBIAN_VERSION),9)
-	@echo "switch to using Debian 9 (Stretch) archive repo"
-	-cp /etc/apt/sources.list /etc/apt/sources.list.orig
-	-cp unix_env/sources.D9.new.list /etc/apt/sources.list
-endif
-	-apt-get -y $(APT_GET_FORCE) update
-	-apt-get -y $(APT_GET_FORCE) install debian-archive-keyring
-	-apt-get -y $(APT_GET_FORCE) update
-	@mkdir -p $(DIR_CFG)
-	touch $(KEYRING)
+    # runs only once per update of the .keyringN.dep filename
+    KEYRING := $(DIR_CFG)/.keyring4.dep
+    $(KEYRING):
+	    @echo "KEYRING.."
+    ifeq ($(DEBIAN_VERSION),7)
+	    @echo "switch to using Debian 7 (Wheezy) archive repo"
+	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	    -sed -e 's/ftp\.us/archive/' < /etc/apt/sources.list >/tmp/sources.list
+	    -mv /tmp/sources.list /etc/apt/sources.list
+    endif
+    ifeq ($(DEBIAN_VERSION),8)
+	    @echo "switch to using Debian 8 (Jessie) archive repo"
+	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	    -cp unix_env/sources.D8.new.list /etc/apt/sources.list
+	    -cp unix_env/sources.D8.new.list /etc/apt/
+	    -cp unix_env/sources.D8.upgrade.list /etc/apt/
+    endif
+    ifeq ($(DEBIAN_VERSION),9)
+	    @echo "switch to using Debian 9 (Stretch) archive repo"
+	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	    -cp unix_env/sources.D9.new.list /etc/apt/sources.list
+    endif
+	    -apt-get -y $(APT_GET_FORCE) update
+	    -apt-get -y $(APT_GET_FORCE) install debian-archive-keyring
+	    -apt-get -y $(APT_GET_FORCE) update
+	    @mkdir -p $(DIR_CFG)
+	    touch $(KEYRING)
 
-# runs once-per-boot
-INSTALL_CERTIFICATES := /tmp/.kiwi-ca-certs
-$(INSTALL_CERTIFICATES):
-	@echo "INSTALL_CERTIFICATES.."
-	make $(KEYRING)
-	-apt-get -y $(APT_GET_FORCE) install ca-certificates
-	-apt-get -y $(APT_GET_FORCE) update
-	touch $(INSTALL_CERTIFICATES)
+    # runs once-per-boot
+    INSTALL_CERTIFICATES := /tmp/.kiwi-ca-certs
+    $(INSTALL_CERTIFICATES):
+	    @echo "INSTALL_CERTIFICATES.."
+	    make $(KEYRING)
+	    -apt-get -y $(APT_GET_FORCE) install ca-certificates
+	    -apt-get -y $(APT_GET_FORCE) update
+	    touch $(INSTALL_CERTIFICATES)
 
-.PHONY: skip_cert_check
-skip_cert_check:
-	touch $(INSTALL_CERTIFICATES)
+    .PHONY: skip_cert_check
+    skip_cert_check:
+	    touch $(INSTALL_CERTIFICATES)
 
-/usr/lib/$(LIB_ARCH)/libfftw3f.a:
-	apt-get -y $(APT_GET_FORCE) install libfftw3-dev
+    /usr/lib/$(LIB_ARCH)/libfftw3f.a:
+	    apt-get -y $(APT_GET_FORCE) install libfftw3-dev
 
-/usr/bin/clang:
-	-apt-get -y $(APT_GET_FORCE) update
-	apt-get -y $(APT_GET_FORCE) install clang
+    /usr/bin/clang:
+	    -apt-get -y $(APT_GET_FORCE) update
+	    apt-get -y $(APT_GET_FORCE) install clang
 
-# NB not a typo: "clang-6.0" vs "clang-7"
+    # NB not a typo: "clang-6.0" vs "clang-7"
 
-/usr/bin/clang-6.0:
-	# With D8 now archived, clang-6.0 must be obtained from the archived D9 backports.
-	# But that repo makes use of an interactive script that requires noninteractive handling.
-	-apt-get -y $(APT_GET_FORCE) update
-	(UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y $(APT_GET_FORCE) install clang-6.0)
+    /usr/bin/clang-6.0:
+	    # With D8 now archived, clang-6.0 must be obtained from the archived D9 backports.
+	    # But that repo makes use of an interactive script that requires noninteractive handling.
+	    -apt-get -y $(APT_GET_FORCE) update
+	    (UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y $(APT_GET_FORCE) install clang-6.0)
 
-/usr/bin/clang-7:
-	-apt-get -y $(APT_GET_FORCE) update
-	apt-get -y $(APT_GET_FORCE) install clang-7
+    /usr/bin/clang-7:
+	    -apt-get -y $(APT_GET_FORCE) update
+	    apt-get -y $(APT_GET_FORCE) install clang-7
 
-/usr/bin/clang-8:
-	-apt-get -y $(APT_GET_FORCE) update
-	apt-get -y $(APT_GET_FORCE) install clang-8
+    /usr/bin/clang-8:
+	    -apt-get -y $(APT_GET_FORCE) update
+	    apt-get -y $(APT_GET_FORCE) install clang-8
 
-/usr/bin/clang-11:
-	-apt-get -y $(APT_GET_FORCE) update
-	apt-get -y $(APT_GET_FORCE) install clang-11
+    /usr/bin/clang-11:
+	    -apt-get -y $(APT_GET_FORCE) update
+	    apt-get -y $(APT_GET_FORCE) install clang-11
 
-/usr/bin/curl:
-	-apt-get -y $(APT_GET_FORCE) install curl
+    /usr/bin/curl:
+	    -apt-get -y $(APT_GET_FORCE) install curl
 
-/usr/bin/wget:
-	-apt-get -y $(APT_GET_FORCE) install wget
+    /usr/bin/wget:
+	    -apt-get -y $(APT_GET_FORCE) install wget
 
-/usr/bin/htop:
-	-apt-get -y $(APT_GET_FORCE) install htop
+    /usr/bin/htop:
+	    -apt-get -y $(APT_GET_FORCE) install htop
 
-/usr/bin/colordiff:
-	-apt-get -y $(APT_GET_FORCE) install colordiff
+    /usr/bin/colordiff:
+	    -apt-get -y $(APT_GET_FORCE) install colordiff
 
-/usr/sbin/avahi-autoipd:
-	-apt-get -y $(APT_GET_FORCE) install avahi-daemon avahi-utils libnss-mdns avahi-autoipd
+    /usr/sbin/avahi-autoipd:
+	    -apt-get -y $(APT_GET_FORCE) install avahi-daemon avahi-utils libnss-mdns avahi-autoipd
 
-/usr/bin/upnpc:
-	-apt-get -y $(APT_GET_FORCE) install miniupnpc
+    /usr/bin/upnpc:
+	    -apt-get -y $(APT_GET_FORCE) install miniupnpc
 
-/usr/bin/dig:
-	-apt-get -y $(APT_GET_FORCE) install dnsutils
+    /usr/bin/dig:
+	    -apt-get -y $(APT_GET_FORCE) install dnsutils
 
-/usr/bin/pgmtoppm:
-	-apt-get -y $(APT_GET_FORCE) install netpbm
+    /usr/bin/pgmtoppm:
+	    -apt-get -y $(APT_GET_FORCE) install netpbm
 
-/sbin/ethtool:
-	-apt-get -y $(APT_GET_FORCE) install ethtool
+    /sbin/ethtool:
+	    -apt-get -y $(APT_GET_FORCE) install ethtool
 
-/usr/bin/sshpass:
-	-apt-get -y $(APT_GET_FORCE) install sshpass
+    /usr/bin/sshpass:
+	    -apt-get -y $(APT_GET_FORCE) install sshpass
 
-/usr/bin/killall:
-	-apt-get -y $(APT_GET_FORCE) install psmisc
+    /usr/bin/killall:
+	    -apt-get -y $(APT_GET_FORCE) install psmisc
 
-/usr/bin/dtc:
-	-apt-get -y $(APT_GET_FORCE) install device-tree-compiler
+    /usr/bin/dtc:
+	    -apt-get -y $(APT_GET_FORCE) install device-tree-compiler
 
-/usr/bin/file:
-	-apt-get -y $(APT_GET_FORCE) install file
+    /usr/bin/file:
+	    -apt-get -y $(APT_GET_FORCE) install file
 
-/bin/nc:
-	-apt-get -y $(APT_GET_FORCE) install netcat
+    ifeq ($(DEBIAN_12_AND_LATER),true)
+        /bin/nc:
+	        -apt-get -y $(APT_GET_FORCE) install netcat-traditional
+    else
+        /bin/nc:
+	        -apt-get -y $(APT_GET_FORCE) install netcat
+    endif
 
-/usr/bin/lftp:
-	(DEBIAN_FRONTEND=noninteractive apt-get -y $(APT_GET_FORCE) install lftp)
+    /usr/bin/lftp:
+	    (DEBIAN_FRONTEND=noninteractive apt-get -y $(APT_GET_FORCE) install lftp)
 
-ifeq ($(DEBIAN_VERSION),10)
-    /usr/bin/connmanctl:
-	    -apt-get -y $(APT_GET_FORCE) install connman
-endif
+    ifeq ($(DEBIAN_VERSION),10)
+        /usr/bin/connmanctl:
+	        -apt-get -y $(APT_GET_FORCE) install connman
+    endif
 
-ifeq ($(DEBIAN_10_AND_LATER),true)
-    /usr/include/openssl/ssl.h:
-	    -apt-get -y install openssl libssl1.1 libssl-dev
-endif
+    ifeq ($(DEBIAN_10_AND_LATER),true)
+        /usr/include/openssl/ssl.h:
+	        -apt-get -y install openssl libssl1.1 libssl-dev
+    endif
 
-ifeq ($(DEBIAN_11_AND_LATER),true)
-    /usr/sbin/ipset:
-	    -apt-get -y install ipset
-else
-    /sbin/ipset:
-	    -apt-get -y $(APT_GET_FORCE) install ipset
-endif
+    ifeq ($(DEBIAN_11_AND_LATER),true)
+        /usr/sbin/ipset:
+	        -apt-get -y install ipset
+    else
+        /sbin/ipset:
+	        -apt-get -y $(APT_GET_FORCE) install ipset
+    endif
 
-ifeq ($(BBAI_64),true)
-    /usr/bin/cpufreq-info:
-	    -apt-get -y install cpufrequtils
-endif
+    ifeq ($(or $(BYAI), $(BBAI_64), $(BBAI)),true)
+        /usr/bin/cpufreq-info:
+	        -apt-get -y install cpufrequtils
+    endif
 
-ifeq ($(BBAI),true)
-    /usr/bin/cpufreq-info:
-	    -apt-get -y install cpufrequtils
-endif
-
-ifneq ($(DEBIAN_VERSION),7)
-    /usr/bin/jq:
-	    -apt-get -y $(APT_GET_FORCE) install jq
-endif
+    ifneq ($(DEBIAN_VERSION),7)
+        /usr/bin/jq:
+	        -apt-get -y $(APT_GET_FORCE) install jq
+    endif
 
 endif
 
@@ -577,6 +577,14 @@ make_binary:
 	            @echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
 	            @cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
 	            @echo "================"
+            else ifneq ($(PVT_EXT_DIRS),)
+	            @echo "   => extensions present: compiling from sources"
+	            @echo "================"
+	            @make $(MAKE_ARGS) make_all
+	            @echo "================"
+	            @echo "   => cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)"
+	            @cp $(BUILD_DIR)/kiwi.bin $(PLAT_KIWI_BIN_NEW)
+	            @echo "================"
             else ifeq ($(HAS_KIWI_BIN),true)
 	            @echo "   => exists: not compiling from sources"
 	            @echo "   => cp $(PLAT_KIWI_BIN) $(BUILD_DIR)/kiwi.bin"
@@ -628,6 +636,7 @@ build_makefile_inc:
 	@echo CPU = $(CPU)
 	@echo PLAT = $(PLAT)
 	@echo PLATFORMS = $(PLATFORMS)
+	@echo RX_CFG = $(shell grep RX_CFG verilog/kiwi.cfg.vh | cut -d\  -f 4 | tr -d ';')
 	@echo BINARY_DISTRO = $(BINARY_DISTRO)
 	@echo REBASE_DISTRO = $(REBASE_DISTRO)
 	@echo DEBUG = $(DEBUG)
@@ -855,6 +864,7 @@ make_vars: check_detect
 	@echo DEBIAN_11_AND_LATER = $(DEBIAN_11_AND_LATER)
 	@echo DEBIAN_12_AND_LATER = $(DEBIAN_12_AND_LATER)
 	@echo
+	@echo BYAI = $(BYAI)
 	@echo BBAI_64 = $(BBAI_64)
 	@echo BBAI = $(BBAI)
 	@echo RPI = $(RPI)
@@ -1222,6 +1232,10 @@ DISABLE_WS:
 	        -@systemctl disable lightdm.service >/dev/null 2>&1 || true
 	        -@systemctl stop nginx.service >/dev/null 2>&1 || true
 	        -@systemctl disable nginx.service >/dev/null 2>&1 || true
+            ifeq ($(BYAI),true)
+	            -@apt-get -y purge bb-code-server >/dev/null 2>&1 || true
+	            -@killall node >/dev/null 2>&1 || true
+            endif
             ifeq ($(BBAI_64),true)
 	            -@systemctl stop bb-code-server.service >/dev/null 2>&1 || true
 	            -@systemctl disable bb-code-server.service >/dev/null 2>&1 || true
@@ -1254,6 +1268,27 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    @touch $(DO_ONCE)
 	    make install_kiwi_device_tree
 	    @touch $(FORCE_REBOOT)
+
+    ifeq ($(BYAI),true)
+        DTS = k3-am67a-beagley-ai.dts
+        DTS2 = k3-am67a-beagley-ai-main_spi2.dts k3-am67a-beagley-ai-main_spi0.dts k3-am67a-beagley-ai-mcu_spi0.dts
+        DIR_DTS  = platform/beagleY_AI/$(DEB)
+        DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)-*)
+        DIR_DTB  = $(DIR_DTB_BASE)/src/arm64/ti
+        DIR_DTB2 = $(DIR_DTB_BASE)/src/arm64/overlays
+        ifeq ($(DEBIAN_12_AND_LATER),true)
+            DEB := "D12+"
+        endif
+
+        install_kiwi_device_tree:
+	        @echo "BYAI: install Kiwi device tree to configure SPI and GPIO pins"
+            ifeq ($(DEBIAN_12_AND_LATER),true)
+	            @cp -v $(DTS_DEP_SRC) $(DIR_DTB)
+	            @cp -v $(DTS_DEP_SRC2) $(DIR_DTB2)
+	            (cd $(DIR_DTB_BASE); make)
+	            (cd $(DIR_DTB_BASE); make install_arm64)
+        endif
+    endif
 
     ifeq ($(BBAI_64),true)
         DTS = k3-j721e-beagleboneai64.dts k3-j721e-beagleboneai64-bone-buses.dtsi
@@ -1481,6 +1516,18 @@ make_install_binary:
 	        @echo "make_install_binary: $(PLAT_KIWID_BIN)"
             ifeq ($(MAKE_FORCE),true)
 	            @echo "   => make force: installing from sources"
+	            @echo "================"
+	            @# don't use MAKE_ARGS here!
+	            @make make_install
+	            @echo "   => cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)"
+	            @cp $(BUILD_DIR)/kiwid.bin $(PLAT_KIWID_BIN_NEW)
+	            @sum $(PLAT_KIWI_BIN_NEW) $(PLAT_KIWID_BIN_NEW)
+	            @echo "================"
+	            @make make_install_files
+#	            @echo "NB: may reboot at this point due to DO_ONCE FORCE_REBOOT"
+	            @echo "================"
+            else ifneq ($(PVT_EXT_DIRS),)
+	            @echo "   => extensions present: installing from sources"
 	            @echo "================"
 	            @# don't use MAKE_ARGS here!
 	            @make make_install
@@ -1964,12 +2011,19 @@ endif
 # development
 ################################
 
+DEP_LFTP := $(if $(REBASE_DISTRO),/usr/bin/lftp,)
+
+lftp: $(DEP_LFTP)
+    ifeq ($(REBASE_DISTRO),true)
+	    -lftp -e 'open http://distro.kiwisdr.com/ && mirror -c --delete --delete-first --verbose=1 . $(DIR_FILE_SRC) && exit'
+	    -chmod +x $(DIR_FILE_SRC)/bin/kiwi*
+	    rsync -av --delete $(DIR_FILE_SRC)/samples/ $(DIR_CFG)/samples
+    endif
+
 # files that have moved to $(BUILD_DIR) that are present in earlier versions (e.g. v1.2)
 clean_deprecated:
 	-rm -rf obj obj_O3 obj_keep kiwi.bin kiwid.bin *.dSYM web/edata*
 	-rm -rf *.dSYM pas extensions/ext_init.cpp kiwi.gen.h kiwid kiwid.aout kiwid_realtime.bin .comp_ctr
-
-DEP_LFTP := $(if $(REBASE_DISTRO),/usr/bin/lftp,)
 
 clean: clean_ext clean_deprecated $(DEP_LFTP)
 	(cd $(REPO_DIR)/e_cpu; make clean)

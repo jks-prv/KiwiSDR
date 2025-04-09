@@ -854,7 +854,8 @@ function init_top_bar()
 
 function update_web_grid(init)
 {
-   var grid = isNonEmptyString(kiwi.GPS_auto_grid)? kiwi.GPS_auto_grid : cfg.index_html_params.RX_QRA;
+   var rx_grid = w3_json_to_string('rx_grid', cfg.rx_grid);
+   var grid = isNonEmptyString(kiwi.GPS_auto_grid)? kiwi.GPS_auto_grid : rx_grid;
    //console_nv('update_web_grid', {init}, {grid}, 'cfg.GPS_update_web_grid');
    if (init != true && !cfg.GPS_update_web_grid) return;
    w3_innerHTML('id-web-grid',
@@ -3893,6 +3894,8 @@ function zoom_finally()
 {
 	w3_innerHTML('id-nav-optbar-wf', 'WF'+ zoom_level.toFixed(0));
 	wf_gnd_value = wf_gnd_value_base - zoomCorrection();
+	zoom_span_Hz = bandwidth / (1 << zoom_level);
+	update_wf_stats();
    extint_environment_changed( { zoom:1, passband_screen_location:1 } );
 	freqset_select();
 }
@@ -3905,7 +3908,7 @@ function zoom_dir_s(dir)
 }
 
 // Extensions can modify value to center waterfall signal between extension control panel and
-// main control panel (keeps signal from bing obscured from a wide extension control panel).
+// main control panel (keeps signal from being obscured from a wide extension control panel).
 // TDoA does this via zoom_center = 0.6
 var zoom_center = 0.5;
 
@@ -3915,6 +3918,7 @@ var zoom_levels_max = 0;
 var zoom_level = 0;
 var zoom_level_f = 0;
 var zoom_freq = 0;
+var zoom_span_Hz = 0;
 var zoom_maxin_s = ['id-maxin', 'id-maxin-nom', 'id-maxin-max'];
 
 var x_bin = 0;				// left edge of waterfall in units of bin number
@@ -4347,7 +4351,7 @@ function spectrum_init()
 
    spec.spectrum_image = spec.ctx.createImageData(spec.canvas.width, spec.canvas.height);
    
-   if (!wf.audioFFT_active && rx_chan >= wf_chans) {
+   if (!wf.audioFFT_active && rx_chan >= wf_chans && !kiwi.wf_share) {
 		// clear entire spectrum canvas to black
 		var sw = spec.canvas.width;
 		var sh = spec.canvas.height;
@@ -4823,7 +4827,7 @@ function wf_init_ready()
 {
 	init_wf_container();
 
-   wf.audioFFT_active = (rx_chan >= wf_chans);
+   wf.audioFFT_active = (rx_chan >= wf_chans && !kiwi.wf_share);
 	resize_waterfall_container(false);
 	resize_wf_canvases();
 	bands_init();
@@ -11519,6 +11523,7 @@ function panels_setup()
 		w3_div('id-status-adc') +
 		w3_div('id-status-config') +
 		w3_div('id-status-gps') +
+		w3_div('id-status-wf') +
 		w3_inline('w3-valign',
 		   w3_div('id-status-audio'), ' ',
 		   w3_div('id-status-problems')
@@ -11528,6 +11533,16 @@ function panels_setup()
 	);
 
 	setTimeout(function() { setInterval(status_periodic, 5000); }, 1000);
+}
+
+function update_wf_stats()
+{
+   var s = 'span '+ zoom_span_Hz.toUnits(true) +'Hz, '+ kiwi.wf_fps.toFixed(0) +' fps';
+   if (kiwi.wf_share) s += ', share mode';
+   w3_innerHTML('id-status-wf',
+      w3_text('w3-text-css-orange', 'WF'),
+      w3_text('', s)
+   );
 }
 
 

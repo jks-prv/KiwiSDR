@@ -19,7 +19,7 @@
 ; http://www.holmea.demon.co.uk/GPS/Main.htm
 ; ============================================================================
 
-; Copyright (c) 2014-2016 John Seamons, ZL4VO/KF6VO
+; Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include ../kiwi.config
 
@@ -461,6 +461,7 @@ Commands:
 				u16		CmdClrRXOvfl
 				u16		CmdSetWFFreq
 				u16		CmdSetWFDecim
+				u16     CmdSetWFOffset
 				u16		CmdWFReset
 				u16		CmdGetWFSamples
 				u16		CmdGetWFContSamps

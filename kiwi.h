@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -45,8 +45,8 @@ Boston, MA  02110-1301, USA.
 
 typedef enum { KiwiSDR_1 = 1, KiwiSDR_2 = 2 } model_e;
 
-typedef enum { PLATFORM_BBG_BBB = 0, PLATFORM_BB_AI = 1, PLATFORM_BB_AI64 = 2, PLATFORM_RPI = 3 } platform_e;
-const char * const platform_s[] = { "beaglebone-black", "bbai", "bbai64", "rpi" };
+typedef enum { PLATFORM_BBG_BBB = 0, PLATFORM_BBAI = 1, PLATFORM_BBAI_64 = 2, PLATFORM_BYAI = 3, PLATFORM_RPI = 4 } platform_e;
+const char * const platform_s[] = { "beaglebone-black", "bbai", "bbai64", "byai", "rpi" };
 
 typedef enum { DAILY_RESTART_NO = 0, DAILY_RESTART = 1, DAILY_REBOOT = 2} daily_restart_e;
 
@@ -68,8 +68,10 @@ typedef struct {
     bool test_marine_mobile;
     u4_t vr, vc;        // virus detection info
     
-    float rf_attn_dB;
+    int current_espeed;
     
+    float rf_attn_dB;
+
     bool snr_initial_meas_done;
     
     bool RsId;
@@ -79,14 +81,19 @@ typedef struct {
     // lat/lon returned by ipinfo lookup
 	bool ipinfo_ll_valid;
 	float ipinfo_lat, ipinfo_lon;
-	char grid6[6 + SPACE_FOR_NULL];
+	char *ipinfo_loc;
+	#define	LEN_GRID6   (6 + SPACE_FOR_NULL)
+	char ipinfo_grid6[LEN_GRID6];
 	
-	char latlon_s[32];
+	char gps_latlon[32];
+	char gps_grid6[LEN_GRID6];
 	
 	// low-res lat/lon from timezone process
 	int lowres_lat, lowres_lon;
 	
 	daily_restart_e daily_restart;
+
+    bool wf_share;
 } kiwi_t;
 
 extern kiwi_t kiwi;
@@ -105,7 +112,8 @@ extern int wf_sim, wf_real, wf_time, ev_dump, wf_flip, wf_exit, wf_start, down,
 	use_spidev, inactivity_timeout_mins, S_meter_cal, waterfall_cal, debug_v, debian_ver,
 	utc_offset, dst_offset, reg_kiwisdr_com_status, kiwi_reg_lo_kHz, kiwi_reg_hi_kHz,
 	debian_maj, debian_min, gps_debug, gps_var, gps_lo_gain, gps_cg_gain, use_foptim, web_caching_debug,
-	drm_nreg_chans, snr_meas_interval_hrs, snr_all, snr_HF, ant_connected;
+	drm_nreg_chans, snr_meas_interval_hrs, snr_all, snr_HF, ant_connected,
+	spidev_maj, spidev_min;
 
 extern char **main_argv;
 
@@ -126,7 +134,7 @@ extern int p_i[8];
 
 typedef enum { DOM_SEL_NAM=0, DOM_SEL_DUC=1, DOM_SEL_PUB=2, DOM_SEL_SIP=3, DOM_SEL_REV=4 } dom_sel_e;
 
-typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3 } firmware_e;
+typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3, RX8_WF8=4 } firmware_e;
 
 #define	KEEPALIVE_SEC		    60
 #define KEEPALIVE_SEC_NO_AUTH   20      // don't hang the rx channel as long if waiting for password entry
@@ -136,7 +144,8 @@ typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3 } firmware_e;
 #define STATS_GPS_SOLN  0x02
 #define STATS_TASK      0x04
 
-#define IDENT_LEN_MIN   16      // e.g. "wsprdaemon_v3.0a" is 16 chars
+#define IDENT_LEN_MIN   8
+#define IDENT_LEN_NOM   16
 
 void kiwi_restart();
 void fpga_init();
@@ -151,6 +160,7 @@ void c2s_sound_setup(void *param);
 void c2s_sound(void *param);
 void c2s_sound_shutdown(void *param);
 
+void c2s_waterfall_once();
 void c2s_waterfall_init();
 void c2s_waterfall_compression(int rx_chan, bool compression);
 void c2s_waterfall_no_sync(int rx_chan, bool no_sync);

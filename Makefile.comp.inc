@@ -1,7 +1,7 @@
 #
 # Makefile for KiwiSDR project
 #
-# Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+# Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 #
 # The '/etc/dogtag' file is present on the Beagle and not on the dev machine.
 # Grep returns 0 if "Debian" is found in /etc/dogtag, 1 if it isn't and 2 if /etc/dogtag doesn't exist.
@@ -54,17 +54,19 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 
         HAS_PROC := $(shell test -d $(KIWI_XC_REMOTE_FS)/proc/device-tree && echo true)
         ifeq ($(HAS_PROC),true)
+            BYAI := $(shell cat $(KIWI_XC_REMOTE_FS)/proc/device-tree/model | grep -q -s "BeagleY-AI" && echo true)
             BBAI_64 := $(shell cat $(KIWI_XC_REMOTE_FS)/proc/device-tree/model | grep -q -s "BeagleBone AI-64" && echo true)
             BBAI := $(shell cat $(KIWI_XC_REMOTE_FS)/proc/device-tree/model | sed "s/\(.*\)./\1x/" | grep -q -s "BeagleBone AIx" && echo true)
             RPI := $(shell cat $(KIWI_XC_REMOTE_FS)/proc/device-tree/model | grep -q -s "Raspberry Pi" && echo true)
         else
             # nfs doesn't see special files in /proc, so have to distinguish BBAI, BBAI-64 manually
+            BYAI := 
             BBAI_64 := 
             BBAI := 
             RPI := $(shell cat $(KIWI_XC_REMOTE_FS)/etc/os-release | grep -q -s "raspbian" && echo true)
         endif
 
-        BBG_BBB := $(and $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
+        BBG_BBB := $(and $(if $(BYAI),,true), $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
         DEBIAN_VERSION := $(shell cat $(KIWI_XC_REMOTE_FS)/etc/debian_version | sed "s/\([0-9]*\)\..*/\1/")
         DEBIAN_VERSION_MIN := $(shell cat /etc/debian_version | sed "s/.*\.\([0-9]*\)/\1/")
         DEBIAN_10_AND_LATER := $(shell [ $(DEBIAN_VERSION) -ge 10 ] && echo true)
@@ -94,10 +96,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
         CFLAGS += -DDEVSYS
         
         # platform choice when building on development machine
+        BYAI := 
         BBAI_64 := 
         BBAI := 
         RPI := 
-        BBG_BBB := $(and $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
+        BBG_BBB := $(and $(if $(BYAI),,true), $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
         PLATFORM = BBG_BBB
 
         # stops incorrect warning for GNU %Nms / %Nm[ automatic string alloc:
@@ -124,10 +127,11 @@ endif
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     CFLAGS += -DHOST
 
+    BYAI := $(shell test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleY-AI" && echo true)
     BBAI_64 := $(shell test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleBone AI-64" && echo true)
     BBAI := $(shell test -e /proc/device-tree && cat /proc/device-tree/model | sed "s/\(.*\)./\1x/" | grep -q -s "BeagleBone AIx" && echo true)
     RPI := $(shell test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "Raspberry Pi" && echo true)
-    BBG_BBB := $(and $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
+    BBG_BBB := $(and $(if $(BYAI),,true), $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
 
     DEBIAN_VERSION := $(shell cat /etc/debian_version | sed "s/\([0-9]*\)\..*/\1/")
     DEBIAN_VERSION_MIN := $(shell cat /etc/debian_version | sed "s/.*\.\([0-9]*\)/\1/")
@@ -135,7 +139,16 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     DEBIAN_11_AND_LATER := $(shell [ $(DEBIAN_VERSION) -ge 11 ] && echo true)
     DEBIAN_12_AND_LATER := $(shell [ $(DEBIAN_VERSION) -ge 12 ] && echo true)
 
-    ifeq ($(BBAI_64),true)
+    ifeq ($(BYAI),true)
+        # Debian 12+
+        CC = clang
+        CPP = clang++
+        VIS_OPT = -Ofast
+        # needed for iq_display.cpp et al
+        CPP_FLAGS += -std=gnu++11
+        CPP_FLAGS += -Wno-fortify-source
+        CMD_DEPS_DEBIAN := /usr/bin/clang
+    else ifeq ($(BBAI_64),true)
         ifeq ($(DEBIAN_VERSION),11)
             CC = clang-11
             CPP = clang++-11
@@ -265,7 +278,19 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 endif
 
 
-ifeq ($(BBAI_64),true)
+ifeq ($(BYAI),true)
+    ARCH := jacinto
+    CPU := AM67
+    PLATFORMS := beaglebone beagleY_ai
+    PLAT := BYAI
+    PLAT_BACKUP := BYAI-FIXME
+    BINARY_INSTALL := true
+    CFLAGS += -DMULTI_CORE
+    FP_FLAGS += -mtune=cortex-a53 -mcpu=cortex-a53
+    #FP_FLAGS += -mfpu=neon-vfpv4 -mfloat-abi=hard
+    ARCH_DIR = arm64
+    LIB_ARCH = aarch64-linux-gnu
+else ifeq ($(BBAI_64),true)
     ARCH := jacinto
     CPU := TDA4VM
     PLATFORMS := beaglebone beaglebone_ai64

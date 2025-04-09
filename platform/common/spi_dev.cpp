@@ -18,11 +18,14 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+
 #include "types.h"
 #include "config.h"
 #include "kiwi.h"
 #include "misc.h"
 #include "cfg.h"
+#include "mem.h"
 #include "peri.h"
 #include "coroutines.h"
 #include "debug.h"
@@ -105,11 +108,23 @@ static void _spi_dev(SPI_SEL sel, SPI_MOSI *mosi, int tx_xfers, SPI_MISO *miso, 
 
 	if (use_spidev) {
 		int spi_bytes = SPI_X2B(MAX(tx_xfers, rx_xfers));
+		
+		//#define SPI_TRACE
+		#ifdef SPI_TRACE
+		    if (mosi->data.cmd < 0 || mosi->data.cmd > (NUM_CMDS+1))
+		        real_printf("T%d:R%d:%d? ", SPI_X2B(tx_xfers), SPI_X2B(rx_xfers), mosi->data.cmd);
+		    else
+		        real_printf("T%d:R%d:%s ", SPI_X2B(tx_xfers), SPI_X2B(rx_xfers), cmds[mosi->data.cmd]);
+            fflush(stdout);
+		#endif
+		
+		SPI_SHMEM->spi_bytes += spi_bytes;
 		struct spi_ioc_transfer spi_tr;
 		memset(&spi_tr, 0, sizeof spi_tr);
 		spi_tr.tx_buf = (unsigned long) txb;
 		spi_tr.rx_buf = (unsigned long) rxb;
 		spi_tr.len = spi_bytes;
+		spi_tr.word_delay_usecs = 0;
 		spi_tr.delay_usecs = 0;
 		spi_tr.speed_hz = speed;
 		spi_tr.bits_per_word = SPI_BPW;		// zero also means 8-bits?
@@ -194,23 +209,30 @@ static void _spi_dev_init(int spi_clkg, int spi_speed)
 	if (use_spidev) {
 		if (spi_fd != -1) close(spi_fd);
 	
-	    const char *spi_devname;
-        #if defined(CPU_AM5729)
-            spi_devname = "/dev/spidev1.0";
-        #elif defined(CPU_AM3359)
-            if (debian_ver <= 9)
-                spi_devname = "/dev/spidev1.0";
-            else
-                spi_devname = "/dev/spidev0.0";
-        #else
-            spi_devname = "/dev/spidev0.0";
-        #endif
+	    char *spi_devname;
+	    if (spidev_maj == -1 || spidev_min == -1) {
+	        spidev_min = 0;
+            #if defined(CPU_AM67)
+                spidev_maj = 2;
+            #elif defined(CPU_AM5729)
+                spidev_maj = 1;
+            #elif defined(CPU_AM3359)
+                if (debian_ver <= 9)
+                    spidev_maj = 1;
+                else
+                    spidev_maj = 0;
+            #else
+                spidev_maj = 0;
+            #endif
+        }
+        asprintf(&spi_devname, "/dev/spidev%d.%d", spidev_maj, spidev_min);
 		lprintf("### open SPI_DEV %s\n", spi_devname);
 	
 		spi_fd = open(spi_devname, O_RDWR);
+        kiwi_asfree(spi_devname);
 		if (spi_fd < 0) {
             #if defined(CPU_TDA4VM)
-                spi_devname = "/dev/spidev9.0";     // name changed with a kernel update around 11/2022
+                spi_devname = (char *) "/dev/spidev9.0";    // name changed with a kernel update around 11/2022
 		        lprintf("### open SPI_DEV %s\n", spi_devname);
 		        spi_fd = open(spi_devname, O_RDWR);
 		        if (spi_fd < 0)
@@ -221,7 +243,11 @@ static void _spi_dev_init(int spi_clkg, int spi_speed)
         }
 	
 		u4_t max_speed = 0, check_speed;
-		if (spi_speed == SPI_48M) max_speed = 48000000; else
+		#ifdef CPU_AM67
+		    if (spi_speed == SPI_48M) max_speed = 50000000; else
+		#else
+		    if (spi_speed == SPI_48M) max_speed = 48000000; else
+		#endif
 		if (spi_speed == SPI_24M) max_speed = 24000000; else
 		if (spi_speed == SPI_12M) max_speed = 12000000; else
 		if (spi_speed == SPI_6M) max_speed = 6000000; else
@@ -315,6 +341,11 @@ void spi_dev_init2()
         #endif
 
         #ifdef CPU_TDA4VM
+            use_spidev = 1;
+            use_async = 1;
+        #endif
+
+        #ifdef CPU_AM67
             use_spidev = 1;
             use_async = 1;
         #endif

@@ -1,6 +1,8 @@
 
 # See HOWTO.update.database.txt
 
+ABYY := a25
+
 include ../../Makefile.comp.inc
 
 PROG = eibi_proc
@@ -24,23 +26,23 @@ $(PROG): $(PROG).o
 %.o: %.cpp
 	$(CPP) $(CFLAGS) $(I) -c $<
 
-ABYY := b24
-fetch:
+fetch all:
 	wget -O /tmp/eibi http://eibispace.de/dx/README.TXT       && iconv -f ISO-8859-1 -t UTF-8 /tmp/eibi > README.txt
 	wget -O /tmp/eibi http://eibispace.de/dx/sked-$(ABYY).csv && iconv -f ISO-8859-1 -t UTF-8 /tmp/eibi > eibi.csv
 	@echo "VERIFY: There should be matches for Rádio Clube do Pará below"
-	grep 'Rádio Clube do Pará' eibi.csv
-	cat eibi.csv ALE.kiwi.csv > sked-current.csv
+	@grep 'Rádio Clube do Pará' eibi.csv
+	cat eibi.csv ALE.kiwi.csv > sked-current.csv.tmp
+	sort -t ';' -s -n -k 1 sked-current.csv.tmp > sked-current.csv
 	cp ../../dx/EiBi.h EiBi.h.prev
-	@echo "EDIT: See HOWTO for sort instructions for sked-current.csv"
+	make run
 
 # always reads from sked-current.csv
 # always writes file ../../dx/EiBi.h
 run: $(PROG)
 	./$(PROG) $(ABYY)
 	@echo "VERIFY: There should be matches for Rádio Clube do Pará below"
-	grep 'Rádio Clube do Pará' ../../dx/EiBi.h
+	@grep 'Rádio Clube do Pará' ../../dx/EiBi.h
 	wc ../../dx/EiBi.h EiBi.h.prev
 
 clean:
-	rm -f $(PROG) *.o *.d eibi.csv sked-current.csv EiBi.h.prev README.txt
+	rm -f $(PROG) *.o *.d eibi.csv sked-current.* EiBi.h.prev README.txt

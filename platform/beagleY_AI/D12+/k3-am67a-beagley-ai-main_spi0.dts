@@ -1,0 +1,79 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * DT Overlay for spidev4.0 & spidev4.1 (mcspi) on BeagleY-AI board.
+ *
+ * Copyright (C) 2023 Texas Instruments Incorporated - https://www.ti.com/
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include "ti/k3-pinctrl.h"
+
+/*
+ * Helper to show loaded overlays under: /proc/device-tree/chosen/overlays/
+ */
+&{/chosen} {
+	overlays {
+		k3-am67a-beagley-ai-main_spi0.kernel = __TIMESTAMP__;
+	};
+};
+
+/ {
+    compatible = "beagle,am67a-beagley-ai", "ti,j722s";
+
+    fragment@0 {
+        target = <&main_pmx0>;
+        __overlay__ {
+            overlay_main_mcspi0_pins_default: overlay-main-mcspi0-default-pins {
+                pinctrl-single,pins = <
+                    // Note: SPI0_D1 on (E20) is used as a GPIO to RGMII1_INT and is unavailable.
+                    J722S_IOPAD(0x1B4, PIN_OUTPUT, 0) /* (B20) SPI0_CS0.EHRPWM0_A */
+                    J722S_IOPAD(0x1B8, PIN_OUTPUT, 0) /* (C20) SPI0_CS1.EHRPWM0_B */
+                    J722S_IOPAD(0x1BC, PIN_OUTPUT, 0) /* (D20) SPI0_CLK.EHRPWM1_A */
+                    J722S_IOPAD(0x1C0, PIN_INPUT,  0) /* (E19) SPI0_D0.EHRPWM1_B */
+                >;
+            };
+        };
+    };
+
+    fragment@1 {
+        target = <&main_spi0>;
+        __overlay__ {
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&overlay_main_mcspi0_pins_default>;
+        
+            compatible = "ti,am654-mcspi","ti,omap2-mcspi","ti,omap4-mcspi";
+            ti,hwmods = "mcspi0";
+            ti,spi-num-cs = <2>;
+            //ti,pindir-d0-in-d1-out;
+            ti,pindir-d0-out-d1-in;
+        
+            // see k3-psil-am62p.c for tx/rx thread ID values
+            // only cs[01] (tx/rx[01]) specified here
+            dmas = <&main_pktdma 0xc300 0>, <&main_pktdma 0x4300 0>,
+                   <&main_pktdma 0xc301 0>, <&main_pktdma 0x4301 0>;
+            dma-names = "tx0", "rx0", "tx1", "rx1";
+        
+            channel@0 {
+                symlink = "hat/spi/4.0";
+                compatible = "rohm,dh2228fv";
+                reg = <0>;	/* CS0 */
+                spi-max-frequency = <50000000>;
+            };
+        
+            channel@1 {
+                symlink = "hat/spi/4.1";
+                compatible = "rohm,dh2228fv";
+                reg = <1>;	/* CS1 */
+                spi-max-frequency = <50000000>;
+            };
+        };
+    };
+};
