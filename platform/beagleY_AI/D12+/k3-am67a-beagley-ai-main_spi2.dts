@@ -18,7 +18,7 @@
  */
 &{/chosen} {
 	overlays {
-		k3-am67a-beagley-ai-spidev2.kernel = __TIMESTAMP__;
+		k3-am67a-beagley-ai-main_spi2.kernel = __TIMESTAMP__;
 	};
 };
 

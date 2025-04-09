@@ -1271,7 +1271,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 
     ifeq ($(BYAI),true)
         DTS = k3-am67a-beagley-ai.dts
-        DTS2 = k3-am67a-beagley-ai-spidev2.dts k3-am67a-beagley-ai-main_spi0.dts k3-am67a-beagley-ai-mcu_spi0.dts
+        DTS2 = k3-am67a-beagley-ai-main_spi2.dts k3-am67a-beagley-ai-main_spi0.dts k3-am67a-beagley-ai-mcu_spi0.dts
         DIR_DTS  = platform/beagleY_AI/$(DEB)
         DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)-*)
         DIR_DTB  = $(DIR_DTB_BASE)/src/arm64/ti

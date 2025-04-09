@@ -29,10 +29,11 @@
 		mmc1 = &sdhci1;
 		mmc2 = &sdhci2;
 		rtc0 = &rtc;
-		//spi0 = &spi_gpio;
-		spi2 = &main_spi2;
-		//spi0 = &mcu_spi0;
-		//spi0 = &main_spi0;
+	    spi0 = &spi_gpio0;  // hat pins 19,21,23,24,26 (RPi compatible bit bang)
+	  //spi1 = &spi_gpio1;  // hat pins 11,12,35,36,38,40 (RPi compatible bit bang)
+		spi2 = &main_spi2;  // hat pins 8,10,11,12,35,36 (MCSPI)
+		spi3 = &mcu_spi0;   // hat pins 19,21,23,24,26 (MCSPI)
+	    spi4 = &main_spi0;  // hat pins 29,31,32,33 (MCSPI, unidirectional only)
 		usb0 = &usb0;
 		usb1 = &usb1;
 		i2c1 = &mcu_i2c0;
@@ -304,12 +305,12 @@
 		};
 	};
 
-	spi_gpio: spi {
+	spi_gpio0: spi {
 		compatible = "spi-gpio";
 		#address-cells = <0x1>;
 		#size-cells = <0x0>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&spi_gpio_default_pins>;
+		pinctrl-0 = <&spi_gpio0_default_pins>;
 
 		sck-gpios = <&mcu_gpio0 2 GPIO_ACTIVE_HIGH>;
 		miso-gpios = <&mcu_gpio0 4 GPIO_ACTIVE_HIGH>;
@@ -805,7 +806,7 @@
 		>;
 	};
 
-	spi_gpio_default_pins: spi-gpio-pins {
+	spi_gpio0_default_pins: spi-gpio0-pins {
 		pinctrl-single,pins = <
 			J722S_MCU_IOPAD(0x000, PIN_OUTPUT, 7)	/* (C12) MCU_SPI0_CS0.MCU_GPIO0_0 SS 0 */
 			J722S_MCU_IOPAD(0x024, PIN_OUTPUT, 7)	/* (B3) WKUP_UART0_RXD.MCU_GPIO0_9 SS 1 */
