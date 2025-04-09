@@ -3,6 +3,28 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.807  April 10, 2025
+    Admin backup tab: Added button to create a Debian 11 upgrade SD card which includes all
+        customizations from the current Kiwi. Intended to be used by Kiwi's still running Debian 8.x
+
+        Greatly simplifies the upgrade process by automating these formerly manual tasks:
+            Checks for sufficient free disk space.
+            Downloads Debian 11 image file from kiwisdr.com with integrity check (checksum).
+            Writes image to SD card.
+            Copies configuration from Kiwi's kiwi.config directory to SD card.
+            SD card is now ready to be use to re-flash this Kiwi to Debian 11 on the next restart.
+            Including if you were to immediately restart after the sd card creation completes.
+
+        => Everyone is strongly advised to upgrade to Debian 11 from Debian 8.
+           At some point we will no longer provide software updates to Kiwi's running Debian 8.
+    
+    Complete rewrite of the admin webpage grid & location processing code. (thanks studentkra)    
+    FSK extension: Added preset menu. Complements the existing ability to set presets in the URL.
+    Reduced minimum name/callsign (ident) length from 16 to 8 characters. (thanks LIN)
+    Admin status & antenna switch configuration page now displays antenna status. (thanks LIN)
+    Updated to EiBi-A25 database. (thanks jgreentn)
+    External extensions being present will always cause a compile from source. (thanks DL3LED)
+
 v1.806  March 12, 2025
     Let DRM extension kick preemptable channels so it can run. (thanks VK6KCH)
     SSTV extension: Fixed Robot B/W modes and added R36-BW. (thanks N1NKM)
