@@ -3,7 +3,7 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
-v1.807  April 10, 2025
+v1.807,808  April 10, 2025
     Admin backup tab: Added button to create a Debian 11 upgrade SD card which includes all
         customizations from the current Kiwi. Intended to be used by Kiwi's still running Debian 8.x
 
