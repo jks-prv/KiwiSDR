@@ -84,7 +84,7 @@ module WATERFALL_1CIC (
 
 	SYNC_PULSE set_decim_inst (.in_clk(cpu_clk), .in(wf_sel_C && set_wf_decim_C), .out_clk(adc_clk), .out(set_wf_decim_A));
 
-	localparam MD = max(1, clog2(WF_1CIC_MAXD));    // +1 because need to represent WF_1CIC_MAXD, not WF_1CIC_MAXD-1
+	localparam MD = max(1, clog2(WF_1CIC_MAXD + 1));    // +1 because need to represent WF_1CIC_MAXD, not WF_1CIC_MAXD-1
 	// see freeze_tos_A[] below
 	// assert_cond(WF_1CIC_MAXD <= 32768);
 	// assert_cond(MD <= 16);
