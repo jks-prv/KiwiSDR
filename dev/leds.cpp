@@ -294,3 +294,18 @@ void led_task(void *param)
 {
     child_task("kiwi.leds", led_reporter);
 }
+
+void led_task_start()
+{
+    #if defined(OPTION_MONITOR_BOOT_BTN) && defined(CPU_AM3359)
+        CreateTask(led_task, NULL, ADMIN_PRIORITY);
+    #else
+        if (!disable_led_task)
+            CreateTask(led_task, NULL, ADMIN_PRIORITY);
+    #endif
+}
+
+void led_task_stop()
+{
+    system("killall -q kiwi.leds");
+}

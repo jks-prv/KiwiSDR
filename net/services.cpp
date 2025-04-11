@@ -1043,12 +1043,7 @@ void services_start()
     SNR_meas_tid = CreateTaskF(SNR_meas, 0, SERVICES_PRIORITY, CTF_NO_LOG);
 	//CreateTask(git_commits, 0, SERVICES_PRIORITY);
 
-    #if defined(OPTION_MONITOR_BOOT_BTN) && defined(CPU_AM3359)
-        CreateTask(led_task, NULL, ADMIN_PRIORITY);
-    #else
-        if (!disable_led_task)
-            CreateTask(led_task, NULL, ADMIN_PRIORITY);
-    #endif
+    led_task_start();
 
     reg_kiwisdr_com_tid = CreateTask(reg_public, 0, SERVICES_PRIORITY);
     CreateTask(file_GET, FILE_DOWNLOAD_RELOAD, SERVICES_PRIORITY);
