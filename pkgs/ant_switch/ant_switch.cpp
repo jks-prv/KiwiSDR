@@ -34,6 +34,7 @@
 #include "rx_util.h"
 #include "shmem.h"
 #include "ant_switch.h"
+#include "peri.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -601,16 +602,7 @@ void ant_switch_get_backend_info()
 void ant_switch_init()
 {
 	// for benefit of Beagle GPIO backend
-	GPIO_OUTPUT(P811); GPIO_WRITE_BIT(P811, 0);
-	GPIO_OUTPUT(P812); GPIO_WRITE_BIT(P812, 0);
-	GPIO_OUTPUT(P813); GPIO_WRITE_BIT(P813, 0);
-	GPIO_OUTPUT(P814); GPIO_WRITE_BIT(P814, 0);
-	GPIO_OUTPUT(P815); GPIO_WRITE_BIT(P815, 0);
-	GPIO_OUTPUT(P816); GPIO_WRITE_BIT(P816, 0);
-	GPIO_OUTPUT(P817); GPIO_WRITE_BIT(P817, 0);
-	GPIO_OUTPUT(P818); GPIO_WRITE_BIT(P818, 0);
-	GPIO_OUTPUT(P819); GPIO_WRITE_BIT(P819, 0);
-	GPIO_OUTPUT(P826); GPIO_WRITE_BIT(P826, 0);
+	gpio_setup_ant_switch();
 	
 	#ifdef ANTSW_PRF
         printf_highlight(0, "ant_switch");
