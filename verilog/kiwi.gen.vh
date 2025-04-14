@@ -58,8 +58,12 @@
 `define DEF_SPIBUF_B 1
 	localparam SPIBUF_BMAX = 4094;    // DEFp 0xffe
 `define DEF_SPIBUF_BMAX 1
+	localparam N_SND_RATES = 2;    // DEFp 0x2
+`define DEF_N_SND_RATES 1
 	localparam SND_RATE_WB = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_WB 1
+	localparam SND_RATE_WB_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_WB_I
 	localparam RX1_WB_DECIM = 926;    // DEFp 0x39e
 `define DEF_RX1_WB_DECIM 1
 	localparam RX2_WB_DECIM = 3;    // DEFp 0x3
@@ -77,14 +81,22 @@
 `define DEF_MAX_SND_RATE 1
 	localparam SND_RATE_3CH = 20250;    // DEFp 0x4f1a
 `define DEF_SND_RATE_3CH 1
+	localparam SND_RATE_3CH_I = 1;    // DEFp 0x1
+`define DEF_SND_RATE_3CH_I 1
 	localparam MIN_SND_RATE = 12000;    // DEFp 0x2ee0
 `define DEF_MIN_SND_RATE 1
 	localparam SND_RATE_4CH = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_4CH 1
+	localparam SND_RATE_4CH_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_4CH_I
 	localparam SND_RATE_8CH = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_8CH 1
+	localparam SND_RATE_8CH_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_8CH_I
 	localparam SND_RATE_14CH = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_14CH 1
+	localparam SND_RATE_14CH_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_14CH_I
 	localparam RX_DECIM_3CH = 3292;    // DEFp 0xcdc
 `define DEF_RX_DECIM_3CH 1
 	localparam RX_DECIM_4CH = 5556;    // DEFp 0x15b4

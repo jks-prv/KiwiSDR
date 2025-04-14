@@ -67,7 +67,7 @@ kiwi_t kiwi;
 int version_maj, version_min;
 int fw_sel, fpga_id, rx_chans, rx_wb_buf_chans, wf_chans, wb_chans, nrx_bufs,
     nrx_samps, nrx_samps_wb, nrx_samps_loop, nrx_samps_rem,
-    snd_rate, wb_rate, rx_decim, rx1_decim, rx2_decim;
+    snd_rate, snd_rate_i, wb_rate, rx_decim, rx1_decim, rx2_decim;
 
 int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, down,
 	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, rx_num, wf_num,
@@ -114,7 +114,6 @@ int main(int argc, char *argv[])
 	int i;
 	int p_gps = 0, gpio_test_pin = 0;
 	eeprom_action_e eeprom_action = EE_NORM;
-	bool err;
 
 	int fw_sel_override = FW_CONFIGURED;
 	int fw_test = 0;
@@ -325,9 +324,10 @@ int main(int argc, char *argv[])
 	dump_init();
 	misc_init();
     cfg_reload();
+    bool update_admcfg = false;
 
     // on reboot let ntpd and other stuff settle first
-    kiwi.restart_delay = admcfg_default_int("restart_delay", RESTART_DELAY_30_SEC, NULL);
+    kiwi.restart_delay = admcfg_default_int("restart_delay", RESTART_DELAY_30_SEC, &update_admcfg);
     if (background_mode && !kiwi_file_exists("/tmp/.kiwi_no_restart_delay")) {
         kiwi.restart_delay = CLAMP(kiwi.restart_delay, 0, RESTART_DELAY_MAX);
         int delay;
@@ -349,21 +349,17 @@ int main(int argc, char *argv[])
     if (fw_sel_override != FW_CONFIGURED) {
         fw_sel = fw_sel_override;
     } else {
-        fw_sel = admcfg_int("firmware_sel", &err, CFG_OPTIONAL);
-        if (err) fw_sel = FW_SEL_SDR_RX4_WF4;
+        fw_sel = admcfg_default_int("firmware_sel", FW_SEL_SDR_RX4_WF4, &update_admcfg);
     }
     
     if (wb_sel_override != -1) {
         wb_sel = wb_sel_override;
     } else {
-        wb_sel = admcfg_int("wb_sel", &err, CFG_OPTIONAL);
-        if (err || wb_sel < 0 || wb_sel > 6) wb_sel = 0;
+        wb_sel = admcfg_default_int("wb_sel", 0, &update_admcfg);
+        if (wb_sel < 0 || wb_sel > 6) wb_sel = 0;
         const int wb_bw[] = { 72, 108, 144, 192, 204, 240, 300 };
         wb_sel = wb_bw[wb_sel];
     }
-    
-    bool update_admcfg = false;
-    if (update_admcfg) admcfg_save();       // during init doesn't conflict with admin cfg
     
     int v_wb_buf_chans;
 
@@ -372,6 +368,7 @@ int main(int argc, char *argv[])
         rx_chans = 4;
         wf_chans = 4;
         snd_rate = SND_RATE_4CH;
+        snd_rate_i = SND_RATE_4CH_I;
         rx_decim = RX_DECIM_4CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
@@ -383,6 +380,7 @@ int main(int argc, char *argv[])
         rx_chans = 8;
         wf_chans = 2;
         snd_rate = SND_RATE_8CH;
+        snd_rate_i = SND_RATE_8CH_I;
         rx_decim = RX_DECIM_8CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
@@ -395,6 +393,7 @@ int main(int argc, char *argv[])
         wf_chans = 2;
         kiwi.wf_share = true;
         snd_rate = SND_RATE_8CH;
+        snd_rate_i = SND_RATE_8CH_I;
         rx_decim = RX_DECIM_8CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
@@ -406,6 +405,7 @@ int main(int argc, char *argv[])
         rx_chans = 3;
         wf_chans = 3;
         snd_rate = SND_RATE_3CH;
+        snd_rate_i = SND_RATE_3CH_I;
         rx_decim = RX_DECIM_3CH;
         rx1_decim = RX1_WIDE_DECIM;
         rx2_decim = RX2_WIDE_DECIM;
@@ -418,6 +418,7 @@ int main(int argc, char *argv[])
         wf_chans = 0;
         gps_chans = GPS_RX14_CHANS;
         snd_rate = SND_RATE_14CH;
+        snd_rate_i = SND_RATE_14CH_I;
         rx_decim = RX_DECIM_14CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
@@ -430,6 +431,7 @@ int main(int argc, char *argv[])
         wf_chans = 1;
         wb_chans = 1;
         snd_rate = SND_RATE_WB;
+        snd_rate_i = SND_RATE_WB_I;
         
         switch (wb_sel) {
             case  72: rx1_decim = 926; rx2_decim =  6; break;
@@ -477,8 +479,7 @@ int main(int argc, char *argv[])
         else
             asprintf(&fpga_file, "rx%d.wf%d%s", rx_chans, wf_chans, fw_test? ".test" : "");
     
-        bool no_wf = cfg_bool("no_wf", &err, CFG_OPTIONAL);
-        if (err) no_wf = false;
+        bool no_wf = cfg_true("no_wf");
         if (no_wf) wf_chans = 0;
 
         lprintf("firmware: rx_chans=%d rx_wb_buf_chans=%d wb_chans=%d wf_chans=%d gps_chans=%d\n",
@@ -490,8 +491,8 @@ int main(int argc, char *argv[])
         snd_intr_usec = 1e6 / ((float) snd_rate/nrx_samps);
         lprintf("firmware: RX rx_decim=%d RX1_DECIM=%d RX2_DECIM=%d USE_RX_CICF=%d\n",
             rx_decim, rx1_decim, rx2_decim, VAL_USE_RX_CICF);
-        lprintf("firmware: RX rx_srate=%.3f(%d) wb_srate=%d bufs=%d samps=%d loop=%d rem=%d intr_usec=%d\n",
-            ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate, wb_rate, nrx_bufs, nrx_samps, nrx_samps_loop, nrx_samps_rem, snd_intr_usec);
+        lprintf("firmware: RX rx_srate=%.3f(%d,%d) wb_srate=%d bufs=%d samps=%d loop=%d rem=%d intr_usec=%d\n",
+            ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate, snd_rate_i, wb_rate, nrx_bufs, nrx_samps, nrx_samps_loop, nrx_samps_rem, snd_intr_usec);
 
         check(wf_chans <= MAX_WF_CHANS);
         check(wb_chans <= MAX_WB_CHANS);
@@ -516,13 +517,14 @@ int main(int argc, char *argv[])
 	TaskInitCfg();
 
     // force enable_gps true because there is no longer an option switch in the admin interface (now uses acquisition checkboxes)
-    do_gps = admcfg_default_bool("enable_gps", true, NULL);
+    do_gps = admcfg_default_bool("enable_gps", true, &update_admcfg);
     if (!do_gps) {
 	    admcfg_set_bool("enable_gps", true);
-		admcfg_save();      // during init doesn't conflict with admin cfg
 		do_gps = 1;
     }
     
+    if (update_admcfg) admcfg_save();       // during init doesn't conflict with admin cfg
+
     if (p_gps != 0) do_gps = (p_gps == 1)? 1:0;
     
 	if (down) do_sdr = do_gps = 0;
@@ -538,8 +540,7 @@ int main(int argc, char *argv[])
 		//pru_start();
 		eeprom_update(eeprom_action);
 		
-		kiwi.ext_clk = cfg_bool("ext_ADC_clk", &err, CFG_OPTIONAL);
-		if (err) kiwi.ext_clk = false;
+		kiwi.ext_clk = cfg_true("ext_ADC_clk");
 		
 		ctrl_clr_set(0xffff, CTRL_EEPROM_WP);
 
