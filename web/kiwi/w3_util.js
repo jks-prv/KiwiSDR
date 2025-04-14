@@ -1205,6 +1205,8 @@ function w3_show_hide_inline(el, show)
 
 function w3_disable(el_id, disable)
 {
+   if (!isArg(disable)) disable = true;
+   
    el = w3_el(el_id);
    //console.log('w3_disable disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
    //console.log(el);
@@ -1228,6 +1230,8 @@ function w3_disable(el_id, disable)
 
 function w3_disable_multi(el_id, disable)
 {
+   if (!isArg(disable)) disable = true;
+   
    w3_els(el_id,
       function(el, i) {
          //console.log('w3_disable_multi disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
@@ -1252,6 +1256,8 @@ function w3_disable_multi(el_id, disable)
 
 function w3_visible(el_id, visible)
 {
+   if (!isArg(visible)) visible = true;
+   
 	var el = w3_el(el_id);
 	el.style.visibility = visible? 'visible' : 'hidden';
 	return el;

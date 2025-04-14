@@ -96,7 +96,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
         CFLAGS += -DDEVSYS
         
         # platform choice when building on development machine
-        BYAI := 
+        BYAI := true
         BBAI_64 := 
         BBAI := 
         RPI := 

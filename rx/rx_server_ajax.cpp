@@ -628,7 +628,7 @@ fail:
         get_location_grid(&loc, &loc_free, &grid, &grid_free);
         if (!loc) loc = (char *) "(-69.0, 90.0)";     // put us in Antarctica to be noticed
         if (!grid) grid = (char *) "(none)";
-        printf("AJAX_STATUS loc=<%s> grid=<%s>\n", loc, grid);
+        //printf("AJAX_STATUS loc=<%s> grid=<%s>\n", loc, grid);
 		
 		// append location to name if none of the keywords in location appear in name
 		s1 = cfg_string("rx_name", NULL, CFG_OPTIONAL);
