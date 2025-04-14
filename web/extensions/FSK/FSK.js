@@ -589,7 +589,7 @@ function fsk_controls_setup()
                   )
                ),
                
-               cfg.fsk.test_file? w3_button('w3-padding-smaller w3-aqua', 'Test', 'fsk_test_cb') : ''
+               cfg.fsk.test_file? w3_button('id-fsk-test w3-padding-smaller w3-aqua', 'Test', 'fsk_test_cb') : ''
             )
 			)
 		);
@@ -629,6 +629,10 @@ function fsk_controls_setup()
 
    ext_set_data_height(fsk.dataH);
 	ext_set_controls_width_height(fsk.ctrlW, fsk.ctrlH);
+	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-fsk-test');
 	
 	w3_do_when_rendered('id-fsk-menus',
 	   function() {
@@ -1126,6 +1130,7 @@ function fsk_bpd_cb(path, idx, first)
 
 function fsk_test_cb(path, idx, first)
 {
+   if (ext_nom_sample_rate() != 12000) return;
    ext_send('SET test');
 }
 

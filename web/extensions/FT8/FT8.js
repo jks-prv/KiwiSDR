@@ -252,7 +252,7 @@ function ft8_controls_setup()
                w3_div('cl-ft8-text', 'reporter call '+ callsign),
                w3_div('id-ft8-rgrid cl-ft8-text', 'reporter grid '+ grid + (cfg.ft8.GPS_update_grid? ' (GPS)':'')),
                w3_button('w3-padding-smaller w3-css-yellow', 'Clear', 'ft8_clear_button_cb'),
-               (dbgUs? w3_button('w3-padding-smaller w3-aqua', 'Test', 'ft8_test_cb') : '')
+               (dbgUs? w3_button('id-ft8-test w3-padding-smaller w3-aqua', 'Test', 'ft8_test_cb') : '')
             )
 			)
 		);
@@ -269,6 +269,7 @@ function ft8_controls_setup()
 	   w3_hide2('id-ft8-err', false);
 	   w3_innerHTML('id-ft8-err',
 	      'FT8 extension only works on Kiwis configured for 12 kHz wide channels');
+	   w3_disable('id-ft8-test');
 	} else {
 	   ext_send('SET ft8_start='+ ft8.FT8 +' debug='+ (dbgUs? 1:0));
 	}
@@ -357,6 +358,7 @@ function ft8_clear_button_cb(path, idx, first)
 
 function ft8_test_cb()
 {
+   if (ext_nom_sample_rate() != 12000) return;
    ext_send('SET ft8_test');
 }
 

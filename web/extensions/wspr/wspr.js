@@ -425,7 +425,7 @@ function wspr_controls_setup()
             w3_select('w3-text-red', '', 'band', 'wspr_init_band', wspr_init_band, wspr.freqs_m, 'wspr_band_select_cb'),
             w3_button('w3-ext-btn w3-padding-smaller', 'stop', 'wspr_stop_start_cb'),
             w3_button('cl-w3-ext-btn w3-padding-smaller w3-css-yellow', 'clear', 'wspr_clear_cb'),
-            w3_button('cl-w3-ext-btn w3-padding-smaller w3-aqua||title="test spots NOT uploaded\nto wsprnet.org"',
+            w3_button('id-wspr-test cl-w3-ext-btn w3-padding-smaller w3-aqua||title="test spots NOT uploaded\nto wsprnet.org"',
                'test', 'wspr_test_cb', 1),
             w3_checkbox('id-wspr-upload-container cl-upload-checkbox/w3-label-inline w3-label-not-bold/',
                'upload<br>spots', 'wspr.upload', true, 'wspr_set_upload_cb'),
@@ -489,6 +489,10 @@ function wspr_controls_setup()
    wspr.pie_interval = setInterval(wspr_draw_pie, 1000);
    wspr_draw_pie();
    wspr_draw_scale(100);
+	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-wspr-test');
 	
    wspr_reset();
    wspr_upload_timeout = setTimeout(function() {wspr_upload(wspr_report_e.STATUS);}, 1000);
@@ -900,7 +904,7 @@ function wspr_stop_start_cb(path, idx, first)
 
 function wspr_test_cb(path, val, first)
 {
-   if (first) return;
+   if (ext_nom_sample_rate() != 12000) return;
    val = +val;
    if (dbgUs) console.log('wspr_test_cb: val='+ val);
    wspr.testing = val;

@@ -263,6 +263,10 @@ function cw_decoder_controls_setup()
    ext_set_data_height(300);
 	ext_set_controls_width_height(380, 200);
 	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-cw-test');
+
    ext_send('SET cw_start='+ cw.training_interval);
 	cw.pboff = -1;
 	CW_decoder_environment_changed();
@@ -433,6 +437,7 @@ function cw_training_interval_cb(path, idx, first)
 function cw_test_cb()
 {
    console_nv('cw_test_cb', 'cw.test');
+	if (ext_nom_sample_rate() != 12000) return;
    cw.test = cw.test? 0:1;    // if already running stop if clicked again
    w3_colors('id-cw-test', '', 'w3-red', cw.test);
 	w3_el('id-cw-bar').style.width = '0%';

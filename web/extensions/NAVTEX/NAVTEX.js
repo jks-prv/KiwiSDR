@@ -316,7 +316,7 @@ function navtex_controls_setup()
                w3_button('w3-padding-smaller w3-css-yellow', 'Clear', 'navtex_clear_button_cb', 0),
                w3_button('id-navtex-log w3-padding-smaller w3-blue', 'Log', 'navtex_log_cb'),
 
-               cfg.navtex.test_file? w3_button('w3-padding-smaller w3-aqua', 'Test', 'navtex_test_cb') : '',
+               cfg.navtex.test_file? w3_button('id-navtex-test w3-padding-smaller w3-aqua', 'Test', 'navtex_test_cb') : '',
 
                w3_input('id-navtex-log-mins/w3-label-not-bold/|padding:0;width:auto|size=4',
                   'log min', 'nt.log_mins', nt.log_mins, 'navtex_log_mins_cb')
@@ -375,6 +375,10 @@ function navtex_controls_setup()
 
    ext_set_data_height(nt.dataH);
 	ext_set_controls_width_height(nt.ctrlW, nt.ctrlH);
+	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-navtex-test');
 	
 	nt.kmap = kiwi_map_init('navtex', [12.5, 112.5], 5, 17);
 
@@ -858,6 +862,7 @@ function navtex_location_update(loc_name, lat, lon, url, color)
 
 function navtex_test_cb(path, idx, first)
 {
+   if (ext_nom_sample_rate() != 12000) return;
    ext_send('SET test');
 }
 

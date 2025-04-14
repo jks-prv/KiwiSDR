@@ -260,9 +260,9 @@ function sstv_controls_setup()
 				   w3_button('id-sstv-btn-auto w3-margin-left w3-padding-smaller', 'Undo adjust', 'sstv_auto_cb'),
 				   w3_button('w3-margin-left w3-padding-smaller w3-css-yellow', 'Reset', 'sstv_reset_cb'),
 				   w3_button('w3-margin-left w3-padding-smaller w3-blue', 'Save images', 'sstv_save_cb'),
-				   w3_button('w3-margin-left w3-padding-smaller w3-aqua', 'Test', 'sstv_test_cb', 0),
+				   w3_button('id-sstv-test1 w3-margin-left w3-padding-smaller w3-aqua', 'Test', 'sstv_test_cb', 0),
 				   dbgUs?
-				         w3_button('w3-margin-L-8 w3-padding-smaller w3-aqua', 'T2', 'sstv_test_cb', 1)
+				         w3_button('id-sstv-test2 w3-margin-L-8 w3-padding-smaller w3-aqua', 'T2', 'sstv_test_cb', 1)
 				      :
 				         ''
 				),
@@ -300,6 +300,12 @@ function sstv_controls_setup()
    ct.fillRect(sstv.marginL,0, sstv.w+sstv.isp,sstv.h);
    sstv.page = -1;
    sstv.shift_second = false;
+
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000) {
+	   w3_disable('id-sstv-test1');
+	   w3_disable('id-sstv-test2');
+	}
 
 	ext_send('SET start');
 
@@ -436,6 +442,7 @@ function sstv_reset_cb(path, val, first)
 function sstv_test_cb(path, val, first)
 {
    // mode_name & status fields set in cpp code
+   if (ext_nom_sample_rate() != 12000) return;
 	sstv_result_cb("");
 	sstv_fsk_id_cb("");
 	console.log('sstv_test_cb '+ val);
