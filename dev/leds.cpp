@@ -83,7 +83,7 @@ static void led_set_trig(int led, const char *s)
     close(fd);
 }
 
-void led_set_debian()
+static void led_set_debian()
 {
     #ifdef CPU_BCM2837
     #else
@@ -129,7 +129,7 @@ static void led_set_one(int led, int v)
     }
 }
 
-void led_set(int l0, int l1, int l2, int l3, int msec)
+static void led_set(int l0, int l1, int l2, int l3, int msec)
 {
     if (l0 != 2) led_set_one(0, l0);
 
@@ -148,7 +148,7 @@ void led_set(int l0, int l1, int l2, int l3, int msec)
     kiwi_msleep(msec);
 }
 
-void led_clear(int msec)
+static void led_clear(int msec)
 {
     led_set(0,0,0,0, msec);
 }
@@ -174,7 +174,7 @@ static void led_cylon(int n, int msec)
     kiwi_msleep(msec);
 }
 
-void led_flash_all(int n)
+static void led_flash_all(int n)
 {
     while (n--) {
         led_set(1,1,1,1, 30);
@@ -290,22 +290,49 @@ static void led_reporter(void *param)
     }
 }
 
-void led_task(void *param)
+static void led_task(void *param)
 {
     child_task("kiwi.leds", led_reporter);
 }
 
 void led_task_start()
 {
-    #if defined(OPTION_MONITOR_BOOT_BTN) && defined(CPU_AM3359)
-        CreateTask(led_task, NULL, ADMIN_PRIORITY);
+    #ifdef PLATFORM_beagleY_ai
+        // BYAI only has single green status/activity LED
     #else
-        if (!disable_led_task)
+        #if defined(OPTION_MONITOR_BOOT_BTN) && defined(CPU_AM3359)
             CreateTask(led_task, NULL, ADMIN_PRIORITY);
+        #else
+            if (!disable_led_task)
+                CreateTask(led_task, NULL, ADMIN_PRIORITY);
+        #endif
     #endif
 }
 
 void led_task_stop()
 {
     system("killall -q kiwi.leds");
+}
+
+void led_display_fpga_code(int code)
+{
+    #ifdef PLATFORM_beagleY_ai
+    #else
+        led_clear(0);
+        
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                led_set(1,0,1,0, 500);
+                led_set(0,1,0,1, 500);
+            }
+            led_clear(1000);
+            #define LB(c,v) (((c) & (v))? 1:0)
+            led_set(LB(code,8), LB(code,4), LB(code,2), LB(code,1), 5000);
+            led_clear(1000);
+        }
+        
+        led_flash_all(32);
+        led_clear(1000);
+        led_set_debian();
+    #endif
 }

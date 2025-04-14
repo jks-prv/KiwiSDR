@@ -130,27 +130,7 @@ void printmem(const char *str, u2_t addr)
 void fpga_panic(int code, const char *s)
 {
     lprintf("FPGA panic: code=%d %s\n", code, s);
-    
-    #ifdef DEBUG
-    #else
-        led_clear(0);
-        
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                led_set(1,0,1,0, 500);
-                led_set(0,1,0,1, 500);
-            }
-            led_clear(1000);
-            #define LB(c,v) (((c) & (v))? 1:0)
-            led_set(LB(code,8), LB(code,4), LB(code,2), LB(code,1), 5000);
-            led_clear(1000);
-        }
-        
-        led_flash_all(32);
-        led_clear(1000);
-        led_set_debian();
-    #endif
-    
+    led_display_fpga_code(code);
     panic("FPGA panic");
 }
 
