@@ -14,6 +14,7 @@
 #include "kiwi.h"
 #include "rx_noise.h"
 #include "noise_filter.h"
+#include <arm_math.h>
 #include <math.h>
 
 #define ANR_DLINE_SIZE  512
@@ -64,7 +65,6 @@ void wdsp_ANR_init(int rx_chan, nr_type_e nr_type, TYPEREAL nr_param[NOISE_PARAM
 void wdsp_ANR_filter(int rx_chan, nr_type_e nr_type, int ns_out, TYPEMONO16 *in, TYPEMONO16 *out)
 {
     wdsp_ANR_t *w = &wdsp_ANR[nr_type][rx_chan];
-    int idx;
     f32_t c0, c1;
     f32_t y, error, sigma, inv_sigp;
     f32_t nel, nev;
@@ -75,10 +75,27 @@ void wdsp_ANR_filter(int rx_chan, nr_type_e nr_type, int ns_out, TYPEMONO16 *in,
         y = 0;
         sigma = 0;
 
-        for (int j = 0; j < w->taps; j++) {
-            idx = (w->in_idx + j + w->delay) & ANR_MASK;
-            y += w->w[j] * w->d[idx];
-            sigma += w->d[idx] * w->d[idx];
+        int start_idx = (w->in_idx + w->delay) & ANR_MASK;
+
+        int seg1_len = (start_idx + w->taps <= ANR_DLINE_SIZE) ? w->taps : (ANR_DLINE_SIZE - start_idx);
+        int seg2_len = w->taps - seg1_len;
+    
+        // Process segment 1
+        if (seg1_len > 0) {
+            float dot1 = 0.0f, pow1 = 0.0f;
+            arm_dot_prod_f32(w->w, &w->d[start_idx], seg1_len, &dot1);
+            arm_power_f32(&w->d[start_idx], seg1_len, &pow1);
+            y += dot1;
+            sigma += pow1;
+        }
+    
+        // Process segment 2 (wrapped)
+        if (seg2_len > 0) {
+            float dot2 = 0.0f, pow2 = 0.0f;
+            arm_dot_prod_f32(&w->w[seg1_len], w->d, seg2_len, &dot2);
+            arm_power_f32(w->d, seg2_len, &pow2);
+            y += dot2;
+            sigma += pow2;
         }
 
         inv_sigp = 1.0 / (sigma + 1e-10);
@@ -107,9 +124,26 @@ void wdsp_ANR_filter(int rx_chan, nr_type_e nr_type, int ns_out, TYPEMONO16 *in,
         c0 = 1.0 - w->two_mu * w->ngamma;
         c1 = w->two_mu * error * inv_sigp;
 
-        for (int j = 0; j < w->taps; j++) {
-            idx = (w->in_idx + j + w->delay) & ANR_MASK;
-            w->w[j] = c0 * w->w[j] + c1 * w->d[idx];
+        if (seg1_len > 0) {
+            // Segment 1
+            float *w_p = &w->w[0];
+            float *d_p = &w->d[start_idx];
+            for (int j = 0; j < seg1_len; j++) {
+                *w_p = c0 * (*w_p) + c1 * (*d_p);
+                w_p++;
+                d_p++;
+            }
+        }
+    
+        if (seg2_len > 0) {
+            // Segment 2 (wrap-around)
+            float *w_p = &w->w[seg1_len];
+            float *d_p = &w->d[0];
+            for (int j = 0; j < seg2_len; j++) {
+                *w_p = c0 * (*w_p) + c1 * (*d_p);
+                w_p++;
+                d_p++;
+            }
         }
 
         w->in_idx = (w->in_idx + ANR_MASK) & ANR_MASK;

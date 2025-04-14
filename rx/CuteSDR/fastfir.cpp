@@ -304,16 +304,19 @@ int CFastFIR::ProcessData(int rx_chan, int InLength, TYPECPX* InBuf, TYPECPX* Ou
 			MFFTW_EXECUTE(m_FFT_RevPlan);
 
             if (OutBuf != NULL) {
-                for (j = (CONV_FIR_SIZE-1); j < CONV_FFT_SIZE; j++) {
-                    // copy FFT output into OutBuf minus CONV_FIR_SIZE-1 samples at beginning
-                    OutBuf[outpos++] = m_pFFTBuf[j];
-                }
+                // copy FFT output into OutBuf minus CONV_FIR_SIZE-1 samples at beginning
+                //for (j = (CONV_FIR_SIZE-1); j < CONV_FFT_SIZE; j++) {
+                //    OutBuf[outpos++] = m_pFFTBuf[j];
+                //}
+                memcpy(&OutBuf[outpos], &m_pFFTBuf[CONV_FIR_SIZE - 1], (CONV_FFT_SIZE - (CONV_FIR_SIZE - 1)) * sizeof(TYPECPX));
+                outpos += (CONV_FFT_SIZE - (CONV_FIR_SIZE - 1));
             }
 
-			for (j=0; j < (CONV_FIR_SIZE - 1); j++) {
-			    // copy overlap buffer into start of fft input buffer
-				m_pFFTBuf[j] = m_pFFTOverlapBuf[j];
-			}
+            // copy overlap buffer into start of fft input buffer
+            //for (j=0; j < (CONV_FIR_SIZE - 1); j++) {
+            //    m_pFFTBuf[j] = m_pFFTOverlapBuf[j];
+            //}
+            memcpy(m_pFFTBuf, m_pFFTOverlapBuf, (CONV_FIR_SIZE - 1) * sizeof(TYPECPX));
 
 			//reset input position to data start position of fft input buffer
 			m_InBufInPos = CONV_FIR_SIZE - 1;
