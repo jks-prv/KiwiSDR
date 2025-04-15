@@ -565,15 +565,13 @@ fail:
         char *mode_m = NULL;
         n = sscanf(mc->query, "%lf%16ms", &dial_freq_kHz, &mode_m);
         if (n == 1 || n == 2) {
-            printf("/s-meter dial_freq_kHz=%.2f freq.offset_kHz=%.2f freq.offmax_kHz=%.2f\n", dial_freq_kHz, freq.offset_kHz, freq.offmax_kHz);
             if (!rx_freq_inRange(dial_freq_kHz)) {
+                printf("/s-meter dial_freq_kHz=%.2f freq.offset_kHz=%.2f freq.offmax_kHz=%.2f\n", dial_freq_kHz, freq.offset_kHz, freq.offmax_kHz);
                 asprintf(&sb, "/s-meter: freq \"%s\" outside configured receiver range of %.2f - %.2f kHz\n",
                     mc->query, freq.offset_kHz, freq.offmax_kHz);
                 printf("%s\n", sb);
                 break;
             }
-            if_freq_kHz = dial_freq_kHz - freq.offset_kHz;
-            if_freq_kHz = CLAMP(if_freq_kHz, 0, ui_srate_kHz);
         } else {
             asprintf(&sb, "/s-meter: freq parse error \"%s\", just enter freq in kHz followed by optional mode, e.g. 7020 or 14200usb\n", mc->query);
             printf("%s\n", sb);
@@ -585,7 +583,9 @@ fail:
         if (mode_i == NOT_FOUND) { mode_m = strdup("cwn"); mode_i = MODE_CWN; }
         int pbl = modes[mode_i].bfo - modes[mode_i].hbw;
         int pbh = modes[mode_i].bfo + modes[mode_i].hbw;
-        printf("/s-meter %.2f %s bfo=%d pb=%d|%d\n", if_freq_kHz, mode_m, modes[mode_i].bfo, pbl, pbh);
+        if_freq_kHz = dial_freq_kHz - ((double) modes[mode_i].bfo /1e3) - freq.offset_kHz;
+        if_freq_kHz = CLAMP(if_freq_kHz, 0, ui_srate_kHz);
+        printf("/s-meter %.2f %s if=%.2f bfo=%d pb=%d|%d\n", dial_freq_kHz, mode_m, if_freq_kHz, modes[mode_i].bfo, pbl, pbh);
 
         bool ok = internal_conn_setup(ICONN_WS_SND, &iconn, 0, PORT_BASE_INTERNAL_S_METER, WS_FL_PREEMPT_AUTORUN | WS_FL_NO_LOG,
             mode_m, pbl, pbh, if_freq_kHz, "S-meter", NULL, "S-meter");
@@ -620,7 +620,7 @@ fail:
         }
         
         internal_conn_shutdown(&iconn);
-        asprintf(&sb, "/s-meter: %.2f kHz %d dBm\n", if_freq_kHz + freq.offset_kHz, sMeter_dBm);
+        asprintf(&sb, "/s-meter: %.2f kHz %d dBm\n", dial_freq_kHz, sMeter_dBm);
         cprintf(iconn.csnd, "%s", sb);
 		break;
 	}
