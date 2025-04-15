@@ -995,7 +995,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     else
                     if (gid == -1) type = 1; else type = 2;
                     cprintf(conn, "DX_UPD %s: n=%d #%d %8.2f %s lo=%d hi=%d off=%d sig_bw=%d flags=0x%x b=%d e=%d text=<%s> notes=<%s> params=<%s>\n",
-                        dx_mod_add_s[type], n, gid, f_kHz, mode_lc[DX_DECODE_MODE(flags)], low_cut, high_cut, mkr_off, sig_bw, flags, begin, end,
+                        dx_mod_add_s[type], n, gid, f_kHz, modes[DX_DECODE_MODE(flags)].lc, low_cut, high_cut, mkr_off, sig_bw, flags, begin, end,
                         text_m, notes_m, params_m);
                 } else {
                     const char * dx_del_s[] = { "DEL", "CVT", "???" };

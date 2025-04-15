@@ -133,7 +133,7 @@ void dx_save_as_json(dx_db_t *dx_db, bool dx_label_foff_convert)
 	        printf("DX CONVERT: %.2f => %.2f %s\n", dxp->freq, freq_kHz, ident);
 	    }
 	    int mode_i = DX_DECODE_MODE(dxp->flags);
-	    sb = kstr_asprintf(NULL, "[%.2f, \"%s\", \"%s\", \"%s\"", freq_kHz, mode_uc[mode_i], ident, notes);
+	    sb = kstr_asprintf(NULL, "[%.2f, \"%s\", \"%s\", \"%s\"", freq_kHz, modes[mode_i].uc, ident, notes);
         free(ident); free(notes);
 
 		u4_t type = dxp->flags & DX_TYPE;
@@ -296,12 +296,12 @@ void update_masked_freqs(dx_t *_dx_list, int _dx_list_len)
             dx_mask_t *dmp = &dx.masked_list[j++];
             int mode_i = DX_DECODE_MODE(dxp->flags);
             int masked_f = roundf((dxp->freq - freq.offset_kHz) * kHz);     // masked freq list always baseband
-            int hbw = mode_hbw[mode_i];
-            int offset = mode_offset[mode_i];
+            int hbw = modes[mode_i].hbw;
+            int offset = (modes[mode_i].flags & IS_SSB)? modes[mode_i].bfo : 0;     // NB: IS_SSB, not IS_F_PBC
             dmp->masked_lo = masked_f + offset + (dxp->low_cut? dxp->low_cut : -hbw);
             dmp->masked_hi = masked_f + offset + (dxp->high_cut? dxp->high_cut : hbw);
             //printf("masked %.2f baseband: %d-%d %s hbw=%d off=%d lc=%d hc=%d\n",
-            //    dxp->freq, dmp->masked_lo, dmp->masked_hi, mode_uc[mode_i], hbw, offset, dxp->low_cut, dxp->high_cut);
+            //    dxp->freq, dmp->masked_lo, dmp->masked_hi, modes[mode_i].uc, hbw, offset, dxp->low_cut, dxp->high_cut);
         }
     }
 }

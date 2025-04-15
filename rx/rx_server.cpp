@@ -21,6 +21,7 @@ Boston, MA  02110-1301, USA.
 #include "config.h"
 #include "options.h"
 #include "kiwi.h"
+#include "mode.h"
 #include "rx.h"
 #include "rx_server.h"
 #include "rx_util.h"
@@ -141,6 +142,7 @@ void rx_server_init()
 	}
 	
 	debug_init();
+	rx_modes_init();
 	
     //#ifndef DEVSYS
     #if 0

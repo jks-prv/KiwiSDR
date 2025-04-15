@@ -592,7 +592,7 @@ void update_vars_from_config(bool called_at_init)
         cfg_string_free(s);
 	} else {
 	    cfg_rem_int("init.mode");
-	    cfg_set_string("init.mode", mode_lc[n]);
+	    cfg_set_string("init.mode", modes[n].lc);
 	    update_cfg = cfg_gdb_break(true);
 	}
 
