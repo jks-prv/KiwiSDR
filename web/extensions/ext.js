@@ -1035,11 +1035,12 @@ function extint_environment_changed(changed)
    // e.g. ext_get_freq_kHz() has been updated with latest value
    //
    // Possible values of "changed":
-   //    freq, mode, passband, zoom, waterfall_pan, resize
+   //    freq, mode, passband, zoom, waterfall_pan, resize, ext_open
    
    setTimeout(
       function() {
          //console_nv('extint_environment_changed', 'extint.current_ext_name');
+         //console.log(changed);
          if (extint.current_ext_name) {
             w3_call(extint.current_ext_name +'_environment_changed', changed);
          }
@@ -1326,6 +1327,15 @@ function extint_open(name, delay)
    if (name == 'dsc') name = 'navtex'; else
    if (name == 'ft4') name = 'ft8'; else
       ;
+   
+   // if ext is already open (e.g. dx label click ext open for same ext)
+   // just pass it possibly changed params (e.g. dx label ext params)
+   var extname = ext_get_name();
+   if (extname && extname.toLowerCase().includes(name)) {
+      console.log('EXT_OPEN '+ extname +' p='+ extint.param);
+      extint_environment_changed( { ext_open:1 } );
+      return;
+   }
    
    var found = 0;
    extint_enum_names(function(i, value, id, id_en) {
