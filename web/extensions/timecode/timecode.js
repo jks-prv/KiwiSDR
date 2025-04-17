@@ -470,53 +470,8 @@ function tc_recv(data)
 	}
 }
 
-function tc_controls_setup()
-{
-   var data_html =
-      time_display_html('tc') +
-
-		w3_div('id-tc-data|width:1024px; height:200px; background-color:black; position:relative;',
-			'<canvas id="id-tc-scope" width="1024" height="200" style="position:absolute"></canvas>'
-		);
-	
-	tc.saved_setup = ext_save_setup();
-   tc.save_agc_delay = ext_agc_delay(5000);
-	tc.config = tc.sig.WWVBp;
-   tc.pll_bw = tc.pll_bw_i[tc.config];
-
-	var controls_html =
-		w3_div('id-tc-controls w3-text-white|height:100%',
-			w3_col_percent('',
-				w3_div('w3-medium w3-text-aqua', '<b>Time station decoder</b>'), 25,
-				w3_div('id-tc-no-audio w3-text-css-lime w3-hide',
-					'No audio will be heard due to zero-IF mode used'
-				), 60
-			),
-			w3_inline('w3-margin-T-8/w3-margin-right',
-			   w3_select_conditional('w3-text-red w3-width-auto', '', '', 'tc.config', tc.config, tc.sig_s, 'tc_signal_menu_cb'),
-            w3_button('w3-padding-small w3-css-yellow', 'Re-sync', 'timecode_resync_cb'),
-            w3_button('w3-padding-small w3-aqua', 'Reset PLL', 'timecode_reset_pll_cb'),
-            //w3_checkbox('w3-label-inline w3-label-not-bold/', 'update Kiwi<br>date &amp; time', 'tc.update', tc.update, 'w3_bool_cb'),
-			   w3_input('w3-padding-tiny w3-label-inline w3-label-not-bold|width:auto|size=3', 'pll bw:', 'tc.pll_bw', tc.pll_bw, 'timecode_pll_bw_cb'),
-            dbgUs? w3_button('w3-padding-small w3-aqua', 'Test', 'timecode_test_cb') : '',
-				w3_div('', '<pre id="id-tc-info" style="margin:0"></pre>')
-			),
-			w3_inline('w3-margin-T-4/w3-margin-right',
-				w3_div('id-tc-status w3-show-inline-block'),
-				w3_div('id-tc-status2 w3-show-inline-block')
-			),
-			w3_div('id-tc-addon'),
-         w3_div('w3-scroll w3-margin-TB-8 w3-grey-white|height:70%', '<pre id="id-tc-dbug"></pre>')
-		);
-	
-	ext_panel_show(controls_html, data_html, null);
-	time_display_setup('tc');
-	tc.sigid_s.forEach(function(sig) { w3_call(sig +'_init'); });
-	tc_environment_changed( {resize:1} );
-	
-	ext_set_controls_width_height(900);
-	
-	var p = ext_param();
+function timecode_process_params(p) {
+   //console.log('timecode_process_params p='+ p);
 	if (p) {
 	   var i, j;
 	   p = p.split(',');
@@ -549,12 +504,72 @@ function tc_controls_setup()
 	ext_send('SET run=1');
 }
 
-function tc_environment_changed(changed)
+function tc_controls_setup()
 {
-   if (!changed.resize) return;
-	var el = w3_el('id-tc-data');
-	var left = (window.innerWidth - 1024 - time_display_width()) / 2;
-	el.style.left = px(left);
+   var data_html =
+      time_display_html('tc') +
+
+		w3_div('id-tc-data|width:1024px; height:200px; background-color:black; position:relative;',
+			'<canvas id="id-tc-scope" width="1024" height="200" style="position:absolute"></canvas>'
+		);
+	
+	tc.saved_setup = ext_save_setup();
+   tc.save_agc_delay = ext_agc_delay(5000);
+	tc.config = tc.sig.WWVBp;
+   tc.pll_bw = tc.pll_bw_i[tc.config];
+
+	var controls_html =
+		w3_div('id-tc-controls w3-text-white|height:100%',
+			w3_col_percent('',
+				w3_div('w3-medium w3-text-aqua', '<b>Time station decoder</b>'), 25,
+				w3_div('id-tc-no-audio w3-text-css-lime w3-hide',
+					'No audio will be heard due to zero-IF mode used'
+				), 60
+			),
+			w3_inline('w3-margin-T-8/w3-margin-right',
+			   w3_select_conditional('w3-text-red w3-width-auto', '', '', 'tc.config', tc.config, tc.sig_s, 'tc_signal_menu_cb'),
+            w3_button('w3-padding-small w3-css-yellow', 'Re-sync', 'timecode_resync_cb'),
+            w3_button('w3-padding-small w3-aqua', 'Reset PLL', 'timecode_reset_pll_cb'),
+            //w3_checkbox('w3-label-inline w3-label-not-bold/', 'update Kiwi<br>date &amp; time', 'tc.update', tc.update, 'w3_bool_cb'),
+			   w3_input('w3-padding-tiny w3-label-inline w3-label-not-bold|width:auto|size=3', 'pll bw:', 'tc.pll_bw', tc.pll_bw, 'timecode_pll_bw_cb'),
+            dbgUs? w3_button('id-tc-test w3-padding-small w3-aqua', 'Test', 'timecode_test_cb') : '',
+				w3_div('', '<pre id="id-tc-info" style="margin:0"></pre>')
+			),
+			w3_inline('w3-margin-T-4/w3-margin-right',
+				w3_div('id-tc-status w3-show-inline-block'),
+				w3_div('id-tc-status2 w3-show-inline-block')
+			),
+			w3_div('id-tc-addon'),
+         w3_div('w3-scroll w3-margin-TB-8 w3-grey-white|height:70%', '<pre id="id-tc-dbug"></pre>')
+		);
+	
+	ext_panel_show(controls_html, data_html, null);
+	time_display_setup('tc');
+	tc.sigid_s.forEach(function(sig) { w3_call(sig +'_init'); });
+	timecode_environment_changed( {resize:1} );
+	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-tc-test');
+	
+	ext_set_controls_width_height(900);
+	timecode_process_params(ext_param());
+}
+
+function timecode_environment_changed(changed)
+{
+   // don't do anything for changes.freq or changed.mode
+   //console.log('timecode_environment_changed:');
+   //console.log(changed);
+   if (changed.ext_open) {
+      timecode_process_params(extint.param);
+   }
+   
+   if (changed.resize) {
+      var el = w3_el('id-tc-data');
+      var left = (window.innerWidth - 1024 - time_display_width()) / 2;
+      el.style.left = px(left);
+   }
 }
 
 function tc_signal_menu_cb(path, val, first)
@@ -721,7 +736,7 @@ function timecode_resync_cb(path, val)
    var phase_meas = (tc.sync_phase[tc.config] != 2);
 	tc.state = phase_meas? tc.ACQ_PHASE : tc.ACQ_SYNC;
 	timecode_reset(tc.state);
-	if (tc.test) ext_send('SET test');
+	if (tc.test && ext_nom_sample_rate() == 12000) ext_send('SET test');
 }
 
 function timecode_reset_pll_cb(path, val)
@@ -741,7 +756,7 @@ function timecode_pll_bw_cb(path, val, complete, first)
 
 function timecode_test_cb(path, val, first)
 {
-   if (first) return;
+   if (ext_nom_sample_rate() != 12000) return;
    timecode_reset(false);
    tc.test = 1;
 	ext_send('SET test');
