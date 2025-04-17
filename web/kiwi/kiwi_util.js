@@ -675,7 +675,7 @@ Number.prototype.withSign = function()
 	return (n < 0)? s : ('+'+ s);
 };
 
-var kHz = function(f) { return (f / 1e3).toFixed(3) +'k'; };
+var kHz_s = function(Hz) { return (Hz / 1e3).toFixed(3) +'k'; };
 
 // need symmetry for negative f in passband calcs
 function _10Hz(f) {

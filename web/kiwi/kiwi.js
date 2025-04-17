@@ -2992,12 +2992,42 @@ function kiwi_force_admin_close_cb(path, val, first)
    }
 }
 
+// convert baseband freq to freq plus offset if freq offset in effect
+function kiwi_freq_with_offset_Hz(freqHz)
+{
+   if (kiwi.isOffset && freqHz < kiwi.freq_offset_Hz) freqHz += kiwi.freq_offset_Hz;
+   return freqHz;
+}
+
+function kiwi_freq_with_offset_kHz(freqkHz)
+{
+   if (kiwi.isOffset && freqkHz < kiwi.freq_offset_kHz) freqkHz += kiwi.freq_offset_kHz;
+   return freqkHz;
+}
+
+// convert freq plus offset to baseband freq if freq offset in effect
+function kiwi_freq_without_offset_Hz(freqHz)
+{
+   if (kiwi.isOffset && freqHz > kiwi.freq_offset_Hz) freqHz -= kiwi.freq_offset_Hz;
+   return freqHz;
+}
+
+function kiwi_freq_without_offset_kHz(freqkHz)
+{
+   if (kiwi.isOffset && freqkHz > kiwi.freq_offset_kHz) freqkHz -= kiwi.freq_offset_kHz;
+   return freqkHz;
+}
+
+// called when the admin changes the frequency offset
 function kiwi_set_freq_offset(freq_offset_kHz)
 {
-   kiwi.isOffset = (freq_offset_kHz != 0);
+   kiwi.freq_bb_max_kHz = cfg.max_freq? 32e3 : 30e3;
+   kiwi.freq_bb_max_Hz = cfg.max_freq?  32e6 : 30e6;
+
+   kiwi.isOffset = (freq_offset_kHz > 0);
    kiwi.freq_offset_kHz = freq_offset_kHz;
    kiwi.freq_offset_Hz  = freq_offset_kHz * 1000;
-   kiwi.offset_frac = (freq_offset_kHz % 1000) * 1000;
+   kiwi.offset_frac_Hz = kiwi.freq_offset_Hz % 1000;
 }
 
 function kiwi_init_cfg(stream_name)

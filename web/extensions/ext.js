@@ -257,7 +257,7 @@ function ext_get_freq_range()
 {
    var offset = kiwi.freq_offset_kHz;
    //return { lo_kHz: cfg.sdr_hu_lo_kHz + offset, hi_kHz: cfg.sdr_hu_hi_kHz + offset, offset_kHz: offset };
-   return { lo_kHz: offset, hi_kHz: offset + 32000, offset_kHz: offset };
+   return { lo_kHz: offset, hi_kHz: offset + kiwi.freq_bb_max_kHz, offset_kHz: offset };
 }
 
 function ext_set_freq_offset(foff_kHz)
@@ -282,12 +282,14 @@ var ext_zoom = {
 
 // mode, zoom and passband are optional
 function ext_tune(freq_dial_kHz, mode, zoom, zlevel, low_cut, high_cut, opt) {
+	if (isUndefined(freq_dial_kHz)) freq_dial_kHz = freq_displayed_Hz / 1000;
+   var freq_dial_bb_kHz = kiwi_freq_without_offset_kHz(freq_dial_kHz);
+
    var pb_specified = (isArg(low_cut) && isArg(high_cut));
-	//console.log('ext_tune: '+ freq_dial_kHz +', '+ mode +', '+ zoom +', '+ zlevel);
+	//console.log('ext_tune: '+ freq_dial_bb_kHz +', '+ mode +', '+ zoom +', '+ zlevel);
 	
 	extint.ext_is_tuning = true;
-	   freq_dial_kHz = freq_dial_kHz || (freq_displayed_Hz / 1000);
-      freqmode_set_dsp_kHz(freq_dial_kHz, mode, opt);
+      freqmode_set_dsp_kHz(freq_dial_bb_kHz, mode, opt);
       if (pb_specified) ext_set_passband(low_cut, high_cut);
       
       if (isArg(zoom)) {
