@@ -1078,7 +1078,7 @@ function ale_2g_f_limit_cb(path, idx, first)
 function ale_2g_f_limit_custom_cb(path, val)
 {
    var f_limit_kHz = val.toString().parseFloatWithUnits('kM', 1e-3);
-	f_limit_kHz = w3_clamp(f_limit_kHz, 1, 32000, 1);
+	f_limit_kHz = w3_clamp(f_limit_kHz, 1, kiwi.freq_bb_max_kHz, 1);
    console.log('ale_2g_f_limit_custom_cb path='+ path +' val='+ val +' f_limit_kHz='+ f_limit_kHz);
 	w3_set_value(path, f_limit_kHz);
 	ale.f_limit = f_limit_kHz * ale.f_sign;

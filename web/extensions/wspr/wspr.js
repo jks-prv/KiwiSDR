@@ -400,7 +400,7 @@ function wspr_controls_setup()
 
    // re-define band menu if downconverter in use
    var r = ext_get_freq_range();
-   if (r.lo_kHz > 32000 && r.hi_kHz > 32000) {
+   if (r.lo_kHz > kiwi.freq_bb_max_kHz && r.hi_kHz > kiwi.freq_bb_max_kHz) {
       wspr.center_freqs = [];
       wspr.freqs_s = {};
       wspr.freqs_m = [];

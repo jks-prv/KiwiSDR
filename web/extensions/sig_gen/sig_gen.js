@@ -271,7 +271,7 @@ function gen_step_up_down_cb(path, sign, first)
    var step = parseInt(sign) * gen.step;
    console.log('gen_step_up_down_cb: step='+ step +' '+ typeof(step));
    gen.freq += step;
-   gen.freq = w3_clamp(gen.freq, 0, cfg.max_freq? 32e3 : 30e3);
+   gen.freq = w3_clamp(gen.freq, 0, kiwi.freq_bb_max_kHz);
 	gen_freq_cb('gen.freq', gen.freq);
 }
 
@@ -296,7 +296,7 @@ function gen_sweep_cb(path, val, first)
          gen.freq += gen.step;
 	      console.log('gen_sweep_cb '+ prev.toFixed(3) +'|'+ gen.step.toFixed(3) +'|'+ gen.freq.toFixed(3));
 	      var stop = ((gen.step > 0 && gen.freq > gen.freq_stop) || (gen.step < 0 && gen.freq < gen.freq_stop));
-         if (stop || gen.freq < 0.01 || gen.freq > (cfg.max_freq? 32e3 : 30e3))
+         if (stop || gen.freq < 0.01 || gen.freq > (kiwi.freq_bb_max_kHz))
             gen_sweep_cancel();
          gen_freq_cb('gen.freq', gen.freq);
       }, gen.dwell);

@@ -205,7 +205,7 @@ function ft8_controls_setup()
    
    // re-define band menu if downconverter in use
    var r = ext_get_freq_range();
-   if (r.lo_kHz > 32000 && r.hi_kHz > 32000) {
+   if (r.lo_kHz > kiwi.freq_bb_max_kHz && r.hi_kHz > kiwi.freq_bb_max_kHz) {
       new_s = {};
       w3_obj_enum(ft8.freq_xvtr_s,
          function(key, i, o) {
