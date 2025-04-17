@@ -326,12 +326,14 @@ function sd_done(err)
 	   case 91: e = 'Kiwi must use BeagleBone Green or Black'; break;
 	   case 92: e = 'Not enough free disk space'; break;
 	   case 93: e = 'Image file checksum failed'; break;
-	   default: e = 'code '+ err; break;
+	   default: e = 'unknown code '+ err; break;
 	}
+	console.log('sd_done: err='+ err +' e='+ e);
 	if (err > 0) e = '<b>ERROR: '+ e +'</b>';
 
 	if (err <= 0) {
-		// force to max in case we never made it during updates
+		// Negative codes used when progress meter isn't possible to run,
+		// so force to max in case we never made it during updates.
 		w3_el('id-sd-progress-text').innerHTML = w3_el('id-sd-progress').style.width = '100%';
 	}
 	kiwi_clearInterval(kiwi.sd_interval);
