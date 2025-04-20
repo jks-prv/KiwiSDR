@@ -179,33 +179,6 @@ void fpga_init() {
     FILE *fp;
     int n, i, j;
 
-	gpio_setup(FPGA_PGM, GPIO_DIR_OUT, 1, PMUX_OUT_PU, 0);		// i.e. FPGA_PGM is an INPUT, active LOW
-	gpio_setup(FPGA_INIT, GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, 0);
-	
-	#if 0
-	    while (1) {
-            GPIO_WRITE_BIT(FPGA_PGM, 1);
-            real_printf("w1r%d ", GPIO_READ_BIT(FPGA_INIT)); fflush(stdout);
-            kiwi_usleep(250000);
-            GPIO_WRITE_BIT(FPGA_PGM, 0);
-            real_printf("w0r%d ", GPIO_READ_BIT(FPGA_INIT)); fflush(stdout);
-	    }
-	#endif
-
-	#if 0
-        GPIO_OUTPUT(SPIn_CS1);
-        //GPIO_OUTPUT(P816);
-	    while (1) {
-            //real_printf("."); fflush(stdout);
-            GPIO_CLR_BIT(SPIn_CS1);
-            //GPIO_CLR_BIT(P816);
-            kiwi_usleep(1000);
-            GPIO_SET_BIT(SPIn_CS1);
-            //GPIO_SET_BIT(P816);
-            kiwi_usleep(1000);
-	    }
-	#endif
-
 	spi_dev_init(spi_clkg, spi_speed);
 
 #ifdef TEST_FLAG_SPI_RFI

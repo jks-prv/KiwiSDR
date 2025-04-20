@@ -535,8 +535,8 @@ int main(int argc, char *argv[])
 
 	if (need_hardware) {
 		peri_init();
-		fpga_init();
 		if (gpio_test_pin) gpio_test(gpio_test_pin);
+		fpga_init();
 		//pru_start();
 		eeprom_update(eeprom_action);
 		
