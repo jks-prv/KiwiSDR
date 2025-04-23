@@ -187,8 +187,8 @@ function dx_passband_cb(path, val, first)
    }
 
 	var o = w3_remove_trailing_index(path, '_');
-   dx.o.last_pb[o.idx] = [dx.o.lo, dx.o.hi];
 	console.log('dx_passband_cb lo='+ dx.o.lo +' hi='+ dx.o.hi +' o.idx='+ o.idx);
+   if (o.idx != dx.IDX_USER) dx.o.last_pb[o.idx] = [dx.o.lo, dx.o.hi];
    if (dx_update_check(o.idx, dx.UPD_MOD, true)) dx_button_highlight();
 }
 
