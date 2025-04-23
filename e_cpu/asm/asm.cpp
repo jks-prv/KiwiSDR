@@ -124,6 +124,8 @@ dict_t dict[] = {
 	{ "wrEvt",		TT_OPC,		OC_WREVT,           OCM_IO },
 	{ "wrEvt2",		TT_OPC,		OC_WREVT2,          OCM_IO },
 	
+	{ "ALIGN",		TT_ALIGN,   0 },
+
 	{ "u8",			TT_DATA,	1 },
 	{ "u16",		TT_DATA,	2 },
 	{ "u32",		TT_DATA,	4 },
@@ -669,13 +671,13 @@ int main(int argc, char *argv[])
 
 
 	// pass 5: allocate space and resolve (possibly forward referenced) LABELs (done in-place)
-	int a=0;
-	curline=1;
+	u4_t a = 0;
+	curline = 1;
 
     tp_start = pass4; tp_end = ep4;
 	for (tp=pass4; tp != ep4; tp++) {
 		tokens_t *t, *tn = tp+1;
-		int op, oper=0;
+		int op, oper = 0;
 		
 		if (a/2 >= CPU_RAM_SIZE) {
 		    printf("a/2=%d CPU_RAM_SIZE=%d\n", a/2, CPU_RAM_SIZE);
@@ -754,13 +756,18 @@ int main(int argc, char *argv[])
 			a += 2;
 		} else
 		
+		// align pc to next 8 insn boundary
+		if (tp->ttype == TT_ALIGN) {
+		    u4_t _a = a;
+		    a = (a & ~0x7) + ((a & 0x7)? 0x8 : 0);
+		    if (debug) printf("pass 5: _a=%04x a=%04x\n", _a, a);
+		} else
+		
 		// structure
 		if (tp->ttype == TT_STRUCT) {
 			if (debug) printf("%04x STRUCT %s size 0x%x\n", a, tp->str, tp->num);
 			a += tp->num;
-		} else
-		
-		;
+		}
 	}
 	
 	
@@ -1038,7 +1045,8 @@ int main(int argc, char *argv[])
 				case OC_WREVT2: {
 								syntax(oper >= 1 && oper <= 0x7ff, t, "i/o specifier outside range 1..0x7ff: 0x%04x", oper);
 								int ones = count_ones(oper);
-								syntax(ones <= 2, t, "too many bits (%d) in i/o specifier 0x%04x", ones, oper);
+								// 3 currently because of kiwi.config: FREQ_L and REG_NO definitions
+								syntax(ones <= 3, t, "too many bits (%d) in i/o specifier 0x%04x", ones, oper);
 								break;
 				}
 
@@ -1118,6 +1126,20 @@ int main(int argc, char *argv[])
 		
 		if (tp->ttype == TT_EOL) {
 			curline = tp->num;
+			continue;
+		} else
+		
+		// align pc to next 8 insn boundary
+		if (tp->ttype == TT_ALIGN) {
+		    u4_t _a = a;
+		    a = (a & ~0x7) + ((a & 0x7)? 0x8 : 0);
+		    if (debug) printf("pass 7: _a=%04x a=%04x\n", _a, a);
+		    out = OC_NOP;
+		    u4_t pc;
+		    for (pc = _a; pc < a; pc += 2) {
+		        if (debug || show_bin) printf("\t%04x %04x nop (align)\n", pc, OC_NOP);
+			    if (write(bfd, &out, 2) != 2) sys_panic("wr");
+		    }
 			continue;
 		} else
 		

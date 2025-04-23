@@ -39,8 +39,14 @@ int num_strings();
 // tokens
 
 typedef enum {
-	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT, TT_ITER, TT_DEF, TT_FILE, TT_STATS
+	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT, TT_ITER,
+	TT_DEF, TT_FILE, TT_STATS, TT_ALIGN
 } token_type_e;
+
+const char * const ttype_s[] = {
+    "EOL", "LABEL", "SYM", "NUM", "OPC", "PRE", "OPR", "DATA", "STRUCT", "ITER",
+    "DEF", "FILE", "STATS", "ALIGN"
+};
 
 #define	TF_RET		0x0001
 #define	TF_CIN		0x0002
@@ -158,10 +164,13 @@ int exp_macro(tokens_t **dp, tokens_t **to);
 
 void sys_panic(const char *str);
 void panic(const char *str, tokens_t *t = NULL);
-void syntax(int cond, tokens_t *tp, const char *fmt, ...);
+void _syntax(bool note, int cond, tokens_t *tp, const char *fmt, ...);
 void syntax2(int cond, const char *fmt, ...);
 void _assert(int cond, const char *str, const char *file, int line);
 void errmsg(const char *str, tokens_t *t = NULL);
+
+#define syntax(cond, tp, fmt, ...) _syntax(false, cond, tp, fmt, ## __VA_ARGS__)
+#define note(cond, tp, fmt, ...) _syntax(true, cond, tp, fmt, ## __VA_ARGS__)
 
 char *str_ends_with(char *s, const char *cs);
 int count_ones(u4_t v);
