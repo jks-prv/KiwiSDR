@@ -43,6 +43,7 @@ Boston, MA  02110-1301, USA.
 #include "rx_waterfall_cmd.h"
 #include "rx_util.h"
 #include "options.h"
+#include "test.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -887,17 +888,22 @@ void sample_wf(int rx_chan)
 
     now = timer_ms();
     int actual = now - wf->mark;
-    int delay = desired - actual;
-    //printf("%d %d %d\n", delay, actual, desired);
     
     // full sampling faster than needed by frame rate
-    if (desired > actual) {
-        evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS");
-        WFSleepReasonMsec("wait frame", delay);
-        evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS done");
-    } else {
+    #ifdef TEST_WF_FULL_RATE
         WFNextTask("loop");
-    }
+    #else
+        int delay = desired - actual;
+        //printf("%d %d %d\n", delay, actual, desired);
+        if (desired > actual) {
+            evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS");
+            WFSleepReasonMsec("wait frame", delay);
+            evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS done");
+        } else {
+            WFNextTask("loop");
+        }
+    #endif
+    
     now = timer_ms();
     wf->mark = now;
     diff = now - wf->last_frames_ms;
