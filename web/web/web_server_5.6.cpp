@@ -315,18 +315,6 @@ void web_server(void *param)
         #else
             TaskSleepUsec(WEB_SERVER_POLL_US);
         #endif
-		
-		//#define CHECK_ECPU_STACK
-		#ifdef CHECK_ECPU_STACK
-            static int every_1sec;
-            every_1sec += WEB_SERVER_POLL_US;
-            if (every_1sec >= 1000000) {
-                static SPI_MISO sprp;
-                spi_get_noduplex(CmdGetSPRP, &sprp, 4);
-                printf("e_cpu: SP=%04x RP=%04x\n", sprp.word[0], sprp.word[1]);
-                every_1sec = 0;
-            }
-		#endif
 	}
 }
 

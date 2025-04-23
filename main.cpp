@@ -66,7 +66,7 @@ kiwi_t kiwi;
 
 int version_maj, version_min;
 int fw_sel, fpga_id, rx_chans, rx_wb_buf_chans, wf_chans, wb_chans, nrx_bufs,
-    nrx_samps, nrx_samps_wb, nrx_samps_loop, nrx_samps_rem,
+    nrx_samps, nrx_samps_total, nrx_samps_wb, nrx_samps_loop, nrx_samps_rem,
     snd_rate, snd_rate_i, wb_rate, rx_decim, rx1_decim, rx2_decim;
 
 int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, down,
@@ -79,7 +79,7 @@ int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, 
 
 u4_t ov_mask, snd_intr_usec;
 
-bool need_hardware, kiwi_reg_debug, gps_e1b_only,
+bool need_hardware, kiwi_reg_debug, gps_e1b_only, ecpu_stack_check,
     disable_led_task, is_multi_core, debug_printfs, cmd_debug;
 
 int main_argc;
@@ -202,6 +202,7 @@ int main(int argc, char *argv[])
 		if (ARG("-gps_debug")) { gps_debug = -1; ARGL(gps_debug); } else
 		if (ARG("-stats") || ARG("+stats")) { print_stats = STATS_TASK; ARGL(print_stats); } else
 		if (ARG("-gpio")) { ARGL(gpio_test_pin); } else
+		if (ARG("-stack")) ecpu_stack_check = true; else
 		if (ARG("-rsid")) kiwi.RsId = true; else
 		if (ARG("-v")) {} else      // dummy arg so Kiwi version can appear in e.g. htop
 		
@@ -486,7 +487,8 @@ int main(int argc, char *argv[])
             rx_chans, rx_wb_buf_chans, wb_chans, wf_chans, gps_chans);
 
         nrx_samps = NRX_SAMPS_CHANS(rx_wb_buf_chans);
-        nrx_samps_loop = nrx_samps * rx_wb_buf_chans / NRX_SAMPS_RPT;
+        nrx_samps_total = nrx_samps * rx_wb_buf_chans;
+        nrx_samps_loop = nrx_samps_total / NRX_SAMPS_RPT;
         nrx_samps_rem = (nrx_samps * rx_wb_buf_chans) - (nrx_samps_loop * NRX_SAMPS_RPT);
         snd_intr_usec = 1e6 / ((float) snd_rate/nrx_samps);
         lprintf("firmware: RX rx_decim=%d RX1_DECIM=%d RX2_DECIM=%d USE_RX_CICF=%d\n",
