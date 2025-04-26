@@ -2636,6 +2636,7 @@ var pin = {
 };
 
 var _gps = {
+   focus: false,
    leaflet: true,
    gps_map_loaded: false,
    pkgs_maps_js: [ 'pkgs_maps/pkgs_maps.js', 'pkgs_maps/pkgs_maps.css' ],
@@ -2750,7 +2751,7 @@ function gps_graph_cb(id, idx, first)
    idx = +idx;
    //console.log('gps_graph_cb idx='+ idx);
    admin_int_cb(id, idx, first);
-   ext_send('SET gps_IQ_data_ch='+ ((idx == _gps.IQ)? _gps.iq_ch:0));
+   gps_iq_ch_cb('', _gps.iq_ch);
 
    w3_show_hide('id-gps-pos-scale', idx == _gps.POS);
    w3_show_hide('id-gps-iq-ch', idx == _gps.IQ);
@@ -2795,12 +2796,13 @@ function gps_pos_scale_cb(path, idx, first)
 
 function gps_iq_ch_cb(path, idx, first)
 {
-   idx = +idx;
-	if (idx == -1 || first)
-	   idx = 0;
-	_gps.iq_ch = idx + 1;  // channel # is biased at 1 so zero indicates "off" (no sampling)
-	//console.log('gps_iq_ch_cb idx='+ idx +' path='+ path+' first='+ first +' iq_ch='+ _gps.iq_ch);
-   ext_send('SET gps_IQ_data_ch='+ _gps.iq_ch);
+   _gps.iq_ch = idx = +idx;
+   
+   // channel # is biased at 1 so zero indicates "off" (no sampling)
+   // make sure IQ data isn't being unnecessarily requested unless GPS tab is in focus and IQ button selected
+	var ch = (_gps.focus && adm.rssi_azel_iq == _gps.IQ)? (idx+1) : 0;
+	console.log('gps_iq_ch_cb idx='+ idx +' path='+ path+' first='+ first +' ch='+ ch +' IQ-button='+ TF(adm.rssi_azel_iq == _gps.IQ) +' focus='+ TF(_gps.focus));
+   ext_send('SET gps_IQ_data_ch='+ ch);
    _gps.IQ_data = null;    // blank display until new data arrives
 }
 
@@ -2829,6 +2831,7 @@ function gps_schedule_azel()
 
 function gps_focus(id)
 {
+   _gps.focus = true;
    if (!_gps.gps_map_loaded) {
       kiwi_load_js(_gps.leaflet? _gps.pkgs_maps_js : _gps.gmap_js, 'gps_focus2');
       _gps.gps_map_loaded = true;
@@ -2854,6 +2857,7 @@ function gps_blur(id)
 	kiwi_clearInterval(gps_azel_interval);
    gps_az_el_history_running = false;
 	ext_send("SET gps_IQ_data_ch=0");
+   _gps.focus = false;
 }
 
 var gps_nsamp;
