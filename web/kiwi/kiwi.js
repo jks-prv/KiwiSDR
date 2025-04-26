@@ -3116,7 +3116,17 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 
 		case "abyy":
          dx.db_s[dx.DB_EiBi] = 'EiBi-'+ param[1] +' (read-only)';    // abyy value sent by server
+         dx.db_short_s[dx.DB_EiBi] = 'EiBi-'+ param[1];
 			break;
+
+		case "dx_db_name":
+		   s = kiwi_decodeURIComponent('dx_db_name', param[1]);
+		   console.log('dx_db_name=<'+ s +'>');
+		   if (isDefined(dx) && isNonEmptyString(s) && s != 'dx') {
+		      dx.db_s[dx.DB_STORED] = s +' (writeable)';
+		      dx.db_short_s[dx.DB_STORED] = s;
+		   }
+		   break;
 
 		case "client_public_ip":
 			client_public_ip = param[1].replace(/::ffff:/, '');    // remove IPv4-mapped IPv6 if any
@@ -3219,7 +3229,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
             console.log(dxcomm_cfg);
          }
 			break;
-
+		
 		case "load_adm":
 			var adm_json = decodeURIComponent(param[1]);
 			console.log('### load_adm '+ ws.stream +' '+ adm_json.length);

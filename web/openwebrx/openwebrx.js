@@ -1369,25 +1369,25 @@ function demodulator_default_analog(offset_frequency, subtype, locut, hicut)
 
 	// this function sends demodulator parameters to the server
 	this.doset = function() {
-		//console.log('DOSET fcar='+freq_car_Hz);
+		//console.log('DOSET fcar='+ freq_car_Hz);
 		//if (dbgUs && dbgUsFirst) { dbgUsFirst = false; console.trace(); }
 		
-		var freq_Hz = freq_car_Hz;
-		var freq_kHz = freq_Hz/1000;
-      var freq_kHz_s = freq_kHz.toFixed(3);     // always allow manual entry of 3 significant digits
+		var new_freq_Hz = freq_car_Hz;
+		var new_freq_kHz = new_freq_Hz/1000;
+      var new_freq_kHz_s = new_freq_kHz.toFixed(3);      // always allow manual entry of 3 significant digits
 
 		var mode = this.server_mode;
 		var locut = this.low_cut.toString();
 		var hicut = this.high_cut.toString();
 		var mparam = (ext_mode(mode).SAx)? (' param='+ (owrx.chan_null | (owrx.SAM_opts << owrx.SAM_opts_sft))) : '';
 		//if (mparam != '') console.log('$mode='+ mode +' mparam='+ mparam); else console.log('$mode='+ mode);
-		var s = 'SET mod='+ mode +' low_cut='+ locut +' high_cut='+ hicut +' freq='+ freq_kHz_s + mparam;
+		var s = 'SET mod='+ mode +' low_cut='+ locut +' high_cut='+ hicut +' freq='+ new_freq_kHz_s + mparam;
 		snd_send(s);
       //kiwi_trace('doSet');
 		//console.log('$'+ s);
 
       var changed = null;
-		freq_Hz = freq_displayed_Hz;
+		var freq_Hz = freq_displayed_Hz;
       if (!owrx.freq_dsp_1Hz) {
          // in 10 Hz mode store rounded freq so comparison below against last freq works correctly
          //var _freq_Hz = _10Hz(freq_Hz);
@@ -1395,9 +1395,12 @@ function demodulator_default_analog(offset_frequency, subtype, locut, hicut)
          //console.log('prev_freq_kHz PUSH '+ freq_Hz +'=>'+ _freq_Hz);
          freq_Hz = _freq_Hz;
       }
-      if (freq_Hz != owrx.last_freq_Hz) {
+      //console.log('$$$$ new_freq_Hz='+ new_freq_Hz +' freq_displayed_Hz='+ freq_Hz +' owrx.last_freq_Hz='+ owrx.last_freq_Hz);
+      if (new_freq_Hz != owrx.last_freq_Hz) {
          changed = changed || {};
          changed.freq = 1;
+      }
+      if (freq_Hz != owrx.last_freq_Hz) {
          if (freq_Hz > 0) {
             //console.log('prev_freq_kHz PUSH '+ freq_Hz +'|'+ owrx.last_freq_Hz);
             owrx.prev_freq_kHz.unshift(freq_Hz);
@@ -1655,7 +1658,7 @@ function mkenvelopes(visible_range)    // called from mkscale etc
 	scale_ctx.textBaseline = 'top';
 	scale_ctx.fillStyle = 'white';
    scale_ctx.textAlign = "left";
-   var s = dx.db_s[dx.db].split(' ')[0];
+   var s = dx.db_short_s[dx.db];
    if (kiwi.mdev) s += '  '+ kiwi.mdev_s;
    scale_ctx.fillText('database: '+ s, 20, 7);
    if (demodulators.length)
@@ -7284,8 +7287,9 @@ function freq_memory_at(idx)
 
 function freq_memory_add(f, clear)
 {
-   //console.log('freq_memory update');
+   //console.log('freq_memory_add f='+ f);
    //console.log(kiwi.freq_memory);
+   //kiwi_trace();
    if (!isNumber(+f)) return;
    if (+f < 1) f = '1';
    if (kiwi.fmem_mode_save) f += ' '+ cur_mode;

@@ -536,12 +536,15 @@ static void _dx_reload_file(cfg_t *cfg, int db)
 
     #define LBUF 512
     char lbuf[LBUF], *s;
-    fgets(lbuf, LBUF, fp);      // skip first line
     
     dx_db_t *dx_db = &dx.dx_db[db];
     dx_db->lines = 1;
     dx_db->json_parse_errors = dx_db->dx_format_errors = 0;
     cfg->json = lbuf;
+
+    fgets(lbuf, LBUF, fp);
+    i = sscanf(lbuf, "%*[ {\"]%31[^\":]", dx_db->db_name);
+    if (i && db == DB_STORED) printf("DX: db_name=<%s>\n", dx_db->db_name);
 
 	jsmn_parser parser;
 	check(cfg->tok_size == 0);

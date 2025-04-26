@@ -51,6 +51,8 @@ typedef struct {
     int db;
 	int lines;
 	int json_parse_errors, dx_format_errors;
+	#define N_DX_DB_NAME 31
+    char db_name[N_DX_DB_NAME + SPACE_FOR_NULL];
 	#define N_DX_FILE_HASH_BYTES 4      // 4 bytes = 8 chars
     char file_hash[N_DX_FILE_HASH_BYTES*2 + SPACE_FOR_NULL];
     int file_size;
