@@ -709,6 +709,12 @@ retry:
 		    c->isMaster = true;
 		}
 
+        // only the first web socket connection sees "nolocal" URL param, so propagate force_notLocal
+		if (snd_or_wf && c->rx_channel != -1 && cother && cother->force_notLocal) {
+            c->isLocal = false;
+            c->force_notLocal = true;
+		}
+
         const char *cp;
         if (mc->query && (cp = strstr(mc->query, "foff=")) != NULL && sscanf(cp, "foff=%lf", &c->foff_in_URL) == 1) {
             if (c->foff_in_URL < 0 || c->foff_in_URL > 100e9) c->foff_in_URL = 0;
