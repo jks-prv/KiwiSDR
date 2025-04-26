@@ -500,7 +500,7 @@ UploadClock:									; &GPS_channels + ch_NAV_MS
 CmdSample:		wrEvt	GPS_SAMPLER_RST
             	ret
 
-gps_chans_m1:   u16		GPS_MAX_CHANS - 1   ; NB: -1 due to how tp_loop[2] insn works
+gps_chans_m1:   u16		GPS_MAX_CHANS - 1   ; NB: -1 due to how to_loop[2] insn works
 
 CmdSetChans:    rdReg	HOST_RX             ; #chans
                 push    gps_chans_m1        ; #chans &gps_chans_m1
@@ -564,21 +564,10 @@ CmdSetSat:      rdReg	HOST_RX             ; chan#
                 pop.r                       ;
 
 CmdSetE1Bcode:
-                push    E1B_CODE_LOOP2
-e1b_more:
-				loop_ct	E1B_CODE_RPT
-e1b_loop1:      SetReg	SET_E1B_CODE
-				loop    e1b_loop1
-				
-				push	1
-				sub
-				dup
-				brNZ	e1b_more
-
-				loop_ct	E1B_CODE_REM
-e1b_loop2:      SetReg	SET_E1B_CODE
-				loop    e1b_loop2
-				drop.r
+				loop_ct	E1B_CODE_LOOP
+e1b_loop:       SetReg	SET_E1B_CODE
+				loop    e1b_loop
+                ret
 
 CmdSetPolarity: rdReg	HOST_RX             ; chan#
                 call    GetGPSchanPtr       ; this
@@ -594,17 +583,12 @@ CmdPause:       SetReg	SET_GPS_CHAN
 
 CmdGetGPSSamples:
 				wrEvt	HOST_RST
-				push	GPS_SAMPS_LOOP
-up_more:
-				loop_ct	GPS_SAMPS_RPT
-up_loop:        wrEvt	GET_GPS_SAMPLES
-				loop    up_loop
-
-				push	1
-				sub
-				dup
-				brNZ	up_more
-				drop.r
+				loop_ct	GPS_SAMPS
+                ALIGN
+gps_loop:
+                wrEvtL	GET_GPS_SAMPS_LOOP
+				// wrEvtL will automatically loop to gps_loop
+				ret
 
 CmdGetChan:     rdReg	HOST_RX				; chan#
                 wrEvt	HOST_RST			; chan#
