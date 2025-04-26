@@ -26,9 +26,14 @@ Boston, MA  02110-1301, USA.
     #define SHMEM_DISABLE_ALL
 #endif
 
+#ifdef NO_SHMEM
+    #warning SHMEM_DISABLE_ALL due to NO_SHMEM
+    #define SHMEM_DISABLE_ALL
+#endif
+
 //#define SHMEM_DISABLE_ALL
 #ifdef SHMEM_DISABLE_ALL
-    #ifndef USE_ASAN
+    #if !defined(USE_ASAN) && !defined(NO_SHMEM)
         #warning dont forget to remove SHMEM_DISABLE_ALL
     #endif
     #define DRM_SHMEM_DISABLE

@@ -1,3 +1,22 @@
+/*
+--------------------------------------------------------------------------------
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301, USA.
+--------------------------------------------------------------------------------
+*/
+
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
@@ -10,13 +29,14 @@
 #define EC_TASK_SCHED       3
 #define	EC_TASK_IDLE        4
 #define	EC_TASK_SWITCH      5
-#define	EC_TRIG1		    6
-#define	EC_TRIG2		    7
-#define	EC_TRIG3		    8
-#define	EC_TRIG_REALTIME    9
-#define	EC_TRIG_ACCUM_ON    10
-#define	EC_TRIG_ACCUM_OFF   11
-#define NECMD               12
+#define	EC_TASK_INTR        6
+#define	EC_TRIG1		    7
+#define	EC_TRIG2		    8
+#define	EC_TRIG3		    9
+#define	EC_TRIG_REALTIME    10
+#define	EC_TRIG_ACCUM_ON    11
+#define	EC_TRIG_ACCUM_OFF   12
+#define NECMD               13
 
 #define	EV_NEXTTASK		0
 #define	EV_SPILOOP		1
@@ -30,6 +50,17 @@
 #define	EV_WS           9
 #define NEVT			10
 
+
+// special profile to find performance problems
+#if 0 && defined(PLATFORM_beaglebone_ai64)
+	#define EV_MEAS
+	#define EV_MEAS_NEXTTASK
+	#define EV_MEAS_LATENCY
+	#define EV_MEAS_DPUMP
+	#define EV_MEAS_DPUMP_CHUNK
+	#define EV_MEAS_SPI
+	#define EV_MEAS_SPI_CMD
+#endif
 
 // measure general task switching times
 #if 0
@@ -152,22 +183,28 @@
 //#define EV_MEAS_SPI_DEV
 #if defined(EV_MEAS) && (defined(EV_MEAS_SPI_DEV) || defined(SPI_PUMP_CHECK))
 	#define evSpiDev(c, e, p, s, s2) ev(c, e, p, s, s2)
+	#define evSpiDevStmt(s) s
 #else
 	#define evSpiDev(c, e, p, s, s2)
+	#define evSpiDevStmt(s)
 #endif
 
 //#define EV_MEAS_SPI
 #if defined(EV_MEAS) && (defined(EV_MEAS_SPI) || defined(SPI_PUMP_CHECK))
 	#define evSpi(c, e, p, s, s2) ev(c, e, p, s, s2)
+	#define evSpiStmt(s) s
 #else
 	#define evSpi(c, e, p, s, s2)
+	#define evSpiStmt(s)
 #endif
 
 //#define EV_MEAS_SPI_CMD
 #if defined(EV_MEAS) && defined(EV_MEAS_SPI_CMD)
 	#define evSpiCmd(c, e, p, s, s2) ev(c, e, p, s, s2)
+	#define evSpiCmdStmt(s) s
 #else
 	#define evSpiCmd(c, e, p, s, s2)
+	#define evSpiCmdStmt(s)
 #endif
 
 //#define EV_MEAS_WF

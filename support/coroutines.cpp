@@ -18,7 +18,7 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-// Copyright (c) 2014-2017 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "kiwi.h"
@@ -900,7 +900,7 @@ void TaskPollForInterrupt(ipoll_from_e from)
 	}
 
 	if (GPIO_READ_BIT(SND_INTR) && itask->sleeping) {
-		evNT(EC_TRIG1, EV_NEXTTASK, -1, "PollIntr", evprintf("CALLED_FROM_%s TO INTERRUPT TASK <===========================",
+		evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("CALLED_FROM_%s TO INTERRUPT TASK <===========================",
 			poll_from[from]));
 
 		// can't call TaskWakeup() from within NextTask()
@@ -908,14 +908,14 @@ void TaskPollForInterrupt(ipoll_from_e from)
 			itask->wu_count++;
 			RUNNABLE_YES(itask);
             itask->wake_param = TO_VOID_PARAM(itask->last_run_time);  // return how long task ran last time
-			evNT(EC_EVENT, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from CALLED_WITHIN_NEXTTASK of itask, wake_param=%d", poll_from[from], itask->wake_param));
+			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from CALLED_WITHIN_NEXTTASK of itask, wake_param=%d", poll_from[from], itask->wake_param));
 		} else {
 			TaskWakeup(itask_tid);
-			evNT(EC_EVENT, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from TaskWakeup of itask", poll_from[from]));
+			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from TaskWakeup of itask", poll_from[from]));
 		}
 	} else {
 		if (last_from != CALLED_WITHIN_NEXTTASK) {	// eliminate repeated messages from idle loop
-			evNT(EC_EVENT, EV_NEXTTASK, -1, "PollIntr", evprintf("CALLED_FROM_%s %s <===========================",
+			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("CALLED_FROM_%s %s <===========================",
 				poll_from[from], itask->sleeping? "NO PENDING INTERRUPT" : "INTERRUPT TASK PENDING"));
 			last_from = from;
 		}

@@ -1,3 +1,22 @@
+/*
+--------------------------------------------------------------------------------
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301, USA.
+--------------------------------------------------------------------------------
+*/
+
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
 #include "kiwi.h"
 #include "printf.h"
 #include "debug.h"
@@ -8,6 +27,22 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <signal.h>
+
+/*
+
+    Using EV
+    
+    Enable one of the EV measurement profiles in ev.h
+    Adjust the value of EV_HIGHEST_ADDR_CONST_STRINGS if necessary for Debian version in use.
+    
+    By default the dump of event data will occur on a ^C (SIGINT), calls ev(EC_DUMP, ...)
+    Run as "./d -dump n" which sets ev_dump as used in code below for various scenarios.
+    Dump explicitly from code e.g. evSpi(EC_DUMP, EV_SPILOOP, -1, "main", "dump");
+    
+    NEV determines the number of ev_t events buffered.
+    
+
+*/
 
 #ifdef EV_MEAS
 
@@ -56,15 +91,20 @@ static void evdump(evdump_e type, int lo, int hi)
         for (int i=lo; i<hi; i++) {
             assert(i >= 0 && i < NEV);
             e = &evs[i];
-            if (e->cmd == EC_TASK_SCHED || e->cmd == EC_TASK_IDLE) {
-                lfprintf(printf_type, "%10.3f %7.3f ", e->tepoch/1e3, e->ttask/1e3);
-                if (e->cmd == EC_TASK_SCHED)
-                    lfprintf(printf_type, "%16s:P%d:T%03d ", e->task, e->tprio, e->tid);
-                else
-                    lfprintf(printf_type, "%23s ", "idle");
-                lfprintf(printf_type, "%s\n",
-                    (e->cmd != EC_TASK_IDLE && e->ttask > 8000)? "*** TOO LONG *** TOO LONG *** TOO LONG *** TOO LONG *** TOO LONG ***":"");
+            static u4_t last_tepoch;
+            if (e->cmd != EC_TASK_SCHED && e->cmd != EC_TASK_SWITCH && e->cmd != EC_TASK_IDLE) continue;
+            lfprintf(printf_type, "%10.3f +%7.3f %7.3f ", e->tepoch/1e3, (e->tepoch - last_tepoch)/1e3, e->ttask/1e3);
+            last_tepoch = e->tepoch;
+            if (e->cmd == EC_TASK_SCHED)
+                lfprintf(printf_type, "%16s:P%d:T%03d", e->task, e->tprio, e->tid);
+            else
+            if (e->cmd == EC_TASK_SWITCH)
+                lfprintf(printf_type, "%16s:P%d:T%03d %s ", e->task, e->tprio, e->tid, e->s2);
+            else {
+                lfprintf(printf_type, "%23s ", "idle");
             }
+            lfprintf(printf_type, "%s\n",
+                (e->cmd != EC_TASK_IDLE && e->ttask > 8000)? "*** TOO LONG *** TOO LONG *** TOO LONG *** TOO LONG *** TOO LONG ***":"");
         }
         return;
 	}
@@ -178,7 +218,8 @@ void ev(int cmd, int event, int param, const char *s, const char *s2)
 	
 	#define EV_AUTO_FREE_CONST_STRINGS
 	#ifdef EV_AUTO_FREE_CONST_STRINGS
-        #define EV_HIGHEST_ADDR_CONST_STRINGS ((char *) 0x200000)
+        //#define EV_HIGHEST_ADDR_CONST_STRINGS ((char *) 0x200000)   // D8 original 
+        #define EV_HIGHEST_ADDR_CONST_STRINGS ((char *) 0x600000)   // D11 AI64
         if (s2 > EV_HIGHEST_ADDR_CONST_STRINGS && ((u64_t) s2 & EV_MALLOCED)) {
             free_s2 = EV_MALLOCED;
             s2 = (char*) ((u64_t) s2 & ~EV_MALLOCED);
@@ -203,6 +244,7 @@ void ev(int cmd, int event, int param, const char *s, const char *s2)
 	// keep memory from filling up with un-freed vasprintf()s from evprintf()
 	#ifdef EV_AUTO_FREE_CONST_STRINGS
         if (e->prev_valid && e->free_s2) {
+            //real_printf("ev: %d \"%s\" %p\n", strlen(e->s2), e->s2, e->s2); fflush(stdout);
             kiwi_asfree((void*) e->s2);
         }
 	#endif

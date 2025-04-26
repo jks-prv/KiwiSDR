@@ -405,3 +405,8 @@ ifeq ($(GDB),1)
     OPT = 0
     VIS_OPT =
 endif
+
+
+ifeq ($(NO_SHMEM),1)
+    CPP_FLAGS += -DNO_SHMEM
+endif

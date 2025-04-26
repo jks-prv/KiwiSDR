@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -106,16 +106,18 @@ static void snd_service()
         // use noduplex here because we don't want to yield
         evDPC(EC_TRIG3, EV_DPUMP, -1, "snd_svc", "CmdGetRX..");
     
-        // CTRL_SND_INTR cleared as a side-effect of the CmdGetRX
-        spi_get3_noduplex(CmdGetRX, miso, rx_xfer_size, nrx_samps_rem, nrx_samps_loop);
+        // CTRL_SND_INTR cleared as a side-effect of the kiwi.sdr.asm:CmdGetRX code
+        spi_get_noduplex(CmdGetRX, miso, rx_xfer_size, nrx_samps_total - 1);    // -1 important!
         moved++;
         dpump.rx_adc_ovfl = miso->status & SPI_ADC_OVFL;
         if (dpump.rx_adc_ovfl) dpump.rx_adc_ovfl_cnt++;
         
         evDPC(EC_EVENT, EV_DPUMP, -1, "snd_svc", "..CmdGetRX");
         
-        evDP(EC_TRIG2, EV_DPUMP, -1, "snd_service", evprintf("SERVICED SEQ %d %%%%%%%%%%%%%%%%%%%%",
-            rxd->snd_seq));
+        #ifdef SND_SEQ_CHECK
+            evDP(EC_TRIG2, EV_DPUMP, -1, "snd_service", evprintf("SERVICED SEQ %d %%%%%%%%%%%%%%%%%%%%",
+                rxd->snd_seq));
+        #endif
         //evDP(EC_TRIG2, EV_DPUMP, 15000, "SND", "SERVICED ----------------------------------------");
         
         #ifdef SND_SEQ_CHECK
@@ -394,7 +396,7 @@ static void snd_service()
             ctrl_clr_set(CTRL_SND_INTR, 0);
         }
     } while (diff > 1);
-    evLatency(EC_EVENT, EV_DPUMP, 0, "DATAPUMP", evprintf("MOVED %d", moved));
+    evLatency(EC_EVENT, EV_DPUMP, 0, "DATAPUMP", evprintf("FINAL MOVED=%d", moved));
 
 }
 
