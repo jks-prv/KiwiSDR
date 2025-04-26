@@ -201,8 +201,6 @@ void SearchInit() {
     GPSstat_init();
     printf("GPS_INTEG_BITS %d\n", GPS_INTEG_BITS);
     
-    assert((GPS_SAMPS % GPS_SAMPS_RPT) == 0);
-    
     const float ca_rate = CPS/FS;
 	float ca_phase=0;
 

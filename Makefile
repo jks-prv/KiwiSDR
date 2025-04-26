@@ -695,7 +695,7 @@ else
 endif
 
 $(GEN_ASM): kiwi.config verilog/kiwi.inline.vh $(wildcard e_cpu/asm/*)
-	(cd $(REPO_DIR)/e_cpu; make OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make gen_includes OTHER_DIR="$(OTHER_DIR2)")
 $(GEN_OTHER_ASM): $(OTHER_CONFIG) e_cpu/other.config $(wildcard e_cpu/asm/*)
 	(cd $(REPO_DIR)/e_cpu; make gen_other OTHER_DIR="$(OTHER_DIR2)")
 $(OUT_ASM): $(wildcard e_cpu/*.asm)

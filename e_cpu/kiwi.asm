@@ -288,23 +288,19 @@ CmdGetMem:
 				fetch16						; addr data
                 wrReg	HOST_TX
                 wrReg	HOST_TX
-                ret
-#else
-				ret
 #endif
+				ret
 
 CmdGetSPRP:
 #if USE_DEBUG
 				wrEvt	HOST_RST
-				push    0                   ; 0
-				push    0                   ; 0 0
+				push    0                   ; 0     make space on stack for sp_rp insn..
+				push    0                   ; 0 0   ..which sets tos & nos directly
 				sp_rp                       ; rp sp
                 wrReg	HOST_TX             ; rp
                 wrReg	HOST_TX             ;
-                ret
-#else
-				ret
 #endif
+				ret
 
 CmdFlush:
 				ret

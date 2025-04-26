@@ -1226,8 +1226,6 @@ void c2s_admin(void *param)
                         ",\"unlock\":%d,\"parity\":%d,\"alert\":%d,\"sub\":%d,\"sub_renew\":%d,\"soln\":%d,\"ACF\":%d,\"novfl\":%d,\"az\":%d,\"el\":%d}",
                         i? ", ":"", i, prn_s, prn, c->snr, c->rssi, c->gain, c->age, c->too_old? 1:0, c->hold, c->wdog,
                         c->ca_unlocked, c->parity, c->alert, c->sub, c->sub_renew, c->has_soln, c->ACF_mode, c->novfl, c->az, c->el);
-        //jks2
-        //if(i==3)printf("%s\n", kstr_sp(sb));
                     c->parity = 0;
                     c->has_soln = 0;
                     for (j = 0; j < SUBFRAMES; j++) {
