@@ -191,7 +191,7 @@ module KiwiSDR (
     wire [31:0] nos, tos;
     reg  [15:0] par;
     wire [2:0]  ser;
-    wire        rdBit0, rdBit1, rdBit2, rdReg, rdReg2, wrReg, wrReg2, wrEvt, wrEvt2;
+    wire        rdBit0, rdBit1, rdBit2, rdReg, wrReg, wrReg2, wrEvt, wrEvt2, wrEvtL;
 
     wire        boot_done, host_srq, mem_rd, gps_rd, ext_rd;
     wire [15:0] host_dout, mem_dout, gps_dout, ext_dout;
@@ -344,6 +344,7 @@ module KiwiSDR (
         .wrReg          (wrReg),
         .wrReg2         (wrReg2),
         .wrEvt2         (wrEvt2),
+        .wrEvtL         (wrEvtL),
         
         .use_gen_C      (use_gen_C),
         
@@ -388,18 +389,20 @@ module KiwiSDR (
     // CPU parallel port input mux
     //////////////////////////////////////////////////////////////////////////
 	
+	wire [1:0] reg_no = op[7:6];
+	
     always @*
     begin
 `ifdef USE_CPU_CTR
-		if (rdReg & op[GET_CPU_CTR0]) par = { cpu_ctr[1][ 7 -:8], cpu_ctr[0][ 7 -:8] }; else
-		if (rdReg & op[GET_CPU_CTR1]) par = { cpu_ctr[1][15 -:8], cpu_ctr[0][15 -:8] }; else
-		if (rdReg & op[GET_CPU_CTR2]) par = { cpu_ctr[1][23 -:8], cpu_ctr[0][23 -:8] }; else
-		if (rdReg & op[GET_CPU_CTR3]) par = { cpu_ctr[1][31 -:8], cpu_ctr[0][31 -:8] }; else
+		if (rdReg & op[GET_CPU_CTR] && reg_no == 0) par = { cpu_ctr[1][ 7 -:8], cpu_ctr[0][ 7 -:8] }; else
+		if (rdReg & op[GET_CPU_CTR] && reg_no == 1) par = { cpu_ctr[1][15 -:8], cpu_ctr[0][15 -:8] }; else
+		if (rdReg & op[GET_CPU_CTR] && reg_no == 2) par = { cpu_ctr[1][23 -:8], cpu_ctr[0][23 -:8] }; else
+		if (rdReg & op[GET_CPU_CTR] && reg_no == 3) par = { cpu_ctr[1][31 -:8], cpu_ctr[0][31 -:8] }; else
 `endif
 
 `ifdef USE_SDR
-		if (rdReg2 & op[GET_ADC_CTR0]) par = { adc_count[15: 0] }; else
-		if (rdReg2 & op[GET_ADC_CTR1]) par = { adc_count[31:16] }; else
+		if (rdReg & op[GET_ADC_CTR] && reg_no == 0) par = { adc_count[15: 0] }; else
+		if (rdReg & op[GET_ADC_CTR] && reg_no == 1) par = { adc_count[31:16] }; else
 `endif
 
 		if (rdReg & op[GET_STATUS]) par = status; else
@@ -484,11 +487,11 @@ module KiwiSDR (
         .rdBit1     (rdBit1),
         .rdBit2     (rdBit2),
         .rdReg      (rdReg),
-        .rdReg2     (rdReg2),
         .wrReg      (wrReg),
         .wrReg2     (wrReg2),
         .wrEvt      (wrEvt),
-        .wrEvt2     (wrEvt2)
+        .wrEvt2     (wrEvt2),
+        .wrEvtL     (wrEvtL)
         );
 
 
@@ -516,6 +519,7 @@ module KiwiSDR (
         .rdReg          (rdReg),
         .wrReg          (wrReg),
         .wrEvt          (wrEvt),
+        .wrEvtL         (wrEvtL),
         
         // o
         .unused_inputs  (unused_inputs_gps)

@@ -18,7 +18,7 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-// Copyright (c) 2014-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 module CPU (
     input  wire        clk,
@@ -36,11 +36,11 @@ module CPU (
     output wire        rdBit1,
     output wire        rdBit2,
     output wire        rdReg,
-    output wire        rdReg2,
     output wire        wrReg,
     output wire        wrReg2,
     output wire        wrEvt,
-    output wire        wrEvt2
+    output wire        wrEvt2,
+    output wire        wrEvtL
 	);
 
 `include "kiwi.gen.vh"
@@ -68,12 +68,12 @@ module CPU (
     //	1011 ddddddddddd0 BZ 11:1
     //	1011 ddddddddddd1 BN 11:1
     //	bbbb ------------ op4 [3:0]
-    //	1100 dddddddddddL loop 11:1
+    //	1100 dddddddddddL loop 11:1, L=[01] which loop counter
 
     // I/O
     //	bbbb ------------ op4 [3:0]
     //	1101 0........... rdReg 10:0
-    //	1101 1........... rdReg2 10:0
+    //	1101 1..........L wrEvtL 10:1, L=[01] which loop counter
     //	1110 0........... wrReg 10:0
     //	1110 1........... wrReg2 10:0
     //	1111 0........... wrEvt 10:0
@@ -143,14 +143,21 @@ module CPU (
     wire [ 7:0] op8 = op[15: 8];
     wire        op0 = op[0];
 
-    wire nz      = |tos [15:0];
-    wire loop_nz = |loop[op0][15:0];
+    wire nz      = |tos[15:0];
+    wire loop_nz = |loop_ctr[op0][15:0];
+    
+    // there's a loop opcode, but also an implied loop-to-aligned-pc as part of the wrEvtL opcode
+    wire loop_opc = op4 == op_loop;
+    wire loop_evt = wrEvtL;
+    wire loop = loop_opc || loop_evt;
 
     wire jump = op5 == op_branchNZ && nz || op5 == op_branch ||
                 op5 == op_branchZ && ~nz || op5 == op_call ||
-                op4 == op_loop && loop_nz;
+                loop_opc && loop_nz;
 
-    wire inc_sp = op_push || op4 == op_rdReg || op8 == op_dup  || op8 == op_r
+    wire back = loop_evt && loop_nz;
+    
+    wire inc_sp = op_push || rdReg || op8 == op_dup  || op8 == op_r
                                              || op8 == op_over || op8 == op_r_from || op8 == op_loop_from;
 
     wire dec_sp = op4 == op_wrReg    || op8 == op_drop || op8 == op_and || op8 == op_mult    ||
@@ -190,7 +197,7 @@ module CPU (
     wire [39:0] prod40;
     wire [31:0] sum;
     wire        co;
-    wire        ci = (op8 == op_add && opt_cin && carry) || op8 == op_sub || op4 == op_loop;
+    wire        ci = (op8 == op_add && opt_cin && carry) || op8 == op_sub || loop;
     reg  [31:0] a, b, alu;
     reg         carry;
     wire        shl_lsb = opt_rot? tos[31] : 1'b0;
@@ -203,19 +210,19 @@ module CPU (
     always @ (posedge clk) if (op8 == op_add) carry <= co;
 
     always @*
-        if (op8 == op_addi)	     a = op[6:0];
-        else if (op4 == op_loop) a = loop[op0];
-        else if (mem_rd)	     a = 2;
-        else				     a = nos;
+        if (op8 == op_addi) a = op[6:0];
+        else if (loop)      a = loop_ctr[op0];
+        else if (mem_rd)    a = 2;
+        else                a = nos;
 
     always @*
-        if (op8 == op_sub)	     b = ~tos;
-        else if (op4 == op_loop) b = ~1;
-        else				     b =  tos;
+        if (op8 == op_sub) b = ~tos;
+        else if (loop)     b = ~1;
+        else               b =  tos;
 
     always @*
-        if      (op_push)                  alu = op;        // side-effect alu[31:16] <= 0
-        else if (mem_rd || op4 == op_loop) alu = sum;
+        if      (op_push)        alu = op;      // side-effect alu[31:16] <= 0
+        else if (mem_rd || loop) alu = sum;
         
         else case (op8)
             op_add, op_addi,
@@ -244,21 +251,25 @@ module CPU (
     always @*
         case (op4)
             op_branchZ[15:12], op_wrReg: next_tos = nos;    // branchNZ also
-                               op_rdReg: next_tos = par;    // NB {16'b0, par}
-                               op_loop:  next_tos = tos;
-            default :
+            
+            default:
                 case (op8)
                     op_swap, op_to_r,
                     op_over, op_drop,
                     op_to_loop         : next_tos = nos;
                     op_rot, op_stk_rd  : next_tos = dstk_dout;
                     op_r_from, op_r    : next_tos = rstk_dout;
-                    op_loop_from       : next_tos = loop[op0];
+                    op_loop_from       : next_tos = loop_ctr[op0];
                     op_swap16          : next_tos = {tos[15:0], tos[31:16]};
                     op_rdBit           : next_tos = {tos[30:0], serial};        // 32-bit left shift
                     op_fetch16         : next_tos = mem_dout;                   // NB {16'b0, mem_dout}
                     op_sp_rp           : next_tos = sp;
-                    default            : next_tos = alu;
+                    
+                    default:
+                        if (rdReg) next_tos = par;  // NB: {16'b0, par}
+                        else
+                        if (loop)  next_tos = tos;
+                        else       next_tos = alu;
                 endcase
         endcase
 
@@ -271,7 +282,7 @@ module CPU (
     assign rdBit1 = (op8 == op_rdBit) && ser_sel1;
     assign rdBit2 = (op8 == op_rdBit) && ser_sel2;
     assign rdReg  = (op4 == op_rdReg) && !op[11];
-    assign rdReg2 = (op4 == op_rdReg) && op[11];
+    assign wrEvtL = (op4 == op_rdReg) && op[11];
     assign wrReg  = (op4 == op_wrReg) && !op[11];
     assign wrReg2 = (op4 == op_wrReg) && op[11];
     assign wrEvt  = (op4 == op_wrEvt) && !op[11];
@@ -293,21 +304,22 @@ module CPU (
     always @ (posedge clk) rp <= rst[RUN]? next_rp :  8'b0;
 
     always @*
-        if   (opt_ret) next_pc = rstk_dout[11:1];
-        else if (jump) next_pc = op       [11:1];
-        else           next_pc = pc_plus_2[11:1];
+        if   (opt_ret)  next_pc = rstk_dout[11:1];
+        else if (jump)  next_pc =        op[11:1];
+        else if (back)  next_pc =      { pc[11:3], 2'b0 };  // jumps back to the last aligned pc
+        else            next_pc = pc_plus_2[11:1];
 
     always @* next_sp = sp + inc_sp - dec_sp;
     always @* next_rp = rp + inc_rp - dec_rp;
 
     //////////////////////////////////////////////////////////////////////////
-    // Loop register
+    // Loop counter
 
-    reg [15:0] loop [0:1];
+    reg [15:0] loop_ctr [0:1];
 
     always @ (posedge clk)
-        if (op4 == op_loop)         loop[op0] <= alu;
-        else if (op8 == op_to_loop) loop[op0] <= tos;
+        if (loop) loop_ctr[op0] <= alu;
+        else if (op8 == op_to_loop) loop_ctr[op0] <= tos;
 
     //////////////////////////////////////////////////////////////////////////
     // 2 x 256 x 32-bit data and return stacks and 512 x 32-bit data memory (1k x 32b total)

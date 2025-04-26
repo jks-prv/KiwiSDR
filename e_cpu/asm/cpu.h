@@ -64,7 +64,7 @@
 
 #define OCM_IO          0x07ff
 #define	OC_RDREG		0xD000		/* op[10:0] = I/O selects */
-#define	OC_RDREG2		0xD800		/* op[10:0] = I/O selects */
+#define	OC_WREVTL		0xD800		/* op[10:0] = I/O selects */
 #define	OC_WRREG		0xE000		/* op[10:0] = I/O selects */
 #define	OC_WRREG2		0xE800		/* op[10:0] = I/O selects */
 #define	OC_WREVT		0xF000		/* op[10:0] = I/O selects */

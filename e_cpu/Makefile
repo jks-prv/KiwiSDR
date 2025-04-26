@@ -12,8 +12,11 @@ CFLAGS = -I. -I./asm -I.. -D_GNU_SOURCE -g
 
 ASM = $(TOOLS_DIR)/asm
 
-all: $(ASM)
+all: $(ASM) no_gen
+
+gen_includes: $(ASM)
 	$(ASM) -o $(GEN_DIR) $(OTHER_DIR)
+	sum $(GEN_DIR)/kiwi.aout
 
 gen_other: $(ASM)
 	$(ASM) -o $(GEN_DIR) -g $(OTHER_DIR)
@@ -33,12 +36,15 @@ $(ASM): $(TOOLS_DIR) $(GEN_DIR) $(ASM_INCLUDES) $(ASM_SOURCE) Makefile
 # don't regenerate the .h/.vh files
 no_gen: $(ASM)
 	$(ASM) -n -o $(GEN_DIR) $(OTHER_DIR)
+	sum $(GEN_DIR)/kiwi.aout
 
 debug: $(ASM)
 	$(ASM) -n -d -o $(GEN_DIR) $(OTHER_DIR)
+	sum $(GEN_DIR)/kiwi.aout
 
 binary: $(ASM)
 	$(ASM) -n -b -o $(GEN_DIR) $(OTHER_DIR)
+	sum $(GEN_DIR)/kiwi.aout
 
 stat stats: $(ASM)
 	$(ASM) -n -s -o $(GEN_DIR) $(OTHER_DIR)

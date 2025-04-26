@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 module receiver_wb (
 	input wire		   adc_clk,
@@ -40,6 +40,7 @@ module receiver_wb (
     input  wire        wrReg,
     input  wire        wrReg2,
     input  wire        wrEvt2,
+    input  wire        wrEvtL,
     
     input  wire        use_gen_C,
 
@@ -54,15 +55,16 @@ module receiver_wb (
 	
 `include "kiwi.gen.vh"
 
-	wire set_rx_chan_C  =  wrReg2 & op_11[SET_RX_CHAN];
-	wire freq_l         =  wrReg2 & op_11[FREQ_L];
-	wire set_rx_freqH_C = (wrReg2 & op_11[SET_RX_FREQ]) && !freq_l;
-	wire set_rx_freqL_C = (wrReg2 & op_11[SET_RX_FREQ]) &&  freq_l;
+	wire set_rx_chan_C   =  wrReg2 & op_11[SET_RX_CHAN];
+	wire freq_l          =  wrReg2 & op_11[FREQ_L];
+	wire set_rx_freqH_C  = (wrReg2 & op_11[SET_RX_FREQ]) && !freq_l;
+	wire set_rx_freqL_C  = (wrReg2 & op_11[SET_RX_FREQ]) &&  freq_l;
 	
-	wire set_wf_chan_C  =  wrReg2 & op_11[SET_WF_CHAN];
-	wire set_wf_freqH_C = (wrReg2 & op_11[SET_WF_FREQ]) && !freq_l;
-	wire set_wf_freqL_C = (wrReg2 & op_11[SET_WF_FREQ]) &&  freq_l;
-	wire set_wf_decim_C =  wrReg2 & op_11[SET_WF_DECIM];
+	wire set_wf_chan_C   =  wrReg2 & op_11[SET_WF_CHAN];
+	wire set_wf_freqH_C  = (wrReg2 & op_11[SET_WF_FREQ]) && !freq_l;
+	wire set_wf_freqL_C  = (wrReg2 & op_11[SET_WF_FREQ]) &&  freq_l;
+	wire set_wf_decim_C  =  wrReg2 & op_11[SET_WF_DECIM];
+	wire set_wf_offset_C =  wrReg2 & op_11[SET_WF_OFFSET];
 
 	// The FREEZE_TOS event starts the process of latching and synchronizing of the ecpu TOS data
 	// from the cpu_clk to the adc_clk domain. This is needed by subsequent wrReg instructions
@@ -247,7 +249,7 @@ module receiver_wb (
 
 	wire set_rx_nsamps_C = wrReg2 & op_11[SET_RX_NSAMPS];
     wire get_rx_srq_C    = rdReg  & op_11[GET_RX_SRQ];
-	wire get_rx_samp_C   = wrEvt2 & op_11[GET_RX_SAMP];
+	wire get_rx_samp_C   = (wrEvt2 & op_11[GET_RX_SAMP]) || (wrEvtL & op_11[GET_RX_SAMP_LOOP]);
 	wire reset_bufs_C    = wrEvt2 & op_11[RX_BUFFER_RST];
 	wire get_buf_ctr_C   = wrEvt2 & op_11[RX_GET_BUF_CTR];
 
@@ -297,7 +299,7 @@ module receiver_wb (
 `ifdef USE_WF
 	wire rst_wf_sampler_C =	wrReg2 & op_11[WF_SAMPLER_RST];
 	wire get_wf_samp_i_C =	wrEvt2 & op_11[GET_WF_SAMP_I];
-	wire get_wf_samp_q_C =	wrEvt2 & op_11[GET_WF_SAMP_Q];
+	wire get_wf_samp_q_C =	(wrEvt2 & op_11[GET_WF_SAMP_Q]) || (wrEvtL & op_11[GET_WF_SAMP_Q_LOOP]);
 	assign wf_rd_C =		get_wf_samp_i_C || get_wf_samp_q_C;
 
 	wire samp_wf_rd_rst_C = tos[WF_SAMP_RD_RST];
@@ -315,6 +317,7 @@ module receiver_wb (
 		.wf_dout_C			(wf_dout_C),
 
 		.cpu_clk			(cpu_clk),
+		.tos_C              (tos[12:0]),
 		.freeze_tos_A       (freeze_tos_A),
 
 		.samp_wf_rd_rst_C   (samp_wf_rd_rst_C),
@@ -322,6 +325,7 @@ module receiver_wb (
 		.set_wf_freqH_C		(set_wf_freqH_C),
 		.set_wf_freqL_C		(set_wf_freqL_C),
 		.set_wf_decim_C		(set_wf_decim_C),
+		.set_wf_offset_C    (set_wf_offset_C),
 		.rst_wf_sampler_C	(rst_wf_sampler_C),
 		.get_wf_samp_i_C	(get_wf_samp_i_C),
 		.get_wf_samp_q_C	(get_wf_samp_q_C)

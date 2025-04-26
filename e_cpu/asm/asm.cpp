@@ -118,7 +118,7 @@ dict_t dict[] = {
 	{ "loop_from",  TT_OPC,		OC_LOOP_FROM,       OPT_RET },
 	{ "loop2_from", TT_OPC,		OC_LOOP2_FROM,      OPT_RET },
 	{ "rdReg",		TT_OPC,		OC_RDREG,           OCM_IO },
-	{ "rdReg2",		TT_OPC,		OC_RDREG2,          OCM_IO },
+	{ "wrEvtL",		TT_OPC,		OC_WREVTL,          OCM_IO },
 	{ "wrReg",		TT_OPC,		OC_WRREG,           OCM_IO },
 	{ "wrReg2",		TT_OPC,		OC_WRREG2,          OCM_IO },
 	{ "wrEvt",		TT_OPC,		OC_WREVT,           OCM_IO },
@@ -1038,11 +1038,11 @@ int main(int argc, char *argv[])
 								break;
 
 				case OC_RDREG:
-				case OC_RDREG2:
 				case OC_WRREG:
 				case OC_WRREG2:
 				case OC_WREVT:
-				case OC_WREVT2: {
+				case OC_WREVT2:
+				case OC_WREVTL: {
 								syntax(oper >= 1 && oper <= 0x7ff, t, "i/o specifier outside range 1..0x7ff: 0x%04x", oper);
 								int ones = count_ones(oper);
 								// 3 currently because of kiwi.config: FREQ_L and REG_NO definitions

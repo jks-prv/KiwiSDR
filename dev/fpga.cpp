@@ -203,7 +203,7 @@ void fpga_init() {
 	char *file;
 	asprintf(&file, "%sKiwiSDR.%s.bit", background_mode? "/usr/local/bin/":"", fpga_file);
     char *sum = non_blocking_cmd_fmt(NULL, "sum %s", file);
-    lprintf("firmware: %s %.5s\n", file, kstr_sp(sum));
+    lprintf("FPGA firmware: %s %.5s\n", file, kstr_sp(sum));
     fp = fopen(file, "rb");
     if (!fp) fpga_panic(3, "fopen config");
     kstr_free(sum);
@@ -278,8 +278,11 @@ void fpga_init() {
 
 	// download embedded CPU program binary
 	const char *aout = background_mode? "/usr/local/bin/kiwid.aout" : (BUILD_DIR "/gen/kiwi.aout");
+    sum = non_blocking_cmd_fmt(NULL, "sum %s", aout);
+	printf("e_cpu firmware: %s %.5s\n", aout, kstr_sp(sum));
     fp = fopen(aout, "rb");
     if (!fp) fpga_panic(5, "fopen aout");
+    kstr_free(sum);
 
 
     // download first 2k words via SPI hardware boot (SPIBUF_B limit)

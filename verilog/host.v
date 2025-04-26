@@ -18,7 +18,7 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-// Copyright (c) 2014-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 `default_nettype none
 
@@ -210,7 +210,8 @@ module HOST (
 	// the preset of ha_rst that occurs before the first ha_clk.
 	// All subsequent bits sent are pipelined properly.
 	//
-	// DFF met timing with synthesis, but not when implemented. Use an ODDR to improve timing.
+	// DFF met timing with synthesis, but not when implemented.
+	// Use an ODDR to improve timing (not used currently).
 
 	reg ha_out2;
 
@@ -226,7 +227,7 @@ module HOST (
 		.C(ha_clk), .CE(1'b1), .D1(ha_out2), .D2(ha_out), .S(ha_rst), .R(1'b0), .Q(spi_miso)
 	);
 `else
-	assign spi_miso = ha_out;		// fixme: check that this meets timing analyzer
+	assign spi_miso = ha_out;		// FIXME: check that this meets timing analyzer
 `endif
 `endif
 
@@ -320,10 +321,10 @@ module HOST (
     assign mem_rd = wrEvt & op_4[GET_MEMORY];
 
     always @*
-        if (gps_rd)  hb_din = gps_dout;  else
-        if (mem_rd)  hb_din = mem_dout;  else
-        if (rx_rd)   hb_din = rx_dout;   else
-        if (wf_rd)   hb_din = wf_dout;   else
+        if (gps_rd)  hb_din = gps_dout; else
+        if (mem_rd)  hb_din = mem_dout; else
+        if (rx_rd)   hb_din = rx_dout;  else
+        if (wf_rd)   hb_din = wf_dout;  else
         if (ext_rd)  hb_din = ext_dout; else
 					 hb_din = tos[15:0];	// default: host_wr (HOST_TX)
 
