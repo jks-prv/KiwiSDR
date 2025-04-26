@@ -55,7 +55,8 @@ module HOST (
     input  wire [3:0]  op_4,
     input  wire        rdReg,
     input  wire        wrReg,
-    input  wire        wrEvt
+    input  wire        wrEvt,
+    input  wire        wrEvtL
     );
     
 `include "kiwi.gen.vh"
@@ -318,7 +319,7 @@ module HOST (
     //////////////////////////////////////////////////////////////////////////
     // Parallel data MUXing
 
-    assign mem_rd = wrEvt & op_4[GET_MEMORY];
+    assign mem_rd = (wrEvt & op_4[GET_MEMORY]) || (wrEvtL & op_4[GET_MEMORY_LOOP]);
 
     always @*
         if (gps_rd)  hb_din = gps_dout; else

@@ -448,7 +448,8 @@ module KiwiSDR (
         .op_4       (op[3:0]),
         .rdReg      (rdReg),
         .wrReg      (wrReg),
-        .wrEvt      (wrEvt)
+        .wrEvt      (wrEvt),
+        .wrEvtL     (wrEvtL)
         );
 
 

@@ -285,10 +285,10 @@
 	localparam CPU_CTR_DIS = 10;    // DEFb: bit number for value: 0x400
 	localparam WREVTL_LOOP_CTR0 = 0;    // DEFb: bit number for value: 0x0
 	localparam WREVTL_LOOP_CTR1 = 0;    // DEFb: bit number for value: 0x1
-	localparam GET_RX_SAMP_LOOP = 1;    // DEFb: bit number for value: 0x2
-	localparam GET_WF_SAMP_Q_LOOP = 2;    // DEFb: bit number for value: 0x4
-	localparam GET_GPS_SAMPS_LOOP = 3;    // DEFb: bit number for value: 0x8
-	localparam WREVTL_010 = 4;    // DEFb: bit number for value: 0x10
+	localparam GET_MEMORY_LOOP = 1;    // DEFb: bit number for value: 0x2
+	localparam GET_RX_SAMP_LOOP = 2;    // DEFb: bit number for value: 0x4
+	localparam GET_WF_SAMP_Q_LOOP = 3;    // DEFb: bit number for value: 0x8
+	localparam GET_GPS_SAMPS_LOOP = 4;    // DEFb: bit number for value: 0x10
 	localparam WREVTL_020 = 5;    // DEFb: bit number for value: 0x20
 	localparam WREVTL_040 = 6;    // DEFb: bit number for value: 0x40
 	localparam WREVTL_080 = 7;    // DEFb: bit number for value: 0x80

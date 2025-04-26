@@ -6,6 +6,7 @@
 #define	OPT_CIN			0x0040
 #define	OPT_ROT			0x0020
 #define	OPT_UNS			0x0010
+#define	OPT_LOOP        0x0002
 
 #define OCM_CONST       0x7fff
 #define	OC_PUSH			0x0000

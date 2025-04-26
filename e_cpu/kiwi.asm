@@ -159,7 +159,7 @@ gps_svc_loop:                                       ; gps_srq
                 swap                                ; this ch#
 				call	GPS_Method					;
 			wrEvt2	CPU_CTR_DIS
-no_gps_svc:     loop2   gps_svc_loop                ; NB: loop2 because GPS_Method() uses shl64_n()::to_loop
+no_gps_svc:     loop2   gps_svc_loop                ; NB: loop2 because GPS_Method() uses shl64_n
 
 #endif
 				
@@ -587,8 +587,8 @@ shl64_n:									; i64H i64L n
                 push    1                   ; i64H i64L n 1
                 sub                         ; i64H i64L n-1
                 to_loop                     ; i64H i64L
-shl64_loop:     shl64
-                loop    shl64_loop
+                ALIGN
+                shl64.loop
                 ret					    	; i64H<<n i64L<<n
 
 neg32:			push	0					; i32 0
@@ -691,8 +691,8 @@ rdBit0_16:
 				push	0
 rdBit0_16z:
                 loop_ct 16
-rdBit0_loop:    rdBit0
-                loop    rdBit0_loop
+                ALIGN
+                rdBit0.loop
 				ret
 
 // not used currently
@@ -702,8 +702,8 @@ rdBit1_16:
 				push	0
 rdBit1_16z:
                 loop_ct 16
-rdBit1_loop:    rdBit1
-                loop    rdBit1_loop
+                ALIGN
+                rdBit1.loop
 				ret
 
 // rdBit2 a 16-bit word
@@ -711,8 +711,8 @@ rdBit2_16:
 				push	0
 rdBit2_16z:
                 loop_ct 16
-rdBit2_loop:    rdBit2
-                loop    rdBit2_loop
+                ALIGN
+                rdBit2.loop
 				ret
 #endif
 

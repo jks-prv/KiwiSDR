@@ -48,16 +48,19 @@ const char * const ttype_s[] = {
     "DEF", "FILE", "STATS", "ALIGN"
 };
 
-#define	TF_RET		0x0001
-#define	TF_CIN		0x0002
-#define	TF_HEX		0x0004
-#define	TF_DOT_H	0x0008
-#define	TF_DOT_VP	0x0010
-#define	TF_DOT_VB	0x0020
-#define	TF_FIELD	0x0040
-#define	TF_2OPR		0x0080
-#define	TF_1OPR		0x0100
-#define	TF_CFG_H	0x0200
+#define	TF_HEX		0x0001
+#define	TF_RET		0x0002
+#define	TF_CIN		0x0004
+#define	TF_LOOP		0x0008
+
+#define	TF_CFG_H	0x0100
+#define	TF_DOT_H	0x0200
+#define	TF_DOT_VP	0x0400
+#define	TF_DOT_VB	0x0800
+
+#define	TF_FIELD	0x1000
+#define	TF_2OPR		0x2000
+#define	TF_1OPR		0x4000
 
 typedef struct {
 	token_type_e ttype;
@@ -67,7 +70,7 @@ typedef struct {
 	    int width;
 	    int ifl;
 	};
-	int flags;
+	int d_flags, flags;
 } tokens_t;
 
 extern tokens_t *tp_start, *tp_end;

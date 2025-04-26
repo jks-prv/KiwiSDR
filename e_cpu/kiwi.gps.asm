@@ -451,8 +451,8 @@ NavSave:                                    ; Inav &ms
 
 UploadChan:										; &GPS_channels[n]
 				loop_ct (sizeof GPS_CHAN / 2)
-upload_ch_loop: wrEvt	GET_MEMORY
-				loop    upload_ch_loop
+                ALIGN
+                wrEvtL  GET_MEMORY_LOOP
 				ret
 
 // "wrEvt GET_MEMORY" side-effect: auto mem ptr incr, i.e. 2x tos += 2 (explains "-4" below)
@@ -471,11 +471,11 @@ UploadClock:									; &GPS_channels + ch_NAV_MS
 				rdBit0_16						; 18-bit clock replica sent across 2 words
 				wrReg	HOST_TX
 				push    0
-				rdBit0
-				rdBit0
+				rdBit0                          ; b16
+				rdBit0                          ; b17
 				wrReg	HOST_TX
 #endif
-				addi.r	sizeof GPS_CHAN - 4		; &GPS_channels++
+				addi.r	sizeof GPS_CHAN - 4		; &GPS_channels++ (-4 due to 2x GET_MEMORY above)
 
 ; ============================================================================
 
@@ -607,14 +607,15 @@ CmdGetClocks:   wrEvt	HOST_RST
                 
                 push	0
                 loop_gps_chans
-gps_chan_loop:  rdBit0						; chan srq
-                loop    gps_chan_loop
+                ALIGN
+                rdBit0.loop                 ; chan srq
                 wrReg	HOST_TX
                 
                 push	GPS_channels + ch_NAV_MS
                 loop2_gps_chans
-upload_loop:    call	UploadClock
-                loop2   upload_loop         ; NB: loop2 because UploadClock() eventually uses loop insn
+upload_clk_loop:
+                call	UploadClock
+                loop2   upload_clk_loop     ; NB: loop2 because UploadClock() eventually uses loop insn
                 drop.r
 
 CmdGetGlitches: wrEvt	HOST_RST
@@ -634,15 +635,13 @@ CmdIQLogReset:  rdReg	HOST_RX             ; ch#
 				wrEvt	LOG_RST             ; &iq_ch
                 pop.r                       ;
 
+// not used enough to justify implementing a "wrEvtL GET_LOG_LOOP"
 CmdIQLogGet:    wrEvt	HOST_RST
-				push	GPS_IQ_SAMPS
+				loop_ct	GPS_IQ_SAMPS
 up_more_log:
 				wrEvt	GET_LOG             ; IH
 				wrEvt	GET_LOG             ; IL
 				wrEvt	GET_LOG             ; QH
 				wrEvt	GET_LOG             ; QL
-				push	1
-				sub
-				dup
-				brNZ	up_more_log
-				drop.r
+				loop    up_more_log
+				ret
