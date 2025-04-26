@@ -79,7 +79,7 @@ int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, 
 
 u4_t ov_mask, snd_intr_usec;
 
-bool need_hardware, kiwi_reg_debug, gps_e1b_only, ecpu_stack_check,
+bool need_hardware, kiwi_reg_debug, gps_e1b_only, ecpu_stack_check, spi_show_stats,
     disable_led_task, is_multi_core, debug_printfs, cmd_debug;
 
 int main_argc;
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 		if (ARG("-gps_debug")) { gps_debug = -1; ARGL(gps_debug); } else
 		if (ARG("-stats") || ARG("+stats")) { print_stats = STATS_TASK; ARGL(print_stats); } else
 		if (ARG("-gpio")) { ARGL(gpio_test_pin); } else
-		if (ARG("-stack")) ecpu_stack_check = true; else
+		if (ARG("-estack")) ecpu_stack_check = true; else
 		if (ARG("-rsid")) kiwi.RsId = true; else
 		if (ARG("-v")) {} else      // dummy arg so Kiwi version can appear in e.g. htop
 		
@@ -240,6 +240,7 @@ int main(int argc, char *argv[])
 		if (ARG("-spispeed")) { ARGL(spi_speed); } else
 		if (ARG("-spimode")) { ARGL(spi_mode); } else
 		if (ARG("-spi")) { ARGL(spi_delay); } else
+		if (ARG("-spistats")) { spi_show_stats = true; } else
 		if (ARG("-ch")) { ARGL(gps_chans); } else
 		if (ARG("-y")) { ARGL(rx_yield); } else
 		if (ARG("-p0")) { ARGL(p0); printf("-p0 = %d\n", p0); } else
