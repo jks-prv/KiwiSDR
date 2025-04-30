@@ -1320,14 +1320,27 @@ function w3_set_highlight_color(el_id, color)
 
 var w3_flag_color = 'w3-override-yellow';
 
-function w3_flag(path)
+function w3_flag(path, s)
 {
-	w3_add(w3_el(path), w3_flag_color);
+   var el = w3_el(path);
+   if (isString(s)) w3_innerHTML(el, s);
+	w3_add(el, w3_flag_color);
 }
 
-function w3_unflag(path)
+function w3_unflag(path, s)
 {
-	w3_remove(w3_el(path), w3_flag_color);
+   var el = w3_el(path);
+   if (isString(s)) w3_innerHTML(el, s);
+	w3_remove(el, w3_flag_color);
+}
+
+function w3_flag_cond(path, cond, s)
+{
+   var el = w3_el(path);
+   if (cond)
+      w3_flag(el, s);
+   else
+      w3_unflag(el, s);
 }
 
 // for when you don't want to w3_add(el_id, "[w3-text-color]")

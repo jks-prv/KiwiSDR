@@ -118,6 +118,12 @@ static void _spi_dev(SPI_SEL sel, SPI_MOSI *mosi, int tx_xfers, SPI_MISO *miso, 
             fflush(stdout);
 		#endif
 		
+		#ifdef PLATFORM_beagleY_ai
+		    if (spi_bytes > SPIBUF_BMAX) {
+		        panic("spi_dev too big");
+		    }
+		#endif
+		
 		SPI_SHMEM->spi_bytes += spi_bytes;
 		struct spi_ioc_transfer spi_tr;
 		memset(&spi_tr, 0, sizeof spi_tr);
@@ -161,6 +167,7 @@ void spi_dev_func(int param)
 {
     assert(SPI_SHMEM != NULL);
     spi_dev_ipc_t *ipc = &SPI_SHMEM->spi_dev_ipc;
+    //real_printf("spi_dev_func: %s(%d) T%dX R%dX\n", cmds[ipc->mosi->data.cmd], ipc->mosi->data.cmd, ipc->tx_xfers, ipc->rx_xfers);
     _spi_dev(ipc->sel, ipc->mosi, ipc->tx_xfers, ipc->miso, ipc->rx_xfers);
 }
 
@@ -196,13 +203,13 @@ void spi_dev_mode(int spi_mode)
 static void _spi_dev_init(int spi_clkg, int spi_speed)
 {
 	// if not overridden in command line, set SPI speed according to configuration param
-	if (spi_speed == SPI_48M) {
+	if (spi_speed == 0) {
 		bool error;
 		int spi_clock = cfg_int("SPI_clock", &error, CFG_OPTIONAL);
-		if (error || spi_clock == SPI_48M)
-			spi_speed = SPI_48M;
+		if (error || spi_clock == 0)
+			spi_speed = 0;
 		else
-			spi_speed = SPI_24M;
+			spi_speed = 1;  // i.e. half-speed
 	}
     
 	if (use_spidev) {
@@ -243,16 +250,26 @@ static void _spi_dev_init(int spi_clkg, int spi_speed)
 	
 		u4_t max_speed = 0, check_speed;
 		#ifdef CPU_AM67
-		    if (spi_speed == SPI_48M) max_speed = 50000000; else
+		    switch (spi_speed) {
+		        case 0:  max_speed = 50000000; break;
+		        case 1:  max_speed = 25000000; break;
+		        case 2:  max_speed = 12500000; break;
+		        case 3:  max_speed =  6250000; break;
+		        case 4:  max_speed =  3125000; break;
+		        case 5:  max_speed =  1562500; break;
+		        default: max_speed = 50000000; break;
+		    }
 		#else
-		    if (spi_speed == SPI_48M) max_speed = 48000000; else
+		    switch (spi_speed) {
+		        case 0:  max_speed = 48000000; break;
+		        case 1:  max_speed = 24000000; break;
+		        case 2:  max_speed = 12000000; break;
+		        case 3:  max_speed =  6000000; break;
+		        case 4:  max_speed =  3000000; break;
+		        case 5:  max_speed =  1500000; break;
+		        default: max_speed = 48000000; break;
+		    }
 		#endif
-		if (spi_speed == SPI_24M) max_speed = 24000000; else
-		if (spi_speed == SPI_12M) max_speed = 12000000; else
-		if (spi_speed == SPI_6M) max_speed = 6000000; else
-		if (spi_speed == SPI_3M) max_speed = 3000000; else
-		if (spi_speed == SPI_1_5M) max_speed = 1500000; else
-			panic("unknown spi_speed");
 		speed = max_speed;
 		if (ioctl(spi_fd, SPI_IOC_WR_MAX_SPEED_HZ, &max_speed) < 0) sys_panic("SPI_IOC_WR_MAX_SPEED_HZ");
 		check_speed = 0;
@@ -264,7 +281,7 @@ static void _spi_dev_init(int spi_clkg, int spi_speed)
 		check_bpw = -1;
 		if (ioctl(spi_fd, SPI_IOC_RD_BITS_PER_WORD, &check_bpw) < 0) sys_panic("SPI_IOC_RD_BITS_PER_WORD");
 		check(bpw == check_bpw);
-		lprintf("SPIDEV: max_speed %d bpw %d\n", check_speed, check_bpw);
+		lprintf("SPIDEV: max_speed=%d bpw=%d\n", check_speed, check_bpw);
 
         spi_dev_mode(SPI_SETUP_MODE);
 	} else {
@@ -325,28 +342,24 @@ void spi_dev_init2()
     #else
         #ifdef CPU_AM3359
             if (use_spidev) {
-                use_async = 1;  // using 2nd process ipc on uni-processor makes sense due to spi async stall problem
+                // using 2nd process ipc on uni-processor makes sense due to spi async stall problem
+                if (!spi_no_async) use_async = 1;
             }
-        #endif
-
-        #ifdef CPU_BCM2837
+        #elif CPU_BCM2837
             use_spidev = 1;
             use_async = 1;
-        #endif
-
-        #ifdef CPU_AM5729
+        #elif CPU_AM5729
             use_spidev = 1;
             use_async = 1;
-        #endif
-
-        #ifdef CPU_TDA4VM
+        #elif CPU_TDA4VM
             use_spidev = 1;
-            use_async = 1;
-        #endif
-
-        #ifdef CPU_AM67
+            if (!spi_no_async) use_async = 1;
+        #elif CPU_AM67
             use_spidev = 1;
-            use_async = 1;
+            if (!spi_no_async) use_async = 1;
+            printf("SPI: CPU_%s use_async=%d\n", ARCH_CPU_S, use_async);
+        #else
+            #error must define use_spidev/use_async for CPU
         #endif
     #endif
 

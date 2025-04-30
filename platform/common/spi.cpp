@@ -188,11 +188,11 @@ static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk
 	int bytes = MAX(tx_bytes, prev->len_bytes);
 	spi.bytes += bytes;
 	
-	#if 0
-        if (mosi->data.cmd == CmdPing || mosi->data.cmd == CmdPing2)
-            real_printf("%s: tx%d(%dX)|Prx%d(%dX)=T%d(%dX) Crx%d(%dX) ", &cmds[mosi->data.cmd][3],
+	#if 0 && defined(PLATFORM_beagleY_ai)
+        //if (mosi->data.cmd == CmdPing || mosi->data.cmd == CmdPing2)
+            printf("%s(%d): tx%d(%dX)|Prx%d(%dX) = T%d(%dX) R%d(%dX)\n", cmds[mosi->data.cmd], mosi->data.cmd,
                 tx_bytes, tx_xfers, prev->len_bytes, SPI_B2X(prev->len_bytes), bytes, SPI_B2X(bytes),
-                rx_bytes, SPI_B2X(rx_bytes)); fflush(stdout);
+                rx_bytes, SPI_B2X(rx_bytes));
     #endif
 	
 	evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_scan", evprintf("ENTER %s(%d) mosi %p:%dx miso(NEXT) %p%s:%dB prev(CUR) %p%s:%dx => T%dx|R%dx",

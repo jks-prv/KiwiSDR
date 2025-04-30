@@ -29,7 +29,6 @@ Boston, MA  02110-1301, USA.
 #include "peri.h"
 #include "eeprom.h"
 #include "spi.h"
-#include "spi_dev.h"
 #include "gps.h"
 #include "gps_fe.h"
 #include "rf_attn.h"
@@ -66,15 +65,15 @@ kiwi_t kiwi;
 
 int version_maj, version_min;
 int fw_sel, fpga_id, rx_chans, rx_wb_buf_chans, wf_chans, wb_chans, nrx_bufs,
-    nrx_samps, nrx_samps_total, nrx_samps_wb, nrx_samps_loop, nrx_samps_rem,
+    nrx_samps, nrx_samps_total, nrx_samps_wb,
     snd_rate, snd_rate_i, wb_rate, rx_decim, rx1_decim, rx2_decim;
 
 int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, down,
-	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, rx_num, wf_num,
-	spi_clkg, spi_speed = SPI_48M, spi_mode = -1,
+	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, rx_num, wf_num, snr_meas=1,
+	spi_clkg, spi_speed, spi_mode = -1, spi_no_async, spi_test,
 	do_gps, do_sdr=1, wf_olap, meas, spi_delay=100, debian_ver, monitors_max, bg,
 	print_stats, ecpu_cmds, ecpu_tcmds, use_spidev, spidev_maj = -1, spidev_min = -1,
-	debian_maj, debian_min, test_flag, dx_print,
+	debian_maj, debian_min, test_flag, dx_print, wf_full_rate,
 	gps_debug, gps_var, gps_lo_gain, gps_cg_gain, use_foptim, is_locked, drm_nreg_chans;
 
 u4_t ov_mask, snd_intr_usec;
@@ -207,6 +206,8 @@ int main(int argc, char *argv[])
 		if (ARG("-v")) {} else      // dummy arg so Kiwi version can appear in e.g. htop
 		
 		if (ARG("-test")) { ARGL(test_flag); printf("test_flag %d(0x%x)\n", test_flag, test_flag); } else
+		if (ARG("-snr_meas")) snr_meas = 0; else
+		if (ARG("-wf_full")) wf_full_rate = 1; else
 		if (ARG("-mm")) kiwi.test_marine_mobile = true; else
 		if (ARG("-dx")) { ARGL(dx_print); printf("dx %d(0x%x)\n", dx_print, dx_print); } else
 		if (ARG("-led") || ARG("-leds")) disable_led_task = true; else
@@ -241,6 +242,8 @@ int main(int argc, char *argv[])
 		if (ARG("-spimode")) { ARGL(spi_mode); } else
 		if (ARG("-spi")) { ARGL(spi_delay); } else
 		if (ARG("-spistats")) { spi_show_stats = true; } else
+		if (ARG("-spiasync")) { spi_no_async = 1; } else
+		if (ARG("-spitest")) { spi_test = 1; } else
 		if (ARG("-ch")) { ARGL(gps_chans); } else
 		if (ARG("-y")) { ARGL(rx_yield); } else
 		if (ARG("-p0")) { ARGL(p0); printf("-p0 = %d\n", p0); } else
@@ -489,13 +492,11 @@ int main(int argc, char *argv[])
 
         nrx_samps = NRX_SAMPS_CHANS(rx_wb_buf_chans);
         nrx_samps_total = nrx_samps * rx_wb_buf_chans;
-        nrx_samps_loop = nrx_samps_total / NRX_SAMPS_RPT;
-        nrx_samps_rem = (nrx_samps * rx_wb_buf_chans) - (nrx_samps_loop * NRX_SAMPS_RPT);
         snd_intr_usec = 1e6 / ((float) snd_rate/nrx_samps);
         lprintf("firmware: RX rx_decim=%d RX1_DECIM=%d RX2_DECIM=%d USE_RX_CICF=%d\n",
             rx_decim, rx1_decim, rx2_decim, VAL_USE_RX_CICF);
-        lprintf("firmware: RX rx_srate=%.3f(%d,%d) wb_srate=%d bufs=%d samps=%d loop=%d rem=%d intr_usec=%d\n",
-            ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate, snd_rate_i, wb_rate, nrx_bufs, nrx_samps, nrx_samps_loop, nrx_samps_rem, snd_intr_usec);
+        lprintf("firmware: RX rx_srate=%.3f(%d,%d) wb_srate=%d bufs=%d samps=%d intr_usec=%d\n",
+            ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate, snd_rate_i, wb_rate, nrx_bufs, nrx_samps, snd_intr_usec);
 
         check(wf_chans <= MAX_WF_CHANS);
         check(wb_chans <= MAX_WB_CHANS);
@@ -510,8 +511,7 @@ int main(int argc, char *argv[])
         check(nrx_samps < FASTFIR_OUTBUF_SIZE);    // see data_pump.h
         check(nrx_samps_wb < MAX_WB_SAMPS);        // see data_pump.h
 
-        lprintf("firmware: WF xfer=%d samps=%d rpt=%d loop=%d rem=%d\n",
-            NWF_NXFER, NWF_SAMPS, NWF_SAMPS_RPT, NWF_SAMPS_LOOP, NWF_SAMPS_REM);
+        lprintf("firmware: WF xfer=%d samps=%d\n", NWF_NXFER, NWF_SAMPS);
 
         rx_num = rx_chans, wf_num = wf_chans;
         monitors_max = (rx_chans * N_CAMP) + N_QUEUERS;

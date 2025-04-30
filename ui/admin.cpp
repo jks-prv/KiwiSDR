@@ -429,6 +429,13 @@ void c2s_admin(void *param)
                 dpump.resets = dpump.in_hist_resets = 0;
                 continue;
             }
+
+            int zoom_all;
+            i = sscanf(cmd, "SET zoom_all=%d", &zoom_all);
+            if (i == 1) {
+                shmem->zoom_all = zoom_all + 1;
+                shmem->zoom_all_seq++;
+            }
 #endif
 
 

@@ -211,7 +211,7 @@ void CHANNEL::Reset(int sat, int codegen_init) {
         int dbg = 0;
         SPI_MOSI *code_buf = &SPI_SHMEM->gps_e1b_code_mosi;
 
-        for (int i=0; i < E1B_CODE_XFERS; i++) {    // number of SPIBUF_W sized xfers needed (currently 2)
+        for (int i=0; i < E1B_CODE_XFERS; i++) {    // number of SPIBUF_WA sized xfers needed (currently 2)
             if (dbg && i == 0) printf("E1B download ch%2d try %s\nprn: ", ch+1, PRN(sat));
 
             for (int j=0; j < E1B_CODE_LOOP; j++) {     // code amount needed that also fits in SPIBUF_W

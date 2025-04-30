@@ -1444,7 +1444,7 @@ input[type=range]::-moz-range-thumb {
 .w3-override-yellow
 {
     color: black;
-    background-color: #ffeb3b;
+    background-color: #ffeb3b !important;
 }
 
 /* listed last so it overrides others when used as the highlight color in w3_util.js */

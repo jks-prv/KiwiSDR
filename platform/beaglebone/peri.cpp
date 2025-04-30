@@ -37,8 +37,9 @@
 #include <string.h>
 
 // debugging
-//#define SHOW_CHECK_PMUX
-//#define SHOW_GPIO_STATE
+#define SHOW_IO_SETUP
+#define SHOW_CHECK_PMUX
+#define SHOW_GPIO_STATE
 
 static volatile u4_t *prcm_m, *pmux_m[NPMUX];
 volatile u4_t *spi_m, *gpio_m[NGPIO];
@@ -247,8 +248,8 @@ gpio_t GPIO_NONE	= { 0xff, 0xff, 0xff, 0xff };
     gpio_t CMD_READY    = { GPIO0,  41, PIN(HAT, 15), 154 };
     gpio_t SND_INTR		= { GPIO0,  42, PIN(HAT, 22), 112 };
 
-    gpio_t G2		    = { GPIO2,  18, PIN(HAT,  3), 172 };
-    gpio_t G3		    = { GPIO2,  17, PIN(HAT,  5), 174 };
+    gpio_t SDA		    = { GPIO2,  18, PIN(HAT,  3), 172 };
+    gpio_t SCL		    = { GPIO2,  17, PIN(HAT,  5), 174 };
     gpio_t G5	        = { GPIO1,  15, PIN(HAT, 29), 170 };
     gpio_t G6	        = { GPIO1,  17, PIN(HAT, 31), 176 };
     gpio_t G7	        = { GPIO2,   9, PIN(HAT, 26), 146 };
@@ -406,7 +407,7 @@ static bool check_pmux(const char *name, gpio_t gpio, gpio_dir_e dir, u4_t pmux_
         #ifdef CPU_AM67
             !GPIO_EQ(gpio, G8) &&   // CPU_AM67 G8 has pmux_reg_off == 0
         #endif
-         pmux_reg_off == 0) {
+        pmux_reg_off == 0) {
         lprintf("PMUX %d_%-3d %s.%-2d %-9s ZERO PMUX_REG_OFF\n",
             GPIO_BANK(gpio), gpio.bit, HDR_CONN_S(gpio), gpio.pin & PIN_BITS, name);
         check(pmux_reg_off != 0);
@@ -460,7 +461,10 @@ static bool any_bad;
 
 void _devio_check(const char *name, gpio_t gpio, gpio_dir_e dir, u4_t pmux_val1, u4_t pmux_val2)
 {
-	//lprintf("DEVIO setup %s %d_%-2d %s\n", name, GPIO_BANK(gpio), gpio.bit, dir_name[dir]);
+    #ifdef SHOW_IO_SETUP
+        printf("\n");
+	    lprintf("DEVIO setup %s %d_%-2d %s\n", name, GPIO_BANK(gpio), gpio.bit, dir_name[dir]);
+	#endif
 	any_bad |= check_pmux(name, gpio, dir, pmux_val1, pmux_val2);
 }
 
@@ -469,6 +473,10 @@ void _gpio_setup(const char *name, gpio_t *gpio_p, gpio_dir_e dir, u4_t initial,
     gpio_t gpio = *gpio_p;
 	if (!isGPIO(gpio)) return;
 
+    #ifdef SHOW_IO_SETUP
+        printf("\n");
+	    lprintf("GPIO setup %s %d_%-2d %s\n", name, GPIO_BANK(gpio), gpio.bit, dir_name[dir]);
+	#endif
 	any_bad |= check_pmux(name, gpio, dir, pmux_val1 | PMUX_GPIO, (pmux_val2 != PMUX_NONE)? (pmux_val2 | PMUX_GPIO) : PMUX_NONE);
 
 	GPIO_CLR_IRQ0(gpio);
@@ -485,17 +493,17 @@ void _gpio_setup(const char *name, gpio_t *gpio_p, gpio_dir_e dir, u4_t initial,
 	    
 		if (initial != GPIO_HIZ) {
 		    #ifdef SHOW_GPIO_STATE
-                lprintf("GPIO setup %-9s %d_%-2d %08x:%08x %s.%-2d %-6s initial=%d isOutput=%d %p\n", name,
+                lprintf("GPIO setup %-9s %d_%-2d %08x:%08x %s.%-2d %-6s initial=%d isOutput=%d\n", name,
                     GPIO_BANK(gpio), gpio.bit, _GPIO_ADDR(gpio,0), _GPIO_BIT(gpio), HDR_CONN_S(gpio), gpio.pin & PIN_BITS,
-                    (dir == GPIO_DIR_OUT)? "OUTPUT":"BIDIR", initial, gpio_p->isOutput, &gpio_p->isOutput);
+                    (dir == GPIO_DIR_OUT)? "OUTPUT":"BIDIR", initial, gpio_p->isOutput);
 			#endif
             GPIO_OUTPUT(gpio);
             GPIO_WRITE_BIT(gpio, initial);
 		} else {
 		    #ifdef SHOW_GPIO_STATE
-			    lprintf("GPIO setup %-9s %d_%-2d %08x:%08x %s.%-2d %-6s initial=Z isOutput=%d %p\n", name,
-                    GPIO_BANK(gpio), gpio.bit, _GPIO_ADDR(gpio, _GPIO_DIR), _GPIO_BIT(gpio), HDR_CONN_S(gpio), gpio.pin & PIN_BITS,
-                    (dir == GPIO_DIR_OUT)? "OUTPUT":"BIDIR", gpio_p->isOutput, &gpio_p->isOutput);
+			    lprintf("GPIO setup %-9s %d_%-2d %08x:%08x %s.%-2d %-6s initial=Z isOutput=%d\n", name,
+                    GPIO_BANK(gpio), gpio.bit, _GPIO_ADDR(gpio,0), _GPIO_BIT(gpio), HDR_CONN_S(gpio), gpio.pin & PIN_BITS,
+                    (dir == GPIO_DIR_OUT)? "OUTPUT":"BIDIR", gpio_p->isOutput);
             #endif
 			GPIO_INPUT(gpio);
 		}
@@ -650,8 +658,8 @@ void peri_init()
     SND_INTR.init();
 
     #ifdef PLATFORM_beagleY_ai
-        G2.init();
-        G3.init();
+        SDA.init();
+        SCL.init();
         G5.init();
         G6.init();
         G7.init();
@@ -734,8 +742,9 @@ void peri_init()
 	gpio_setup(SND_INTR,  GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO, PMUX_IO_PU);
 
 #ifdef PLATFORM_beagleY_ai
-    gpio_setup(G2 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
-    gpio_setup(G3 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
+    devio_check(SDA, GPIO_DIR_BIDIR, PMUX_IO_PU | PMUX_I2C, 0);
+    devio_check(SCL, GPIO_DIR_OUT,   PMUX_IO_PU | PMUX_I2C, PMUX_OUT_PU | PMUX_I2C);
+    
     gpio_setup(G5 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
     gpio_setup(G6 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
     gpio_setup(G7 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
@@ -842,8 +851,8 @@ void gpio_test(int gpio_test_pin) {
     if (gpio_p != NULL) {
         printf("testing GPIO pin %s%d\n", conn_s, gpio_test_pin);
         gpio_t gpio = *gpio_p;
-        printf("\tGPIO %d_%-2d %08x:%08x %s.%-2d isOutput=%d %p\n",
-            gpio.bank, gpio.bit, _GPIO_ADDR(gpio,0), _GPIO_BIT(gpio), HDR_CONN_S(gpio), gpio.pin & PIN_BITS, gpio.isOutput, &gpio_p->isOutput);
+        printf("\tGPIO %d_%-2d %08x:%08x %s.%-2d isOutput=%d\n",
+            gpio.bank, gpio.bit, _GPIO_ADDR(gpio,0), _GPIO_BIT(gpio), HDR_CONN_S(gpio), gpio.pin & PIN_BITS, gpio.isOutput);
         GPIO_OUTPUT(gpio);
         while (1) {
             if (gpio.isOutput) {

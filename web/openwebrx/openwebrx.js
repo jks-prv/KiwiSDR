@@ -13551,6 +13551,12 @@ function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 			zoom_nom = Math.min(ZOOM_NOMINAL, zoom_levels_max);
 			break;
 
+		case "zoom_all":
+		   var zoom_all = parseInt(param[1]) - 1;
+		   console.log('zoom_all='+ zoom_all);
+		   ext_set_zoom(ext_zoom.ABS, zoom_all);
+			break;
+
 		case "audio_init":
          toggle_or_set_audio(toggle_e.FROM_COOKIE | toggle_e.SET, 1);
 			audio_init(+param[1], btn_less_buffering, kiwi_toggle(toggle_e.FROM_COOKIE | toggle_e.SET, 1, 1, 'last_compression'));

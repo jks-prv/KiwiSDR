@@ -165,7 +165,7 @@ u64_t fpga_dna()
 // FPGA init
 ////////////////////////////////
 
-//#define TEST_FLAG_SPI_RFI
+#define TEST_FLAG_SPI_RFI
 
 bool background_mode = FALSE;
 
@@ -182,7 +182,7 @@ void fpga_init() {
 	spi_dev_init(spi_clkg, spi_speed);
 
 #ifdef TEST_FLAG_SPI_RFI
-	if (test_flag)
+	if (spi_test)
 		real_printf("TEST_FLAG_SPI_RFI..\n");
 	else
 #endif
@@ -234,7 +234,7 @@ void fpga_init() {
     #endif
     
     #ifdef TEST_FLAG_SPI_RFI
-    	if (test_flag) {
+    	if (spi_test) {
             //real_printf("."); fflush(stdout);
             kiwi_usleep(3000);
     		if (n <= 0) {
@@ -266,7 +266,6 @@ void fpga_init() {
     }
     
 	// keep clocking until config/startup finishes
-	n = sizeof(zeros.bytes);
     spi_dev(SPI_FPGA, &zeros, SPI_B2X(n), &readback, SPI_B2X(n));
 
     fclose(fp);

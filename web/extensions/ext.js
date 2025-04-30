@@ -1297,7 +1297,7 @@ function ext_auth()
 function extint_select_build_menu()
 {
    //console.log('extint_select_menu rx_chan='+ rx_chan +' ext_auth='+ ext_auth());
-   var iframe_names = kiwi_array_iter(extint.iframe_names, function(el) { return el.toLowerCase(); });
+   var iframe_names = kiwi_array_iter_dup(extint.iframe_names, function(el) { return el.toLowerCase(); });
    console.log(iframe_names);
    var iframe_enable = ext_get_cfg_param('iframe.enable');
 	var s = '';

@@ -20,4 +20,3 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 //#define TEST_IP_BLACKLIST_USING_LOCAL_IPs
-#define TEST_WF_FULL_RATE

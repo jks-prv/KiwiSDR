@@ -54,10 +54,10 @@
 `define SPI_32 1    // DEFh 0x1
 	localparam SPIBUF_W = 2048;    // DEFp 0x800
 `define DEF_SPIBUF_W 1
+	localparam SPIBUF_WA = 2046;    // DEFp 0x7fe
+`define DEF_SPIBUF_WA 1
 	localparam SPIBUF_B = 4096;    // DEFp 0x1000
 `define DEF_SPIBUF_B 1
-	localparam SPIBUF_BMAX = 4094;    // DEFp 0xffe
-`define DEF_SPIBUF_BMAX 1
 	localparam N_SND_RATES = 2;    // DEFp 0x2
 `define DEF_N_SND_RATES 1
 	localparam SND_RATE_WB = 12000;    // DEFp 0x2ee0
@@ -127,14 +127,6 @@
 `define DEF_RXBUF_LARGE_14CH 1
 	localparam RXBUF_LARGE_WB = 2;    // DEFp 0x2
 `define DEF_RXBUF_LARGE_WB 1
-	localparam NRX_IQW = 3;    // DEFp 0x3
-`define DEF_NRX_IQW 1
-	localparam NRX_SPI = 2047;    // DEFp 0x7ff
-`define DEF_NRX_SPI 1
-	localparam NRX_OVHD = 5;    // DEFp 0x5
-`define DEF_NRX_OVHD 1
-	localparam NRX_SAMPS_RPT = 8;    // DEFp 0x8
-`define DEF_NRX_SAMPS_RPT 1
 //`define USE_RX_CIC24    // DEFh 0x0
 	localparam RX1_BITS = 22;    // DEFp 0x16
 `define DEF_RX1_BITS 1
@@ -154,14 +146,6 @@
 `define DEF_NWF_NXFER 1
 	localparam NWF_SAMPS = 911;    // DEFp 0x38f
 `define DEF_NWF_SAMPS 1
-	localparam NWF_SAMPS_RPT = 50;    // DEFp 0x32
-`define DEF_NWF_SAMPS_RPT 1
-	localparam NWF_SAMPS_LOOP = 18;    // DEFp 0x12
-`define DEF_NWF_SAMPS_LOOP 1
-	localparam NWF_SAMPS_LOOP2 = 900;    // DEFp 0x384
-`define DEF_NWF_SAMPS_LOOP2 1
-	localparam NWF_SAMPS_REM = 11;    // DEFp 0xb
-`define DEF_NWF_SAMPS_REM 1
 `define USE_WF_1CIC 1    // DEFh 0x1
 `define USE_WF_CIC24 1    // DEFh 0x1
 //`define USE_WF_MEM24    // DEFh 0x0
@@ -209,16 +193,8 @@
 `define DEF_E1B_CODELEN 1
 	localparam E1B_CODE_XFERS = 2;    // DEFp 0x2
 `define DEF_E1B_CODE_XFERS 1
-	localparam E1B_CODE_LOOP = 2046;    // DEFp 0x7fe
+	localparam E1B_CODE_LOOP = 2044;    // DEFp 0x7fc
 `define DEF_E1B_CODE_LOOP 1
-	localparam E1B_CODE_RPT = 32;    // DEFp 0x20
-`define DEF_E1B_CODE_RPT 1
-	localparam E1B_CODE_LOOP2 = 63;    // DEFp 0x3f
-`define DEF_E1B_CODE_LOOP2 1
-	localparam E1B_CODE_LOOP3 = 2016;    // DEFp 0x7e0
-`define DEF_E1B_CODE_LOOP3 1
-	localparam E1B_CODE_REM = 30;    // DEFp 0x1e
-`define DEF_E1B_CODE_REM 1
 	localparam GET_CHAN_IQ = 0;    // DEFb: bit number for value: 0x1
 	localparam GET_SRQ = 1;    // DEFb: bit number for value: 0x2
 	localparam GET_SNAPSHOT = 2;    // DEFb: bit number for value: 0x4

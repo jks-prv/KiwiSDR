@@ -108,8 +108,9 @@ Boston, MA  02110-1301, USA.
  #define    PMUX_ATTR_S 20
  #define    PMUX_ATTR_E 14
 
- #define	PMUX_MODE   0x0000000f  // mode bits
- #define	PMUX_SPI    0x00000001  // SPI  = mode 1    // see: beagley_ai-pins.txt
+ #define	PMUX_MODE   0x0000000f  // mode bits, see: beagley_ai-pins.txt
+ #define	PMUX_I2C    0x00000000  // I2C  = mode 0
+ #define	PMUX_SPI    0x00000001  // SPI  = mode 1
  #define	PMUX_GPIO   0x00000007  // GPIO = mode 7
  #define	PMUX_OFF    0x0000000f  // mode 15
 #endif

@@ -139,6 +139,7 @@ struct wf_inst_t {
 	wf_interp_t interp;
 	int window_func;
 	bool trigger;
+	u4_t zoom_all_seq;
 	
 	tid_t tid;
 	u4_t lock_seq;

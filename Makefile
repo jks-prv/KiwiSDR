@@ -1864,6 +1864,9 @@ dump_eeprom:
     ifeq ($(DEBIAN_VERSION),7)
 	    -hexdump -C /sys/bus/i2c/devices/1-0054/eeprom
     else
+    ifeq ($(BYAI),true)
+	    @echo "(not working yet on BYAI)"
+    else
     ifeq ($(BBAI_64),true)
 	    -hexdump -C /sys/bus/i2c/devices/5-0054/eeprom
     else
@@ -1878,11 +1881,12 @@ dump_eeprom:
     endif
     endif
     endif
+    endif
 
 dump_eeprom_all: dump_eeprom
 	@echo
 	@echo "BeagleBone EEPROM:"
-    ifeq ($(BBAI_64),true)
+    ifeq ($(or $(BBAI_64), $(BYAI)),true)
 	    -hexdump -C /sys/bus/i2c/devices/2-0050/eeprom
     else
     ifeq ($(BBAI),true)

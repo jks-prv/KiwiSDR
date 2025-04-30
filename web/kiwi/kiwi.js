@@ -2878,7 +2878,7 @@ function user_cb(obj)
          //console.log('NOTIFY nc|rx_chan='+ obj.nc +'|'+ rx_chan +' seq='+ obj.ns +'|'+ kiwi.notify_seq);
          if (isNumber(obj.ns) && obj.ns != kiwi.notify_seq) {
          //console.log('NOTIFY sn='+ obj.ns);
-		   msg_send('SET notify_msg');
+		   msg_send('SET notify_msg');      // ask all but initiating channel to display notification
          kiwi.notify_seq = obj.ns;
          }
       }
