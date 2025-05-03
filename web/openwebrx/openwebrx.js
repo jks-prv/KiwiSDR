@@ -3441,6 +3441,8 @@ function wheel_dev_cb(path, idx, first)
    w3_set_value('id-wheel-poll', owrx.wheel_poll);
    w3_set_value('id-wheel-fast', owrx.wheel_fast);
    w3_set_value('id-wheel-unlock', owrx.wheel_unlock);
+   w3_disable_multi('id-wheel-field', idx != owrx.WHEEL_CUSTOM, 'w3-disabled-field');
+   
    canvas_mousewheel_rlimit_tune = kiwi_rateLimit(canvas_mousewheel_cb, /* msec */ owrx.wheel_poll);
    console.log('wheel_dev_cb: wheel_poll='+ owrx.wheel_poll +' wheel_fast='+ owrx.wheel_fast +' wheel_unlock='+ owrx.wheel_unlock);
 }
@@ -13048,9 +13050,9 @@ function users_setup()
             w3_button('w3-green w3-small w3-padding-small w3-margin-R-4 w3-btn-right', 'help', 'wheel_help')
          ),
          w3_inline('w3-margin-T-8 w3-margin-B-8 w3-margin-R-8/w3-margin-between-8',
-            w3_input('id-wheel-poll w3-padding-tiny', 'Poll (msec)', 'wheel_poll', 0, 'wheel_param_cb|0'),
-            w3_input('id-wheel-fast w3-padding-tiny', 'Fast threshold', 'wheel_fast', 0, 'wheel_param_cb|1'),
-            w3_input('id-wheel-unlock w3-padding-tiny', 'Unlock (msec)', 'wheel_unlock', 0, 'wheel_param_cb|2')
+            w3_input('id-wheel-field id-wheel-poll w3-padding-tiny', 'Poll (msec)', 'wheel_poll', 0, 'wheel_param_cb|0'),
+            w3_input('id-wheel-field id-wheel-fast w3-padding-tiny', 'Fast threshold', 'wheel_fast', 0, 'wheel_param_cb|1'),
+            w3_input('id-wheel-field id-wheel-unlock w3-padding-tiny', 'Unlock (msec)', 'wheel_unlock', 0, 'wheel_param_cb|2')
          )
       );
 

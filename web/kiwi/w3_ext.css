@@ -383,6 +383,11 @@ input[type=range]::-moz-range-thumb {
     opacity: 0.3;
 }
 
+.w3-disabled-field
+{
+    cursor: not-allowed !important;
+}
+
 .w3-cursor-not-allowed
 {
     cursor: not-allowed !important;

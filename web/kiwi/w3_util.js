@@ -1203,14 +1203,15 @@ function w3_show_hide_inline(el, show)
    w3_show_hide(el, show, 'w3-show-inline-new');
 }
 
-function w3_disable(el_id, disable)
+function w3_disable(el_id, disable, prop)
 {
    if (!isArg(disable)) disable = true;
+   if (!isString(prop)) prop = 'w3-disabled';
    
    el = w3_el(el_id);
    //console.log('w3_disable disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
    //console.log(el);
-	w3_set_props(el, 'w3-disabled', disable);
+   w3_set_props(el, prop, disable);
 	
 	// for disabling menu popup and sliders
 	if (isDefined(el.nodeName) && (el.nodeName == 'SELECT' || el.nodeName == 'INPUT')) {
@@ -1228,15 +1229,16 @@ function w3_disable(el_id, disable)
 	return el;
 }
 
-function w3_disable_multi(el_id, disable)
+function w3_disable_multi(el_id, disable, prop)
 {
    if (!isArg(disable)) disable = true;
+   if (!isString(prop)) prop = 'w3-disabled';
    
    w3_els(el_id,
       function(el, i) {
          //console.log('w3_disable_multi disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
          //console.log(el);
-         w3_set_props(el, 'w3-disabled', disable);
+         w3_set_props(el, prop, disable);
    
          // for disabling menu popup and sliders
          if (isDefined(el.nodeName) && (el.nodeName == 'SELECT' || el.nodeName == 'INPUT')) {
