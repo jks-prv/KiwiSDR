@@ -947,7 +947,7 @@ function connect_stop_proxy()
 function connect_my_kiwi_register()
 {
    // wait for prior ext_set_cfg_param() to update on server
-   setTimeout(function() { ext_send('my_kiwi_register'); }, 3000);
+   setTimeout(function() { ext_send('SET my_kiwi_register'); }, 3000);
 }
 
 function connect_dom_nam_focus(ok)
