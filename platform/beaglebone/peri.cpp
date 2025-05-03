@@ -248,8 +248,6 @@ gpio_t GPIO_NONE	= { 0xff, 0xff, 0xff, 0xff };
     gpio_t CMD_READY    = { GPIO0,  41, PIN(HAT, 15), 154 };
     gpio_t SND_INTR		= { GPIO0,  42, PIN(HAT, 22), 112 };
 
-    gpio_t SDA		    = { GPIO2,  18, PIN(HAT,  3), 172 };
-    gpio_t SCL		    = { GPIO2,  17, PIN(HAT,  5), 174 };
     gpio_t G5	        = { GPIO1,  15, PIN(HAT, 29), 170 };
     gpio_t G6	        = { GPIO1,  17, PIN(HAT, 31), 176 };
     gpio_t G7	        = { GPIO2,   9, PIN(HAT, 26), 146 };
@@ -658,8 +656,6 @@ void peri_init()
     SND_INTR.init();
 
     #ifdef PLATFORM_beagleY_ai
-        SDA.init();
-        SCL.init();
         G5.init();
         G6.init();
         G7.init();
@@ -742,9 +738,6 @@ void peri_init()
 	gpio_setup(SND_INTR,  GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO, PMUX_IO_PU);
 
 #ifdef PLATFORM_beagleY_ai
-    devio_check(SDA, GPIO_DIR_BIDIR, PMUX_IO_PU | PMUX_I2C, 0);
-    devio_check(SCL, GPIO_DIR_OUT,   PMUX_IO_PU | PMUX_I2C, PMUX_OUT_PU | PMUX_I2C);
-    
     gpio_setup(G5 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
     gpio_setup(G6 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
     gpio_setup(G7 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);

@@ -82,4 +82,16 @@
             };
         };
     };
+
+    fragment@2 {
+        target = <&wkup_i2c0>;
+        __overlay__ {
+            eeprom@54 {
+                compatible = "atmel,24c32";
+                #address-cells = <0x1>;
+                #size-cells = <0x0>;
+                reg = <0x54>;
+            };
+        };
+    };
 };

@@ -1320,9 +1320,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 #	            @cp -v $(DTS_DEP_SRC2) $(DIR_DTB2)
 	            (cd $(DIR_DTB_BASE); make)
 	            (cd $(DIR_DTB_BASE); make install_arm64)
-	            # including this breaks /dev/spidev9 since D11.9 / r113?
+                # including this breaks /dev/spidev9 since D11.9
+                # don't need to do anything except "modprobe spidev" in ./k and unix_env/kiwid
+                # also note the added "bone_spi_0: &main_spi6" to k3-j721e-beagleboneai64-bone-buses.dtsi
                 #ifeq ($(EXISTS_EXTLINUX),true)
-	            #   -sed -i -e 's:#fdtoverlays /overlays/<file>.dtbo:fdtoverlays /overlays/BONE-SPI0_0.dtbo:' $(EXTLINUX)
+                #   -sed -i -e 's:#fdtoverlays /overlays/<file>.dtbo:fdtoverlays /overlays/BONE-SPI0_0.dtbo:' $(EXTLINUX)
                 #endif
             else
 	            @cp -v $(DTS_DEP_SRC) $(DIR_DTB)
@@ -1864,9 +1866,6 @@ dump_eeprom:
     ifeq ($(DEBIAN_VERSION),7)
 	    -hexdump -C /sys/bus/i2c/devices/1-0054/eeprom
     else
-    ifeq ($(BYAI),true)
-	    @echo "(not working yet on BYAI)"
-    else
     ifeq ($(BBAI_64),true)
 	    -hexdump -C /sys/bus/i2c/devices/5-0054/eeprom
     else
@@ -1877,7 +1876,6 @@ dump_eeprom:
 	    -hexdump -C /sys/bus/i2c/devices/1-0050/eeprom
     else
 	    -hexdump -C /sys/bus/i2c/devices/2-0054/eeprom
-    endif
     endif
     endif
     endif
