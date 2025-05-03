@@ -666,6 +666,16 @@ void update_vars_from_config(bool called_at_init)
         update_admcfg = true;
 	}
 
+    if (called_at_init) {
+        admcfg_default_string("hostname", "kiwisdr", &up_cfg);
+        const char *hn = admcfg_string("hostname", NULL, CFG_REQUIRED);
+        kiwi_strncpy(net.hostname, hn, N_HOSTNAME + SPACE_FOR_NULL);
+        admcfg_string_free(hn);
+        sethostname(net.hostname, strlen(net.hostname));
+        printf("hostname: %s\n", net.hostname);
+        if (strcmp(net.hostname, "kiwisdr") == 0) net.hostname[0] = '\0';
+    }
+	
     // historical uses of options parameter:
     //int new_find_local = admcfg_int("options", NULL, CFG_REQUIRED) & 1;
     admcfg_default_int("options", 0, &update_admcfg);

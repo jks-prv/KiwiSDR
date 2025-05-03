@@ -513,6 +513,8 @@ void c2s_admin(void *param)
                 if (DUC_enable_start) {
                     send_msg(conn, SM_NO_DEBUG, "ADM DUC_status=301");
                     net.DUC_status = 301;
+                } else {
+                    send_msg(conn, SM_NO_DEBUG, "ADM DUC_status=%d", net.DUC_status);
                 }
                 continue;
             }
@@ -535,6 +537,7 @@ void c2s_admin(void *param)
                     lprintf("DUC: noip2 failed?\n");
                     send_msg(conn, SM_NO_DEBUG, "ADM DUC_status=300");
                     net.DUC_status = 300;
+                    my_kiwi_register();
                     continue;
                 }
                 status = WEXITSTATUS(stat);
@@ -543,6 +546,7 @@ void c2s_admin(void *param)
                 kstr_free(reply);
                 send_msg(conn, SM_NO_DEBUG, "ADM DUC_status=%d", status);
                 net.DUC_status = status;
+                my_kiwi_register();
                 if (status != 0) continue;
                 DUC_enable_start = true;
             
@@ -569,6 +573,13 @@ void c2s_admin(void *param)
             if (i == 0) {
                 lprintf("PROXY: stopping frpc\n");
                 system("killall -q frpc");
+                continue;
+            }
+    
+            i = strcmp(cmd, "SET my_kiwi_register");
+            if (i == 0) {
+                printf("ADMIN: my_kiwi_register\n");
+                my_kiwi_register();
                 continue;
             }
     
@@ -607,6 +618,7 @@ void c2s_admin(void *param)
 
                     send_msg(conn, SM_NO_DEBUG, "ADM rev_status=%d", status);
                     net.proxy_status = status;
+                    my_kiwi_register();
                 } else {
                     // setup frpc.ini and restart frpc if new account or host name updated (FRPC_NEW, FRPC_UPDATE_HOST)
                     // or check for existing (FRPC_EXISTING) and frpc is *not* running for some reason
@@ -1031,6 +1043,19 @@ void c2s_admin(void *param)
             i = sscanf(cmd, "SET my_kiwi=%d", &my_kiwi);
             if (i == 1) {
                 my_kiwi_register(my_kiwi? true:false);
+                continue;
+            }
+
+            char *hostname_m = NULL;
+            i = sscanf(cmd, "SET hostname=%255ms", &hostname_m);
+            if (i == 1) {
+                kiwi_str_decode_inplace(hostname_m);
+                kiwi_strncpy(net.hostname, hostname_m, N_HOSTNAME + SPACE_FOR_NULL);
+                kiwi_asfree(hostname_m);
+                if (net.hostname[0] == '\0') strcpy(net.hostname, "kiwisdr");
+	            printf("ADMIN set hostname: %s\n", net.hostname);
+                sethostname(net.hostname, strlen(net.hostname));
+                my_kiwi_register();
                 continue;
             }
 

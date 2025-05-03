@@ -215,6 +215,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
     char *kiwisdr_com = DNS_lookup_result("my_kiwi", "kiwisdr.com", &net.ips_kiwisdr_com);
     int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
     int dom_stat = (dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
+    printf("my_kiwi_register dom=%d dom_stat=%d\n", dom_sel, dom_stat);
 
     const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
     int add_nat = admcfg_true("auto_add_nat")? 1:0;
@@ -230,14 +231,14 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
 
     asprintf(&cmd_p, "curl -Ls --show-error --ipv4 --connect-timeout 5 "
         "\"%s/php/my_kiwi.php?auth=308bb2580afb041e0514cd0d4f21919c&"
-        "url=http://%s:%d&mac=%s&add_nat=%d&"
+        "url=http://%s:%d&mac=%s&add_nat=%d&hn=%s&"
         "pub=%s&pvt=%s&"
         "port=%d&dhcp=%d&jq=%d&"
         "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
         "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&vr=%x&up=%d"
         "%s\"",
         kiwisdr_com,
-        server_url, server_port, net.mac, add_nat,
+        server_url, server_port, net.mac, add_nat, kiwi_str_encode_static(net.hostname),
         net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
         net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
         email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
@@ -931,14 +932,14 @@ static void reg_public(void *param)
 	    // done here because updating timer_sec() is sent
         asprintf(&cmd_p, "wget --timeout=30 --tries=2 --inet4-only -qO- "
             "\"%s/php/update.php?"
-            "url=http://%s:%d&mac=%s&add_nat=%d&"
+            "url=http://%s:%d&mac=%s&add_nat=%d&hn=%s&"
             "pub=%s&pvt=%s&"
             "port=%d&dhcp=%d&jq=%d&"
             "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
             "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&up=%d"
             "\" 2>&1",
             kiwisdr_com,
-            server_url, server_port, net.mac, add_nat,
+            server_url, server_port, net.mac, add_nat, kiwi_str_encode_static(net.hostname),
             net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
             net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
             email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,

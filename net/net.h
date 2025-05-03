@@ -105,6 +105,9 @@ typedef struct {
 	u4_t serno;
     u64_t dna;
     
+    #define N_HOSTNAME 15
+    char hostname[N_HOSTNAME + SPACE_FOR_NULL];
+    
     int proxy_status, DUC_status;
 	
 	// IPv4

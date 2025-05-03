@@ -944,6 +944,12 @@ function connect_stop_proxy()
    ext_send('SET stop_proxy');
 }
 
+function connect_my_kiwi_register()
+{
+   // wait for prior ext_set_cfg_param() to update on server
+   setTimeout(function() { ext_send('my_kiwi_register'); }, 3000);
+}
+
 function connect_dom_nam_focus(ok)
 {
    var server_url = (ok == false)? '' : cfg.sdr_hu_dom_name;
@@ -952,6 +958,7 @@ function connect_dom_nam_focus(ok)
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.NAM, EXT_SAVE);
 	connect_update_url();
 	connect_stop_proxy();
+	connect_my_kiwi_register();
 	if (server_url != '') w3_restart_cb();
 }
 
@@ -963,6 +970,7 @@ function connect_dom_duc_focus()
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.DUC, EXT_SAVE);
 	connect_update_url();
 	connect_stop_proxy();
+	connect_my_kiwi_register();
 	if (server_url != '') w3_restart_cb();
 }
 
@@ -974,6 +982,7 @@ function connect_dom_rev_focus(check_restart)
 	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.REV, EXT_SAVE);
 	connect_update_url();
+	connect_my_kiwi_register();
 	if (check_restart && server_url != '') w3_restart_cb();
 }
 
@@ -985,6 +994,7 @@ function connect_dom_pub_focus()
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.PUB, EXT_SAVE);
 	connect_update_url();
 	connect_stop_proxy();
+	connect_my_kiwi_register();
 	if (server_url != '') w3_restart_cb();
 }
 
@@ -996,6 +1006,7 @@ function connect_dom_sip_focus(ok)
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.SIP, EXT_SAVE);
 	connect_update_url();
 	connect_stop_proxy();
+	connect_my_kiwi_register();
 	if (server_url != '') w3_restart_cb();
 }
 
@@ -1828,9 +1839,10 @@ function network_html()
 
 		w3_div('id-net-reboot w3-container',
 			w3_inline('w3-halign-space-between w3-margin-bottom w3-text-teal/',
-			   w3_divs('w3-valign w3-flex-col w3-restart/w3-tspace-6',
-					w3_input_get('', 'Internal port', 'adm.port', 'admin_int_cb'),
-					w3_input_get('', 'External port', 'adm.port_ext', 'admin_int_cb')
+			   w3_divs('w3-valign w3-flex-col/w3-tspace-6',
+					w3_input_get('w3-restart', 'Internal port', 'adm.port', 'admin_int_cb'),
+					w3_input_get('w3-restart', 'External port', 'adm.port_ext', 'admin_int_cb'),
+					w3_input_get('', 'Debian hostname', 'adm.hostname', 'network_hostname_cb', 'kiwisdr')
 				),
 				w3_divs('id-net-ssl-vis w3-hide/ w3-center w3-restart',
 					w3_switch_label_get_param('id-net-ssl w3-center', 'Enable HTTPS/SSL on<br>network connections?',
@@ -2008,6 +2020,17 @@ function network_html()
       '<hr>';
 
 	return w3_div('id-network w3-hide', s1 + s2 + s3);
+}
+
+function network_hostname_cb(path, s, first)
+{
+   if (first) return;
+   s = s.trim();
+   //console.log('network_hostname_cb path='+ path +' s='+ s);
+   if (s == '') s = 'kiwisdr';
+   w3_set_value(path, s);
+   w3_string_set_cfg_cb(path, s);
+	ext_send('SET hostname='+ encodeURIComponent(s));
 }
 
 function network_my_kiwi_cb(path, idx, first)
