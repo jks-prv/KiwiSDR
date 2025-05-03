@@ -498,8 +498,14 @@ function wspr_controls_setup()
    wspr_upload_timeout = setTimeout(function() {wspr_upload(wspr_report_e.STATUS);}, 1000);
 
 	// set band and start if URL parameter present
-	var p = ext_param();
+	wspr_process_params(ext_param());
+}
+
+function wspr_process_params(p)
+{
+   //console.log('wspr_process_params p='+ p);
 	if (p) {
+      var r = ext_get_freq_range();
       p = p.toLowerCase().split(',');
       p.forEach(function(a, i) {
          var sel = wspr.freqs_s[a];
@@ -606,6 +612,17 @@ function wspr_band_select_cb(path, idx, first)
 		wspr_init_band = idx;
 		wspr_freq(idx);
 	}
+}
+
+// automatically called on changes in the environment
+function wspr_environment_changed(changed)
+{
+   //w3_console.log(changed, 'wspr_environment_changed');
+
+   // don't do anything for changes.freq or changed.mode
+   if (changed.ext_open) {
+      wspr_process_params(extint.param);
+   }
 }
 
 function wspr_focus()
