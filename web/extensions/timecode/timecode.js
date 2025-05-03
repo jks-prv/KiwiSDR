@@ -558,9 +558,9 @@ function tc_controls_setup()
 
 function timecode_environment_changed(changed)
 {
+   //w3_console.log(changed, 'timecode_environment_changed');
+
    // don't do anything for changes.freq or changed.mode
-   //console.log('timecode_environment_changed:');
-   //console.log(changed);
    if (changed.ext_open) {
       timecode_process_params(extint.param);
    }

@@ -358,10 +358,70 @@ function ale_2g_watchdog()
    //console.log('ale tick');
 }
 
+function ale_2g_menu_match(m_freq, m_str)
+{
+   var d = (0 && dbgUs);
+   var rv = { found_menu_match: false, match_menu: 0, match_val: 0, menu_match_numeric: false, look_for_first_entry: false };
+   
+   for (var i = 0; i < ale.menu_n && !rv.found_menu_match; i++) {
+      var menu = 'ale.menu'+ i;
+      var match = false;
+      var menu_match_numeric = false;
+      var look_for_first_entry = false;
+   
+      if (d) console.log('CONSIDER '+ menu +' -----------------------------------------');
+      w3_select_enum(menu, function(option, j) {
+         var val = +option.value;
+         if (rv.found_menu_match || val == -1) return;
+         var menu_f = parseFloat(option.innerHTML);
+         var menu_s = option.innerHTML.toLowerCase();
+         if (d) console.log('CONSIDER '+ val +' '+ option.innerHTML);
+      
+         if (look_for_first_entry) {
+            // find first 'scan' or single frequency entry by
+            // skipping disabled entries from multi-line net name
+            if (option.disabled) return;
+            match = true;
+            if (isNumber(menu_f))
+               menu_match_numeric = true;
+         } else {
+            if (isNumber(menu_f)) {
+               if (menu_f == m_freq) {
+                  if (d) console.log('MATCH num: '+ menu_s +'['+ j +']');
+                  match = true;
+                  menu_match_numeric = true;
+               }
+            } else {
+               if (menu_s.includes(m_str)) {
+                  look_for_first_entry = true;
+                  if (d) console.log('MATCH str: '+ menu_s +'['+ j +'] BEGIN look_for_first_entry');
+                  return;
+               }
+            }
+         }
+      
+         if (match) {
+            if (d) console.log('MATCH '+ val +' '+ option.innerHTML);
+            // delay call to ale_2g_pre_select_cb(), which might start scanning,
+            // until other params processed below
+            rv.match_menu = menu;
+            rv.match_val = val;
+            rv.match_entry = option.innerHTML;
+            rv.found_menu_match = true;
+            rv.menu_match_numeric = menu_match_numeric;
+            rv.look_for_first_entry = look_for_first_entry;
+         }
+      });
+   }
+      
+   return rv;
+}
+
 function ale_2g_get_nets_done_cb(nets)
 {
    var url = ale.url;
    var fault = false;
+   var idx;
    
    if (!nets) {
       console.log('ale_2g_get_nets_done_cb: nets='+ nets);
@@ -392,7 +452,7 @@ function ale_2g_get_nets_done_cb(nets)
       console.log(nets);
       
       // load the default station list from a file embedded with the extension (should always succeed)
-      var url = kiwi_url_origin() + '/extensions/ALE_2G/ALE_nets.cjson';
+      url = kiwi_url_origin() + '/extensions/ALE_2G/ALE_nets.cjson';
       console.log('ale_2g_get_nets_done_cb: using default station list '+ url);
       ale.using_default = true;
       ale.double_fault = true;
@@ -410,6 +470,7 @@ function ale_2g_get_nets_done_cb(nets)
 
    ale.url_params = ext_param();
    if (dbgUs) console.log('url_params='+ ale.url_params);
+   var do_test = 0;
    
 	if (ale.url_params) {
       var p = ale.url_params.split(',');
@@ -419,10 +480,6 @@ function ale_2g_get_nets_done_cb(nets)
       var m_str = kiwi_decodeURIComponent('ale', p[0]).toLowerCase();
       if (dbgUs) console.log('URL freq='+ m_freq);
       var found_scan_param = false;
-      var found_menu_match = false;
-      var menu_match_numeric = false;
-      var match_menu, match_val;
-      var do_test = 0;
       
       // look for user scan list
       if (isNumber(m_freq) && p.length >= 2) {
@@ -460,7 +517,7 @@ function ale_2g_get_nets_done_cb(nets)
          var r;
          if ((r = w3_ext_param('format', a)).match) {
             if (isNumber(r.num)) {
-               var idx = w3_clamp(r.num, 0, ale.format_s.length-1, 0);
+               idx = w3_clamp(r.num, 0, ale.format_s.length-1, 0);
                console.log('menus '+ r.num +' '+ idx);
                ale_2g_format_cb('id-ale.format_m', idx);      // will call ale_2g_render_menus()
             }
@@ -468,59 +525,12 @@ function ale_2g_get_nets_done_cb(nets)
       });
 
       // select matching menu item frequency if there was no user scan list already specified
+      var rv;
       if (!ale.have_user_scan_list) {
+         rv = ale_2g_menu_match(m_freq, m_str);
 
-         for (var i = 0; i < ale.menu_n; i++) {
-            var menu = 'ale.menu'+ i;
-            var look_for_first_entry = false;
-            var match = false;
-         
-            if (dbgUs) console.log('CONSIDER '+ menu +' -----------------------------------------');
-            w3_select_enum(menu, function(option, j) {
-               var val = +option.value;
-               if (found_menu_match || val == -1) return;
-               var menu_f = parseFloat(option.innerHTML);
-               var menu_s = option.innerHTML.toLowerCase();
-               if (dbgUs) console.log('CONSIDER '+ val +' '+ option.innerHTML);
-            
-               if (look_for_first_entry) {
-                  // find first 'scan' or single frequency entry by
-                  // skipping disabled entries from multi-line net name
-                  if (option.disabled) return;
-                  match = true;
-                  if (isNumber(menu_f))
-                     menu_match_numeric = true;
-               } else {
-                  if (isNumber(menu_f)) {
-                     if (menu_f == m_freq) {
-                        if (dbgUs) console.log('MATCH num: '+ menu_s +'['+ j +']');
-                        match = true;
-                        menu_match_numeric = true;
-                     }
-                  } else {
-                     if (menu_s.includes(m_str)) {
-                        look_for_first_entry = true;
-                        if (dbgUs) console.log('MATCH str: '+ menu_s +'['+ j +'] BEGIN look_for_first_entry');
-                        return;
-                     }
-                  }
-               }
-            
-               if (match) {
-                  if (dbgUs) console.log('MATCH '+ val +' '+ option.innerHTML);
-                  // delay call to ale_2g_pre_select_cb(), which might start scanning,
-                  // until other params processed below
-                  match_menu = menu;
-                  match_val = val;
-                  found_menu_match = true;
-               }
-            });
-            
-            if (found_menu_match) {
-               p.shift();
-               break;
-            }
-         }
+         if (rv.found_menu_match)
+            p.shift();
       }
 
       p.forEach(function(a, i) {
@@ -531,7 +541,7 @@ function ale_2g_get_nets_done_cb(nets)
          } else
          if ((r = w3_ext_param('display', a)).match) {
             if (isNumber(r.num)) {
-               var idx = w3_clamp(r.num, 0, ale.dsp_s.length-1, 0);
+               idx = w3_clamp(r.num, 0, ale.dsp_s.length-1, 0);
                console.log('display '+ r.num +' '+ idx);
                ale_2g_display_cb('id-ale.dsp', idx);
             }
@@ -559,7 +569,7 @@ function ale_2g_get_nets_done_cb(nets)
          if ((r = w3_ext_param('rec', a)).match) {
             var num = r.has_value? r.num : 1;
             if (isNumber(num)) {
-               var idx = w3_clamp(num, 0, ale.record_s.length-1, 0);
+               idx = w3_clamp(num, 0, ale.record_s.length-1, 0);
                console.log('record '+ num +' '+ idx);
                ale_2g_record_cb('id-ale.record_m', idx);
             }
@@ -578,20 +588,21 @@ function ale_2g_get_nets_done_cb(nets)
             do_test = 1;
          } else
          if (w3_ext_param('format', a).match) {
-            ;     // processed above
+            // processed above
          } else
             console.log('ALE 2G: unknown URL param "'+ a +'"');
       });
       
-      if (found_menu_match) {
-         ale_2g_pre_select_cb(match_menu, match_val, false);
+      if (rv.found_menu_match) {
+         console.log('');
+         ale_2g_pre_select_cb(rv.match_menu, rv.match_val, false);
       }
 
-      if (found_scan_param && found_menu_match) {
+      if (found_scan_param && rv.found_menu_match) {
          console.log('found_scan_param && found_menu_match');
-         if (look_for_first_entry)
+         if (rv.look_for_first_entry)
             ale_2g_scanner(ale.SET, undefined, 1);
-         if (!menu_match_numeric)
+         if (!rv.menu_match_numeric)
             ale_2g_scanner(ale.RESUME);
       }
    }
@@ -913,8 +924,8 @@ function ale_2g_scan(scan)
 
 function ale_2g_scanner(idx, scan_list, new_idx, from_menu)
 {
-   if (dbgUs) console.log('ale_2g_scanner idx='+ ((idx <= 1)? ale.scan_s[idx+2] : idx) +' scan_cur_idx='+ ale.scan_cur_idx
-      +' new_idx(PARAM)='+ new_idx +' scan_list(PARAM)='+ kiwi_typeof(scan_list) +' ale.scan_list='+ kiwi_typeof(ale.scan_list));
+   if (dbgUs) console.log('ale_2g_scanner idx='+ ((idx <= 1)? ale.scan_s[idx+2] : idx) +' scan_cur_idx='+ ale.scan_cur_idx +
+      ' new_idx(PARAM)='+ new_idx +' scan_list(PARAM)='+ kiwi_typeof(scan_list) +' ale.scan_list='+ kiwi_typeof(ale.scan_list));
    var s, resume_scanning;
    
    if (isDefined(scan_list)) ale.scan_list = scan_list;
@@ -1184,14 +1195,25 @@ function ALE_2G_environment_changed(changed)
 {
    //w3_console.log(changed, 'ALE_2G_environment_changed');
 
-   if (changed.freq || changed.mode) {
-      var f_kHz = ext_get_freq_kHz();
+   if (changed.ext_open || changed.freq || changed.mode) {
+      var f_kHz = (+ext_get_freq_kHz()).toFixed(0);
+      var ale_f_kHz = (+ale.freq).toFixed(0);
       var mode = ext_get_mode();
-      //console.log('ALE_2G_environment_changed freq='+ ale.freq +' f_kHz='+ f_kHz);
-	   if (ale.freq != f_kHz || (mode != 'lsb' && mode != 'usb')) {
-	      //console.log('ale_2g_clear_menus()');
-	      ale_2g_clear_menus();
-	   }
+      //console.log('ALE_2G_environment_changed: TEST ext_open='+ TF(changed.ext_open) +' freq='+ ale_f_kHz +' f_kHz='+ f_kHz +' mode='+ mode);
+	   if (changed.ext_open || ale_f_kHz != f_kHz || (mode != 'lsb' && mode != 'usb')) {
+	      // try and match new freq to one of the menu entries
+	      //console.log('ALE_2G_environment_changed: TRUE f='+ f_kHz);
+	      var rv = ale_2g_menu_match(+f_kHz, f_kHz);
+         if (rv.found_menu_match) {
+            //console.log('ALE MATCH f_kHz='+ f_kHz);
+            ale_2g_pre_select_cb(rv.match_menu, rv.match_val, false);
+	      } else {
+            //console.log('ale_2g_clear_menus()');
+            ale_2g_clear_menus();
+         }
+      } else {
+	         //console.log('ALE no freq change');
+      }
    }
 
    if (changed.resize) {
