@@ -74,7 +74,7 @@ typedef struct {
 #elif CPU_BCM2837
     #define SPI_SHMEM_DISABLE
 #elif CPU_AM3359
-    //#define SPI_SHMEM_DISABLE
+    #define SPI_SHMEM_DISABLE
 #else
     #error must define SPI_SHMEM_DISABLE per CPU
 #endif
