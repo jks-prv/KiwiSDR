@@ -51,6 +51,7 @@ var admin = {
 function za(zoom)
 {
    if (dbgUs) ext_send('SET zoom_all='+ zoom);
+   return zoom;
 }
 
 function status_html()

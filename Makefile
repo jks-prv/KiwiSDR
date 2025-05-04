@@ -2061,20 +2061,10 @@ clone:
 
 ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 
-BIN_PLATFORMS := BBAI_64 BBAI BBG_BBB
-BIN_EXISTS := $(foreach plat,$(BIN_PLATFORMS),$(shell test -f bin/kiwi_$(VER)_$(DEBMM)_$(plat).bin && echo true || echo false))
-
     # used by scgit alias
     copy_to_git:
 	    @(echo 'current dir is:'; pwd)
 	    @(cd $(GITAPP)/$(REPO_NAME); echo 'repo branch set to:'; pwd; git --no-pager branch)
-        ifeq ($(BINARY_DISTRO),true)
-	        @echo "checking for release bin files: $(BIN_PLATFORMS)"
-            ifeq ($(findstring false,$(BIN_EXISTS)),false)
-	            @echo "WARNING some binary release files missing:"
-	            @ls -la bin
-            endif
-        endif
 	    @echo '################################'
 	    @echo -n 'did you make install to rebuild the optimized files? '
 	    @read not_used

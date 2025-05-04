@@ -3533,7 +3533,7 @@ function w3_slider_wheel(cb, el, cur, slow, fast)
    if (!el) return null;
    var evt = w3int.rate_limit_evt[cb];
 	//event_dump(evt, cb, 1);
-   console.log(cb +' need_shift='+ w3int.rate_limit_need_shift[cb] +' shiftKey='+ evt.shiftKey +' button='+ evt.button +' buttons='+ evt.buttons);
+   //console.log(cb +' need_shift='+ w3int.rate_limit_need_shift[cb] +' shiftKey='+ evt.shiftKey +' button='+ evt.button +' buttons='+ evt.buttons);
 	if (w3int.rate_limit_need_shift[cb] && !evt.shiftKey)
 	   return null;
    var x = evt.deltaX;

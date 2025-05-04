@@ -1304,7 +1304,7 @@ function extint_select_build_menu()
 	if (extint.ext_names && isArray(extint.ext_names)) {
 	   extint_enum_names(function(i, value, id, id_en) {
          var enable = iframe_names.includes(id_en)? iframe_enable : ext_get_cfg_param(id_en +'.enable');
-         console.log('extint_select_menu id_en='+ id_en +' en='+ enable);
+         //console.log('extint_select_menu id_en='+ id_en +' en='+ enable);
          if (enable == null || ext_auth() == kiwi.AUTH_LOCAL) enable = true;   // enable if no cfg param or local connection
          if (id == 'DRM') kiwi.DRM_enable = enable;
          
