@@ -3425,7 +3425,7 @@ function wheel_dev_cb(path, idx, first)
    idx = +idx;
    if (first) idx = +kiwi_storeRead('wheel_dev', idx);
    owrx.wheel_dev = idx;
-   console.log('wheel_dev_cb: idx='+ idx +' first='+ first);
+   //console.log('wheel_dev_cb: idx='+ idx +' first='+ first);
 
    if (idx == owrx.WHEEL_CUSTOM) {
       owrx.wheel_poll = kiwi_storeRead('wheel_poll', owrx.wheel_poll_i[idx]);
@@ -3444,7 +3444,7 @@ function wheel_dev_cb(path, idx, first)
    w3_disable_multi('id-wheel-field', idx != owrx.WHEEL_CUSTOM, 'w3-disabled-field');
    
    canvas_mousewheel_rlimit_tune = kiwi_rateLimit(canvas_mousewheel_cb, /* msec */ owrx.wheel_poll);
-   console.log('wheel_dev_cb: wheel_poll='+ owrx.wheel_poll +' wheel_fast='+ owrx.wheel_fast +' wheel_unlock='+ owrx.wheel_unlock);
+   //console.log('wheel_dev_cb: wheel_poll='+ owrx.wheel_poll +' wheel_fast='+ owrx.wheel_fast +' wheel_unlock='+ owrx.wheel_unlock);
 }
 
 function wheel_dir_cb(path, idx, first)
@@ -3452,7 +3452,7 @@ function wheel_dir_cb(path, idx, first)
    idx = +idx;
    if (first) idx = +kiwi_storeRead('wheel_dir', idx);
    owrx.wheel_dir = idx;
-   console.log('wheel_dir_cb: idx='+ idx +' first='+ first);
+   //console.log('wheel_dir_cb: idx='+ idx +' first='+ first);
 
    w3_set_value('id-wheel-dir', idx);     // for benefit of kiwi_storeRead() above
    kiwi_storeWrite('wheel_dir', idx);
@@ -4380,6 +4380,7 @@ function spectrum_init()
 
    kiwi_load_js('extensions/colormap/colormap.js',
       function() {
+         waterfall_init_pre();
          waterfall_controls_setup();
          waterfall_init();
          colormap_init();
