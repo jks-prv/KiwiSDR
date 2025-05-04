@@ -3,6 +3,63 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.809  April 5, 2025
+    The output from my.kiwisdr.com has been expanded to include additional information:
+        Proxy links in addition to local IP links if proxy mode is setup and running.
+        Connection type & status (i.e. settings on admin page "connect" tab).
+        Kiwi and Debian software versions.
+        Kiwi product model and Beagle type.
+        The Debian hostname is shown after the serial number if it has been customized from the
+            default "kiwisdr". Useful if you have multiple Kiwi on your network and you want to
+            distinguish them by name instead of solely by serial number.
+    
+    Admin network tab has new field "Debian hostname" to complement the my.kiwisdr.com change above.
+        This changes the actual Linux hostname and is not just a Kiwi configuration parameter.
+
+    DX label fixes (desktop):
+        When an extension is open, and you click on a dx label specified to open the same named
+        extension, the extension won't get closed and re-opened. Instead, any new extension
+        parameters contained in the dx label are sent directly to the open extension for
+        further processing. Example: clicking on a different LF time station causes the
+        timecode extension to change its decoding setup.
+            
+        Label only turns magenta (indicting extension will be opened on click) when mousing over
+        label _without_ a modifier key pressed (shift etc). For example shift-clicking a label
+        opens the label edit panel. So it doesn't make sense to be turning the label magenta
+        because an extension isn't going to be opened when you click it.
+            
+        The DX help panel is opened if the cursor is in the label area and "h" or "?" pressed.
+        
+        The stored DX database can now have a custom name, 15 chars max. (thanks Mauno WRTH)
+        Change the first line of the dx.json file from:
+            {"dx":[
+        to:
+            {"my-custom-name":[
+        If this is of interest you presumably already have a custom dx.json file you're loading
+        via the admin DX tab "import JSON" button. If not, just use the "export JSON" button
+        to download a copy of dx.json and use a text editor to make your changes.
+        The custom name will appear in all the usual places: The left end of the frequency
+        scale, the various database selection menus, etc.
+    
+    When frequency scale offset is in use (i.e. using a downconverter) fixed broken behavior of:
+        "VFO A/B" button. (thanks F5AFY)
+        "Zoom-to-band" button.
+        "--- +++" buttons when frequency scale offset was not a multiple of 1 kHz.
+    
+    S-meter URL query: Allow optional mode e.g. my_kiwi:8073/s-meter?14200usb (thanks F5AFY)
+    Prevent Beagle LED control conflict when admin backup function running. (thanks F5AFY)
+    Save/restore waterfall timestamp parameters in browser storage. (thanks nitroengine)
+    
+    Removed debugging print causing lots of "AJAX_STATUS ..." messages in admin log when
+        wsprdaemon or similar application are in use. (thanks DL4ZBE)
+        
+    Admin local blacklist now disallows entry of subnets which would otherwise exclude local
+        network addresses or the loopback IP address. (thanks G2YT)
+    
+    When the "device preset" menu of the "Mouse wheel / trackpad setup" section of the user tab
+        is set to anything except "custom" the three fields below are disabled for input.
+        Although they still show what the preset values are. (thanks ZL2P)
+
 v1.807,808  April 10, 2025
     Admin backup tab: Added button to create a Debian 11 upgrade SD card which includes all
         customizations from the current Kiwi. Intended to be used by Kiwi's still running Debian 8.x
