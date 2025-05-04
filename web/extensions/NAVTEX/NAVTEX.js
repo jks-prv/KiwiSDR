@@ -744,7 +744,7 @@ function navtex_day_night_visible_cb(path, checked, first)
 {
    if (first) return;
    if (!nt.kmap.day_night) return;
-   var checked = w3_checkbox_get(path);
+   checked = w3_checkbox_get(path);
    kiwi_map_day_night_visible(nt.kmap, checked);
 }
 
@@ -768,7 +768,7 @@ function navtex_locations_visible_cb(path, checked, first)
 function navtex_clear_old_cb(path, idx, first)
 {
    //console.log('navtex_clear_old_cb idx='+ idx +' first='+ first);
-   if (!(+idx)) return;
+   if ((+idx) == 0) return;
    var all = (+idx == 2);
    var old = Date.now() - nt.too_old_min*60*1000;
    w3_obj_enum(nt.locations, function(key, i, o) {
@@ -781,14 +781,14 @@ function navtex_clear_old_cb(path, idx, first)
 
 function navtex_location_update(loc_name, lat, lon, url, color)
 {
-   var dup;
+   var dup, loc_o, marker;
    
    if (!nt.locations[loc_name]) {
       console.log('LOC-NEW '+ loc_name +' '+ lat.toFixed(2) +' '+ lon.toFixed(2));
 
-      var marker = kiwi_map_add_marker_div(nt.kmap, kmap.NO_ADD_TO_MAP,
+      marker = kiwi_map_add_marker_div(nt.kmap, kmap.NO_ADD_TO_MAP,
          [lat, lon], '', [12, 12], [0, 0], 1.0);
-      var loc_o = { loc_name: loc_name, mkr: marker, upd: Date.now(), pos: [] };
+      loc_o = { loc_name: loc_name, mkr: marker, upd: Date.now(), pos: [] };
       if (nt.test_location && loc_name.startsWith('ABC'))
          loc_o.upd -= (nt.too_old_min+10)*60*1000;
       loc_o.pos.push([lat, lon]);
@@ -841,8 +841,8 @@ function navtex_location_update(loc_name, lat, lon, url, color)
 
       dup = false;
    } else {
-      var loc_o = nt.locations[loc_name];
-      var marker = loc_o.mkr;
+      loc_o = nt.locations[loc_name];
+      marker = loc_o.mkr;
       marker.setLatLng([lat, lon]);
       var n = loc_o.pos.push([lat, lon]);
       

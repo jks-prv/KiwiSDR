@@ -911,7 +911,7 @@ function connect_update_url()
 	w3_el('id-connect-proxy_server').innerHTML = '.'+ adm.proxy_server;
 	w3_el('id-connect-proxy_server2').innerHTML = '.'+ adm.proxy_server;
 
-   ok = config_net.pub_ip? 1:0
+   ok = config_net.pub_ip? 1:0;
 	w3_innerHTML('id-connect-pub-ip', 'Public IP address detected by Kiwi: ' +
 	   w3_div('w3-show-inline-block w3-text-black '+ ok_color[ok], ok? config_net.pub_ip : '(no public IP address detected)'));
 
@@ -937,7 +937,7 @@ function connect_update_url()
    }
    
    ok = (host != '');
-   w3_flag_cond('id-connect-url', !ok, ok? host_and_port : '(incomplete information, fill-in field above)')
+   w3_flag_cond('id-connect-url', !ok, ok? host_and_port : '(incomplete information, fill-in field above)');
 }
 
 function connect_stop_proxy()
