@@ -2,17 +2,13 @@
 
 #include "ext.h"	// all calls to the extension interface begin with "ext_", e.g. ext_register()
 
+#include "types.h"
 #include "rx_util.h"
 #include "data_pump.h"
 #include "mem.h"
-#include "printf.h"
 #include "rsid.h"
+#include "printf.h"
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <math.h>
-#include <strings.h>
 #include <sys/mman.h>
 
 //#define DEBUG_MSG	true
@@ -213,7 +209,7 @@ void digi_modes_main()
     char *fn2;
     asprintf(&fn2, "%s/samples/%s", DIR_CFG, fn);
     //cfg_string_free(fn);
-    printf("digi: mmap %s\n", fn2);
+    alt_printf("digi: mmap %s\n", fn2);
     int fd = open(fn2, O_RDONLY);
     if (fd < 0) {
         printf("digi: open failed\n");
@@ -223,7 +219,7 @@ void digi_modes_main()
     kiwi_asfree(fn2);
     char *file = (char *) mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
     if (file == MAP_FAILED) {
-        printf("digi: mmap failed\n");
+        alt_printf("digi: mmap failed\n");
         return;
     }
     close(fd);
@@ -231,7 +227,7 @@ void digi_modes_main()
     digi_conf.s2p_start = (s2_t *) file;
     u4_t off = *(digi_conf.s2p_start + 3);
     off = FLIP16(off);
-    printf("digi: off=%d size=%ld\n", off, fsize);
+    alt_printf("digi: off=%d size=%ld\n", off, fsize);
     off /= 2;
     digi_conf.s2p_start += off;
     words -= off;
