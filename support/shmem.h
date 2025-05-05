@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -116,6 +116,7 @@ const char * const shmem_status_s[] = { "IDLE", "START", "BUSY", "DONE", "ERROR"
 typedef struct {
     net_t net_shmem;
     int CAT_last_freqHz;
+    u4_t zoom_all, zoom_all_seq;
 
     u4_t rv_u4_t[MAX_RX_CHANS];
     

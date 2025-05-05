@@ -204,6 +204,10 @@ function cw_skimmer_controls_setup()
    ext_set_data_height(cws.height);
 	ext_set_controls_width_height(350, 125);
 	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-cw-test');
+
    ext_send('SET cws_start');
 
    cws_clear_button_cb();
@@ -273,6 +277,7 @@ function cws_log_cb()
 function cws_test_cb()
 {
    //console_nv('cws_test_cb', 'cws.test');
+	if (ext_nom_sample_rate() != 12000) return;
    cws.test = cws.test? 0:1;    // if already running stop if clicked again
    w3_colors('id-cw-test', '', 'w3-red', cws.test);
 	w3_el('id-cw-bar').style.width = '0%';

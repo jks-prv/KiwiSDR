@@ -174,7 +174,7 @@ int unpackpfx(int32_t nprefix, char *call)
         char * p = strrchr(pfx,' ');
         strcpy(call, p ? p + 1 : pfx);
         strncat(call,"/",1);
-        strncat(call,tmpcall,strlen(tmpcall));
+        strncat(call,tmpcall,6);
         
     } else {
         // add a suffix of 1 or 2 characters

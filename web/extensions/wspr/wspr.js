@@ -400,7 +400,7 @@ function wspr_controls_setup()
 
    // re-define band menu if downconverter in use
    var r = ext_get_freq_range();
-   if (r.lo_kHz > 32000 && r.hi_kHz > 32000) {
+   if (r.lo_kHz > kiwi.freq_bb_max_kHz && r.hi_kHz > kiwi.freq_bb_max_kHz) {
       wspr.center_freqs = [];
       wspr.freqs_s = {};
       wspr.freqs_m = [];
@@ -425,7 +425,7 @@ function wspr_controls_setup()
             w3_select('w3-text-red', '', 'band', 'wspr_init_band', wspr_init_band, wspr.freqs_m, 'wspr_band_select_cb'),
             w3_button('w3-ext-btn w3-padding-smaller', 'stop', 'wspr_stop_start_cb'),
             w3_button('cl-w3-ext-btn w3-padding-smaller w3-css-yellow', 'clear', 'wspr_clear_cb'),
-            w3_button('cl-w3-ext-btn w3-padding-smaller w3-aqua||title="test spots NOT uploaded\nto wsprnet.org"',
+            w3_button('id-wspr-test cl-w3-ext-btn w3-padding-smaller w3-aqua||title="test spots NOT uploaded\nto wsprnet.org"',
                'test', 'wspr_test_cb', 1),
             w3_checkbox('id-wspr-upload-container cl-upload-checkbox/w3-label-inline w3-label-not-bold/',
                'upload<br>spots', 'wspr.upload', true, 'wspr_set_upload_cb'),
@@ -490,12 +490,22 @@ function wspr_controls_setup()
    wspr_draw_pie();
    wspr_draw_scale(100);
 	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-wspr-test');
+	
    wspr_reset();
    wspr_upload_timeout = setTimeout(function() {wspr_upload(wspr_report_e.STATUS);}, 1000);
 
 	// set band and start if URL parameter present
-	var p = ext_param();
+	wspr_process_params(ext_param());
+}
+
+function wspr_process_params(p)
+{
+   //console.log('wspr_process_params p='+ p);
 	if (p) {
+      var r = ext_get_freq_range();
       p = p.toLowerCase().split(',');
       p.forEach(function(a, i) {
          var sel = wspr.freqs_s[a];
@@ -602,6 +612,17 @@ function wspr_band_select_cb(path, idx, first)
 		wspr_init_band = idx;
 		wspr_freq(idx);
 	}
+}
+
+// automatically called on changes in the environment
+function wspr_environment_changed(changed)
+{
+   //w3_console.log(changed, 'wspr_environment_changed');
+
+   // don't do anything for changes.freq or changed.mode
+   if (changed.ext_open) {
+      wspr_process_params(extint.param);
+   }
 }
 
 function wspr_focus()
@@ -900,7 +921,7 @@ function wspr_stop_start_cb(path, idx, first)
 
 function wspr_test_cb(path, val, first)
 {
-   if (first) return;
+   if (ext_nom_sample_rate() != 12000) return;
    val = +val;
    if (dbgUs) console.log('wspr_test_cb: val='+ val);
    wspr.testing = val;

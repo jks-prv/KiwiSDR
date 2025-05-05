@@ -50,8 +50,7 @@ RX_Buffer:
 not_init:		ret
 
 CmdGetRX:
-                rdReg	HOST_RX				; nrx_samps_rem
-                rdReg	HOST_RX				; nrx_samps_rem nrx_samps_loop
+                rdReg	HOST_RX				; nrx_samps_total - 1
 				wrEvt	HOST_RST
 
 				push	CTRL_SND_INTR
@@ -64,41 +63,23 @@ CmdGetRX:
 				wrReg	HOST_TX
 				wrReg	HOST_TX
 #endif
-				                            ; cnt = nrx_samps_loop
-				
-rx_loop:									; cnt
-				loop_ct	NRX_SAMPS_RPT
-rx_loop2:       wrEvt2	GET_RX_SAMP			; move i
+                                            ; cnt = nrx_samps_total - 1
+                to_loop                     ;
+                ALIGN
+rx_loop:
+                wrEvt2	GET_RX_SAMP			; move i
 				wrEvt2	GET_RX_SAMP			; move q
-				wrEvt2	GET_RX_SAMP			; move iq3
-				loop    rx_loop2
+				wrEvtL	GET_RX_SAMP_LOOP    ; move iq3
+				// wrEvtL will automatically loop to rx_loop
 
-				push	1					; cnt 1
-				sub							; cnt--
-				dup                         ; cnt cnt
-				brNZ	rx_loop             ; cnt
-				pop                         ; cnt = nrx_samps_rem
-				
-				// NB: nrx_samps_rem can be zero on entry -- that is why test is at top of loop
-rx_tail:                                    ; cnt
-				dup                         ; cnt cnt
-				brNZ	rx_tail2            ; cnt
-
+                // tail information: ticks, stored/current buffer counters
 				wrEvt2	GET_RX_SAMP			; move ticks[3]
 				wrEvt2	GET_RX_SAMP
 				wrEvt2	GET_RX_SAMP
 				
 				wrEvt2	GET_RX_SAMP         ; move stored buffer counter
 				wrEvt2  RX_GET_BUF_CTR      ; move current buffer counter
-				drop.r                      ;
-
-rx_tail2:                                   ; cnt
-				wrEvt2	GET_RX_SAMP			; move i
-				wrEvt2	GET_RX_SAMP			; move q
-				wrEvt2	GET_RX_SAMP			; move iq3
-				push	1					; cnt 1
-				sub							; cnt--
-				br      rx_tail
+				ret
 
 CmdSetRXNsamps:	rdReg	HOST_RX				; nsamps
 				dup
@@ -162,9 +143,9 @@ CmdSetOVMask:
 
 CmdGetADCCtr:
 				wrEvt	HOST_RST
-				rdReg2	GET_ADC_CTR0        ; adc_count[15:0]
+				rdReg	GET_ADC_CTR0        ; adc_count[15:0]
 				wrReg	HOST_TX
-				rdReg2	GET_ADC_CTR1        ; adc_count[31:16]
+				rdReg	GET_ADC_CTR1        ; adc_count[31:16]
 				wrReg	HOST_TX
                 ret
 
@@ -192,25 +173,13 @@ CmdGetWFSamples:
 				wrReg2	SET_WF_CHAN			;
 getWFSamples2:
 				wrEvt	HOST_RST
-				push	NWF_SAMPS_LOOP      ; cnt
-wf_more:                                    ; cnt
-				loop_ct NWF_SAMPS_RPT       ; cnt
-wf_loop1:
+				loop_ct NWF_SAMPS           ; cnt-1
+                ALIGN
+wf_loop:
 				wrEvt2	GET_WF_SAMP_I
-				wrEvt2	GET_WF_SAMP_Q
-			    loop    wf_loop1
-				
-				push	1                   ; cnt 1
-				sub                         ; cnt
-				dup                         ; cnt cnt
-				brNZ	wf_more             ; cnt
-
-				loop_ct NWF_SAMPS_REM       ; cnt
-wf_loop2:
-				wrEvt2	GET_WF_SAMP_I
-				wrEvt2	GET_WF_SAMP_Q
-			    loop    wf_loop2
-				drop.r                      ;
+				wrEvtL	GET_WF_SAMP_Q_LOOP
+				// wrEvtL will automatically loop to wf_loop
+				ret
 
 CmdGetWFContSamps:
 				rdReg	HOST_RX				; wf_chan

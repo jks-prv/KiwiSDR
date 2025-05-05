@@ -56,10 +56,54 @@ Boston, MA  02110-1301, USA.
 #include <sched.h>
 #include <math.h>
 #include <signal.h>
+#include <ctype.h>
+
+// CAUTION: must match order in mode_e, kiwi.js
+// CAUTION: add new entries at the end
+
+modes_t modes[] = {
+    //  lc      bfo     hbw         flags
+    {   "am",   0,      9800/2,     IS_AM },
+    {   "amn",  0,      5000/2,     IS_AM|IS_NARROW },
+    {   "usb",  1500,   2400/2,     IS_SSB|IS_USB|IS_F_PBC },
+    {   "lsb",  -1500,  2400/2,     IS_SSB|IS_LSB|IS_F_PBC },
+    {   "cw",   500,    400/2,      IS_CW|IS_F_PBC },
+    {   "cwn",  500,    60/2,       IS_CW|IS_NARROW|IS_F_PBC },
+    {   "nbfm", 0,      9800/2,     IS_NBFM },
+    {   "iq",   0,      12000/2,    IS_IQ|IS_STEREO },
+    {   "drm",  0,      10000/2,    IS_DRM|IS_STEREO },
+    {   "usn",  1350,   2100/2,     IS_SSB|IS_USB|IS_NARROW|IS_F_PBC },
+    {   "lsn",  -1350,  2100/2,     IS_SSB|IS_LSB|IS_NARROW|IS_F_PBC },
+    {   "sam",  0,      9800/2,     IS_SAM },
+    {   "sau",  0,      9800/2,     IS_SAM },
+    {   "sal",  0,      9800/2,     IS_SAM },
+    {   "sas",  0,      9800/2,     IS_SAM|IS_STEREO },
+    {   "qam",  0,      9800/2,     IS_SAM|IS_STEREO },
+    {   "nnfm", 0,      6000/2,     IS_NBFM|IS_NARROW },
+    {   "amw",  0,      12000/2,    IS_AM|IS_WIDE }
+};
 
 rx_util_t rx_util;
 
 freq_t freq;
+
+void rx_modes_init()
+{
+    int i, j;
+    
+	for (i = 0; i < ARRAY_LEN(modes); i++) {
+	    char c;
+	    for (j = 0; (c = modes[i].lc[j]) != '\0'; j++) {
+	        modes[i].uc[j] = toupper(c);
+	    }
+	}
+	
+	#if 0
+        for (i = 0; i < ARRAY_LEN(modes); i++)
+            printf("%2d %4s %4s bfo=%5d hbw=%4d flags=0x%04x\n", i, modes[i].lc, modes[i].uc,
+                modes[i].bfo, modes[i].hbw, modes[i].flags);
+    #endif
+}
 
 void rx_set_freq(double freq_with_offset_kHz, double foff_kHz)
 {
@@ -825,16 +869,17 @@ void debug_init()
 
 int rx_mode2enum(const char *mode)
 {
-	for (int i = 0; i < ARRAY_LEN(mode_lc); i++) {
-		if (strcasecmp(mode, mode_lc[i]) == 0) return i;
+    if (mode == NULL) return NOT_FOUND;
+	for (int i = 0; i < ARRAY_LEN(modes); i++) {
+		if (strcasecmp(mode, modes[i].lc) == 0) return i;
 	}
 	return NOT_FOUND;
 }
 
 const char *rx_enum2mode(int e)
 {
-	if (e < 0 || e >= ARRAY_LEN(mode_lc)) return NULL;
-	return (mode_lc[e]);
+	if (e < 0 || e >= ARRAY_LEN(modes)) return NULL;
+	return (modes[e].lc);
 }
 
 // Pass result json back to main process via shmem->status_str_large

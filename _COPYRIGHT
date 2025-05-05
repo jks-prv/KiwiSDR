@@ -2,11 +2,11 @@ See the full copyright information in the individual _COPYRIGHT files in most su
 and also in individual files.
 
 KiwiSDR
-Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
-Copyright (c) 2018-2024 Christoph Mayer, DL1CH
+Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+Copyright (c) 2018-2025 Christoph Mayer, DL1CH
 
 "Kiwi with headphones" logo
-Copyright (c) 2014-2024 Hayes Roberts, bluebison.net
+Copyright (c) 2014-2025 Hayes Roberts, bluebison.net
 
 OpenWebRX, CSDR
 Copyright (c) 2013-2014 Andras Retzler <randras@sdr.hu>
@@ -57,6 +57,9 @@ Copyright © 2006 through 2023 Dave Freese, W1HKJ, et al.
 CMSIS
 Copyright (C) 2010-2019 ARM Limited or its affiliates. All rights reserved.
 
+Web-888
+    RX-888 Team, support@rx-888.com, Licensed under CC-BY-SA 4.0
+
 
 ////////////////////////////////
 // Extensions
@@ -73,6 +76,9 @@ Copyright 2015 Milen Rangelov <gat3way@gmail.com>
 
 CW decoder
 Copyright (c) 2016  Loftur E. Jonasson  (tf3lj [at] arrl [dot] net)
+
+CW Skimmer
+Copyright (c) 2022-2025 Marat Fayzullin <luarvique@gmail.com> All rights reserved.
 
 DRM / Dream
 Copyright (c) 2001-2020, Technische Universitaet Darmstadt, Institut fuer Nachrichtentechnik
@@ -127,7 +133,7 @@ Copyright 2014-2015, Steven Franke, K9AN
 ////////////////////////////////
 // Code contributors (not mentioned elsewhere)
 //
-// Please email us if we have missed your contribution.
+// Please email support@kiwisdr.com if we have missed your contribution.
 // We are slowly going through all the github issues and emails trying to complete this list.
 ////////////////////////////////
 
@@ -234,12 +240,14 @@ Portions copyright (c) 2014 Charles Steinkuehler <charles@steinkuehler.net>
     SPIDEV
         Copyright (C) 2006 SWAPP, Andrea Paterniani <a.paterniani@swapp-eng.it>
 
-BeagleBone Black hardware
+BeagleBone hardware
+© Copyright 2025, BeagleBoard.org Foundation
 Copyright (C) 2013 CircuitCo
+Seeed Studio, CC-BY-SA 4.0
 
-Sitara CPU / PRU
-Copyright (C) 2010-20 Texas Instruments Incorporated - http://www.ti.com
+Sitara/Jacinto CPU/PRU
+Copyright (C) 2010-2025 Texas Instruments Incorporated - http://www.ti.com
 
 Xilinx (FPGA, Vivado, Verilog)
-(c) Copyright 1995-2020 Xilinx, Inc. All rights reserved.
+(c) Copyright 1995-2025 Xilinx, Inc. All rights reserved.
 

@@ -22,6 +22,7 @@
 
 #include "peri.h"
 #include "spi.h"
+#include "options.h"
 
 enum SPI_SEL {
     SPI_FPGA=0,  // Load FPGA
@@ -43,18 +44,26 @@ typedef struct {
     SPI_MISO dpump_miso;
     SPI_MISO gps_search_miso, gps_channel_miso[GPS_MAX_CHANS], gps_clocks_miso, gps_iqdata_miso, gps_glitches_miso[2];
     SPI_MOSI gps_e1b_code_mosi;
-    SPI_MISO wf_miso[MAX_RX_CHANS];
     SPI_MISO misc_miso[2];
     SPI_MISO spi_junk_miso, pingx_miso;
     SPI_MOSI spi_tx[N_SPI_TX];
     SPI_MOSI misc_mosi;
+
+    #ifdef OPTION_WF_CONSOLIDATE_SPI
+        SPI_MISO wf_miso[MAX_RX_CHANS][NWF_NXFER];      // FIXME: check perf if [NWF_NXFER] => [16]
+    #else
+        SPI_MISO wf_miso[MAX_RX_CHANS];
+    #endif
 } spi_shmem_t;
 
 #include "shmem_config.h"
 
-#ifdef CPU_TDA4VM   // NB: not MULTI_CORE
-        // shared memory enabled
-#elif CPU_AM5729    // NB: not MULTI_CORE
+// list all CPUs as a reminder that the effect of SPI SHMEM needs to be evaluated for each
+#ifdef CPU_AM67
+    // shared memory enabled
+#elif CPU_TDA4VM
+    // shared memory enabled
+#elif CPU_AM5729
     //#define SPI_SHMEM_DISABLE_TEST
     #ifdef SPI_SHMEM_DISABLE_TEST
         #warning dont forget to remove SPI_SHMEM_DISABLE_TEST
@@ -62,8 +71,12 @@ typedef struct {
     #else
         // shared memory enabled
     #endif
-#else
+#elif CPU_BCM2837
     #define SPI_SHMEM_DISABLE
+#elif CPU_AM3359
+    #define SPI_SHMEM_DISABLE
+#else
+    #error must define SPI_SHMEM_DISABLE per CPU
 #endif
 
 #include "shmem.h"
@@ -84,14 +97,6 @@ typedef struct {
 #ifdef SPI_32
 	#define	SPI_BPW	32
 #endif
-
-// values compatible with spi_pio:spi_speed
-#define	SPI_48M			0
-#define	SPI_24M			1
-#define	SPI_12M			2
-#define	SPI_6M			3
-#define	SPI_3M			4
-#define	SPI_1_5M		5
 
 #define SPI_SETUP_MODE      0
 #define SPI_KIWISDR_1_MODE  0

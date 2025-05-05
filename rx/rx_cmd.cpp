@@ -875,8 +875,10 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     conn->isPassword = is_password;
                     
                     if (stream_snd_or_wf || stream_mon || stream_admin_or_mfg) {
-                        send_msg(conn, SM_NO_DEBUG, "MSG version_maj=%d version_min=%d debian_ver=%d model=%d platform=%d ext_clk=%d abyy=%s freq_offset=%.3f",
-                            version_maj, version_min, debian_ver, kiwi.model, kiwi.platform, kiwi.ext_clk, eibi_abyy, freq.offset_kHz);
+                        send_msg(conn, SM_NO_DEBUG, "MSG version_maj=%d version_min=%d debian_ver=%d model=%d platform=%d ext_clk=%d freq_offset=%.3f "
+                            "abyy=%s dx_db_name=%s",
+                            version_maj, version_min, debian_ver, kiwi.model, kiwi.platform, kiwi.ext_clk, freq.offset_kHz,
+                            eibi_abyy, kiwi_str_encode_static(dx.dx_db[DB_STORED].db_name));
                     }
 
                     // send cfg once to javascript
@@ -995,7 +997,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     else
                     if (gid == -1) type = 1; else type = 2;
                     cprintf(conn, "DX_UPD %s: n=%d #%d %8.2f %s lo=%d hi=%d off=%d sig_bw=%d flags=0x%x b=%d e=%d text=<%s> notes=<%s> params=<%s>\n",
-                        dx_mod_add_s[type], n, gid, f_kHz, mode_lc[DX_DECODE_MODE(flags)], low_cut, high_cut, mkr_off, sig_bw, flags, begin, end,
+                        dx_mod_add_s[type], n, gid, f_kHz, modes[DX_DECODE_MODE(flags)].lc, low_cut, high_cut, mkr_off, sig_bw, flags, begin, end,
                         text_m, notes_m, params_m);
                 } else {
                     const char * dx_del_s[] = { "DEL", "CVT", "???" };

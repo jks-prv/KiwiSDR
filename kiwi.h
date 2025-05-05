@@ -100,19 +100,19 @@ extern kiwi_t kiwi;
 
 extern int version_maj, version_min;
 
-extern bool background_mode, need_hardware, is_multi_core, any_preempt_autorun,
+extern bool background_mode, need_hardware, is_multi_core, any_preempt_autorun, spi_show_stats,
 	DUC_enable_start, rev_enable_start, web_nocache, kiwi_reg_debug, cmd_debug,
-	gps_e1b_only, disable_led_task, debug_printfs, force_camp,
+	gps_e1b_only, disable_led_task, debug_printfs, force_camp, ecpu_stack_check,
 	snr_local_time, log_local_ip, DRM_enable, have_snd_users, admin_keepalive;
 
 extern int wf_sim, wf_real, wf_time, ev_dump, wf_flip, wf_exit, wf_start, down,
 	meas, monitors_max, rx_yield, gps_chans, wf_max, rx_num, wf_num, do_gps, do_sdr, wf_olap,
-	spi_clkg, spi_speed, spi_mode, spi_delay, bg, dx_print,
+	spi_clkg, spi_speed, spi_mode, spi_delay, spi_no_async, bg, dx_print, snr_meas, wf_full_rate,
 	port, print_stats, ecpu_cmds, ecpu_tcmds, serial_number, ip_limit_mins, is_locked, test_flag, n_camp,
 	use_spidev, inactivity_timeout_mins, S_meter_cal, waterfall_cal, debug_v, debian_ver,
 	utc_offset, dst_offset, reg_kiwisdr_com_status, kiwi_reg_lo_kHz, kiwi_reg_hi_kHz,
 	debian_maj, debian_min, gps_debug, gps_var, gps_lo_gain, gps_cg_gain, use_foptim, web_caching_debug,
-	drm_nreg_chans, snr_meas_interval_hrs, snr_all, snr_HF, ant_connected,
+	drm_nreg_chans, snr_meas_interval_hrs, snr_all, snr_HF, ant_connected, spi_test,
 	spidev_maj, spidev_min;
 
 extern char **main_argv;

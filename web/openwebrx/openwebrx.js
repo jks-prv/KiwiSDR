@@ -1369,25 +1369,25 @@ function demodulator_default_analog(offset_frequency, subtype, locut, hicut)
 
 	// this function sends demodulator parameters to the server
 	this.doset = function() {
-		//console.log('DOSET fcar='+freq_car_Hz);
+		//console.log('DOSET fcar='+ freq_car_Hz);
 		//if (dbgUs && dbgUsFirst) { dbgUsFirst = false; console.trace(); }
 		
-		var freq_Hz = freq_car_Hz;
-		var freq_kHz = freq_Hz/1000;
-      var freq_kHz_s = freq_kHz.toFixed(3);     // always allow manual entry of 3 significant digits
+		var new_freq_Hz = freq_car_Hz;
+		var new_freq_kHz = new_freq_Hz/1000;
+      var new_freq_kHz_s = new_freq_kHz.toFixed(3);      // always allow manual entry of 3 significant digits
 
 		var mode = this.server_mode;
 		var locut = this.low_cut.toString();
 		var hicut = this.high_cut.toString();
 		var mparam = (ext_mode(mode).SAx)? (' param='+ (owrx.chan_null | (owrx.SAM_opts << owrx.SAM_opts_sft))) : '';
 		//if (mparam != '') console.log('$mode='+ mode +' mparam='+ mparam); else console.log('$mode='+ mode);
-		var s = 'SET mod='+ mode +' low_cut='+ locut +' high_cut='+ hicut +' freq='+ freq_kHz_s + mparam;
+		var s = 'SET mod='+ mode +' low_cut='+ locut +' high_cut='+ hicut +' freq='+ new_freq_kHz_s + mparam;
 		snd_send(s);
       //kiwi_trace('doSet');
 		//console.log('$'+ s);
 
       var changed = null;
-		freq_Hz = freq_displayed_Hz;
+		var freq_Hz = freq_displayed_Hz;
       if (!owrx.freq_dsp_1Hz) {
          // in 10 Hz mode store rounded freq so comparison below against last freq works correctly
          //var _freq_Hz = _10Hz(freq_Hz);
@@ -1395,9 +1395,12 @@ function demodulator_default_analog(offset_frequency, subtype, locut, hicut)
          //console.log('prev_freq_kHz PUSH '+ freq_Hz +'=>'+ _freq_Hz);
          freq_Hz = _freq_Hz;
       }
-      if (freq_Hz != owrx.last_freq_Hz) {
+      //console.log('$$$$ new_freq_Hz='+ new_freq_Hz +' freq_displayed_Hz='+ freq_Hz +' owrx.last_freq_Hz='+ owrx.last_freq_Hz);
+      if (new_freq_Hz != owrx.last_freq_Hz) {
          changed = changed || {};
          changed.freq = 1;
+      }
+      if (freq_Hz != owrx.last_freq_Hz) {
          if (freq_Hz > 0) {
             //console.log('prev_freq_kHz PUSH '+ freq_Hz +'|'+ owrx.last_freq_Hz);
             owrx.prev_freq_kHz.unshift(freq_Hz);
@@ -1655,7 +1658,7 @@ function mkenvelopes(visible_range)    // called from mkscale etc
 	scale_ctx.textBaseline = 'top';
 	scale_ctx.fillStyle = 'white';
    scale_ctx.textAlign = "left";
-   var s = dx.db_s[dx.db].split(' ')[0];
+   var s = dx.db_short_s[dx.db];
    if (kiwi.mdev) s += '  '+ kiwi.mdev_s;
    scale_ctx.fillText('database: '+ s, 20, 7);
    if (demodulators.length)
@@ -1747,7 +1750,7 @@ function demodulator_analog_replace(subtype, freq)
 
 function demodulator_set_frequency(which, freq_car_Hz)
 {
-	//console.log('demodulator_set_frequency: freq_car_Hz='+ freq_car_Hz);
+	//console.log('demodulator_set_frequency: which='+ which +' freq_car_Hz='+ freq_car_Hz);
    demodulator_set_offset_frequency(which, freq_car_Hz - center_freq);
 }
 
@@ -2182,7 +2185,7 @@ function get_visible_freq_range()
 	   //console.log("GVFR z="+zoom_level+" xb="+x_bin+" BACZ="+bins+" s="+out.start+" c="+out.center+" e="+out.end+" bw="+out.bw+" hpp="+out.hpp+" cw="+scale_canvas.clientWidth);
 	}
 	
-	out.start_offset = out.start + kiwi.offset_frac;
+	out.start_offset = out.start + kiwi.offset_frac_Hz;
 	return out;
 }
 
@@ -2265,7 +2268,7 @@ function get_scale_mark_spacing(range)
 		out.pxsmall = out.pxlarge/out.ratio; 								//distance between small markers
 		if (out.pxsmall < scale_min_space_btwn_small_markers) return false; 
 		if (out.pxsmall/2 >= scale_min_space_btwn_small_markers && mkr_spacing.toString()[0] != "5") { out.pxsmall/=2; out.ratio*=2; }
-      //w3_innerHTML('id-owner-info', 'mkr_spacing='+ kHz(mkr_spacing));
+      //w3_innerHTML('id-owner-info', 'mkr_spacing='+ kHz_s(mkr_spacing));
 		out.smallbw = mkr_spacing/out.ratio;
 		return true;
 	};
@@ -2304,8 +2307,8 @@ function mk_freq_scale()
 	var spacing = get_scale_mark_spacing(g_range);
 	//console.log(spacing);
 	var marker_hz = Math.ceil(g_range.start_offset / spacing.smallbw) * spacing.smallbw;
-	var marker_hz_offset = marker_hz + kiwi.freq_offset_Hz - kiwi.offset_frac;
-   //console.log('mkfs z'+ zoom_level +' freq_offset_kHz='+ kiwi.freq_offset_kHz +' offset_frac='+ kHz(kiwi.offset_frac) +' marker_hz='+ kHz(marker_hz) +'|'+ kHz(marker_hz_offset));
+	var marker_hz_offset = marker_hz + kiwi.freq_offset_Hz - kiwi.offset_frac_Hz;
+   //console.log('mkfs z'+ zoom_level +' freq_offset_kHz='+ kiwi.freq_offset_kHz +' offset_frac_Hz='+ kHz_s(kiwi.offset_frac_Hz) +' marker_hz='+ kHz_s(marker_hz) +'|'+ kHz_s(marker_hz_offset));
 	text_y_pos = 22+10 + (kiwi_isFirefox()? 3:0);
 	var text_to_draw;
 	
@@ -2313,13 +2316,13 @@ function mk_freq_scale()
 	   var f = fo;
 		var pre_divide = spacing.params.pre_divide;
 		var decimals = spacing.params.decimals;
-		f += kiwi.freq_offset_Hz - kiwi.offset_frac;
+		f += kiwi.freq_offset_Hz - kiwi.offset_frac_Hz;
 		if (f < 1e6) {
 			pre_divide /= 1000;
 			decimals = 0;
 		}
 		text_to_draw = format_frequency(spacing.params.format+((f < 1e6)? 'kHz':'MHz'), f, pre_divide, decimals);
-      //console.log('ftext-mkfs z'+ zoom_level +' '+ spacing.params.hz_per_large_marker +' marker_hz='+ kHz(marker_hz) +'|'+ kHz(marker_hz_offset) +' fo|f='+ kHz(fo) +'|'+ kHz(f) +' "'+ text_to_draw +'"');
+      //console.log('ftext-mkfs z'+ zoom_level +' '+ spacing.params.hz_per_large_marker +' marker_hz='+ kHz_s(marker_hz) +'|'+ kHz_s(marker_hz_offset) +' fo|f='+ kHz_s(fo) +'|'+ kHz_s(f) +' "'+ text_to_draw +'"');
 	};
 	
 	var last_large;
@@ -2330,7 +2333,7 @@ function mk_freq_scale()
       conv_ct++;
       if (conv_ct > 1000) break;
 		x = scale_px_from_freq_offset(marker_hz, g_range);
-      //console.log('mkfs marker_hz|HPLM|0?='+ kHz(marker_hz) +'|'+ kHz(marker_hz_offset) +' '+ kHz(spacing.params.hz_per_large_marker) +' '+ (marker_hz_offset % spacing.params.hz_per_large_marker) +' x='+ x);
+      //console.log('mkfs marker_hz|HPLM|0?='+ kHz_s(marker_hz) +'|'+ kHz_s(marker_hz_offset) +' '+ kHz_s(spacing.params.hz_per_large_marker) +' '+ (marker_hz_offset % spacing.params.hz_per_large_marker) +' x='+ x);
 		if (x > window.innerWidth) break;
 		scale_ctx.beginPath();		
 		scale_ctx.moveTo(x, 22);
@@ -3422,7 +3425,7 @@ function wheel_dev_cb(path, idx, first)
    idx = +idx;
    if (first) idx = +kiwi_storeRead('wheel_dev', idx);
    owrx.wheel_dev = idx;
-   console.log('wheel_dev_cb: idx='+ idx +' first='+ first);
+   //console.log('wheel_dev_cb: idx='+ idx +' first='+ first);
 
    if (idx == owrx.WHEEL_CUSTOM) {
       owrx.wheel_poll = kiwi_storeRead('wheel_poll', owrx.wheel_poll_i[idx]);
@@ -3438,8 +3441,10 @@ function wheel_dev_cb(path, idx, first)
    w3_set_value('id-wheel-poll', owrx.wheel_poll);
    w3_set_value('id-wheel-fast', owrx.wheel_fast);
    w3_set_value('id-wheel-unlock', owrx.wheel_unlock);
+   w3_disable_multi('id-wheel-field', idx != owrx.WHEEL_CUSTOM, 'w3-disabled-field');
+   
    canvas_mousewheel_rlimit_tune = kiwi_rateLimit(canvas_mousewheel_cb, /* msec */ owrx.wheel_poll);
-   console.log('wheel_dev_cb: wheel_poll='+ owrx.wheel_poll +' wheel_fast='+ owrx.wheel_fast +' wheel_unlock='+ owrx.wheel_unlock);
+   //console.log('wheel_dev_cb: wheel_poll='+ owrx.wheel_poll +' wheel_fast='+ owrx.wheel_fast +' wheel_unlock='+ owrx.wheel_unlock);
 }
 
 function wheel_dir_cb(path, idx, first)
@@ -3447,7 +3452,7 @@ function wheel_dir_cb(path, idx, first)
    idx = +idx;
    if (first) idx = +kiwi_storeRead('wheel_dir', idx);
    owrx.wheel_dir = idx;
-   console.log('wheel_dir_cb: idx='+ idx +' first='+ first);
+   //console.log('wheel_dir_cb: idx='+ idx +' first='+ first);
 
    w3_set_value('id-wheel-dir', idx);     // for benefit of kiwi_storeRead() above
    kiwi_storeWrite('wheel_dir', idx);
@@ -3988,12 +3993,16 @@ function zoom_step(dir, arg2)
             var _dxcfg = dx_cfg_db();
             if (!_dxcfg) { zoom_finally(); return; }
             var _kiwi_bands = kiwi_bands_db(dx.INIT_BANDS_NO);
+
 				for (i=0; i < _dxcfg.bands.length; i++) {    // search for first containing band
 					b1 = _dxcfg.bands[i];
 					b2 = _kiwi_bands[i];
+					
+               // filter bands based on offset mode
+               if ((kiwi.isOffset && !b2.isOffset) || (!kiwi.isOffset && b2.isOffset)) continue;
 		         if (!(b1.itu == kiwi.BAND_SCALE_ONLY || b1.itu == kiwi.ITU_ANY || b1.itu == ITU_region)) continue;
 					if (f >= b2.minHz && f <= b2.maxHz) {
-		            //console.log('zoom_band FOUND itu=R'+ b1.itu +' '+ b1.min +' '+ f +' '+ b1.max);
+		            //console.log('zoom_band FOUND itu=R'+ b1.itu +' '+ b1.min +' '+ (f/1e3) +' '+ b1.max);
 						break;
 					}
 				}
@@ -4371,6 +4380,7 @@ function spectrum_init()
 
    kiwi_load_js('extensions/colormap/colormap.js',
       function() {
+         waterfall_init_pre();
          waterfall_controls_setup();
          waterfall_init();
          colormap_init();
@@ -6436,8 +6446,8 @@ function freqmode_set_dsp_kHz(fdsp_kHz, mode, opt)
    var no_set_freq = w3_opt(opt, 'no_set_freq', 0);
    var no_clear_last_gid = w3_opt(opt, 'no_clear_last_gid', 0);
 
-	var fdsp_Hz = fdsp_kHz * 1000;
-	//console.log('freqmode_set_dsp_kHz: fdsp_Hz=' +fdsp_Hz+ ' mode='+ mode);
+	var fdsp_bb_Hz = kiwi_freq_without_offset_kHz(fdsp_kHz) * 1000;
+	//console.log('freqmode_set_dsp_kHz: fdsp_kHz='+ fdsp_kHz +' fdsp_bb_Hz='+ fdsp_bb_Hz +' mode='+ mode);
 	if (dont_clear_wf == false) {
 	   wf.audioFFT_clear_wf = true;
 	}
@@ -6447,9 +6457,9 @@ function freqmode_set_dsp_kHz(fdsp_kHz, mode, opt)
 
 	if (isArg(mode) && (mode != cur_mode || open_ext == true)) {
 		//console.log("freqmode_set_dsp_kHz: calling demodulator_analog_replace");
-		ext_set_mode(mode, fdsp_Hz, opt);
+		ext_set_mode(mode, fdsp_bb_Hz, opt);
 	} else {
-		freq_car_Hz = freq_dsp_to_car(fdsp_Hz);
+		freq_car_Hz = freq_dsp_to_car(fdsp_bb_Hz);
 		if (!no_set_freq) {
          //console.log('freqmode_set_dsp_kHz: demodulator_set_frequency NEW freq_car_Hz=' +freq_car_Hz +' no_set_freq='+ no_set_freq);
          //kiwi_trace('FSET_SET_FREQ');
@@ -6469,7 +6479,7 @@ var freq_dsp_set_last;
 function freq_field_prec(f_kHz)
 {
    // limit to 9 characters max: 12345.789 or 123456.89
-   var limit = 100e3 - (cfg.max_freq? 32e3 : 30e3);
+   var limit = 100e3 - kiwi.freq_bb_max_kHz;
    var prec = (kiwi.freq_offset_kHz >= limit)? 2 : (owrx.freq_dsp_1Hz? 3 : 2);
    return prec;
 }
@@ -6510,7 +6520,7 @@ function freq_field_width()
 */
    
    // limit to 9 characters max: 12345.789 or 123456.89
-   var limit = 100e3 - (cfg.max_freq? 32e3 : 30e3);
+   var limit = 100e3 - kiwi.freq_bb_max_kHz;
    //var width = (kiwi.freq_offset_kHz >= limit)? 6.5 : (_1Hz? 6.5 : 6);
    var width = (kiwi.freq_offset_kHz >= limit)? 6.25 : (_1Hz? 6.25 : 5.75);
    return (width +'em');
@@ -6586,6 +6596,7 @@ function vfo_update(A_equal_B)
       var vfo_default = freq_displayed_kHz_str_with_freq_offset + cur_mode +'z'+ zoom_level;
 	   var last_vfo_a = parseInt(kiwi_storeInit('last_vfo_A', vfo_default));
 	   var last_vfo_b = parseInt(kiwi_storeInit('last_vfo_B', vfo_default));
+	   console.log('vfo_update: last_vfo_a='+ last_vfo_a +' last_vfo_b='+ last_vfo_b);
 	   
 	   // switch to VFO B if initial freq matches it and not VFO A
 	   if (freq_displayed_kHz_str_with_freq_offset != last_vfo_a && freq_displayed_kHz_str_with_freq_offset == last_vfo_b) {
@@ -7007,15 +7018,17 @@ function freqstep_cb(path, sel, first, ev)
       w3_autorepeat_canceller();
       return;
    }
-	var step_Hz = up_down[cur_mode][sel]*1000;
+   
+   var fracHz = kiwi.offset_frac_Hz;
+	var fnew = freq_displayed_Hz + fracHz;    // remove fractional offset for calculations below
+	var step_Hz = up_down[cur_mode][sel] * 1000;
 	
 	// set step size from band channel spacing
 	if (step_Hz == 0) {
-		var b = find_band(freq_displayed_Hz);
+		var b = find_band(fnew);
 		step_Hz = special_step(b, sel, 'freqstep_cb');
 	}
 
-	var fnew = freq_displayed_Hz;
 	var incHz = Math.abs(step_Hz);
 	var posHz = (step_Hz >= 0)? 1:0;
 	var trunc = fnew / incHz;
@@ -7023,32 +7036,33 @@ function freqstep_cb(path, sel, first, ev)
 	var took;
 
 	if (incHz == NDB_400_1000_mode) {
-	   if (shiftKey != true) {
+	   if (!shiftKey) {
          var kHz = fnew % 1000;
          if (posHz)
             kHz = (kHz < 400)? 400 : ( (kHz < 600)? 600 : 1000 );
          else
             kHz = (kHz == 0)? -400 : ( (kHz <= 400)? 0 : ( (kHz <= 600)? 400 : 600 ) );
-         trunc = Math.floor(fnew/1000)*1000;
+         trunc = Math.floor(fnew/1000) * 1000;
          fnew = trunc + kHz;
          took = '400/1000';
-         //console.log("STEP -400/1000 kHz="+kHz+" trunc="+trunc+" fnew="+fnew);
       } else {
 		   fnew += Math.sign(step_Hz) * 1000;
 		   took = 'SHIFT';
       }
 	} else
-	if (shiftKey != true && freq_displayed_Hz != trunc) {
+	if (!shiftKey && fnew != trunc) {
+		took = 'TRUNC '+ fnew +'|'+ trunc;
 		fnew = trunc;
-		took = 'TRUNC';
 	} else {
 		fnew += step_Hz;
-		took = (shiftKey == true)? 'SHIFT' : 'INC';
+		took = (shiftKey? 'SHIFT ' : 'INC ') + step_Hz;
 	}
-	//console.log('STEP '+sel+' '+cur_mode+' fold='+freq_displayed_Hz+' inc='+incHz+' trunc='+trunc+' fnew='+fnew+' '+took);
+	
+	var Hz = fnew - fracHz;    // add fractional offset so passband matches freq scale boundaries
+	//console.log('STEP '+ sel +' '+ cur_mode +' fold='+ freq_displayed_Hz +' inc='+ incHz +' trunc='+ trunc +' fnew='+ fnew +' frac='+ fracHz +' Hz='+ Hz +' '+ took);
 	
 	// audioFFT mode: don't clear waterfall for small frequency steps
-	freqmode_set_dsp_kHz(fnew/1000, null, { dont_clear_wf:true });
+	freqmode_set_dsp_kHz(Hz/1000, null, { dont_clear_wf:true });
 }
 
 var freq_step_last_mode, freq_step_last_band;
@@ -7120,7 +7134,7 @@ function freq_memory_init()
       if (isNumber(s)) s = s.toString();
       var as = s.split(' ');
       var f_n = as[0].parseFloatWithUnits('kM', 1e-3);
-      fmem[i] = w3_clamp(f_n, 1, cfg.max_freq? 32000 : 30000).toFixed(prec);
+      fmem[i] = w3_clamp(f_n, 1, kiwi.freq_bb_max_kHz).toFixed(prec);
       if (as[1]) fmem[i] += ' '+ as[1];      // add back mode
    });
 	
@@ -7276,8 +7290,9 @@ function freq_memory_at(idx)
 
 function freq_memory_add(f, clear)
 {
-   //console.log('freq_memory update');
+   //console.log('freq_memory_add f='+ f);
    //console.log(kiwi.freq_memory);
+   //kiwi_trace();
    if (!isNumber(+f)) return;
    if (+f < 1) f = '1';
    if (kiwi.fmem_mode_save) f += ' '+ cur_mode;
@@ -7363,7 +7378,7 @@ function freq_memory_menu_item_cb(idx, x, cb_param, ev)
    }
       
    if (f_m) {
-      ext_tune(f_m.freq - kiwi.freq_offset_kHz, f_m.mode, ext_zoom.CUR);
+      ext_tune(f_m.freq, f_m.mode, ext_zoom.CUR);
    } else {
       freqset_select();
    }
@@ -7376,7 +7391,7 @@ function freq_memory_recall(idx)
    var f_m = freq_memory_at(Math.min(9, idx));
    if (f_m) {
       owrx.no_fmem_update = true;   // don't re-push fmem when just simply recalling from it
-      ext_tune(f_m.freq - kiwi.freq_offset_kHz, f_m.mode, ext_zoom.CUR);
+      ext_tune(f_m.freq, f_m.mode, ext_zoom.CUR);
       owrx.no_fmem_update = false;
    }
 }
@@ -7695,11 +7710,12 @@ function bands_addl_info(isAdmin)
 		   max -= offset_kHz;
 		   b2.isOffset = true;
 		} else
-		if (b1.min > 32000)        // an offset band bar when not in offset mode
+		if (b1.min > kiwi.freq_bb_max_kHz) {   // an offset band bar when not in offset mode
 		   b2.isOffset = true;
-		else
-		if (b2.isOffset != true)   // guard against bands_addl_info() being called multiple times
-		   b2.isOffset = false;    // a 0-30 MHz band bar
+		} else {
+         if (b2.isOffset != true)   // guard against bands_addl_info() being called multiple times
+            b2.isOffset = false;    // a 0-30 MHz band bar
+      }
 		
 		b2.minHz = min * 1000; b2.maxHz = max * 1000; b2.chanHz = b1.chan * 1000;
 		var bw = b2.maxHz - b2.minHz;
@@ -7735,17 +7751,13 @@ function setup_band_menu()
    var _dxcfg = dx_cfg_db();
    if (!_dxcfg) return '';
    var _kiwi_bands = kiwi_bands_db(dx.INIT_BANDS_NO);
+
 	for (i = 0; i < _dxcfg.bands.length; i++) {
 		var b1 = _dxcfg.bands[i];
 		var b2 = _kiwi_bands[i];
 
 		// filter bands based on offset mode
-		if (kiwi.isOffset) {
-		   if (!b2.isOffset) continue;
-		} else {
-		   if (b2.isOffset) continue;
-		}
-
+      if ((kiwi.isOffset && !b2.isOffset) || (!kiwi.isOffset && b2.isOffset)) continue;
 		if (!(b1.itu == kiwi.BAND_MENU_ONLY || b1.itu == kiwi.ITU_ANY || b1.itu == ITU_region)) continue;
 
 		if (service != b1.svc) {
@@ -7779,25 +7791,31 @@ function mk_band_menu()
 // find_band() is only called by code related to setting the frequency step size.
 // For this purpose always consider the top of the MW band ending at 1710 kHz even if the
 // configured ITU region causes the band bar to display a lower frequency.
-function find_band(freq)
+function find_band(freqHz)
 {
 	var ITU_region = cfg.init.ITU_region + 1;    // cfg.init.ITU_region = 0:R1, 1:R2, 2:R3
-   //console.log('find_band f='+ freq +' ITU_region=R'+ ITU_region);
+	var kHz_bb = kiwi_freq_without_offset_Hz(freqHz);
+   //console.log('find_band freqkHz='+ kHz_s(freqHz) +' kHz_bb='+ kHz_s(kHz_bb) +' ITU_region=R'+ ITU_region);
 
    var _dxcfg = dx_cfg_db();
    if (!_dxcfg) return null;
    var _kiwi_bands = kiwi_bands_db(dx.INIT_BANDS_NO);
+
 	for (var i = 0; i < _dxcfg.bands.length; i++) {
 		var b1 = _dxcfg.bands[i];
 		var b2 = _kiwi_bands[i];
+		
+		// filter bands based on offset mode
+      if ((kiwi.isOffset && !b2.isOffset) || (!kiwi.isOffset && b2.isOffset)) continue;
       if (!(b1.itu == kiwi.BAND_SCALE_ONLY || b1.itu == kiwi.ITU_ANY || b1.itu == ITU_region)) continue;
+
       var max = (b1.name == 'MW')? 1710000 : b2.maxHz;
-		if (freq >= b2.minHz && freq <= max) {
+		if (kHz_bb >= b2.minHz && kHz_bb <= max) {
 		/*
 		   if (b1.itu)
-		      console.log('find_band FOUND itu=R'+ b1.itu +' '+ b1.min +' '+ freq +' '+ b1.max);
+		      console.log('find_band FOUND i='+ i +' itu=R'+ b1.itu +' '+ b2.minHz +' '+ kHz_bb +' '+ max);
 		   else
-		      console.log('find_band FOUND '+ b1.min +' '+ freq +' '+ b1.max);
+		      console.log('find_band FOUND i='+ i +' '+ b2.minHz +' '+ kHz_bb +' '+ max);
 		*/
 			return b1;
 		}
@@ -7841,17 +7859,13 @@ function mk_bands_scale()
    var _dxcfg = dx_cfg_db();
    if (!_dxcfg) return;
    var _kiwi_bands = kiwi_bands_db(dx.INIT_BANDS_NO);
+
 	for (i = 0; i < _dxcfg.bands.length; i++) {
 		var b1 = _dxcfg.bands[i];
 		var b2 = _kiwi_bands[i];
 
 		// filter bands based on offset mode
-		if (kiwi.isOffset) {
-		   if (!b2.isOffset) continue;
-		} else {
-		   if (b2.isOffset) continue;
-		}
-
+      if ((kiwi.isOffset && !b2.isOffset) || (!kiwi.isOffset && b2.isOffset)) continue;
 		if (!(b1.itu == kiwi.BAND_SCALE_ONLY || b1.itu == kiwi.ITU_ANY || b1.itu == ITU_region)) continue;
 		//console.log('mk_bands_scale CONSIDER '+ b1.name +' R'+ b1.itu +' min='+ b1.min);
 		
@@ -9317,6 +9331,7 @@ function dx_show_edit_panel2()
 {
    var i, cbox, label, gid;
    dx_color_init();
+   confirmation_panel_close();      // close possible dx help
 
    if (dx.db != dx.DB_COMMUNITY) {
       gid = dx.o.gid;
@@ -9937,11 +9952,13 @@ function dx_ext_open()
 
 function dx_enter(ev, cmkr_x)
 {
+   //event_dump(ev, 'dx_enter');
    var tgt = ev.target;
 	dx.z_save = tgt.style.zIndex;
 	tgt.style.zIndex = 999;
 	dx.bg_color_save = tgt.style.backgroundColor;
-	tgt.style.backgroundColor = w3_contains(tgt, 'cl-dx-label-filtered')? 'lightGrey' : (w3_contains(tgt, 'dx-has-ext')? 'magenta' : 'yellow');
+	var ext = w3_contains(tgt, 'dx-has-ext') && !any_alternate_click_event(ev);
+	tgt.style.backgroundColor = w3_contains(tgt, 'cl-dx-label-filtered')? 'lightGrey' : (ext? 'magenta' : 'yellow');
 
 	var dx_line = w3_el('id-dx-line_'+ tgt.id.parseIntEnd());
 	//console.log('tgt.id='+ tgt.id +' id-dx-line_'+ tgt.id.parseIntEnd() +'='+ dx_line);
@@ -10407,7 +10424,7 @@ function keyboard_shortcut_init()
          w3_inline_percent('w3-padding-tiny', '~', 25, 'open admin page in new tab'),
          w3_inline_percent('w3-padding-tiny', 'esc', 25, 'close/cancel action'),
          w3_inline_percent('w3-padding-tiny', '? h', 25, 'toggle this help list'),
-         w3_inline_percent('w3-padding-tiny', 'H', 25, 'toggle extension or frequency entry field help'),
+         w3_inline_percent('w3-padding-tiny', 'H', 25, 'toggle additional help information (extension etc)'),
          w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', '', 25, 'Windows, Linux: use alt key, not control key'),
          w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', '', 25, 'Mac: use alt/option or control key')
       );
@@ -10482,13 +10499,15 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    
    var el = w3_elementAtPointer(owrx.last_pageX, owrx.last_pageY);
    //console.log(el);
-   var inFreqIn = false, inFreqMenu = false;
+   var inFreqIn = false, inFreqMenu = false, inDX = false;
    if (el) {
       var id = w3_id(el);
       //console.log(id);
       if (id == 'id-freq-input') inFreqIn = true;
       else
       if (id == 'id-freq-menu') inFreqMenu = true;
+      else
+      if (id == 'id-dx-container') inDX = true;
    }
 
    switch (key) {
@@ -10606,10 +10625,12 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    case '&': wf_snap(owrx.wf_snap ^ 1); break;
 
    case '?': case 'h':
-      console.log('inFreqIn='+ TF(inFreqIn) +' inFreqMenu='+ TF(inFreqMenu));
+      //console.log('inFreqIn='+ TF(inFreqIn) +' inFreqMenu='+ TF(inFreqMenu) +' inDX='+ TF(inDX));
       if (inFreqIn) freq_input_help();
       else
       if (inFreqMenu) freq_memory_help();
+      else
+      if (inDX) dx_help(true);
       else
          keyboard_shortcut_help();
       break;
@@ -13030,9 +13051,9 @@ function users_setup()
             w3_button('w3-green w3-small w3-padding-small w3-margin-R-4 w3-btn-right', 'help', 'wheel_help')
          ),
          w3_inline('w3-margin-T-8 w3-margin-B-8 w3-margin-R-8/w3-margin-between-8',
-            w3_input('id-wheel-poll w3-padding-tiny', 'Poll (msec)', 'wheel_poll', 0, 'wheel_param_cb|0'),
-            w3_input('id-wheel-fast w3-padding-tiny', 'Fast threshold', 'wheel_fast', 0, 'wheel_param_cb|1'),
-            w3_input('id-wheel-unlock w3-padding-tiny', 'Unlock (msec)', 'wheel_unlock', 0, 'wheel_param_cb|2')
+            w3_input('id-wheel-field id-wheel-poll w3-padding-tiny', 'Poll (msec)', 'wheel_poll', 0, 'wheel_param_cb|0'),
+            w3_input('id-wheel-field id-wheel-fast w3-padding-tiny', 'Fast threshold', 'wheel_fast', 0, 'wheel_param_cb|1'),
+            w3_input('id-wheel-field id-wheel-unlock w3-padding-tiny', 'Unlock (msec)', 'wheel_unlock', 0, 'wheel_param_cb|2')
          )
       );
 
@@ -13531,6 +13552,12 @@ function owrx_msg_cb(param, ws)     // #msg-proc #MSG
 		case "zoom_max":
 			zoom_levels_max = parseInt(param[1]);
 			zoom_nom = Math.min(ZOOM_NOMINAL, zoom_levels_max);
+			break;
+
+		case "zoom_all":
+		   var zoom_all = parseInt(param[1]) - 1;
+		   console.log('zoom_all='+ zoom_all);
+		   ext_set_zoom(ext_zoom.ABS, zoom_all);
 			break;
 
 		case "audio_init":

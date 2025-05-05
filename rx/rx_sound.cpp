@@ -473,9 +473,9 @@ void c2s_sound(void *param)
 		#define SND_FLAG_SQUELCH_UI     0x40
 		#define SND_FLAG_LITTLE_ENDIAN  0x80
 		
-		bool isNBFM = (mode_flags[s->mode] & IS_NBFM);
+		bool isNBFM = (modes[s->mode].flags & IS_NBFM);
 		bool isDRM = (s->mode == MODE_DRM);
-		bool IQ_or_DRM_or_stereo = (mode_flags[s->mode] & IS_STEREO);
+		bool IQ_or_DRM_or_stereo = (modes[s->mode].flags & IS_STEREO);
 
 		u1_t *flags, *seq, *smeter;
 		

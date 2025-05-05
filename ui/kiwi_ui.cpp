@@ -28,6 +28,7 @@ Boston, MA  02110-1301, USA.
 #include "coroutines.h"
 #include "debug.h"
 #include "printf.h"
+#include "leds.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -151,6 +152,8 @@ void sd_backup(conn_t *conn, bool from_admin)
         return;
     }
     
+    led_task_stop();
+    
     char *cmd;
     const char *platform = platform_s[kiwi.platform];
     bool D11_plus = (debian_ver >= 11);
@@ -159,6 +162,8 @@ void sd_backup(conn_t *conn, bool from_admin)
     int err = sd_cmd(conn, cmd, "rsync", NULL, NULL, from_admin, false);
     kiwi_asfree(cmd);
     send_msg(conn, SM_NO_DEBUG, "%s sd_done=%d", from_admin? "ADM":"MFG", err);
+    
+    led_task_start();
 }
 
 #define UPG_CMD "cd /root/" REPO_NAME "/tools; ./kiwiSDR-make-Debian-11-flasher.sh"
@@ -182,7 +187,7 @@ void sd_upgrade(conn_t *conn)
     
     char *cmd;
     asprintf(&cmd, UPG_CMD);
-    cprintf(conn, "sd_backup: kiwi.platform=%d <%s>\n", kiwi.platform, cmd);
+    cprintf(conn, "sd_upgrade: kiwi.platform=%d <%s>\n", kiwi.platform, cmd);
     int err = sd_cmd(conn, cmd, "curl", "xzcat", UPG_CLEANUP, true, true);
     kiwi_asfree(cmd);
     if (err == 0) err = -1;

@@ -1203,12 +1203,15 @@ function w3_show_hide_inline(el, show)
    w3_show_hide(el, show, 'w3-show-inline-new');
 }
 
-function w3_disable(el_id, disable)
+function w3_disable(el_id, disable, prop)
 {
+   if (!isArg(disable)) disable = true;
+   if (!isString(prop)) prop = 'w3-disabled';
+   
    el = w3_el(el_id);
    //console.log('w3_disable disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
    //console.log(el);
-	w3_set_props(el, 'w3-disabled', disable);
+   w3_set_props(el, prop, disable);
 	
 	// for disabling menu popup and sliders
 	if (isDefined(el.nodeName) && (el.nodeName == 'SELECT' || el.nodeName == 'INPUT')) {
@@ -1226,13 +1229,16 @@ function w3_disable(el_id, disable)
 	return el;
 }
 
-function w3_disable_multi(el_id, disable)
+function w3_disable_multi(el_id, disable, prop)
 {
+   if (!isArg(disable)) disable = true;
+   if (!isString(prop)) prop = 'w3-disabled';
+   
    w3_els(el_id,
       function(el, i) {
          //console.log('w3_disable_multi disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
          //console.log(el);
-         w3_set_props(el, 'w3-disabled', disable);
+         w3_set_props(el, prop, disable);
    
          // for disabling menu popup and sliders
          if (isDefined(el.nodeName) && (el.nodeName == 'SELECT' || el.nodeName == 'INPUT')) {
@@ -1252,6 +1258,8 @@ function w3_disable_multi(el_id, disable)
 
 function w3_visible(el_id, visible)
 {
+   if (!isArg(visible)) visible = true;
+   
 	var el = w3_el(el_id);
 	el.style.visibility = visible? 'visible' : 'hidden';
 	return el;
@@ -1314,14 +1322,27 @@ function w3_set_highlight_color(el_id, color)
 
 var w3_flag_color = 'w3-override-yellow';
 
-function w3_flag(path)
+function w3_flag(path, s)
 {
-	w3_add(w3_el(path), w3_flag_color);
+   var el = w3_el(path);
+   if (isString(s)) w3_innerHTML(el, s);
+	w3_add(el, w3_flag_color);
 }
 
-function w3_unflag(path)
+function w3_unflag(path, s)
 {
-	w3_remove(w3_el(path), w3_flag_color);
+   var el = w3_el(path);
+   if (isString(s)) w3_innerHTML(el, s);
+	w3_remove(el, w3_flag_color);
+}
+
+function w3_flag_cond(path, cond, s)
+{
+   var el = w3_el(path);
+   if (cond)
+      w3_flag(el, s);
+   else
+      w3_unflag(el, s);
 }
 
 // for when you don't want to w3_add(el_id, "[w3-text-color]")
@@ -3512,7 +3533,7 @@ function w3_slider_wheel(cb, el, cur, slow, fast)
    if (!el) return null;
    var evt = w3int.rate_limit_evt[cb];
 	//event_dump(evt, cb, 1);
-   console.log(cb +' need_shift='+ w3int.rate_limit_need_shift[cb] +' shiftKey='+ evt.shiftKey +' button='+ evt.button +' buttons='+ evt.buttons);
+   //console.log(cb +' need_shift='+ w3int.rate_limit_need_shift[cb] +' shiftKey='+ evt.shiftKey +' button='+ evt.button +' buttons='+ evt.buttons);
 	if (w3int.rate_limit_need_shift[cb] && !evt.shiftKey)
 	   return null;
    var x = evt.deltaX;

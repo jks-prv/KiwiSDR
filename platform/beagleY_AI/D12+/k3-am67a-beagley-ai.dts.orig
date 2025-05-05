@@ -8,8 +8,6 @@
 
 /dts-v1/;
 
-#define KiwiSDR
-
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/net/ti-dp83867.h>
 #include <dt-bindings/phy/phy.h>
@@ -31,14 +29,11 @@
 		mmc1 = &sdhci1;
 		mmc2 = &sdhci2;
 		rtc0 = &rtc;
-		#ifdef KiwiSDR
-          //spi0 = &spi_gpio0;  // hat pins 19,21,23,24,26 (RPi compatible bit bang)
-            spi2 = &main_spi2;  // hat pins 8,10,11,12,35,36 (MCSPI)
-            spi3 = &mcu_spi0;   // hat pins 19,21,23,24,26 (MCSPI)
-          //spi4 = &main_spi0;  // hat pins 29,31,32,33 (MCSPI, unidirectional only)
-		#else
-            spi1 = &spi_gpio1;  // hat pins 11,12,35,36,38,40 (RPi compatible bit bang)
-		#endif
+	    spi0 = &spi_gpio0;  // hat pins 19,21,23,24,26 (RPi compatible bit bang)
+	  //spi1 = &spi_gpio1;  // hat pins 11,12,35,36,38,40 (RPi compatible bit bang)
+		spi2 = &main_spi2;  // hat pins 8,10,11,12,35,36 (MCSPI)
+		spi3 = &mcu_spi0;   // hat pins 19,21,23,24,26 (MCSPI)
+	    spi4 = &main_spi0;  // hat pins 29,31,32,33 (MCSPI, unidirectional only)
 		usb0 = &usb0;
 		usb1 = &usb1;
 		i2c1 = &mcu_i2c0;

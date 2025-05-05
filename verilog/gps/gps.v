@@ -41,6 +41,7 @@ module GPS (
     input  wire        rdReg,
     input  wire        wrReg,
     input  wire        wrEvt,
+    input  wire        wrEvtL,
     
     output wire        unused_inputs
     );
@@ -147,7 +148,7 @@ module GPS (
     // Sampling
 
     wire sampler_rst = wrEvt & op_8[GPS_SAMPLER_RST];
-    wire sampler_rd  = wrEvt & op_8[GET_GPS_SAMPLES];
+    wire sampler_rd  = (wrEvt & op_8[GET_GPS_SAMPLES]) || (wrEvtL & op_8[GET_GPS_SAMPS_LOOP]);
 
     wire [15:0] sampler_dout;
     reg         sample;

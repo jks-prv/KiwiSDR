@@ -1213,7 +1213,7 @@ bone_spi_0: &main_spi6 {
             &P9_17_spi_pin /* spi6_cs0 */
             &P9_22_spi_pin /* spi6_sclk */
             &P9_21_spi_pin /* spi6_miso */
-            &P9_18_spi_pin /* spi6_d1 */
+            &P9_18_spi_pin /* spi6_mosi */
         >;
         ti,spi-num-cs = <2>;
         #ifdef KiwiSDR
@@ -1222,7 +1222,12 @@ bone_spi_0: &main_spi6 {
             ti,pindir-d0-out-d1-in;
         #endif
 
-        spidev0: spidev@0{
+        // see k3-psil-j721e.c for tx/rx thread ID values
+        // only cs0 tx0/rx0 specified here
+        dmas = <&main_udmap 0xc624>, <&main_udmap 0x4624>;
+        dma-names = "tx0", "rx0";
+
+        spidev0: spidev@0 {
             symlink = "bone/spi/0.0";
             compatible = "spidev";
             reg = <0>;	/* CE0 */
@@ -1231,7 +1236,7 @@ bone_spi_0: &main_spi6 {
             spi-max-frequency = <125000000>;
         };
 
-        spidev1: spidev@1{
+        spidev1: spidev@1 {
             symlink = "bone/spi/0.1";
             compatible = "spidev";
             reg = <1>;	/* CE1 */

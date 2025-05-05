@@ -6,6 +6,7 @@
 #define	OPT_CIN			0x0040
 #define	OPT_ROT			0x0020
 #define	OPT_UNS			0x0010
+#define	OPT_LOOP        0x0002
 
 #define OCM_CONST       0x7fff
 #define	OC_PUSH			0x0000
@@ -64,7 +65,7 @@
 
 #define OCM_IO          0x07ff
 #define	OC_RDREG		0xD000		/* op[10:0] = I/O selects */
-#define	OC_RDREG2		0xD800		/* op[10:0] = I/O selects */
+#define	OC_WREVTL		0xD800		/* op[10:0] = I/O selects */
 #define	OC_WRREG		0xE000		/* op[10:0] = I/O selects */
 #define	OC_WRREG2		0xE800		/* op[10:0] = I/O selects */
 #define	OC_WREVT		0xF000		/* op[10:0] = I/O selects */

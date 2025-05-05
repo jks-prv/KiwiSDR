@@ -22,6 +22,7 @@ Boston, MA  02110-1301, USA.
 // AM3359 memory map (BBB/G)
 #ifdef CPU_AM3359
  #define PRCM_BASE	0x44e00000		// power, reset, clock management
+ #define NPMUX      1
  #define PMUX_BASE	0x44e10000		// control module for pin mux
  #define GPIO0_BASE	0x44e07000
  #define GPIO1_BASE	0x4804c000
@@ -37,6 +38,7 @@ Boston, MA  02110-1301, USA.
 // AM5729 memory map (BBAI)
 #ifdef CPU_AM5729
  #define PRCM_BASE	0x4A009000		// power, reset, clock management for GPIO2-8 (TRM 3.12.26 CM_CORE_L4PER)
+ #define NPMUX      1
  #define PMUX_BASE	0x4A002000		// control module for pin mux (TRM 2.3.1, 18.5.2.1 CTRL_MODULE_CORE)
  #define GPIO1_BASE	0x4AE10000      // NB: don't currently use because PRCM base addr is different (WKUP, not L4PER)
  #define GPIO2_BASE	0x48055000      // TRM 2.4.1
@@ -88,6 +90,8 @@ Boston, MA  02110-1301, USA.
 // PMUX: pin mux (remember: Linux doesn't allow write of pmux via mmap -- use device tree (dts) mechanism instead)
 
 #ifdef CPU_AM3359
+ #define    PMUX(g,off) pmux_m[0][(off) >> 2]
+
  #define	PMUX_SLOW	0x40		// slew rate
  #define	PMUX_FAST	0x00
  #define	PMUX_RXEN	0x20		// TX can always be enabled with GPIO_OE
@@ -102,6 +106,8 @@ Boston, MA  02110-1301, USA.
 #endif
 
 #ifdef CPU_AM5729                   // TRM 18.4.6.1.1, 18.5.2.2
+ #define    PMUX(g,off) pmux_m[0][(off) >> 2]
+
  #define	PMUX_SLOW	0x00080000  // slew rate
  #define	PMUX_FAST	0x00000000
  #define	PMUX_RXEN	0x00040000  // TX can always be enabled with GPIO_OE
@@ -144,7 +150,7 @@ Boston, MA  02110-1301, USA.
 #endif
 
 #ifdef CPU_AM5729
- #define	NBALL	2   // max number of cpu package balls assigned to a single GPIO
+ #define	NBALL	2   // max number of cpu package balls wired to a single header pin
  #define	GPIO1	0
  #define	GPIO2	1
  #define	GPIO3	2
@@ -169,33 +175,34 @@ Boston, MA  02110-1301, USA.
 
 
 #ifndef _PASM_
-#define GPIO_REVISION(g)	gpio_m[(g).bank][_GPIO_REVISION>>2]
-#define GPIO_SYSCONFIG(g)	gpio_m[(g).bank][_GPIO_SYSCONFIG>>2]
-#define GPIO_CLR_IRQ0(g)	gpio_m[(g).bank][_GPIO_CLR_IRQ0>>2] = 1 << (g).bit
-#define GPIO_CLR_IRQ1(g)	gpio_m[(g).bank][_GPIO_CLR_IRQ1>>2] = 1 << (g).bit
-#define GPIO_OE(g)			gpio_m[(g).bank][_GPIO_OE>>2]			// 0 = output
-#define GPIO_IN(g)			gpio_m[(g).bank][_GPIO_IN>>2]
-#define GPIO_OUT(g)			gpio_m[(g).bank][_GPIO_OUT>>2]
-#define GPIO_CLR(g)			gpio_m[(g).bank][_GPIO_CLR>>2]
-#define GPIO_SET(g)			gpio_m[(g).bank][_GPIO_SET>>2]
+#define _GPIO_REG(g, off)   gpio_m[(g).bank][(off) >> 2]
+#define _GPIO_ADDR(g, off)  &_GPIO_REG(g, off)
+#define _GPIO_BIT(g)        (1 << (g).bit)
 
-#define	GPIO_OUTPUT(g)		GPIO_OE(g) = GPIO_OE(g) & ~(1 << (g).bit);
-#define	GPIO_INPUT(g)		GPIO_OE(g) = GPIO_OE(g) | (1 << (g).bit);
-#define	GPIO_isOE(g)		((GPIO_OE(g) & (1 << (g).bit))? 0:1)
+#define GPIO_REVISION(g)	_GPIO_REG(g, _GPIO_REVISION)
+#define GPIO_SYSCONFIG(g)	_GPIO_REG(g, _GPIO_SYSCONFIG)
+#define GPIO_CLR_IRQ0(g)	_GPIO_REG(g, _GPIO_CLR_IRQ0) = _GPIO_BIT(g)
+#define GPIO_CLR_IRQ1(g)	_GPIO_REG(g, _GPIO_CLR_IRQ1) = _GPIO_BIT(g)
+#define GPIO_OE(g)			_GPIO_REG(g, _GPIO_OE)      // 0 = output
+#define GPIO_IN(g)			_GPIO_REG(g, _GPIO_IN)
+#define GPIO_OUT(g)			_GPIO_REG(g, _GPIO_OUT)
+#define GPIO_CLR(g)			_GPIO_REG(g, _GPIO_CLR)
+#define GPIO_SET(g)			_GPIO_REG(g, _GPIO_SET)
 
-#define	GPIO_CLR_BIT(g)		GPIO_CLR(g) = 1 << (g).bit;
-#define	GPIO_SET_BIT(g)		GPIO_SET(g) = 1 << (g).bit;
-#define	GPIO_READ_BIT(g)	((GPIO_IN(g) & (1 << (g).bit))? 1:0)
+#define	GPIO_OUTPUT(g)		GPIO_OE(g) = GPIO_OE(g) & ~_GPIO_BIT(g);
+#define	GPIO_INPUT(g)		GPIO_OE(g) = GPIO_OE(g) | _GPIO_BIT(g);
+#define	GPIO_isOE(g)		((GPIO_OE(g) & _GPIO_BIT(g))? 0:1)
+
+#define	GPIO_CLR_BIT(g)		GPIO_CLR(g) = _GPIO_BIT(g);
+#define	GPIO_SET_BIT(g)		GPIO_SET(g) = _GPIO_BIT(g);
+#define	GPIO_READ_BIT(g)	((GPIO_IN(g) & _GPIO_BIT(g))? 1:0)
 #define	GPIO_WRITE_BIT(g,b)	{ if (b) { GPIO_SET_BIT(g) } else { GPIO_CLR_BIT(g) } }
 
-#define	P8			0x00
-#define	P9			0x80
-#define	PIN_BITS	0x7f	// pins 1..46
-#define	PIN(P8_P9, pin)		(P8_P9 | (pin & PIN_BITS))
-
-typedef struct {
+struct gpio_t {
 	u1_t bank, bit, pin, eeprom_off;
-} __attribute__((packed)) gpio_t;
+    bool isOutput;
+    void init() {}
+};
 
 typedef struct {
 	gpio_t gpio;
@@ -213,7 +220,8 @@ extern pin_t eeprom_pins[EE_NPINS];
 #define	EE_PINS_OFFSET_BASE		88
 
 extern gpio_t GPIO_NONE;
-#define isGPIO(g)	((g).bit != 0xff)
+#define GPIO_EQ(g1, g2) ((g1).pin == (g2).pin)
+#define isGPIO(g)	    ((g).bit != 0xff)
 
 #define GPIO_HIZ	-1
 

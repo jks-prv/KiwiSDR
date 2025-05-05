@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * DT Overlay for KiwiSDR cape on BeagleY-AI board.
+ *
+ * Copyright (c) 2025 John Seamons, ZL4VO/KF6VO
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include "ti/k3-pinctrl.h"
+
+#define PIN_IO_PULLUP PIN_INPUT_PULLUP
+
+/*
+ * Helper to show loaded overlays under: /proc/device-tree/chosen/overlays/
+ */
+&{/chosen} {
+	overlays {
+		k3-am67a-beagley-ai-kiwisdr.kernel = __TIMESTAMP__;
+	};
+};
+
+/ {
+    compatible = "beagle,am67a-beagley-ai", "ti,j722s";
+
+    fragment@0 {
+        target = <&main_pmx0>;
+        __overlay__ {
+            overlay_main_mcspi2_pins_default: overlay-main-mcspi2-default-pins {
+                pinctrl-single,pins = <
+                    J722S_IOPAD(0x1B0, PIN_OUTPUT_PULLUP, 1) /* (F24) hat-08 SPI2_CLK */
+                    J722S_IOPAD(0x198, PIN_IO_PULLUP,     1) /* (A26) hat-11 SPI2_D1 */
+                    J722S_IOPAD(0x194, PIN_IO_PULLUP,     1) /* (A25) hat-36 SPI2_D0 */
+                    J722S_IOPAD(0x1AC, PIN_OUTPUT_PULLUP, 1) /* (C27) hat-10 SPI2_CS0 */
+
+                    J722S_IOPAD(0x088, PIN_OUTPUT_PULLUP, 7) /* (N22) hat-13 (SPI2_CS1)  GPIO0_33 */
+                    J722S_IOPAD(0x094, PIN_OUTPUT_PULLUP, 7) /* (P26) hat-37 (FPGA_PGM)  GPIO0_36 */
+                    J722S_IOPAD(0x09c, PIN_IO_PULLUP,     7) /* (W26) hat-07 (FPGA_INIT) GPIO0_38 */
+                    J722S_IOPAD(0x0a8, PIN_IO_PULLUP,     7) /* (R27) hat-14 (CMD_RDY)   GPIO0_41 */
+                    J722S_IOPAD(0x0ac, PIN_IO_PULLUP,     7) /* (P21) hat-22 (SND_INTR)  GPIO0_42 */
+                >;
+            };
+        };
+    };
+
+    fragment@1 {
+        target = <&main_spi2>;
+        __overlay__ {
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&overlay_main_mcspi2_pins_default>;
+        
+            compatible = "ti,am654-mcspi","ti,omap2-mcspi","ti,omap4-mcspi";
+            ti,hwmods = "mcspi2";
+            ti,spi-num-cs = <2>;
+            ti,pindir-d0-in-d1-out;
+            //ti,pindir-d0-out-d1-in;
+        
+            // see k3-psil-am62p.c for tx/rx thread ID values
+            // only cs[01] (tx/rx[01]) specified here
+            dmas = <&main_pktdma 0xc308 0>, <&main_pktdma 0x4308 0>,
+                   <&main_pktdma 0xc309 0>, <&main_pktdma 0x4309 0>;
+            dma-names = "tx0", "rx0", "tx1", "rx1";
+        
+            channel@0 {
+                symlink = "hat/spi/2.0";
+                compatible = "rohm,dh2228fv";
+                reg = <0>;	/* CS0 */
+                spi-max-frequency = <50000000>;
+            };
+        
+            channel@1 {
+                symlink = "hat/spi/2.1";
+                compatible = "rohm,dh2228fv";
+                reg = <1>;	/* CS1 */
+                spi-max-frequency = <50000000>;
+            };
+        };
+    };
+
+    fragment@2 {
+        target = <&wkup_i2c0>;
+        __overlay__ {
+            #address-cells = <0x1>;
+            #size-cells = <0x0>;
+            
+            eeprom@54 {
+                compatible = "atmel,24c32";
+                reg = <0x54>;
+            };
+        };
+    };
+};

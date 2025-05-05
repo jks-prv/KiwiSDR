@@ -302,9 +302,9 @@ void cRsId::search(void)
 	if (nBinLow < 3) nBinLow = 3;
 	if (nBinHigh > RSID_FFT_SIZE - 32) nBinHigh = RSID_FFT_SIZE - 32;
 
-    //rcprintf(rx_chan, "RSID: %s\n", mode_uc[ext_get_mode(rx_chan)]);
+    //rcprintf(rx_chan, "RSID: %s\n", modes[ext_get_mode(rx_chan)].uc);
     // FIXME: what to do about IQ mode?
-	bool bReverse = mode_flags[snd->mode] & IS_LSB;
+	bool bReverse = modes[snd->mode].flags & IS_LSB;
 	if (bReverse) {
 		nBinLow  = RSID_FFT_SIZE - nBinHigh;
 		nBinHigh = RSID_FFT_SIZE - nBinLow;

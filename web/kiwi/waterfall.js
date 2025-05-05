@@ -82,8 +82,8 @@ function waterfall_controls_setup()
                w3_select('id-wfext-tstamp '+ wfext.sfmt, '', '', 'wfext.tstamp_i', wfext.tstamp_i, wfext.tstamp_s, 'wfext_tstamp_cb'),
                w3_input('id-wfext-tstamp-custom|padding:0;width:auto|size=4',
                   '', 'wfext.tstamp_f', wfext.tstamp_f, 'wfext_tstamp_custom_cb'),
-               w3_select(wfext.sfmt, '', '', 'wf.ts_tz', wf.ts_tz, wfext.tstamp_tz_s, 'w3_num_cb'),
-				   w3_button('w3-padding-smaller w3-aqua', 'Save WF as JPG', 'export_waterfall')
+               w3_select(wfext.sfmt, '', '', 'wf.ts_tz', wf.ts_tz, wfext.tstamp_tz_s, 'wfext_ts_tz_cb'),
+				   w3_button('w3-padding-smaller w3-aqua', 'Save WF', 'export_waterfall')
             )
          ),
          
@@ -106,6 +106,17 @@ function waterfall_controls_setup()
    //w3_event_listener('wf_ts_tz', 'id-wf.ts_tz');
 }
 
+function waterfall_init_pre()
+{
+   wfext.spb_on = +kiwi_storeInit('last_spb_on', wfext.spb_on);
+   wfext.spb_color = kiwi_storeInit('last_spb_color', wfext.spb_color);
+   //console.log('waterfall_init spb_on='+ wfext.spb_on +' spb_color='+ wfext.spb_color);
+
+   wfext.tstamp_i = +kiwi_storeInit('last_wf_tstamp', wfext.tstamp_i);
+   wf.ts_tz = +kiwi_storeInit('last_wf_ts_tz', wf.ts_tz);
+   //console.log('waterfall_init tstamp_i='+ wfext.tstamp_i +' ts_tz='+ wf.ts_tz);
+}
+
 function waterfall_init()
 {
    //console.log('waterfall_init audioFFT_active='+ wf.audioFFT_active);
@@ -121,9 +132,6 @@ function waterfall_init()
       wf_aper_cb('wf.aper', false, false);
    }
    
-   wfext.spb_on = +kiwi_storeInit('last_spb_on', wfext.spb_on);
-   wfext.spb_color = kiwi_storeInit('last_spb_color', wfext.spb_color);
-   
    // allow URL param to override
    if (wf_interp != -1) {
       wfext.interp_i = wf_interp % 10;
@@ -131,6 +139,9 @@ function waterfall_init()
    }
    
    if (wf.url_tstamp) wfext.tstamp = wf.url_tstamp;
+
+   if (wfext.tstamp_s[wfext.tstamp_i] == 'custom')
+      wfext_tstamp_custom_cb('id-wfext-tstamp-custom', +kiwi_storeInit('last_wf_ts_custom', 0));
 }
 
 function waterfall_aper_algo_cb(path, idx, first)
@@ -247,24 +258,21 @@ function wfext_spb_on_cb(path, checked, first)
 function wfext_tstamp_cb(path, idx, first)
 {
    //if (first) return;
-   //console.log('wfext_tstamp_cb TOP first='+ first);
+   //console.log('wfext_tstamp_cb TOP idx='+ idx +' first='+ first);
    wfext.tstamp_i = idx = +idx;
+   kiwi_storeWrite('last_wf_tstamp', wfext.tstamp_i);
    w3_set_value(path, idx);      // for benefit of direct callers
    var tstamp_s = wfext.tstamp_s[idx];
    var isCustom = (tstamp_s == 'custom');
    var el_custom = w3_el('id-wfext-tstamp-custom');
 
-   if (first) {
-      if (!wf.url_tstamp) {
-         if (isCustom) wfext_tstamp_custom_cb(el_custom, wfext.tstamp);
-         return;
-      }
+   if (first && wf.url_tstamp) {
       //console.log('wfext_tstamp_cb HAVE url_tstamp='+ wf.url_tstamp);
       var stop = false;
       w3_select_enum(path, function(el, idx) {
          if (stop || el.innerHTML != 'custom') return;
          //console.log('wfext_tstamp_cb MATCH url_tstamp='+ wf.url_tstamp);
-         wfext_tstamp_custom_cb('id-wfext-tstamp-custom', wf.url_tstamp);
+         wfext_tstamp_custom_cb(el_custom, wf.url_tstamp);
          wfext_tstamp_cb(path, el.value);
          stop = true;
       });
@@ -286,8 +294,18 @@ function wfext_tstamp_custom_cb(path, val)
 {
    //console.log('wfext_tstamp_custom_cb val='+ val);
    wfext.tstamp = w3_clamp(+val, 2, 60*60, 2);
+   kiwi_storeWrite('last_wf_ts_custom', wfext.tstamp);
    w3_set_value(path, wfext.tstamp);
    w3_show_block(path);
+}
+
+function wfext_ts_tz_cb(path, idx, first)
+{
+   //if (first) return;
+   wf.ts_tz = idx = +idx;
+   w3_num_cb(path, idx, first);
+   kiwi_storeWrite('last_wf_ts_tz', wf.ts_tz);
+   wfext.spb_color_seq++;
 }
 
 function wfext_winf_cb(path, idx, first)

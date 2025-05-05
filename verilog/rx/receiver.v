@@ -40,6 +40,7 @@ module receiver (
     input  wire        wrReg,
     input  wire        wrReg2,
     input  wire        wrEvt2,
+    input  wire        wrEvtL,
     
     input  wire        use_gen_C,
     
@@ -237,7 +238,7 @@ module receiver (
 
 	wire set_rx_nsamps_C = wrReg2 & op_11[SET_RX_NSAMPS];
     wire get_rx_srq_C    = rdReg  & op_11[GET_RX_SRQ];
-	wire get_rx_samp_C   = wrEvt2 & op_11[GET_RX_SAMP];
+	wire get_rx_samp_C   = (wrEvt2 & op_11[GET_RX_SAMP]) || (wrEvtL & op_11[GET_RX_SAMP_LOOP]);
 	wire reset_bufs_C    = wrEvt2 & op_11[RX_BUFFER_RST];
 	wire get_buf_ctr_C   = wrEvt2 & op_11[RX_GET_BUF_CTR];
 
@@ -293,7 +294,7 @@ module receiver (
 
 	wire rst_wf_sampler_C =	wrReg2 & op_11[WF_SAMPLER_RST];
 	wire get_wf_samp_i_C =	wrEvt2 & op_11[GET_WF_SAMP_I];
-	wire get_wf_samp_q_C =	wrEvt2 & op_11[GET_WF_SAMP_Q];
+	wire get_wf_samp_q_C =	(wrEvt2 & op_11[GET_WF_SAMP_Q]) || (wrEvtL & op_11[GET_WF_SAMP_Q_LOOP]);
 	assign wf_rd_C =		get_wf_samp_i_C || get_wf_samp_q_C;
 
 	wire samp_wf_rd_rst_C = tos[WF_SAMP_RD_RST];

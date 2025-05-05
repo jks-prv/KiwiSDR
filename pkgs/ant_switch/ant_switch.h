@@ -57,7 +57,8 @@
             "ADM antsw_GetInfo" => send_msg("ADM antsw_ver=%d.%d antsw_nch=%d")
             "ADM antsw_GetBackends" => send_msg("ADM antsw_backends=%s")
     
-        rx/rx_server_ajax.cpp:AJAX_STATUS => ant_switch_configured()
+        rx/rx_server_ajax.cpp:AJAX_STATUS => antsw.isConfigured
+        rx/rx_server_ajax.cpp:AJAX_SNR => antsw.{using_ground,using_tstorm}
 */
 
 #define FRONTEND REPO_DIR "/pkgs/ant_switch/ant-switch-frontend"

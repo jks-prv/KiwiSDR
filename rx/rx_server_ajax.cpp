@@ -20,6 +20,7 @@ Boston, MA  02110-1301, USA.
 #include "types.h"
 #include "config.h"
 #include "kiwi.h"
+#include "mode.h"
 #include "mem.h"
 #include "misc.h"
 #include "str.h"
@@ -555,36 +556,43 @@ fail:
 	//	Returns simple S-meter value
 	case AJAX_S_METER: {
 	    if (mc->query == NULL) {
-            asprintf(&sb, "/s_meter: missing freq, try my_kiwi:8073/s-meter/?(freq in kHz)\n");
-            printf("%s", sb);
+            asprintf(&sb, "/s-meter: missing freq/mode, try my_kiwi:8073/s-meter/?(passband center freq in kHz)(optional mode, default CWN)\n");
+            printf("%s\n", sb);
             break;
 	    }
 	    
         double dial_freq_kHz, if_freq_kHz;
-        n = sscanf(mc->query, "%lf", &dial_freq_kHz);
-        if (n == 1) {
-            printf("/s_meter dial_freq_kHz=%.2f freq.offset_kHz=%.2f freq.offmax_kHz=%.2f ", dial_freq_kHz, freq.offset_kHz, freq.offmax_kHz);
+        char *mode_m = NULL;
+        n = sscanf(mc->query, "%lf%16ms", &dial_freq_kHz, &mode_m);
+        if (n == 1 || n == 2) {
             if (!rx_freq_inRange(dial_freq_kHz)) {
-                asprintf(&sb, "/s_meter: freq \"%s\" outside configured receiver range of %.2f - %.2f kHz\n",
+                printf("/s-meter dial_freq_kHz=%.2f freq.offset_kHz=%.2f freq.offmax_kHz=%.2f\n", dial_freq_kHz, freq.offset_kHz, freq.offmax_kHz);
+                asprintf(&sb, "/s-meter: freq \"%s\" outside configured receiver range of %.2f - %.2f kHz\n",
                     mc->query, freq.offset_kHz, freq.offmax_kHz);
-                printf("%s", sb);
+                printf("%s\n", sb);
                 break;
             }
-            if_freq_kHz = dial_freq_kHz - freq.offset_kHz;
-            if_freq_kHz = CLAMP(if_freq_kHz, 0, ui_srate_kHz);
-            printf("if_freq_kHz=%.2f\n", if_freq_kHz);
         } else {
-            asprintf(&sb, "/s_meter: freq parse error \"%s\", just enter freq in kHz\n", mc->query);
-            printf("%s", sb);
+            asprintf(&sb, "/s-meter: freq parse error \"%s\", just enter freq in kHz followed by optional mode, e.g. 7020 or 14200usb\n", mc->query);
+            printf("%s\n", sb);
             break;
         }
 
         internal_conn_t iconn;
-        #define CW_BFO 500
+        int mode_i = rx_mode2enum(mode_m);
+        if (mode_i == NOT_FOUND) { mode_m = strdup("cwn"); mode_i = MODE_CWN; }
+        int pbl = modes[mode_i].bfo - modes[mode_i].hbw;
+        int pbh = modes[mode_i].bfo + modes[mode_i].hbw;
+        if_freq_kHz = dial_freq_kHz - ((double) modes[mode_i].bfo /1e3) - freq.offset_kHz;
+        if_freq_kHz = CLAMP(if_freq_kHz, 0, ui_srate_kHz);
+        printf("/s-meter %.2f %s if=%.2f bfo=%d pb=%d|%d\n", dial_freq_kHz, mode_m, if_freq_kHz, modes[mode_i].bfo, pbl, pbh);
+
         bool ok = internal_conn_setup(ICONN_WS_SND, &iconn, 0, PORT_BASE_INTERNAL_S_METER, WS_FL_PREEMPT_AUTORUN | WS_FL_NO_LOG,
-            "cwn", CW_BFO-30, CW_BFO+30, if_freq_kHz - CW_BFO/1e3, "S-meter", NULL, "S-meter");
+            mode_m, pbl, pbh, if_freq_kHz, "S-meter", NULL, "S-meter");
+        kiwi_asfree(mode_m);
         if (!ok) {
             asprintf(&sb, "s-meter: all channels busy\n");
+            printf("%s\n", sb);
             break;
         }
         
@@ -612,7 +620,7 @@ fail:
         }
         
         internal_conn_shutdown(&iconn);
-        asprintf(&sb, "/s-meter: %.2f kHz %d dBm\n", if_freq_kHz + freq.offset_kHz, sMeter_dBm);
+        asprintf(&sb, "/s-meter: %.2f kHz %d dBm\n", dial_freq_kHz, sMeter_dBm);
         cprintf(iconn.csnd, "%s", sb);
 		break;
 	}
@@ -628,7 +636,7 @@ fail:
         get_location_grid(&loc, &loc_free, &grid, &grid_free);
         if (!loc) loc = (char *) "(-69.0, 90.0)";     // put us in Antarctica to be noticed
         if (!grid) grid = (char *) "(none)";
-        printf("AJAX_STATUS loc=<%s> grid=<%s>\n", loc, grid);
+        //printf("AJAX_STATUS loc=<%s> grid=<%s>\n", loc, grid);
 		
 		// append location to name if none of the keywords in location appear in name
 		s1 = cfg_string("rx_name", NULL, CFG_OPTIONAL);

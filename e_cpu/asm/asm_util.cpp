@@ -21,18 +21,19 @@ static void remove_files()
 
 char *token(tokens_t *tp);
 
-static void _errmsg(char *str, tokens_t *t = NULL)
+static void _errmsg(char *str, tokens_t *t = NULL, char *prefix = NULL)
 {
+    if (!prefix) prefix = (char *) "error";
     //dump_tokens("errmsg", tp_start, tp_end);
     if (t == NULL)
-	    printf("error: %s", str);
+	    printf("%s: %s", prefix, str);
 	else {
         for (; t->ttype != TT_EOL; t++) {
             //printf("DBG %s %s ifl=%d %s:%d\n", ttype(t->ttype), token(t), t->ifl, ifiles_list[t->ifl], t->num-1);
             ;
         }
         //printf("DBG %s %s ifl=%d %s:%d\n", ttype(t->ttype), token(t), t->ifl, ifiles_list[t->ifl], t->num-1);
-	    printf("%s:%d error: %s", ifiles_list[t->ifl], t->num-2, str);
+	    printf("%s:%d %s: %s", ifiles_list[t->ifl], t->num-2, prefix, str);
 	}
 }
 
@@ -62,7 +63,7 @@ void panic(const char *str, tokens_t *t)
     _panic((char *) str, t);
 }
 
-void syntax(int cond, tokens_t *tp, const char *fmt, ...)
+void _syntax(bool isNote, int cond, tokens_t *tp, const char *fmt, ...)
 {
 	if (!cond) {
         tokens_t *t;
@@ -83,7 +84,13 @@ void syntax(int cond, tokens_t *tp, const char *fmt, ...)
         char *buf;
 		vasprintf(&buf, fmt, ap);
         va_end(ap);
-		_panic(buf, t);
+        
+        if (isNote) {
+            _errmsg(buf, t, (char *) "note");
+	        printf("\n");
+        } else {
+		    _panic(buf, t);
+		}
 	}
 }
 
@@ -174,10 +181,6 @@ int num_strings()
 
 // tokens
 
-static const char *ttype_s[] = {
-    "EOL", "LABEL", "SYM", "NUM", "OPC", "PRE", "OPR", "DATA", "STRUCT", "ITER", "DEF"
-};
-
 const char *ttype(token_type_e ttype_e)
 {
     return ttype_s[ttype_e];
@@ -200,6 +203,7 @@ char *token(tokens_t *tp)
 	case TT_STRUCT:	asprintf(&s, "{%s}", tp->str); break;
 	case TT_ITER:	asprintf(&s, "<iter>"); break;
 	case TT_FILE:	asprintf(&s, "file: %s", tp->str); break;
+	case TT_ALIGN:	asprintf(&s, "ALIGN"); break;
 	default:		asprintf(&s, "UNK ttype???"); break;
 	}
 	

@@ -21,6 +21,7 @@ Boston, MA  02110-1301, USA.
 #include "config.h"
 #include "options.h"
 #include "kiwi.h"
+#include "mode.h"
 #include "rx.h"
 #include "rx_server.h"
 #include "rx_util.h"
@@ -141,6 +142,7 @@ void rx_server_init()
 	}
 	
 	debug_init();
+	rx_modes_init();
 	
     //#ifndef DEVSYS
     #if 0
@@ -705,6 +707,12 @@ retry:
 		if (st->type == STREAM_WATERFALL && c->rx_channel != -1 && rx_channels[c->rx_channel].conn == NULL) {
 		    rx_channels[c->rx_channel].conn = c;
 		    c->isMaster = true;
+		}
+
+        // only the first web socket connection sees "nolocal" URL param, so propagate force_notLocal
+		if (snd_or_wf && c->rx_channel != -1 && cother && cother->force_notLocal) {
+            c->isLocal = false;
+            c->force_notLocal = true;
 		}
 
         const char *cp;

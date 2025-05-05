@@ -2878,7 +2878,7 @@ function user_cb(obj)
          //console.log('NOTIFY nc|rx_chan='+ obj.nc +'|'+ rx_chan +' seq='+ obj.ns +'|'+ kiwi.notify_seq);
          if (isNumber(obj.ns) && obj.ns != kiwi.notify_seq) {
          //console.log('NOTIFY sn='+ obj.ns);
-		   msg_send('SET notify_msg');
+		   msg_send('SET notify_msg');      // ask all but initiating channel to display notification
          kiwi.notify_seq = obj.ns;
          }
       }
@@ -2992,12 +2992,42 @@ function kiwi_force_admin_close_cb(path, val, first)
    }
 }
 
+// convert baseband freq to freq plus offset if freq offset in effect
+function kiwi_freq_with_offset_Hz(freqHz)
+{
+   if (kiwi.isOffset && freqHz < kiwi.freq_offset_Hz) freqHz += kiwi.freq_offset_Hz;
+   return freqHz;
+}
+
+function kiwi_freq_with_offset_kHz(freqkHz)
+{
+   if (kiwi.isOffset && freqkHz < kiwi.freq_offset_kHz) freqkHz += kiwi.freq_offset_kHz;
+   return freqkHz;
+}
+
+// convert freq plus offset to baseband freq if freq offset in effect
+function kiwi_freq_without_offset_Hz(freqHz)
+{
+   if (kiwi.isOffset && freqHz > kiwi.freq_offset_Hz) freqHz -= kiwi.freq_offset_Hz;
+   return freqHz;
+}
+
+function kiwi_freq_without_offset_kHz(freqkHz)
+{
+   if (kiwi.isOffset && freqkHz > kiwi.freq_offset_kHz) freqkHz -= kiwi.freq_offset_kHz;
+   return freqkHz;
+}
+
+// called when the admin changes the frequency offset
 function kiwi_set_freq_offset(freq_offset_kHz)
 {
-   kiwi.isOffset = (freq_offset_kHz != 0);
+   kiwi.freq_bb_max_kHz = cfg.max_freq? 32e3 : 30e3;
+   kiwi.freq_bb_max_Hz = cfg.max_freq?  32e6 : 30e6;
+
+   kiwi.isOffset = (freq_offset_kHz > 0);
    kiwi.freq_offset_kHz = freq_offset_kHz;
    kiwi.freq_offset_Hz  = freq_offset_kHz * 1000;
-   kiwi.offset_frac = (freq_offset_kHz % 1000) * 1000;
+   kiwi.offset_frac_Hz = kiwi.freq_offset_Hz % 1000;
 }
 
 function kiwi_init_cfg(stream_name)
@@ -3086,7 +3116,17 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 
 		case "abyy":
          dx.db_s[dx.DB_EiBi] = 'EiBi-'+ param[1] +' (read-only)';    // abyy value sent by server
+         dx.db_short_s[dx.DB_EiBi] = 'EiBi-'+ param[1];
 			break;
+
+		case "dx_db_name":
+		   s = kiwi_decodeURIComponent('dx_db_name', param[1]);
+		   console.log('dx_db_name=<'+ s +'>');
+		   if (isDefined(dx) && isNonEmptyString(s) && s != 'dx') {
+		      dx.db_s[dx.DB_STORED] = s +' (writeable)';
+		      dx.db_short_s[dx.DB_STORED] = s;
+		   }
+		   break;
 
 		case "client_public_ip":
 			client_public_ip = param[1].replace(/::ffff:/, '');    // remove IPv4-mapped IPv6 if any
@@ -3189,7 +3229,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
             console.log(dxcomm_cfg);
          }
 			break;
-
+		
 		case "load_adm":
 			var adm_json = decodeURIComponent(param[1]);
 			console.log('### load_adm '+ ws.stream +' '+ adm_json.length);

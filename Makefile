@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 808
+VERSION_MIN = 809
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -695,7 +695,7 @@ else
 endif
 
 $(GEN_ASM): kiwi.config verilog/kiwi.inline.vh $(wildcard e_cpu/asm/*)
-	(cd $(REPO_DIR)/e_cpu; make OTHER_DIR="$(OTHER_DIR2)")
+	(cd $(REPO_DIR)/e_cpu; make gen_includes OTHER_DIR="$(OTHER_DIR2)")
 $(GEN_OTHER_ASM): $(OTHER_CONFIG) e_cpu/other.config $(wildcard e_cpu/asm/*)
 	(cd $(REPO_DIR)/e_cpu; make gen_other OTHER_DIR="$(OTHER_DIR2)")
 $(OUT_ASM): $(wildcard e_cpu/*.asm)
@@ -910,6 +910,9 @@ make_vars: check_detect
 	@echo DTS_DEP_SRC2 = $(DTS_DEP_SRC2)
 	@echo DTS_DEP_DST = $(DTS_DEP_DST)
 	@echo DTS_DEP_DST2 = $(DTS_DEP_DST2)
+	@echo DIR_DTB_BASE = $(DIR_DTB_BASE)
+	@echo DIR_DTB = $(DIR_DTB)
+	@echo DIR_DTB2 = $(DIR_DTB2)
 	@echo
 	@echo GEN_ASM = $(GEN_ASM)
 	@echo
@@ -1252,16 +1255,15 @@ FORCE_REBOOT = /tmp/.force_reboot
 DO_ONCE =
 DTS_DEP_DST =
 DTS_DEP_DST2 =
+DIR_DTB_BASE =
+DIR_DTB =
+DIR_DTB2 =
 
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     DO_ONCE = $(DIR_CFG)/.do_once.dep
 
     DTS_DEP_SRC  = $(addprefix $(DIR_DTS)/,$(DTS))
     DTS_DEP_SRC2 = $(addprefix $(DIR_DTS)/,$(DTS2))
-    ifneq ($(DIR_DTB),)
-        DTS_DEP_DST  = $(addprefix $(DIR_DTB)/,$(DTS))
-        DTS_DEP_DST2 = $(addprefix $(DIR_DTB)/,$(DTS2))
-    endif
 
     $(DO_ONCE):
 	    @mkdir -p $(DIR_CFG)
@@ -1271,14 +1273,28 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 
     ifeq ($(BYAI),true)
         DTS = k3-am67a-beagley-ai.dts
-        DTS2 = k3-am67a-beagley-ai-main_spi2.dts k3-am67a-beagley-ai-main_spi0.dts k3-am67a-beagley-ai-mcu_spi0.dts
-        DIR_DTS  = platform/beagleY_AI/$(DEB)
+        DTS2 = k3-am67a-beagley-ai-kiwisdr.dts k3-am67a-beagley-ai-main_spi2.dts k3-am67a-beagley-ai-main_spi0.dts k3-am67a-beagley-ai-mcu_spi0.dts
+        DIR_DTS = platform/beagleY_AI/$(DEB)
+
         DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)-*)
         DIR_DTB  = $(DIR_DTB_BASE)/src/arm64/ti
         DIR_DTB2 = $(DIR_DTB_BASE)/src/arm64/overlays
+
         ifeq ($(DEBIAN_12_AND_LATER),true)
-            DEB := "D12+"
+            DEB := D12+
         endif
+
+        DTS_DEP_DST  = $(addprefix $(DIR_DTB)/,$(DTS))
+        DTS_DEP_DST2 = $(addprefix $(DIR_DTB)/,$(DTS2))
+
+        # re-install device tree if changes made to *.dts source file
+        $(DTS_DEP_DST) $(DTS_DEP_DST2): $(DTS_DEP_SRC) $(DTS_DEP_SRC2)
+	        @echo "BYAI: re-install Kiwi device tree to configure GPIO pins"
+	        -@ls -la $(DTS_DEP_SRC) $(DTS_DEP_DST) $(DTS_DEP_SRC2) $(DTS_DEP_DST2)
+	        -@sum $(DTS_DEP_SRC) $(DTS_DEP_DST) $(DTS_DEP_SRC2) $(DTS_DEP_DST2)
+	        make install_kiwi_device_tree
+#	        exit 1
+	        touch $(FORCE_REBOOT)
 
         install_kiwi_device_tree:
 	        @echo "BYAI: install Kiwi device tree to configure SPI and GPIO pins"
@@ -1293,24 +1309,32 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     ifeq ($(BBAI_64),true)
         DTS = k3-j721e-beagleboneai64.dts k3-j721e-beagleboneai64-bone-buses.dtsi
         DTS2 = 
-        DIR_DTS  = platform/beaglebone_AI64/$(DEB)
+        DIR_DTS = platform/beaglebone_AI64/$(DEB)
+
         DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)-*)
         DIR_DTB  = $(DIR_DTB_BASE)/src/arm64
         DIR_DTB2 = $(DIR_DTB_BASE)/src/arm64/overlays
+
         ifeq ($(DEBIAN_11_AND_LATER),true)
             #DTS2 = overlays/kiwisdr-cape.dts
             EXTLINUX := /boot/firmware/extlinux/extlinux.conf
             EXISTS_EXTLINUX := $(shell test -e $(EXTLINUX) && echo true)
             ifeq ($(EXISTS_EXTLINUX),true)
-                DEB := "D11.9+"
+                DEB := D11.9+
             endif
         endif
 
+        DTS_DEP_DST  = $(addprefix $(DIR_DTB)/,$(DTS))
+        DTS_DEP_DST2 = $(addprefix $(DIR_DTB)/,$(DTS2))
+
         # re-install device tree if changes made to *.dts source file
-#        $(DTS_DEP_DST) $(DTS_DEP_DST2): $(DTS_DEP_SRC) $(DTS_DEP_SRC2)
-#	        @echo "BBAI-64: re-install Kiwi device tree to configure GPIO pins"
-#	        make install_kiwi_device_tree
-#	        touch $(FORCE_REBOOT)
+        $(DTS_DEP_DST) $(DTS_DEP_DST2): $(DTS_DEP_SRC) $(DTS_DEP_SRC2)
+	        @echo "BBAI-64: re-install Kiwi device tree to configure GPIO pins"
+	        -@ls -la $(DTS_DEP_SRC) $(DTS_DEP_DST) $(DTS_DEP_SRC2) $(DTS_DEP_DST2)
+	        -@sum $(DTS_DEP_SRC) $(DTS_DEP_DST) $(DTS_DEP_SRC2) $(DTS_DEP_DST2)
+	        make install_kiwi_device_tree
+#	        exit 1
+	        touch $(FORCE_REBOOT)
 
         install_kiwi_device_tree:
 	        @echo "BBAI-64: install Kiwi device tree to configure GPIO pins"
@@ -1320,9 +1344,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 #	            @cp -v $(DTS_DEP_SRC2) $(DIR_DTB2)
 	            (cd $(DIR_DTB_BASE); make)
 	            (cd $(DIR_DTB_BASE); make install_arm64)
-	            # including this breaks /dev/spidev9 since D11.9 / r113?
+                # including this breaks /dev/spidev9 since D11.9
+                # don't need to do anything except "modprobe spidev" in ./k and unix_env/kiwid
+                # also note the added "bone_spi_0: &main_spi6" to k3-j721e-beagleboneai64-bone-buses.dtsi
                 #ifeq ($(EXISTS_EXTLINUX),true)
-	            #   -sed -i -e 's:#fdtoverlays /overlays/<file>.dtbo:fdtoverlays /overlays/BONE-SPI0_0.dtbo:' $(EXTLINUX)
+                #   -sed -i -e 's:#fdtoverlays /overlays/<file>.dtbo:fdtoverlays /overlays/BONE-SPI0_0.dtbo:' $(EXTLINUX)
                 #endif
             else
 	            @cp -v $(DTS_DEP_SRC) $(DIR_DTB)
@@ -1335,9 +1361,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
         DTS = am5729-beagleboneai.dts am5729-beagleboneai-kiwisdr-cape.dts
         DTS2 = 
         DIR_DTS = platform/beaglebone_AI/$(DEB)
+
         DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)-*)
-        DIR_DTB = $(DIR_DTB_BASE)/src/arm
+        DIR_DTB  = $(DIR_DTB_BASE)/src/arm
         DIR_DTB2 = $(DIR_DTB_BASE)/src/arm/overlays
+
         ifeq ($(DEBIAN_12_AND_LATER),true)
             #DTS2 = overlays/kiwisdr-cape.dts
         endif
@@ -1379,6 +1407,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     ifeq ($(BBG_BBB),true)
         DTS = cape-bone-kiwi-00A0.dts
         DIR_DTS = platform/beaglebone_black
+
         ifeq ($(DEBIAN_12_AND_LATER),true)
             #DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)-*)
             #DIR_DTB = $(DIR_DTB_BASE)/src/arm
@@ -1838,7 +1867,7 @@ git:
 	git checkout .
 	git pull -v $(GIT_PROTO)://github.com/$(REPO_GIT)
 
-GITHUB_COM_IP = "52.64.108.95"
+GITHUB_COM_IP = 4.237.22.38
 git_using_ip:
 	@# remove local changes from development activities before the pull
 	git clean -fd
@@ -1882,7 +1911,7 @@ dump_eeprom:
 dump_eeprom_all: dump_eeprom
 	@echo
 	@echo "BeagleBone EEPROM:"
-    ifeq ($(BBAI_64),true)
+    ifeq ($(or $(BBAI_64), $(BYAI)),true)
 	    -hexdump -C /sys/bus/i2c/devices/2-0050/eeprom
     else
     ifeq ($(BBAI),true)
@@ -2059,20 +2088,10 @@ clone:
 
 ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 
-BIN_PLATFORMS := BBAI_64 BBAI BBG_BBB
-BIN_EXISTS := $(foreach plat,$(BIN_PLATFORMS),$(shell test -f bin/kiwi_$(VER)_$(DEBMM)_$(plat).bin && echo true || echo false))
-
     # used by scgit alias
     copy_to_git:
 	    @(echo 'current dir is:'; pwd)
 	    @(cd $(GITAPP)/$(REPO_NAME); echo 'repo branch set to:'; pwd; git --no-pager branch)
-        ifeq ($(BINARY_DISTRO),true)
-	        @echo "checking for release bin files: $(BIN_PLATFORMS)"
-            ifeq ($(findstring false,$(BIN_EXISTS)),false)
-	            @echo "WARNING some binary release files missing:"
-	            @ls -la bin
-            endif
-        endif
 	    @echo '################################'
 	    @echo -n 'did you make install to rebuild the optimized files? '
 	    @read not_used

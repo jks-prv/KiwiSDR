@@ -69,6 +69,7 @@ function HFDL_main()
 
 function hfdl_recv(data)
 {
+   var s, src, acars;
 	var firstChars = arrayBufferToStringLen(data, 3);
 	
 	// process data sent from server/C by ext_send_msg_data()
@@ -133,7 +134,7 @@ function hfdl_recv(data)
 			   break;
 
 			case "chars":
-			   var s = param[1];
+			   s = param[1];
             var x = kiwi_decodeURIComponent('', param[1]).split('\n');
             //console.log(x);
             var uplink = x[1].startsWith('Uplink');
@@ -204,9 +205,10 @@ function hfdl_recv(data)
 
                   s += ' | '+ x[3];
 
-                  var found = false, acars = false;
+                  var found = false;
+                  acars = false;
                   var ss = '', _type;
-                  var src = '';
+                  src = '';
                   var type_s = [ 'Logon request', 'Logon resume', 'Logon confirm', 'Unnumbered data', 'Unnumbered ack\'ed' ];
                   type_s.forEach(function(type, i) {
                      if (found || !x[4].includes(type)) return;
@@ -237,10 +239,10 @@ function hfdl_recv(data)
                   break;
          
                case hfdl.ACARS:
-                  var s = '';
-                  var src = '';
+                  s = '';
+                  src = '';
                   var accum_acars_msgs = false;
-                  var acars = '';
+                  acars = '';
                   x.forEach(function(s1, j) {
                      //console.log('ACARS-'+ j +': '+ s1);
                      var a = s1.split(':');
@@ -362,7 +364,7 @@ function hfdl_controls_setup()
             w3_button('w3-padding-smaller', 'Prev', 'w3_select_next_prev_cb', { dir:w3_MENU_PREV, id:'hfdl.menu', isNumeric:true, func:'hfdl_np_pre_select_cb' }),
             w3_button('id-hfdl-clear-button w3-padding-smaller w3-css-yellow', 'Clear', 'hfdl_clear_button_cb'),
             w3_button('id-hfdl-log w3-padding-smaller w3-blue', 'Log', 'hfdl_log_cb'),
-            w3_button('id-id-hfdl-test w3-padding-smaller w3-aqua', 'Test', 'hfdl_test_cb', 1),
+            w3_button('id-hfdl-test w3-padding-smaller w3-aqua', 'Test', 'hfdl_test_cb', 1),
             w3_div('id-hfdl-bar-container w3-progress-container w3-round-large w3-white w3-hide|width:70px; height:16px',
                w3_div('id-hfdl-bar w3-progressbar w3-round-large w3-light-green|width:0%', '&nbsp;')
             ),
@@ -391,7 +393,7 @@ function hfdl_controls_setup()
 	
 	// our sample file is 12k only
 	if (ext_nom_sample_rate() != 12000)
-	   w3_add('id-hfdl-test', 'w3-disabled');
+	   w3_disable('id-hfdl-test');
 	
 	hfdl.kmap = kiwi_map_init('hfdl', [28, 15], 2, 17);
 
@@ -451,7 +453,7 @@ function hfdl_show_kiwi_cb(path, idx, first)
 function hfdl_clear_old_cb(path, idx, first)
 {
    //console.log('hfdl_clear_old_cb idx='+ idx +' first='+ first);
-   if (!(+idx)) return;
+   if ((+idx) == 0) return;
    var old = Date.now() - hfdl.too_old_min*60*1000;
    w3_obj_enum(hfdl.flights, function(key, i, o) {
       if (o.upd > old) return;
@@ -488,7 +490,7 @@ function hfdl_day_night_visible_cb(path, checked, first)
 {
    if (first) return;
    if (!hfdl.kmap.day_night) return;
-   var checked = w3_checkbox_get(path);
+   checked = w3_checkbox_get(path);
    kiwi_map_day_night_visible(hfdl.kmap, checked);
 }
 
@@ -584,12 +586,12 @@ function hfdl_place_gs_marker(gs_n)
 
 function hfdl_flight_update(flight_name, lat, lon)
 {
-   var flight_o;
+   var flight_o, marker;
    
    if (!hfdl.flights[flight_name]) {
       console.log('FL-NEW '+ flight_name +' '+ lat.toFixed(4) +' '+ lon.toFixed(4));
 
-      var marker = kiwi_map_add_marker_div(hfdl.kmap, kmap.NO_ADD_TO_MAP,
+      marker = kiwi_map_add_marker_div(hfdl.kmap, kmap.NO_ADD_TO_MAP,
          [lat, lon], '', [12, 12], [0, 0], 1.0);
       flight_o = { flight: flight_name, mkr: marker, upd: Date.now(), pos: [] };
       if (hfdl.test_flight && flight_name.startsWith('ABC')) {
@@ -618,7 +620,7 @@ function hfdl_flight_update(flight_name, lat, lon)
       );
    } else {
       flight_o = hfdl.flights[flight_name];
-      var marker = flight_o.mkr;
+      marker = flight_o.mkr;
       marker.setLatLng([lat, lon]);
       var n = flight_o.pos.push([lat, lon]);
       w3_color(flight_o.el, 'black', 'yellow');    // might have re-appeared after previously going grey
@@ -698,34 +700,35 @@ function hfdl_freq_2_band(f)
 
 function hfdl_menu_match(m_freq, m_str)
 {
+   var d = (0 && dbgUs);
    var rv = { found_menu_match: false, match_menu: 0, match_val: 0 };
    var menu = 'hfdl.menu1';   // limit matching to "Bands" menu
    var match = false;
 
-   if (dbgUs) console.log('CONSIDER '+ menu +' '+ dq(m_str) +' -----------------------------------------');
+   if (d) console.log('CONSIDER '+ menu +' '+ dq(m_str) +' -----------------------------------------');
    w3_select_enum(menu, function(option, j) {
       if (option.disabled) return;
       var val = +option.value;
       if (rv.found_menu_match || val == -1) return;
       var menu_f = parseFloat(option.innerHTML);
       var menu_s = option.innerHTML.toLowerCase();
-      if (dbgUs) console.log('CONSIDER '+ val +' '+ dq(option.innerHTML));
+      if (d) console.log('CONSIDER '+ val +' '+ dq(option.innerHTML));
 
       if (isNumber(m_freq) && isNumber(menu_f)) {
          if (menu_f == m_freq) {
-            if (dbgUs) console.log('MATCH num: '+ dq(menu_s) +'['+ j +']');
+            if (d) console.log('MATCH num: '+ dq(menu_s) +'['+ j +']');
             match = true;
          }
       } else {
-         if (dbgUs) console.log('menu_s '+ dq(menu_s) +' m_str '+ dq(m_str) +' '+ TF(menu_s.includes(m_str)));
+         if (d) console.log('menu_s '+ dq(menu_s) +' m_str '+ dq(m_str) +' '+ TF(menu_s.includes(m_str)));
          if (menu_s.includes(m_str)) {
-            if (dbgUs) console.log('MATCH str: '+ dq(menu_s) +'['+ j +']');
+            if (d) console.log('MATCH str: '+ dq(menu_s) +'['+ j +']');
             match = true;
          }
       }
 
       if (match) {
-         if (dbgUs) console.log('MATCH rv menu='+ menu +' val='+ val +' '+ dq(option.innerHTML));
+         if (d) console.log('MATCH rv menu='+ menu +' val='+ val +' '+ dq(option.innerHTML));
          // delay call to hfdl_pre_select_cb() until other params processed below
          rv.match_menu = menu;
          rv.match_val = val;
@@ -750,6 +753,7 @@ function hfdl_get_systable_done_cb(stations)
    
          hfdl.url_params = ext_param();
          if (dbgUs) console.log('url_params='+ hfdl.url_params);
+         var do_test = 0;
    
          if (hfdl.url_params) {
             var p = hfdl.url_params.split(',');
@@ -758,7 +762,6 @@ function hfdl_get_systable_done_cb(stations)
             var m_freq = p[0].parseFloatWithUnits('kM', 1e-3);
             var m_str = kiwi_decodeURIComponent('hfdl', p[0]).toLowerCase();
             if (dbgUs) console.log('URL freq='+ m_freq);
-            var do_test = 0;
 
             // select matching menu item frequency
             var rv = hfdl_menu_match(m_freq, m_str);
@@ -939,10 +942,11 @@ function hfdl_pre_select_cb(path, val, first)
 {
    if (first) return;
    val = +val;
-   if (dbgUs) console.log('hfdl_pre_select_cb path='+ path +' val='+ val);
+   var d = (0 && dbgUs);
+   if (d) console.log('hfdl_pre_select_cb path='+ path +' val='+ val);
 
 	var menu_n = parseInt(path.split('hfdl.menu')[1]);
-   if (dbgUs) console.log('hfdl_pre_select_cb path='+ path +' val='+ val +' menu_n='+ menu_n);
+   if (d) console.log('hfdl_pre_select_cb path='+ path +' val='+ val +' menu_n='+ menu_n);
 
    // find matching object entry in hfdl.menus[] hierarchy and set hfdl.* parameters from it
    var header = '';
@@ -951,11 +955,11 @@ function hfdl_pre_select_cb(path, val, first)
 
 	w3_select_enum(path, function(option) {
 	   if (found) return;
-	   if (dbgUs) console.log('hfdl_pre_select_cb menu_n='+ menu_n +' opt.val='+ option.value +' opt.disabled='+ option.disabled +' opt.inner='+ option.innerHTML +' opt.id='+ option.id);
+	   if (d) console.log('hfdl_pre_select_cb menu_n='+ menu_n +' opt.val='+ option.value +' opt.disabled='+ option.disabled +' opt.inner='+ option.innerHTML +' opt.id='+ option.id);
 	   
 	   var menu0_hdr = (menu_n == 0 && option.disabled && option.value != -1);
 	   var menu1_hdr = (menu_n == 1 && option.id && option.id.split('-')[2] == 0);
-	   if (dbgUs) console.log('menu0_hdr='+ menu0_hdr +' menu1_hdr='+ menu1_hdr);
+	   if (d) console.log('menu0_hdr='+ menu0_hdr +' menu1_hdr='+ menu1_hdr);
 	   if (menu0_hdr || menu1_hdr) {
 	      if (cont)
 	         header = header +' '+ option.innerHTML;
@@ -972,7 +976,7 @@ function hfdl_pre_select_cb(path, val, first)
       hfdl.cur_header = header;
 	   
       hfdl.menu_sel = option.innerHTML +' ';
-      if (dbgUs) console.log('hfdl_pre_select_cb opt.val='+ option.value +' menu_sel='+ hfdl.menu_sel +' opt.id='+ option.id);
+      if (d) console.log('hfdl_pre_select_cb opt.val='+ option.value +' menu_sel='+ hfdl.menu_sel +' opt.id='+ option.id);
 
       var id = option.id.split('id-')[1];
       if (isUndefined(id)) {
@@ -985,21 +989,21 @@ function hfdl_pre_select_cb(path, val, first)
       id = id.split('-');
       var i = +id[0];
       var j = +id[1];
-      if (dbgUs) console.log('hfdl_pre_select_cb i='+ i +' j='+ j);
+      if (d) console.log('hfdl_pre_select_cb i='+ i +' j='+ j);
       var o1 = w3_obj_seq_el(hfdl.menus[menu_n], i);
       //console.log(hfdl.menus[menu_n]);
       //console.log('o1=...');
       //console.log(o1);
-      if (dbgUs) w3_console.log(o1, 'o1');
+      if (d) w3_console.log(o1, 'o1');
       o2 = w3_obj_seq_el(o1.frequencies, j);
       //console.log('o2=...');
       //console.log(o2);
-      if (dbgUs) w3_console.log(o2, 'o2');
+      if (d) w3_console.log(o2, 'o2');
    
       var s = null, show_msg = 0;
       o2 = parseInt(o2);
       if (isNumber(o2)) {
-         if (dbgUs) console.log(o2);
+         if (d) console.log(o2);
          
          if (o2 < hfdl.bf.length) {
             var znew = hfdl.bf_z[o2];
@@ -1081,7 +1085,7 @@ function hfdl_display_cb(path, idx, first)
 
 function hfdl_test_cb(path, val, first)
 {
-   if (first) return;
+   if (ext_nom_sample_rate() != 12000) return;
    val = +val;
    if (dbgUs) console.log('hfdl_test_cb: val='+ val);
    hfdl.testing = val;
@@ -1128,21 +1132,30 @@ function HFDL_environment_changed(changed)
 {
    //w3_console.log(changed, 'HFDL_environment_changed');
 
-   if (changed.freq || changed.mode) {
+   if (changed.ext_open || changed.freq || changed.mode) {
       var f_kHz = (+ext_get_freq_kHz()).toFixed(0);
       var hfdl_f_kHz = (+hfdl.freq).toFixed(0);
       var mode = ext_get_mode();
-      //console.log('HFDL_environment_changed: freq='+ hfdl_f_kHz +' f_kHz='+ f_kHz +' mode='+ mode);
+      //console.log('HFDL_environment_changed: TEST ext_open='+ TF(changed.ext_open) +' freq='+ hfdl_f_kHz +' f_kHz='+ f_kHz +' mode='+ mode);
 	   if (mode != 'iq') {
 	      //console.log('hfdl_clear_menus()');
 	      hfdl_clear_menus();
+	      hfdl_msg('w3-text-css-yellow', '&nbsp;');
 	   } else
-	   if (hfdl_f_kHz != f_kHz && mode == 'iq') {
+	   if ((changed.ext_open || hfdl_f_kHz != f_kHz) && mode == 'iq') {
 	      // try and match new freq to one of the menu entries
-	      //console.log('HFDL_environment_changed: f='+ f_kHz);
+	      //console.log('HFDL_environment_changed: TRUE f='+ f_kHz);
 	      var rv = hfdl_menu_match(+f_kHz, f_kHz);
-         if (rv.found_menu_match)
+         if (rv.found_menu_match) {
+            //console.log('HFDL MATCH f_kHz='+ f_kHz);
             hfdl_pre_select_cb(rv.match_menu, rv.match_val, false);
+         } else {
+	         //console.log('hfdl_clear_menus()');
+	         hfdl_clear_menus();
+	         hfdl_msg('w3-text-css-yellow', '&nbsp;');
+	      }
+      } else {
+	         //console.log('HFDL no freq change');
       }
    }
 

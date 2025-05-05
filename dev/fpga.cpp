@@ -130,27 +130,7 @@ void printmem(const char *str, u2_t addr)
 void fpga_panic(int code, const char *s)
 {
     lprintf("FPGA panic: code=%d %s\n", code, s);
-    
-    #ifdef DEBUG
-    #else
-        led_clear(0);
-        
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                led_set(1,0,1,0, 500);
-                led_set(0,1,0,1, 500);
-            }
-            led_clear(1000);
-            #define LB(c,v) (((c) & (v))? 1:0)
-            led_set(LB(code,8), LB(code,4), LB(code,2), LB(code,1), 5000);
-            led_clear(1000);
-        }
-        
-        led_flash_all(32);
-        led_clear(1000);
-        led_set_debian();
-    #endif
-    
+    led_display_fpga_code(code);
     panic("FPGA panic");
 }
 
@@ -185,7 +165,7 @@ u64_t fpga_dna()
 // FPGA init
 ////////////////////////////////
 
-//#define TEST_FLAG_SPI_RFI
+#define TEST_FLAG_SPI_RFI
 
 bool background_mode = FALSE;
 
@@ -199,37 +179,10 @@ void fpga_init() {
     FILE *fp;
     int n, i, j;
 
-	gpio_setup(FPGA_PGM, GPIO_DIR_OUT, 1, PMUX_OUT_PU, 0);		// i.e. FPGA_PGM is an INPUT, active LOW
-	gpio_setup(FPGA_INIT, GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, 0);
-	
-	#if 0
-	    while (1) {
-            GPIO_WRITE_BIT(FPGA_PGM, 1);
-            real_printf("w1r%d ", GPIO_READ_BIT(FPGA_INIT)); fflush(stdout);
-            kiwi_usleep(250000);
-            GPIO_WRITE_BIT(FPGA_PGM, 0);
-            real_printf("w0r%d ", GPIO_READ_BIT(FPGA_INIT)); fflush(stdout);
-	    }
-	#endif
-
-	#if 0
-        GPIO_OUTPUT(SPIn_CS1);
-        //GPIO_OUTPUT(P816);
-	    while (1) {
-            //real_printf("."); fflush(stdout);
-            GPIO_CLR_BIT(SPIn_CS1);
-            //GPIO_CLR_BIT(P816);
-            kiwi_usleep(1000);
-            GPIO_SET_BIT(SPIn_CS1);
-            //GPIO_SET_BIT(P816);
-            kiwi_usleep(1000);
-	    }
-	#endif
-
 	spi_dev_init(spi_clkg, spi_speed);
 
 #ifdef TEST_FLAG_SPI_RFI
-	if (test_flag)
+	if (spi_test)
 		real_printf("TEST_FLAG_SPI_RFI..\n");
 	else
 #endif
@@ -250,7 +203,7 @@ void fpga_init() {
 	char *file;
 	asprintf(&file, "%sKiwiSDR.%s.bit", background_mode? "/usr/local/bin/":"", fpga_file);
     char *sum = non_blocking_cmd_fmt(NULL, "sum %s", file);
-    lprintf("firmware: %s %.5s\n", file, kstr_sp(sum));
+    lprintf("FPGA firmware: %s %.5s\n", file, kstr_sp(sum));
     fp = fopen(file, "rb");
     if (!fp) fpga_panic(3, "fopen config");
     kstr_free(sum);
@@ -281,7 +234,7 @@ void fpga_init() {
     #endif
     
     #ifdef TEST_FLAG_SPI_RFI
-    	if (test_flag) {
+    	if (spi_test) {
             //real_printf("."); fflush(stdout);
             kiwi_usleep(3000);
     		if (n <= 0) {
@@ -313,7 +266,6 @@ void fpga_init() {
     }
     
 	// keep clocking until config/startup finishes
-	n = sizeof(zeros.bytes);
     spi_dev(SPI_FPGA, &zeros, SPI_B2X(n), &readback, SPI_B2X(n));
 
     fclose(fp);
@@ -325,8 +277,11 @@ void fpga_init() {
 
 	// download embedded CPU program binary
 	const char *aout = background_mode? "/usr/local/bin/kiwid.aout" : (BUILD_DIR "/gen/kiwi.aout");
+    sum = non_blocking_cmd_fmt(NULL, "sum %s", aout);
+	printf("e_cpu firmware: %s %.5s\n", aout, kstr_sp(sum));
     fp = fopen(aout, "rb");
     if (!fp) fpga_panic(5, "fopen aout");
+    kstr_free(sum);
 
 
     // download first 2k words via SPI hardware boot (SPIBUF_B limit)

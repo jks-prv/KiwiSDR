@@ -96,7 +96,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
         CFLAGS += -DDEVSYS
         
         # platform choice when building on development machine
-        BYAI := 
+        BYAI := true
         BBAI_64 := 
         BBAI := 
         RPI := 
@@ -404,4 +404,9 @@ ifeq ($(GDB),1)
     CPP_FLAGS += -O0
     OPT = 0
     VIS_OPT =
+endif
+
+
+ifeq ($(NO_SHMEM),1)
+    CPP_FLAGS += -DNO_SHMEM
 endif

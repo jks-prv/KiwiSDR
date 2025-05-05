@@ -22,6 +22,7 @@ Boston, MA  02110-1301, USA.
 // TDA4VM memory map (BBAI-64) TRM 2.1 pdfpg 126
 #ifdef CPU_TDA4VM
  #define PRCM_BASE	NULL        // already powered up
+ #define NPMUX      1
  #define PMUX_BASE	0x0011C000  // CTRL_MMR0_CFG0/CTRLMMR_PADCONFIG0
  #define GPIO0_BASE	0x00600000
  #define SPI_BASE	NULL        // SPI_PIO never used
@@ -30,20 +31,27 @@ Boston, MA  02110-1301, USA.
 
 // AM67 memory map (BYAI) TRM 2.1 pdfpg 40
 #ifdef CPU_AM67
- #define PRCM_BASE	NULL        // already powered up
- #define PMUX_BASE	0x000f4000  // PADCFG_CTRL0_CFG0
- #define GPIO0_BASE	0x00600000
- #define SPI_BASE	NULL        // SPI_PIO never used
- #define MMAP_SIZE	0x2000
+ #define PRCM_BASE	 NULL       // already powered up
+ #define NPMUX       3
+ #define PMUX01_BASE 0x000f4000 // PADCFG_CTRL0_CFG0
+ #define PMUX2_BASE	 0x04084000 // MCU_PADCFG_CTRL0_CFG0
+ #define GPIO0_BASE	 0x00600000
+ #define GPIO1_BASE	 0x00601000
+ #define GPIO2_BASE	 0x04201000 // really MCU_GPIO0_BASE
+ #define SPI_BASE	 NULL       // SPI_PIO never used
+ #define MMAP_SIZE	 0x2000
 #endif
 
 
 // PMUX: pin mux (remember: Linux doesn't allow write of pmux via mmap -- use device tree (dts) mechanism instead)
 
-#ifdef CPU_TDA4VM                   // TRM 5.1.3.3.1.1 pad configuration regs
-                                    // J721E_registers1.pdf 6.404 pdfpg 1048 padconfig1 reg
-                                    // CAUTION: padconfig0 reg is different from all others (fields missing)
-                                    // padconfig1 hw reset value 0x8214007
+#ifdef CPU_TDA4VM
+ #define    PMUX(g,off) pmux_m[0][(off) >> 2]
+
+ // TRM 5.1.3.3.1.1 pad configuration regs
+ // J721E_registers1.pdf 6.404 pdfpg 1048 padconfig1 reg
+ // CAUTION: padconfig0 reg is different from all others (fields missing)
+ // padconfig1 hw reset value 0x8214007
  
  #define	PMUX_ISOBP	0x00800000  // 23 isolation bypass
  #define	PMUX_ISOOV	0x00400000  // 22 isolation override
@@ -71,11 +79,14 @@ Boston, MA  02110-1301, USA.
  #define	PMUX_OFF    0x0000000f  // mode 15
 #endif
 
-#ifdef CPU_AM67                     // TRM 6.1.2.1.2 pad configuration regs
-                                    // J722S_Registers_Public_20250115.xlsx sheet 90_PADCFG_CTRL0
-                                    // CAUTION: padconfig0 reg is different from all others (fields missing)
-                                    // padconfig0 0xf4000, padconfig1 0xf4004
-                                    // padconfig1 hw reset value 0x8214007
+#ifdef CPU_AM67
+ #define    PMUX(g,off) pmux_m[(g).bank][(off) >> 2]
+
+ // TRM 6.1.2.1.2 pad configuration regs
+ // J722S_Registers_Public_20250115.xlsx sheet 90_PADCFG_CTRL0
+ // CAUTION: padconfig0 reg is different from all others (fields missing)
+ // padconfig0 0xf4000, padconfig1 0xf4004
+ // padconfig1 hw reset value 0x8214007
  
  #define	PMUX_ISOBP	0x00800000  // 23 isolation bypass
  #define	PMUX_ISOOV	0x00400000  // 22 isolation override
@@ -97,8 +108,9 @@ Boston, MA  02110-1301, USA.
  #define    PMUX_ATTR_S 20
  #define    PMUX_ATTR_E 14
 
- #define	PMUX_MODE   0x0000000f  // mode bits
- #define	PMUX_SPI    0x00000000  // SPI  = mode 1    // see: beagley_ai-pins.txt
+ #define	PMUX_MODE   0x0000000f  // mode bits, see: beagley_ai-pins.txt
+ #define	PMUX_I2C    0x00000000  // I2C  = mode 0
+ #define	PMUX_SPI    0x00000001  // SPI  = mode 1
  #define	PMUX_GPIO   0x00000007  // GPIO = mode 7
  #define	PMUX_OFF    0x0000000f  // mode 15
 #endif
@@ -120,7 +132,7 @@ Boston, MA  02110-1301, USA.
 // GPIO
 
 #ifdef CPU_TDA4VM
- #define	NBALL	        2   // max number of cpu package balls assigned to a single GPIO
+ #define	NBALL	        2   // max number of cpu package balls wired to a single header pin
  #define	GPIO0	        0
  #define	NGPIO	        1
  #define    GPIO_NPINS      128
@@ -128,16 +140,18 @@ Boston, MA  02110-1301, USA.
 #endif
 
 #ifdef CPU_AM67
- #define	NBALL	        2   // max number of cpu package balls assigned to a single GPIO
+ #define	NBALL	        2   // max number of cpu package balls wired to a single header pin
  #define	GPIO0	        0
  #define	GPIO1	        1
- #define	NGPIO	        2
- #define    GPIO_NPINS      128
+ #define	GPIO2           2   // really MCU_GPIO0_BASE
+ #define	NGPIO	        3
+ #define    GPIO_NPINS      128 // pow2, not actual
  #define    GPIO_BANK(gpio) ((gpio).bank)
 #endif
 
 // CPU_TDA4VM J721E_registers4.pdf table 2-2 pdfpg 56
 // CPU_AM67   J722S_Registers_Public_20250115.xlsx sheet 70_GPIO0
+#define	_GPIO_ID			0x000
 #define	_GPIO_IEN		    0x008   // enable = 1
 #define	_GPIO_DIR		    0x010   // input = 1
 #define	_GPIO_OUT			0x014
@@ -149,33 +163,34 @@ Boston, MA  02110-1301, USA.
 #define GPIO_CLR_IRQ0(g)    // assume already cleared
 #define GPIO_CLR_IRQ1(g)
 
-// 32*4 = 128
-// 0x10 + n*0x28
-// 01:0x10 23:0x38 45:0x60 67:0x88
-#define _GPIO_REG(g, off)   gpio_m[GPIO0][(((g).bit_div32 * 0x28) + (off)) >> 2]
+// 9*16 = 144 i.e. 9 banks of 16 GPIOs each, regs store 32 GPIOs e.g. GPIO01 GPIO23 ...
+// e.g. GPIO_DIR() = n*0x28 + 0x10, n = bit/32, 0x10 = _GPIO_DIR
+//  GPIO_DIR01:0x10 GPIO_DIR23:0x38 GPIO_DIR45:0x60 GPIO_DIR67:0x88 GPIO_DIR8:0xb0
+#define _GPIO_OFF(g, off)   ((((g).bit_div32 * 0x28) + (off)) >> 2)
+#define _GPIO_REG(g, off)   gpio_m[GPIO_BANK(g)][_GPIO_OFF(g, off)]
+#define _GPIO_ADDR(g, off)  &_GPIO_REG(g, off)
+#define _GPIO_BIT(g)        (1 << ((g).bit_mod32))
+
+#define GPIO_ID(g)			gpio_m[GPIO_BANK(g)][0]
 #define GPIO_DIR(g)			_GPIO_REG(g, _GPIO_DIR)
 #define GPIO_IN(g)			_GPIO_REG(g, _GPIO_IN)
 #define GPIO_OUT(g)			_GPIO_REG(g, _GPIO_OUT)
 #define GPIO_CLR(g)			_GPIO_REG(g, _GPIO_CLR)
 #define GPIO_SET(g)			_GPIO_REG(g, _GPIO_SET)
 
-#define	GPIO_OUTPUT(g)		GPIO_DIR(g) = GPIO_DIR(g) & ~(1 << ((g).bit_mod32));
-#define	GPIO_INPUT(g)		GPIO_DIR(g) = GPIO_DIR(g) | (1 << ((g).bit_mod32));
-#define	GPIO_isOUT(g)		((GPIO_DIR(g) & (1 << ((g).bit_mod32)))? 0:1)
+#define	GPIO_OUTPUT(g)		GPIO_DIR(g) = GPIO_DIR(g) & ~_GPIO_BIT(g);
+#define	GPIO_INPUT(g)		GPIO_DIR(g) = GPIO_DIR(g) | _GPIO_BIT(g);
+#define	GPIO_isOUT(g)		((GPIO_DIR(g) & _GPIO_BIT(g))? 0:1)
 
-#define	GPIO_CLR_BIT(g)		GPIO_CLR(g) = 1 << ((g).bit_mod32);
-#define	GPIO_SET_BIT(g)		GPIO_SET(g) = 1 << ((g).bit_mod32);
-#define	GPIO_READ_BIT(g)	((GPIO_IN(g) & (1 << ((g).bit_mod32)))? 1:0)
+#define	GPIO_CLR_BIT(g)		GPIO_CLR(g) = _GPIO_BIT(g);
+#define	GPIO_SET_BIT(g)		GPIO_SET(g) = _GPIO_BIT(g);
+#define	GPIO_READ_BIT(g)	((GPIO_IN(g) & _GPIO_BIT(g))? 1:0)
 #define	GPIO_WRITE_BIT(g,b)	{ if (b) { GPIO_SET_BIT(g) } else { GPIO_CLR_BIT(g) } }
-
-#define	P8			0x00
-#define	P9			0x80
-#define	PIN_BITS	0x7f	// pins 1..46
-#define	PIN(P8_P9, pin)		(P8_P9 | (pin & PIN_BITS))
 
 struct gpio_t {
 	u1_t bank, bit, pin, eeprom_off;
     u1_t bit_div32, bit_mod32;
+    bool isOutput;
 
     void init() {
         bit_div32 = bit / 32;
@@ -199,7 +214,8 @@ extern pin_t eeprom_pins[EE_NPINS];
 #define	EE_PINS_OFFSET_BASE		88
 
 extern gpio_t GPIO_NONE;
-#define isGPIO(g)	((g).bit != 0xff)
+#define GPIO_EQ(g1, g2) ((g1).pin == (g2).pin)
+#define isGPIO(g)	    ((g).bit != 0xff)
 
 #define GPIO_HIZ	-1
 

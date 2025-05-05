@@ -30,24 +30,45 @@
  #include "jacinto.h"
 #endif
 
+#ifdef PLATFORM_beagleY_ai
+    #define	HAT			0x00
+    #define	PIN_BITS	0x7f	// pins 1..40
+    #define	PIN(HAT, pin)		(HAT | (pin & PIN_BITS))
+    #define HDR_CONN_S(gpio)    hdr_conn_s[0]
+    const char * const hdr_conn_s[] = { "HAT" };
+#else
+    #define	P8			0x00
+    #define	P9			0x80
+    #define	PIN_BITS	0x7f	// pins 1..46
+    #define	PIN(P8_P9, pin)		(P8_P9 | (pin & PIN_BITS))
+    #define HDR_CONN_S(gpio)    hdr_conn_s[(gpio.pin & P9)? 1:0]
+    const char * const hdr_conn_s[] = { "P8", "P9" };
+#endif
+
 extern volatile u4_t *spi_m, *gpio_m[];
 
 extern gpio_t GPIO_NONE;
 extern gpio_t FPGA_INIT, FPGA_PGM;
 extern gpio_t SPIn_SCLK, SPIn_MISO, SPIn_MOSI, SPIn_CS0, SPIn_CS1;
 extern gpio_t CMD_READY, SND_INTR;
-extern gpio_t P911, P913, P915, P926;
-extern gpio_t P811, P812, P813, P814, P815, P816, P817, P818, P819, P826;
-extern gpio_t BOOT_BTN;
+
+#ifdef PLATFORM_beagleY_ai
+    extern gpio_t G5, G6, G7, G8, G9, G10, G11, G12, G13, G18, G19, G20, G21, G23, G24;
+#else
+    extern gpio_t P911, P913, P915, P926;
+    extern gpio_t P811, P812, P813, P814, P815, P816, P817, P818, P819, P826;
+    extern gpio_t BOOT_BTN;
+#endif
 
 #define devio_check(gpio, dir, pmux_val1, pmux_val2) \
 	_devio_check(#gpio, gpio, dir, pmux_val1, pmux_val2);
 void _devio_check(const char *name, gpio_t gpio, gpio_dir_e dir, u4_t pmux_val1, u4_t pmux_val2);
 
 #define gpio_setup(gpio, dir, initial, pmux_val1, pmux_val2) \
-    _gpio_setup(#gpio, gpio, dir, initial, pmux_val1, pmux_val2);
-void _gpio_setup(const char *name, gpio_t gpio, gpio_dir_e dir, u4_t initial, u4_t pmux_val1, u4_t pmux_val2);
+    _gpio_setup(#gpio, &gpio, dir, initial, pmux_val1, pmux_val2);
+void _gpio_setup(const char *name, gpio_t *gpio, gpio_dir_e dir, u4_t initial, u4_t pmux_val1, u4_t pmux_val2);
 
 void peri_init();
+void gpio_setup_ant_switch();
 void gpio_test(int gpio_test);
 void peri_free();

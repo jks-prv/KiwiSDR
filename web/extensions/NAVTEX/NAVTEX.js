@@ -316,7 +316,7 @@ function navtex_controls_setup()
                w3_button('w3-padding-smaller w3-css-yellow', 'Clear', 'navtex_clear_button_cb', 0),
                w3_button('id-navtex-log w3-padding-smaller w3-blue', 'Log', 'navtex_log_cb'),
 
-               cfg.navtex.test_file? w3_button('w3-padding-smaller w3-aqua', 'Test', 'navtex_test_cb') : '',
+               cfg.navtex.test_file? w3_button('id-navtex-test w3-padding-smaller w3-aqua', 'Test', 'navtex_test_cb') : '',
 
                w3_input('id-navtex-log-mins/w3-label-not-bold/|padding:0;width:auto|size=4',
                   'log min', 'nt.log_mins', nt.log_mins, 'navtex_log_mins_cb')
@@ -375,6 +375,10 @@ function navtex_controls_setup()
 
    ext_set_data_height(nt.dataH);
 	ext_set_controls_width_height(nt.ctrlW, nt.ctrlH);
+	
+	// our sample file is 12k only
+	if (ext_nom_sample_rate() != 12000)
+	   w3_disable('id-navtex-test');
 	
 	nt.kmap = kiwi_map_init('navtex', [12.5, 112.5], 5, 17);
 
@@ -740,7 +744,7 @@ function navtex_day_night_visible_cb(path, checked, first)
 {
    if (first) return;
    if (!nt.kmap.day_night) return;
-   var checked = w3_checkbox_get(path);
+   checked = w3_checkbox_get(path);
    kiwi_map_day_night_visible(nt.kmap, checked);
 }
 
@@ -764,7 +768,7 @@ function navtex_locations_visible_cb(path, checked, first)
 function navtex_clear_old_cb(path, idx, first)
 {
    //console.log('navtex_clear_old_cb idx='+ idx +' first='+ first);
-   if (!(+idx)) return;
+   if ((+idx) == 0) return;
    var all = (+idx == 2);
    var old = Date.now() - nt.too_old_min*60*1000;
    w3_obj_enum(nt.locations, function(key, i, o) {
@@ -777,14 +781,14 @@ function navtex_clear_old_cb(path, idx, first)
 
 function navtex_location_update(loc_name, lat, lon, url, color)
 {
-   var dup;
+   var dup, loc_o, marker;
    
    if (!nt.locations[loc_name]) {
       console.log('LOC-NEW '+ loc_name +' '+ lat.toFixed(2) +' '+ lon.toFixed(2));
 
-      var marker = kiwi_map_add_marker_div(nt.kmap, kmap.NO_ADD_TO_MAP,
+      marker = kiwi_map_add_marker_div(nt.kmap, kmap.NO_ADD_TO_MAP,
          [lat, lon], '', [12, 12], [0, 0], 1.0);
-      var loc_o = { loc_name: loc_name, mkr: marker, upd: Date.now(), pos: [] };
+      loc_o = { loc_name: loc_name, mkr: marker, upd: Date.now(), pos: [] };
       if (nt.test_location && loc_name.startsWith('ABC'))
          loc_o.upd -= (nt.too_old_min+10)*60*1000;
       loc_o.pos.push([lat, lon]);
@@ -837,8 +841,8 @@ function navtex_location_update(loc_name, lat, lon, url, color)
 
       dup = false;
    } else {
-      var loc_o = nt.locations[loc_name];
-      var marker = loc_o.mkr;
+      loc_o = nt.locations[loc_name];
+      marker = loc_o.mkr;
       marker.setLatLng([lat, lon]);
       var n = loc_o.pos.push([lat, lon]);
       
@@ -858,6 +862,7 @@ function navtex_location_update(loc_name, lat, lon, url, color)
 
 function navtex_test_cb(path, idx, first)
 {
+   if (ext_nom_sample_rate() != 12000) return;
    ext_send('SET test');
 }
 

@@ -183,8 +183,8 @@ bool wdsp_SAM_demod(int rx_chan, int mode, u4_t SAM_mparam, int ns_out, TYPECPX 
     
     for (u4_t i = 0; i < ns_out; i++) {
           
-        f32_t err_sin = sinf(w->phzerror);
-        f32_t err_cos = cosf(w->phzerror);
+        f32_t err_sin, err_cos;
+        sincosf(w->phzerror, &err_sin, &err_cos);
         f32_t ai = err_cos * in[i].re;
         f32_t bi = err_sin * in[i].re;
         f32_t aq = err_cos * in[i].im;

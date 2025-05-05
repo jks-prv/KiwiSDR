@@ -40,10 +40,8 @@ typedef struct {
 	const char *str;
 	token_type_e ttype;
 	int val;
-	union {
-	    u4_t flags;     // TF_* flags
-	    u4_t mask;      // opcode mask for TT_OPC entries
-	};
+    u4_t flags;     // TF_* flags
+    u4_t mask;      // opcode mask for TT_OPC entries
 	u4_t stats;
 } dict_t;
 
@@ -69,61 +67,63 @@ dict_t dict[] = {
 	{ "#else",		TT_PRE,		PP_ELSE },
 	{ "#endif",		TT_PRE,		PP_ENDIF },
 
-	{ "push",		TT_OPC,		OC_PUSH,            OCM_CONST },
-	{ "nop",		TT_OPC,		OC_NOP,             OCM_NONE },
-	{ "ret",		TT_OPC,		OC_NOP | OPT_RET,   OCM_NONE },
-	{ "dup",		TT_OPC,		OC_DUP,             OPT_RET },
-	{ "swap",		TT_OPC,		OC_SWAP,            OPT_RET },
-	{ "swap16",		TT_OPC,		OC_SWAP16,          OPT_RET },
-	{ "over",		TT_OPC,		OC_OVER,            OPT_RET },
-	{ "pop",		TT_OPC,		OC_POP,             OPT_RET },
-	{ "drop",		TT_OPC,		OC_POP,             OPT_RET },
-	{ "rot",		TT_OPC,		OC_ROT,             OPT_RET },
-	{ "addi",		TT_OPC,		OC_ADDI,            OPT_RET },
-	{ "add",		TT_OPC,		OC_ADD,             OPT_RET },
-	{ "add.cin",    TT_STATS,   OC_ADD | OPT_CIN,   OPT_RET },     // only for benefit of stats
-	{ "sub",		TT_OPC,		OC_SUB,             OPT_RET },
-	{ "mult",		TT_OPC,		OC_MULT,            OPT_RET },
-	{ "mult20",		TT_OPC,		OC_MULT20,          OPT_RET },
-	{ "and",		TT_OPC,		OC_AND,             OPT_RET },
-	{ "or",			TT_OPC,		OC_OR,              OPT_RET },
-	{ "xor",		TT_OPC,		OC_XOR,             OPT_RET },
-	{ "not",		TT_OPC,		OC_NOT,             OPT_RET },
-	{ "shl64",		TT_OPC,		OC_SHL64,           OPT_RET },
-	{ "shl",		TT_OPC,		OC_SHL,             OPT_RET },
-	{ "rol",		TT_OPC,		OC_ROL,             OPT_RET },
-	{ "shr",		TT_OPC,		OC_SHR,             OPT_RET },
-	{ "ror",		TT_OPC,		OC_ROR,             OPT_RET },
-	{ "usr",		TT_OPC,		OC_USR,             OPT_RET },
-	{ "rdBit0",		TT_OPC,		OC_RDBIT0,          OPT_RET },
-	{ "rdBit1",		TT_OPC,		OC_RDBIT1,          OPT_RET },
-	{ "rdBit2",		TT_OPC,		OC_RDBIT2,          OPT_RET },
-	{ "fetch16",	TT_OPC,		OC_FETCH16,         OPT_RET },
-	{ "store16",	TT_OPC,		OC_STORE16,         OPT_RET },
-	{ "stk_rd",	    TT_OPC,		OC_STK_RD,          OPT_RET },
-	{ "stk_wr",	    TT_OPC,		OC_STK_WR,          OPT_RET },
-	{ "sp_rp",      TT_OPC,		OC_SP_RP,           OPT_RET },
+	{ "push",		TT_OPC,		OC_PUSH,            0,              OCM_CONST },
+	{ "nop",		TT_OPC,		OC_NOP },
+	{ "ret",		TT_OPC,		OC_NOP | OPT_RET,   TF_RET },
+	{ "dup",		TT_OPC,		OC_DUP,             TF_RET },
+	{ "swap",		TT_OPC,		OC_SWAP,            TF_RET },
+	{ "swap16",		TT_OPC,		OC_SWAP16,          TF_RET },
+	{ "over",		TT_OPC,		OC_OVER,            TF_RET },
+	{ "pop",		TT_OPC,		OC_POP,             TF_RET },
+	{ "drop",		TT_OPC,		OC_POP,             TF_RET },
+	{ "rot",		TT_OPC,		OC_ROT,             TF_RET },
+	{ "addi",		TT_OPC,		OC_ADDI,            TF_RET },
+	{ "add",		TT_OPC,		OC_ADD,             TF_RET | TF_CIN },
+	{ "add.cin",    TT_STATS,   OC_ADD | OPT_CIN,   TF_RET | TF_CIN },  // only for benefit of stats
+	{ "sub",		TT_OPC,		OC_SUB,             TF_RET },
+	{ "mult",		TT_OPC,		OC_MULT,            TF_RET },
+	{ "mult20",		TT_OPC,		OC_MULT20,          TF_RET },
+	{ "and",		TT_OPC,		OC_AND,             TF_RET },
+	{ "or",			TT_OPC,		OC_OR,              TF_RET },
+	{ "xor",		TT_OPC,		OC_XOR,             TF_RET },
+	{ "not",		TT_OPC,		OC_NOT,             TF_RET },
+	{ "shl64",		TT_OPC,		OC_SHL64,           TF_RET | TF_LOOP },
+	{ "shl",		TT_OPC,		OC_SHL,             TF_RET },
+	{ "rol",		TT_OPC,		OC_ROL,             TF_RET },
+	{ "shr",		TT_OPC,		OC_SHR,             TF_RET },
+	{ "ror",		TT_OPC,		OC_ROR,             TF_RET },
+	{ "usr",		TT_OPC,		OC_USR,             TF_RET },
+	{ "rdBit0",		TT_OPC,		OC_RDBIT0,          TF_RET | TF_LOOP },
+	{ "rdBit1",		TT_OPC,		OC_RDBIT1,          TF_RET | TF_LOOP },
+	{ "rdBit2",		TT_OPC,		OC_RDBIT2,          TF_RET | TF_LOOP },
+	{ "fetch16",	TT_OPC,		OC_FETCH16,         TF_RET },
+	{ "store16",	TT_OPC,		OC_STORE16,         TF_RET },
+	{ "stk_rd",	    TT_OPC,		OC_STK_RD,          TF_RET },
+	{ "stk_wr",	    TT_OPC,		OC_STK_WR,          TF_RET },
+	{ "sp_rp",      TT_OPC,		OC_SP_RP,           TF_RET },
 
-	{ "r",			TT_OPC,		OC_R,               OCM_NONE },
-	{ "r_from",		TT_OPC,		OC_R_FROM,          OCM_NONE },
-	{ "to_r",		TT_OPC,		OC_TO_R,            OCM_NONE },
-	{ "call",		TT_OPC,		OC_CALL,            OCM_ADDR },
-	{ "br",			TT_OPC,		OC_BR,              OCM_ADDR },
-	{ "brZ",		TT_OPC,		OC_BRZ,             OCM_ADDR },
-	{ "brNZ",		TT_OPC,		OC_BRNZ,            OCM_ADDR },
-	{ "loop",		TT_OPC,		OC_LOOP,            OCM_ADDR },
-	{ "loop2",		TT_OPC,		OC_LOOP2,           OCM_ADDR },
-	{ "to_loop",    TT_OPC,		OC_TO_LOOP,         OPT_RET },
-	{ "to_loop2",   TT_OPC,		OC_TO_LOOP2,        OPT_RET },
-	{ "loop_from",  TT_OPC,		OC_LOOP_FROM,       OPT_RET },
-	{ "loop2_from", TT_OPC,		OC_LOOP2_FROM,      OPT_RET },
-	{ "rdReg",		TT_OPC,		OC_RDREG,           OCM_IO },
-	{ "rdReg2",		TT_OPC,		OC_RDREG2,          OCM_IO },
-	{ "wrReg",		TT_OPC,		OC_WRREG,           OCM_IO },
-	{ "wrReg2",		TT_OPC,		OC_WRREG2,          OCM_IO },
-	{ "wrEvt",		TT_OPC,		OC_WREVT,           OCM_IO },
-	{ "wrEvt2",		TT_OPC,		OC_WREVT2,          OCM_IO },
+	{ "r",			TT_OPC,		OC_R,               TF_RET,     OCM_NONE },
+	{ "r_from",		TT_OPC,		OC_R_FROM,          TF_RET,     OCM_NONE },
+	{ "to_r",		TT_OPC,		OC_TO_R,            TF_RET,     OCM_NONE },
+	{ "call",		TT_OPC,		OC_CALL,            0,          OCM_ADDR },
+	{ "br",			TT_OPC,		OC_BR,              0,          OCM_ADDR },
+	{ "brZ",		TT_OPC,		OC_BRZ,             0,          OCM_ADDR },
+	{ "brNZ",		TT_OPC,		OC_BRNZ,            0,          OCM_ADDR },
+	{ "loop",		TT_OPC,		OC_LOOP,            0,          OCM_ADDR },
+	{ "loop2",		TT_OPC,		OC_LOOP2,           0,          OCM_ADDR },
+	{ "to_loop",    TT_OPC,		OC_TO_LOOP,         TF_RET },
+	{ "to_loop2",   TT_OPC,		OC_TO_LOOP2,        TF_RET },
+	{ "loop_from",  TT_OPC,		OC_LOOP_FROM,       TF_RET },
+	{ "loop2_from", TT_OPC,		OC_LOOP2_FROM,      TF_RET },
+	{ "rdReg",		TT_OPC,		OC_RDREG,           0,          OCM_IO },
+	{ "wrEvtL",		TT_OPC,		OC_WREVTL,          0,          OCM_IO },
+	{ "wrReg",		TT_OPC,		OC_WRREG,           0,          OCM_IO },
+	{ "wrReg2",		TT_OPC,		OC_WRREG2,          0,          OCM_IO },
+	{ "wrEvt",		TT_OPC,		OC_WREVT,           0,          OCM_IO },
+	{ "wrEvt2",		TT_OPC,		OC_WREVT2,          0,          OCM_IO },
 	
+	{ "ALIGN",		TT_ALIGN,   0 },
+
 	{ "u8",			TT_DATA,	1 },
 	{ "u16",		TT_DATA,	2 },
 	{ "u32",		TT_DATA,	4 },
@@ -292,6 +292,7 @@ int main(int argc, char *argv[])
 				if (isspace(*cp)) { cp++; continue; }
 				if (*cp==';' || (*cp=='/' && *np=='/')) break;	// comment
 				
+				// number
 				if (isdigit(*cp) || (*cp == '-' && isdigit(*np))) {
 					tp->ttype = TT_NUM;
 					if (*np=='x') tp->flags |= TF_HEX;
@@ -320,18 +321,27 @@ int main(int argc, char *argv[])
 							tp->ttype = dp->ttype;
 							tp->str = (char *) dp->str;
 							tp->num = dp->val;
-						    tp->flags = (dp->ttype != TT_OPC)? dp->flags : 0;
+						    if (dp->ttype == TT_OPC) {
+						        tp->d_flags = dp->flags;
+						        tp->flags = 0;
+						    } else {
+						        tp->d_flags = 0;
+						        tp->flags = dp->flags;
+						    }
 							if (strncmp(cp, ".r", 2) == 0) tp->flags |= TF_RET, cp+=2;
 							if (strncmp(cp, ".cin", 4) == 0) tp->flags |= TF_CIN, cp+=4;
+							if (strncmp(cp, ".loop", 5) == 0) tp->flags |= TF_LOOP, cp+=5;
 							break;
 						}
 					}
 	
+	                // symbol, label
 					if (!dp->str) {
 						if (*cp==':') ttype = TT_LABEL, cp++; else ttype = TT_SYM;
 						tp->ttype = ttype; string_enter(sym, &(tp->str), (ttype==TT_LABEL)? SF_LABEL:0);
 						if (strncmp(cp, ".r", 2) == 0) tp->flags |= TF_RET, cp+=2;
 						if (strncmp(cp, ".cin", 4) == 0) tp->flags |= TF_CIN, cp+=4;
+                        if (strncmp(cp, ".loop", 5) == 0) tp->flags |= TF_LOOP, cp+=5;
 					}
 	
 					tp++; continue;
@@ -347,7 +357,13 @@ int main(int argc, char *argv[])
 						tp->ttype = dp->ttype;
 						tp->str = (char *) dp->str;
 						tp->num = dp->val;
-						tp->flags = (dp->ttype != TT_OPC)? dp->flags : 0;
+                        if (dp->ttype == TT_OPC) {
+                            tp->d_flags = dp->flags;
+                            tp->flags = 0;
+                        } else {
+                            tp->d_flags = 0;
+                            tp->flags = dp->flags;
+                        }
 						tp++;
 						break;
 					}
@@ -669,13 +685,13 @@ int main(int argc, char *argv[])
 
 
 	// pass 5: allocate space and resolve (possibly forward referenced) LABELs (done in-place)
-	int a=0;
-	curline=1;
+	u4_t a = 0;
+	curline = 1;
 
     tp_start = pass4; tp_end = ep4;
 	for (tp=pass4; tp != ep4; tp++) {
 		tokens_t *t, *tn = tp+1;
-		int op, oper=0;
+		int op, oper = 0;
 		
 		if (a/2 >= CPU_RAM_SIZE) {
 		    printf("a/2=%d CPU_RAM_SIZE=%d\n", a/2, CPU_RAM_SIZE);
@@ -754,13 +770,18 @@ int main(int argc, char *argv[])
 			a += 2;
 		} else
 		
+		// align pc to next 8 insn boundary
+		if (tp->ttype == TT_ALIGN) {
+		    u4_t _a = a;
+		    a = (a & ~0x7) + ((a & 0x7)? 0x8 : 0);
+		    if (debug) printf("pass 5: _a=%04x a=%04x\n", _a, a);
+		} else
+		
 		// structure
 		if (tp->ttype == TT_STRUCT) {
 			if (debug) printf("%04x STRUCT %s size 0x%x\n", a, tp->str, tp->num);
 			a += tp->num;
-		} else
-		
-		;
+		}
 	}
 	
 	
@@ -1031,14 +1052,15 @@ int main(int argc, char *argv[])
 								break;
 
 				case OC_RDREG:
-				case OC_RDREG2:
 				case OC_WRREG:
 				case OC_WRREG2:
 				case OC_WREVT:
-				case OC_WREVT2: {
+				case OC_WREVT2:
+				case OC_WREVTL: {
 								syntax(oper >= 1 && oper <= 0x7ff, t, "i/o specifier outside range 1..0x7ff: 0x%04x", oper);
 								int ones = count_ones(oper);
-								syntax(ones <= 2, t, "too many bits (%d) in i/o specifier 0x%04x", ones, oper);
+								// 3 currently because of kiwi.config: FREQ_L and REG_NO definitions
+								syntax(ones <= 3, t, "too many bits (%d) in i/o specifier 0x%04x", ones, oper);
 								break;
 				}
 
@@ -1048,15 +1070,17 @@ int main(int argc, char *argv[])
 								break;
 			}
 			
-			if ((tp->flags & TF_CIN) && (oc != OC_ADD)) syntax(0, tp, "\".cin\" only valid for add instruction");
-			bool rstk = (oc == OC_R || oc == OC_R_FROM || oc == OC_TO_R);
-			if ((tp->flags & TF_RET) && (((oc & 0xe000) != 0x8000) || rstk)) syntax(0, tp, "\".r\" not valid for this instruction");
+			if ((tp->flags & TF_CIN) && !(tp->d_flags & TF_CIN)) syntax(0, tp, "\".cin\" only valid for add instruction");
+			if ((tp->flags & TF_RET) && !(tp->d_flags & TF_RET)) syntax(0, tp, "\".r\" not valid for this instruction");
+			if ((tp->flags & TF_LOOP) && !(tp->d_flags & TF_LOOP)) syntax(0, tp, "\".loop\" not valid for this instruction");
 			
 			op += oper;
-			if (tp->flags & TF_RET) op |= OPT_RET;
-			if (tp->flags & TF_CIN) op |= OPT_CIN;
+			if (tp->flags & TF_RET)  op |= OPT_RET;
+			if (tp->flags & TF_CIN)  op |= OPT_CIN;
+			if (tp->flags & TF_LOOP) op |= OPT_LOOP;
 			
-			if (debug || show_bin) printf("\t%04x %04x %s%s ", a, op, tp->str, (tp->flags&TF_RET)? ".r": (tp->flags&TF_CIN)? ".cin":"");
+			if (debug || show_bin) printf("\t%04x %04x %s%s ", a, op, tp->str,
+			    (tp->flags&TF_RET)? ".r" : ((tp->flags&TF_CIN)? ".cin" : ((tp->flags&TF_LOOP)? ".loop" : "")));
 			if (write_coe) {
 				fprintf(efp, "%c\n%04x", comma, op);
 				comma = ',';
@@ -1118,6 +1142,20 @@ int main(int argc, char *argv[])
 		
 		if (tp->ttype == TT_EOL) {
 			curline = tp->num;
+			continue;
+		} else
+		
+		// align pc to next 8 insn boundary
+		if (tp->ttype == TT_ALIGN) {
+		    u4_t _a = a;
+		    a = (a & ~0x7) + ((a & 0x7)? 0x8 : 0);
+		    if (debug) printf("pass 7: _a=%04x a=%04x\n", _a, a);
+		    out = OC_NOP;
+		    u4_t pc;
+		    for (pc = _a; pc < a; pc += 2) {
+		        if (debug || show_bin) printf("\t%04x %04x nop (align)\n", pc, OC_NOP);
+			    if (write(bfd, &out, 2) != 2) sys_panic("wr");
+		    }
 			continue;
 		} else
 		

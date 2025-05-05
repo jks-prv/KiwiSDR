@@ -39,19 +39,28 @@ int num_strings();
 // tokens
 
 typedef enum {
-	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT, TT_ITER, TT_DEF, TT_FILE, TT_STATS
+	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT, TT_ITER,
+	TT_DEF, TT_FILE, TT_STATS, TT_ALIGN
 } token_type_e;
 
-#define	TF_RET		0x0001
-#define	TF_CIN		0x0002
-#define	TF_HEX		0x0004
-#define	TF_DOT_H	0x0008
-#define	TF_DOT_VP	0x0010
-#define	TF_DOT_VB	0x0020
-#define	TF_FIELD	0x0040
-#define	TF_2OPR		0x0080
-#define	TF_1OPR		0x0100
-#define	TF_CFG_H	0x0200
+const char * const ttype_s[] = {
+    "EOL", "LABEL", "SYM", "NUM", "OPC", "PRE", "OPR", "DATA", "STRUCT", "ITER",
+    "DEF", "FILE", "STATS", "ALIGN"
+};
+
+#define	TF_HEX		0x0001
+#define	TF_RET		0x0002
+#define	TF_CIN		0x0004
+#define	TF_LOOP		0x0008
+
+#define	TF_CFG_H	0x0100
+#define	TF_DOT_H	0x0200
+#define	TF_DOT_VP	0x0400
+#define	TF_DOT_VB	0x0800
+
+#define	TF_FIELD	0x1000
+#define	TF_2OPR		0x2000
+#define	TF_1OPR		0x4000
 
 typedef struct {
 	token_type_e ttype;
@@ -61,7 +70,7 @@ typedef struct {
 	    int width;
 	    int ifl;
 	};
-	int flags;
+	int d_flags, flags;
 } tokens_t;
 
 extern tokens_t *tp_start, *tp_end;
@@ -158,10 +167,13 @@ int exp_macro(tokens_t **dp, tokens_t **to);
 
 void sys_panic(const char *str);
 void panic(const char *str, tokens_t *t = NULL);
-void syntax(int cond, tokens_t *tp, const char *fmt, ...);
+void _syntax(bool note, int cond, tokens_t *tp, const char *fmt, ...);
 void syntax2(int cond, const char *fmt, ...);
 void _assert(int cond, const char *str, const char *file, int line);
 void errmsg(const char *str, tokens_t *t = NULL);
+
+#define syntax(cond, tp, fmt, ...) _syntax(false, cond, tp, fmt, ## __VA_ARGS__)
+#define note(cond, tp, fmt, ...) _syntax(true, cond, tp, fmt, ## __VA_ARGS__)
 
 char *str_ends_with(char *s, const char *cs);
 int count_ones(u4_t v);

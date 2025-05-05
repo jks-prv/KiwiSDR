@@ -451,8 +451,8 @@ NavSave:                                    ; Inav &ms
 
 UploadChan:										; &GPS_channels[n]
 				loop_ct (sizeof GPS_CHAN / 2)
-upload_ch_loop: wrEvt	GET_MEMORY
-				loop    upload_ch_loop
+                ALIGN
+                wrEvtL  GET_MEMORY_LOOP
 				ret
 
 // "wrEvt GET_MEMORY" side-effect: auto mem ptr incr, i.e. 2x tos += 2 (explains "-4" below)
@@ -471,11 +471,11 @@ UploadClock:									; &GPS_channels + ch_NAV_MS
 				rdBit0_16						; 18-bit clock replica sent across 2 words
 				wrReg	HOST_TX
 				push    0
-				rdBit0
-				rdBit0
+				rdBit0                          ; b16
+				rdBit0                          ; b17
 				wrReg	HOST_TX
 #endif
-				addi.r	sizeof GPS_CHAN - 4		; &GPS_channels++
+				addi.r	sizeof GPS_CHAN - 4		; &GPS_channels++ (-4 due to 2x GET_MEMORY above)
 
 ; ============================================================================
 
@@ -500,7 +500,7 @@ UploadClock:									; &GPS_channels + ch_NAV_MS
 CmdSample:		wrEvt	GPS_SAMPLER_RST
             	ret
 
-gps_chans_m1:   u16		GPS_MAX_CHANS - 1   ; NB: -1 due to how tp_loop[2] insn works
+gps_chans_m1:   u16		GPS_MAX_CHANS - 1   ; NB: -1 due to how to_loop[2] insn works
 
 CmdSetChans:    rdReg	HOST_RX             ; #chans
                 push    gps_chans_m1        ; #chans &gps_chans_m1
@@ -564,21 +564,10 @@ CmdSetSat:      rdReg	HOST_RX             ; chan#
                 pop.r                       ;
 
 CmdSetE1Bcode:
-                push    E1B_CODE_LOOP2
-e1b_more:
-				loop_ct	E1B_CODE_RPT
-e1b_loop1:      SetReg	SET_E1B_CODE
-				loop    e1b_loop1
-				
-				push	1
-				sub
-				dup
-				brNZ	e1b_more
-
-				loop_ct	E1B_CODE_REM
-e1b_loop2:      SetReg	SET_E1B_CODE
-				loop    e1b_loop2
-				drop.r
+				loop_ct	E1B_CODE_LOOP
+e1b_loop:       SetReg	SET_E1B_CODE
+				loop    e1b_loop
+                ret
 
 CmdSetPolarity: rdReg	HOST_RX             ; chan#
                 call    GetGPSchanPtr       ; this
@@ -594,17 +583,12 @@ CmdPause:       SetReg	SET_GPS_CHAN
 
 CmdGetGPSSamples:
 				wrEvt	HOST_RST
-				push	GPS_SAMPS_LOOP
-up_more:
-				loop_ct	GPS_SAMPS_RPT
-up_loop:        wrEvt	GET_GPS_SAMPLES
-				loop    up_loop
-
-				push	1
-				sub
-				dup
-				brNZ	up_more
-				drop.r
+				loop_ct	GPS_SAMPS
+                ALIGN
+gps_loop:
+                wrEvtL	GET_GPS_SAMPS_LOOP
+				// wrEvtL will automatically loop to gps_loop
+				ret
 
 CmdGetChan:     rdReg	HOST_RX				; chan#
                 wrEvt	HOST_RST			; chan#
@@ -623,14 +607,15 @@ CmdGetClocks:   wrEvt	HOST_RST
                 
                 push	0
                 loop_gps_chans
-gps_chan_loop:  rdBit0						; chan srq
-                loop    gps_chan_loop
+                ALIGN
+                rdBit0.loop                 ; chan srq
                 wrReg	HOST_TX
                 
                 push	GPS_channels + ch_NAV_MS
                 loop2_gps_chans
-upload_loop:    call	UploadClock
-                loop2   upload_loop         ; NB: loop2 because UploadClock() eventually uses loop insn
+upload_clk_loop:
+                call	UploadClock
+                loop2   upload_clk_loop     ; NB: loop2 because UploadClock() eventually uses loop insn
                 drop.r
 
 CmdGetGlitches: wrEvt	HOST_RST
@@ -650,15 +635,13 @@ CmdIQLogReset:  rdReg	HOST_RX             ; ch#
 				wrEvt	LOG_RST             ; &iq_ch
                 pop.r                       ;
 
+// not used enough to justify implementing a "wrEvtL GET_LOG_LOOP"
 CmdIQLogGet:    wrEvt	HOST_RST
-				push	GPS_IQ_SAMPS
+				loop_ct	GPS_IQ_SAMPS
 up_more_log:
 				wrEvt	GET_LOG             ; IH
 				wrEvt	GET_LOG             ; IL
 				wrEvt	GET_LOG             ; QH
 				wrEvt	GET_LOG             ; QL
-				push	1
-				sub
-				dup
-				brNZ	up_more_log
-				drop.r
+				loop    up_more_log
+				ret

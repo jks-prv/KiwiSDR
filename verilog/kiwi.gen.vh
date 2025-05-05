@@ -54,12 +54,16 @@
 `define SPI_32 1    // DEFh 0x1
 	localparam SPIBUF_W = 2048;    // DEFp 0x800
 `define DEF_SPIBUF_W 1
+	localparam SPIBUF_WA = 2046;    // DEFp 0x7fe
+`define DEF_SPIBUF_WA 1
 	localparam SPIBUF_B = 4096;    // DEFp 0x1000
 `define DEF_SPIBUF_B 1
-	localparam SPIBUF_BMAX = 4094;    // DEFp 0xffe
-`define DEF_SPIBUF_BMAX 1
+	localparam N_SND_RATES = 2;    // DEFp 0x2
+`define DEF_N_SND_RATES 1
 	localparam SND_RATE_WB = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_WB 1
+	localparam SND_RATE_WB_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_WB_I
 	localparam RX1_WB_DECIM = 926;    // DEFp 0x39e
 `define DEF_RX1_WB_DECIM 1
 	localparam RX2_WB_DECIM = 3;    // DEFp 0x3
@@ -77,14 +81,22 @@
 `define DEF_MAX_SND_RATE 1
 	localparam SND_RATE_3CH = 20250;    // DEFp 0x4f1a
 `define DEF_SND_RATE_3CH 1
+	localparam SND_RATE_3CH_I = 1;    // DEFp 0x1
+`define DEF_SND_RATE_3CH_I 1
 	localparam MIN_SND_RATE = 12000;    // DEFp 0x2ee0
 `define DEF_MIN_SND_RATE 1
 	localparam SND_RATE_4CH = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_4CH 1
+	localparam SND_RATE_4CH_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_4CH_I
 	localparam SND_RATE_8CH = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_8CH 1
+	localparam SND_RATE_8CH_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_8CH_I
 	localparam SND_RATE_14CH = 12000;    // DEFp 0x2ee0
 `define DEF_SND_RATE_14CH 1
+	localparam SND_RATE_14CH_I = 0;    // DEFp 0x0
+//`define DEF_SND_RATE_14CH_I
 	localparam RX_DECIM_3CH = 3292;    // DEFp 0xcdc
 `define DEF_RX_DECIM_3CH 1
 	localparam RX_DECIM_4CH = 5556;    // DEFp 0x15b4
@@ -115,14 +127,6 @@
 `define DEF_RXBUF_LARGE_14CH 1
 	localparam RXBUF_LARGE_WB = 2;    // DEFp 0x2
 `define DEF_RXBUF_LARGE_WB 1
-	localparam NRX_IQW = 3;    // DEFp 0x3
-`define DEF_NRX_IQW 1
-	localparam NRX_SPI = 2047;    // DEFp 0x7ff
-`define DEF_NRX_SPI 1
-	localparam NRX_OVHD = 5;    // DEFp 0x5
-`define DEF_NRX_OVHD 1
-	localparam NRX_SAMPS_RPT = 8;    // DEFp 0x8
-`define DEF_NRX_SAMPS_RPT 1
 //`define USE_RX_CIC24    // DEFh 0x0
 	localparam RX1_BITS = 22;    // DEFp 0x16
 `define DEF_RX1_BITS 1
@@ -142,14 +146,6 @@
 `define DEF_NWF_NXFER 1
 	localparam NWF_SAMPS = 911;    // DEFp 0x38f
 `define DEF_NWF_SAMPS 1
-	localparam NWF_SAMPS_RPT = 50;    // DEFp 0x32
-`define DEF_NWF_SAMPS_RPT 1
-	localparam NWF_SAMPS_LOOP = 18;    // DEFp 0x12
-`define DEF_NWF_SAMPS_LOOP 1
-	localparam NWF_SAMPS_LOOP2 = 900;    // DEFp 0x384
-`define DEF_NWF_SAMPS_LOOP2 1
-	localparam NWF_SAMPS_REM = 11;    // DEFp 0xb
-`define DEF_NWF_SAMPS_REM 1
 `define USE_WF_1CIC 1    // DEFh 0x1
 `define USE_WF_CIC24 1    // DEFh 0x1
 //`define USE_WF_MEM24    // DEFh 0x0
@@ -179,12 +175,8 @@
 `define DEF_MAX_NAV_BITS 1
 	localparam GPS_RPT = 32;    // DEFp 0x20
 `define DEF_GPS_RPT 1
-	localparam GPS_SAMPS = 256;    // DEFp 0x100
+	localparam GPS_SAMPS = 2044;    // DEFp 0x7fc
 `define DEF_GPS_SAMPS 1
-	localparam GPS_SAMPS_RPT = 32;    // DEFp 0x20
-`define DEF_GPS_SAMPS_RPT 1
-	localparam GPS_SAMPS_LOOP = 8;    // DEFp 0x8
-`define DEF_GPS_SAMPS_LOOP 1
 	localparam GPS_IQ_SAMPS = 255;    // DEFp 0xff
 `define DEF_GPS_IQ_SAMPS 1
 	localparam GPS_IQ_SAMPS_W = 1020;    // DEFp 0x3fc
@@ -201,38 +193,28 @@
 `define DEF_E1B_CODELEN 1
 	localparam E1B_CODE_XFERS = 2;    // DEFp 0x2
 `define DEF_E1B_CODE_XFERS 1
-	localparam E1B_CODE_LOOP = 2046;    // DEFp 0x7fe
+	localparam E1B_CODE_LOOP = 2044;    // DEFp 0x7fc
 `define DEF_E1B_CODE_LOOP 1
-	localparam E1B_CODE_RPT = 32;    // DEFp 0x20
-`define DEF_E1B_CODE_RPT 1
-	localparam E1B_CODE_LOOP2 = 63;    // DEFp 0x3f
-`define DEF_E1B_CODE_LOOP2 1
-	localparam E1B_CODE_LOOP3 = 2016;    // DEFp 0x7e0
-`define DEF_E1B_CODE_LOOP3 1
-	localparam E1B_CODE_REM = 30;    // DEFp 0x1e
-`define DEF_E1B_CODE_REM 1
 	localparam GET_CHAN_IQ = 0;    // DEFb: bit number for value: 0x1
 	localparam GET_SRQ = 1;    // DEFb: bit number for value: 0x2
 	localparam GET_SNAPSHOT = 2;    // DEFb: bit number for value: 0x4
 	localparam HOST_RX = 3;    // DEFb: bit number for value: 0x8
 	localparam GET_RX_SRQ = 4;    // DEFb: bit number for value: 0x10
-	localparam GET_CPU_CTR0 = 5;    // DEFb: bit number for value: 0x20
-	localparam GET_CPU_CTR1 = 6;    // DEFb: bit number for value: 0x40
-	localparam GET_CPU_CTR2 = 7;    // DEFb: bit number for value: 0x80
-	localparam GET_CPU_CTR3 = 8;    // DEFb: bit number for value: 0x100
-	localparam GET_STATUS = 9;    // DEFb: bit number for value: 0x200
+	localparam GET_STATUS = 5;    // DEFb: bit number for value: 0x20
+	localparam REG_NO = 6;    // DEFb: bit number for value: 0xc0
+	localparam REG_0 = 0;    // DEFb: bit number for value: 0x0
+	localparam REG_1 = 6;    // DEFb: bit number for value: 0x40
+	localparam REG_2 = 7;    // DEFb: bit number for value: 0x80
+	localparam REG_3 = 6;    // DEFb: bit number for value: 0xc0
+	localparam GET_CPU_CTR = 8;    // DEFb: bit number for value: 0x100
+	localparam GET_CPU_CTR0 = 8;    // DEFb: bit number for value: 0x100
+	localparam GET_CPU_CTR1 = 6;    // DEFb: bit number for value: 0x140
+	localparam GET_CPU_CTR2 = 7;    // DEFb: bit number for value: 0x180
+	localparam GET_CPU_CTR3 = 6;    // DEFb: bit number for value: 0x1c0
+	localparam GET_ADC_CTR = 9;    // DEFb: bit number for value: 0x200
+	localparam GET_ADC_CTR0 = 9;    // DEFb: bit number for value: 0x200
+	localparam GET_ADC_CTR1 = 6;    // DEFb: bit number for value: 0x240
 	localparam RDREG_400 = 10;    // DEFb: bit number for value: 0x400
-	localparam GET_ADC_CTR0 = 0;    // DEFb: bit number for value: 0x1
-	localparam GET_ADC_CTR1 = 1;    // DEFb: bit number for value: 0x2
-	localparam RDREG2_004 = 2;    // DEFb: bit number for value: 0x4
-	localparam RDREG2_008 = 3;    // DEFb: bit number for value: 0x8
-	localparam RDREG2_010 = 4;    // DEFb: bit number for value: 0x10
-	localparam RDREG2_020 = 5;    // DEFb: bit number for value: 0x20
-	localparam RDREG2_040 = 6;    // DEFb: bit number for value: 0x40
-	localparam RDREG2_080 = 7;    // DEFb: bit number for value: 0x80
-	localparam RDREG2_100 = 8;    // DEFb: bit number for value: 0x100
-	localparam RDREG2_200 = 9;    // DEFb: bit number for value: 0x200
-	localparam RDREG2_400 = 10;    // DEFb: bit number for value: 0x400
 	localparam HOST_TX = 0;    // DEFb: bit number for value: 0x1
 	localparam SET_GPS_MASK = 1;    // DEFb: bit number for value: 0x2
 	localparam SET_GPS_CHAN = 2;    // DEFb: bit number for value: 0x4
@@ -269,7 +251,7 @@
 	localparam GET_RX_SAMP = 0;    // DEFb: bit number for value: 0x1
 	localparam RX_BUFFER_RST = 1;    // DEFb: bit number for value: 0x2
 	localparam RX_GET_BUF_CTR = 2;    // DEFb: bit number for value: 0x4
-	localparam WREVT_008 = 3;    // DEFb: bit number for value: 0x8
+	localparam WREVT2_008 = 3;    // DEFb: bit number for value: 0x8
 	localparam GET_WF_SAMP_I = 4;    // DEFb: bit number for value: 0x10
 	localparam GET_WF_SAMP_Q = 5;    // DEFb: bit number for value: 0x20
 	localparam CLR_RX_OVFL = 6;    // DEFb: bit number for value: 0x40
@@ -277,6 +259,18 @@
 	localparam CPU_CTR_CLR = 8;    // DEFb: bit number for value: 0x100
 	localparam CPU_CTR_ENA = 9;    // DEFb: bit number for value: 0x200
 	localparam CPU_CTR_DIS = 10;    // DEFb: bit number for value: 0x400
+	localparam WREVTL_LOOP_CTR0 = 0;    // DEFb: bit number for value: 0x0
+	localparam WREVTL_LOOP_CTR1 = 0;    // DEFb: bit number for value: 0x1
+	localparam GET_MEMORY_LOOP = 1;    // DEFb: bit number for value: 0x2
+	localparam GET_RX_SAMP_LOOP = 2;    // DEFb: bit number for value: 0x4
+	localparam GET_WF_SAMP_Q_LOOP = 3;    // DEFb: bit number for value: 0x8
+	localparam GET_GPS_SAMPS_LOOP = 4;    // DEFb: bit number for value: 0x10
+	localparam WREVTL_020 = 5;    // DEFb: bit number for value: 0x20
+	localparam WREVTL_040 = 6;    // DEFb: bit number for value: 0x40
+	localparam WREVTL_080 = 7;    // DEFb: bit number for value: 0x80
+	localparam WREVTL_100 = 8;    // DEFb: bit number for value: 0x100
+	localparam WREVTL_200 = 9;    // DEFb: bit number for value: 0x200
+	localparam WREVTL_400 = 10;    // DEFb: bit number for value: 0x400
 	localparam WF_SAMP_RD_RST = 0;    // DEFb: bit number for value: 0x1
 	localparam WF_SAMP_WR_RST = 1;    // DEFb: bit number for value: 0x2
 	localparam WF_SAMP_CONTIN = 2;    // DEFb: bit number for value: 0x4

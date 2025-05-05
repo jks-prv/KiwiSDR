@@ -125,3 +125,4 @@ void rx_send_config(int rx_chan);
 void get_location_grid(char **loc, bool *free_loc, char **grid = NULL, bool *free_grid = NULL);
 void on_GPS_solution();
 float dB_fast(float x);
+void rx_modes_init();

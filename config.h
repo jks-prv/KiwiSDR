@@ -43,12 +43,23 @@ typedef enum { ESPEED_AUTO = 0, ESPEED_10M = 1, ESPEED_100M = 2 } espeed_e;
 #define MAX_WB_CHANS    1
 #define MAX_NRX_BUFS    16      // for RXBUF_SIZE_14CH
 #define MAX_NRX_SAMPS   226     // for nch = 3
-#define NRX_SAMPS_CHANS(nch)    ((NRX_SPI - NRX_OVHD) / NRX_IQW / nch);
-//                              (((2048-1) - (3+1+1)) / 3 / nch) = 680 / nch
+
+#ifdef PLATFORM_beagleY_ai
+    #define NRX_BUG 2           // 2w/4b for SPI_32 cfg
+#else
+    #define NRX_BUG 0
+#endif
+
+#define NRX_SPI         SPIBUF_W
+#define NRX_SPI_ST      2           // 2w/4b for SPI_32 cfg
+#define NRX_OVHD        (3 + 1 + 1) // ticks 3w, ctr_stored 1w, ctr_current 1w
+#define NRX_IQW         S2B(3)      // 1.5 words (24-bits) per I,Q
+#define NRX_SAMPS_CHANS(nch) (S2B(NRX_SPI - NRX_BUG - NRX_SPI_ST - NRX_OVHD) / NRX_IQW / nch);
+#define NRX_SAMPS_MAX         S2B(NRX_SPI - NRX_BUG - NRX_SPI_ST)
 #define MAX_WB_SAMPS    1024
+#define SPIBUF_BMAX     (SPIBUF_B - S2B(NRX_BUG))
 
-
-#define N_CONN_ADMIN        8   // simultaneous admin connections
+#define N_CONN_ADMIN        1   // simultaneous admin connections
 
 #define N_CAMP              4
 #define N_QUEUERS           8
@@ -57,8 +68,8 @@ typedef enum { ESPEED_AUTO = 0, ESPEED_10M = 1, ESPEED_100M = 2 } espeed_e;
 #define PROXY_SERVER_PORT   8073
 
 extern int fw_sel, fpga_id, rx_chans, rx_wb_buf_chans, wf_chans, wb_chans,
-    nrx_bufs, nrx_samps_wb, nrx_samps, nrx_samps_loop, nrx_samps_rem,
-    snd_rate, wb_rate, rx_decim;
+    nrx_bufs, nrx_samps_wb, nrx_samps, nrx_samps_total, nrx_samps_loop, nrx_samps_rem,
+    snd_rate, snd_rate_i, wb_rate, rx_decim;
 
 // INET6_ADDRSTRLEN (46) plus some extra in case ipv6 scope/zone is an issue
 // can't be in net.h due to #include recursion problems

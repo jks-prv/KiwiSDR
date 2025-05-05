@@ -199,7 +199,7 @@ bool fax_msgs(char *msg, int rx_chan)
                 POLL_MSEC(500));
 		#else
             non_blocking_cmd_system_child("kiwi.fax", 
-                stprintf("cd " DIR_DATA ";
+                stprintf("cd " DIR_DATA ";"
                     "pnmtopng fax.ch%d.pgm > fax.ch%d_%d.png; "
                     "pnmscale fax.ch%d.pgm -width=96 -height=32 > fax.ch%d.thumb.pgm; "
                     "pnmtopng fax.ch%d.thumb.pgm > fax.ch%d_%d.thumb.png",

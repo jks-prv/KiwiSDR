@@ -2379,7 +2379,9 @@ function dx_export_cb2(obj)
       //console.log('dx_export_cb2 JSON');
       mime_type = 'application/json';
       file_ext = '.json';
-      wrap_begin = '{"dx":[\n';
+      s = dx.db_short_s[dx.DB_STORED];
+      if (s == 'stored') s = 'dx';
+      wrap_begin = '{"'+ s +'":[\n';
       wrap_end = ']}\n';
    }
    

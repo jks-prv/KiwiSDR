@@ -43,6 +43,7 @@ Boston, MA  02110-1301, USA.
 #include "rx_waterfall_cmd.h"
 #include "rx_util.h"
 #include "options.h"
+#include "test.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -513,6 +514,12 @@ void c2s_waterfall(void *param)
 		    wf->new_scale_mask = true;
 		}
 		
+		if (shmem->zoom_all_seq != wf->zoom_all_seq) {
+		    //cprintf(conn, "WF zoom_all=%d\n", shmem->zoom_all);
+            send_msg(conn, false, "MSG zoom_all=%d", shmem->zoom_all);
+		    wf->zoom_all_seq = shmem->zoom_all_seq;
+		}
+		
 		// forward admin changes of waterfall cal to client side
 		if (waterfall_cal != wf_cal) {
             send_msg(conn, false, "MSG wf_cal=%d", waterfall_cal);
@@ -683,11 +690,11 @@ void sample_wf(int rx_chan)
         if (wf->trigger) {
             real_printf(MAGENTA "%d%dRST " NORM, rx_chan, wf->hw_chan);
         }
-        deadline = timer_us64() + wf->chunk_wait_us*2;
+        deadline = timer_us64() + wf->chunk_wait_us*2;      // wait twice as long the first time
         first_cmd = CmdGetWFSamples;
     }
 
-    SPI_MISO *miso = &SPI_SHMEM->wf_miso[rx_chan];
+    SPI_MISO *miso;
     if (wf->trigger) {
         real_printf(CYAN "%d%dM%p " NORM, rx_chan, wf->hw_chan, miso);
         wf->trigger = false;
@@ -699,8 +706,79 @@ void sample_wf(int rx_chan)
     int n_chunks = WF_SHMEM->n_chunks;
     float *window = WF_SHMEM->window_function[wf->window_func];
     fft_t *fft = &WF_SHMEM->fft_inst[wf->hw_chan];
+
+#ifdef OPTION_WF_CONSOLIDATE_SPI
+    for (chunk=0; chunk < n_chunks; chunk++) {
+        assert(chunk < n_chunks);
+        miso = &SPI_SHMEM->wf_miso[rx_chan][chunk];
+
+        if (wf->overlapped_sampling) {
+            evWF(EC_TRIG1, EV_WF, -1, "WF", "CmdGetWFContSamps");
+        } else {
+            // wait until current chunk is available in WF sample buffer
+            now64 = timer_us64();
+            //if (now64 < deadline) {
+            if (chunk == 0 && now64 < deadline) {      //jksx
+                diff = deadline - now64;
+                if (diff) {
+                    evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait chunk buffer");
+                    WFSleepReasonUsec("wait chunk", diff);
+                    evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait chunk buffer done");
+                }
+            }
+            deadline += wf->chunk_wait_us;
+        }
     
+        if (chunk == 0) {
+            //#define WF_MEAS_OLAP
+            #ifdef WF_MEAS_OLAP
+                if (wf->overlapped_sampling && rx_chan == 0 && wf->zoom >= 10) now2 = timer_us();
+            #endif
+            
+            spi_get_noduplex(first_cmd, miso, NWF_SAMPS * sizeof(iq_t), wf->hw_chan);
+        } else
+        if (chunk < n_chunks-1) {
+            spi_get_noduplex(CmdGetWFSamples, miso, NWF_SAMPS * sizeof(iq_t), wf->hw_chan);
+        }
+
+        evWFC(EC_EVENT, EV_WF, -1, "WF", evprintf("%s SAMPLING chunk %d",
+            wf->overlapped_sampling? "OVERLAPPED":"NON-OVERLAPPED", chunk));
+    }
+
     for (chunk=0, sn=0; sn < WF_C_NSAMPS; chunk++) {
+        assert(chunk < n_chunks);
+        miso = &SPI_SHMEM->wf_miso[rx_chan][chunk];
+        iqp = (iq_t*) &(miso->word[0]);
+        
+        for (k=0; k<NWF_SAMPS; k++) {
+            if (sn >= WF_C_NSAMPS) break;
+            ii = (s4_t) (s2_t) iqp->i;
+            qq = (s4_t) (s2_t) iqp->q;
+            iqp++;
+
+            float fi = ((float) ii) * window[sn];
+            float fq = ((float) qq) * window[sn];
+            
+            #ifdef SHOW_MAX_MIN_IQ
+                print_max_min_stream_i(&IQi_state, P_MAX_MIN_DEMAND, "IQi", k, 2, ii, qq);
+                print_max_min_stream_f(&IQf_state, P_MAX_MIN_DEMAND, "IQf", k, 2, (double) fi, (double) fq);
+            #endif
+            
+            fft->hw_c_samps[sn][I] = fi;
+            fft->hw_c_samps[sn][Q] = fq;
+            sn++;
+        }
+
+        #if 1
+            if (wf->overlapped_sampling && chunk == n_chunks/2 && wf->zoom >= 10 && wf_slowdown) {
+                WFSleepReasonMsec("slow down", wf_slowdown);
+                //if (rx_chan == 0) { real_printf("%d", chunk); fflush(stdout); }
+            }
+        #endif
+    }
+#else
+    for (chunk=0, sn=0; sn < WF_C_NSAMPS; chunk++) {
+        miso = &SPI_SHMEM->wf_miso[rx_chan];
         assert(chunk < n_chunks);
 
         if (wf->overlapped_sampling) {
@@ -724,7 +802,7 @@ void sample_wf(int rx_chan)
             #ifdef WF_MEAS_OLAP
                 if (wf->overlapped_sampling && rx_chan == 0 && wf->zoom >= 10) now2 = timer_us();
             #endif
-            
+
             spi_get_noduplex(first_cmd, miso, NWF_SAMPS * sizeof(iq_t), wf->hw_chan);
         } else
         if (chunk < n_chunks-1) {
@@ -762,6 +840,7 @@ void sample_wf(int rx_chan)
             }
         #endif
     }
+#endif
     
     #ifdef WF_MEAS_OLAP
         if (wf->overlapped_sampling && rx_chan == 0 && wf->zoom >= 10) {
@@ -887,17 +966,22 @@ void sample_wf(int rx_chan)
 
     now = timer_ms();
     int actual = now - wf->mark;
-    int delay = desired - actual;
-    //printf("%d %d %d\n", delay, actual, desired);
     
     // full sampling faster than needed by frame rate
-    if (desired > actual) {
-        evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS");
-        WFSleepReasonMsec("wait frame", delay);
-        evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS done");
-    } else {
+    if (wf_full_rate) {
         WFNextTask("loop");
+    } else {
+        int delay = desired - actual;
+        //printf("%d %d %d\n", delay, actual, desired);
+        if (desired > actual) {
+            evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS");
+            WFSleepReasonMsec("wait frame", delay);
+            evWF(EC_EVENT, EV_WF, -1, "WF", "TaskSleep wait FPS done");
+        } else {
+            WFNextTask("loop");
+        }
     }
+    
     now = timer_ms();
     wf->mark = now;
     diff = now - wf->last_frames_ms;
