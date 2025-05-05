@@ -228,7 +228,8 @@ void c2s_sound(void *param)
 	int j, k, n;
 
 	memset(s, 0, sizeof(snd_t));
-	s->freq_kHz = s->mode = s->squelch_on_seq = -1;
+	s->freq_kHz = s->squelch_on_seq = -1;
+	s->mode = MODE_AM;
 	s->agc = 1; s->thresh = -90; s->decay = 50;
 	s->compression = 1;
 	s->nb_algo = NB_OFF; s->nr_algo = NR_OFF_;
