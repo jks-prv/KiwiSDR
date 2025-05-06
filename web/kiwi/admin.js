@@ -4511,6 +4511,43 @@ function admin_draw(sdr_mode)
       w3_click_nav('id-navbar-admin', kiwi_toggle(toggle_e.FROM_COOKIE | toggle_e.SET, nav_def, nav_def, 'last_admin_navbar'), 'admin_nav');
 	admin.init = false;
 	
+	// navigate navbar using keys
+   window.addEventListener("keydown",
+      function(ev) {
+         //console.log(ev);
+         if (!isString(ev.key)) return;
+         var i = w3_array_el_seq(tabs, admin.current_tab_name, { toLower:1 }), j;
+         var e = tabs.length - 1;
+         var k = ev.key.toLowerCase();
+         if (k.length == 1 && k >= 'a' && a <= 'z') {    // lcase/ucase char match next/prev
+            var dir = (ev.key == k.toUpperCase())? -1:1;
+            for (j = i + dir; j != i; j += dir) {
+               if (j > e) j = 0;
+               if (j < 0) j = e;
+               if (tabs[j].toLowerCase()[0] == k) {
+                  admin_nav_focus(tabs[j]);
+                  break;
+               }
+            }
+            //console.log('char dir='+ dir +' j='+ j +' '+ tabs[j]);
+         } else
+         if (k.startsWith('arrow')) {     // left/right arrow
+            var match = true;
+            if (k[5] == 'l') {
+               //console.log('L i='+ i +' e='+ e +' '+ admin.current_tab_name);
+               i = i? i-1 : e;
+            } else
+            if (k[5] == 'r') {
+               //console.log('R i='+ i +' e='+ e +' '+ admin.current_tab_name);
+               i = (i == e)? 0 : i+1;
+            } else
+               match = false;
+            //console.log('dir i='+ i +' '+ tabs[i]);
+            if (match) admin_nav_focus(tabs[i]);
+         }
+      }
+   );
+
 	setTimeout(function() { setInterval(status_periodic, 5000); }, 1000);
 }
 
@@ -4518,6 +4555,7 @@ function admin_user_page_cb() { kiwi_open_or_reload_page({ tab:1 }); }
 
 function admin_nav_focus(id, cb_arg)
 {
+   id = id.toLowerCase();
    //console.log('admin_nav_focus id='+ id);
    admin.current_tab_name = id;
    w3_click_nav('id-navbar-admin', id, id, null, 'admin_nav_focus');

@@ -7,6 +7,7 @@
 
 var admin_sdr = {
    ext_cur_nav: null,
+   ext_nav: [],
    
    comp_s: [ 'last', 'on', 'off' ],
    setup_s: [ 'show all', 'RF spec + WF', 'WF only', 'DX labels only', 'top bar only' ],
@@ -2992,6 +2993,31 @@ function extensions_html()
 	return s;
 }
 
+function extensions_keydown(ev)
+{
+   //console.log(ev);
+   if (!isString(ev.key)) return;
+   var list = admin_sdr.ext_nav;
+   var cur = admin_sdr.ext_cur_nav.toLowerCase();
+   var i = w3_array_el_seq(list, cur, { toLower:1 }), j;
+   var e = list.length - 1;
+   var k = ev.key.toLowerCase();
+   if (k.startsWith('arrow')) {     // up/down arrow
+      var match = true;
+      if (k[5] == 'u') {
+         //console.log('U i='+ i +' e='+ e +' '+ cur);
+         i = i? i-1 : e;
+      } else
+      if (k[5] == 'd') {
+         //console.log('D i='+ i +' e='+ e +' '+ cur);
+         i = (i == e)? 0 : i+1;
+      } else
+         match = false;
+      //console.log('dir i='+ i +' '+ list[i]);
+      if (match) extensions_nav_focus(list[i]);
+   }
+}
+
 function extensions_focus()
 {
    //console.log('extensions_focus');
@@ -3003,10 +3029,13 @@ function extensions_focus()
          return admin.ext_configs_done;
       },
       function() {
-         var ext_tab = kiwi_url_param(0);
-         if (ext_tab) ext_tab = ext_tab.split(',')[1];
-         if (isNonEmptyString(ext_tab)) {
-            kiwi_storeWrite('last_admin_ext_nav', ext_tab);
+         if (!admin_sdr.url_once) {
+            var ext_tab = kiwi_url_param(0);
+            if (ext_tab) ext_tab = ext_tab.split(',')[1];
+            if (isNonEmptyString(ext_tab)) {
+               kiwi_storeWrite('last_admin_ext_nav', ext_tab);
+            }
+            admin_sdr.url_once = true;
          }
          
          w3_click_nav('id-sidenav-ext', kiwi_toggle(toggle_e.FROM_COOKIE | toggle_e.SET, 'wspr', 'wspr', 'last_admin_ext_nav'), 'extensions_nav');
@@ -3014,6 +3043,8 @@ function extensions_focus()
       200
    );
    // REMINDER: w3_do_when_cond() returns immediately
+   
+   window.addEventListener("keydown", extensions_keydown);
 
 	// get updates while the extensions tab is selected
 	admin_update_start();
@@ -3023,12 +3054,14 @@ function extensions_blur()
 {
    //console.log('extensions_blur');
    if (admin_sdr.ext_cur_nav) w3_call(admin_sdr.ext_cur_nav +'_config_blur');
+   window.removeEventListener("keydown", extensions_keydown);
 	admin_update_stop();
 }
 
 function extensions_nav_focus(id, cb_arg)
 {
    //console.log('extensions_nav_focus id='+ id +' cb_arg='+ cb_arg);
+   w3_click_nav('id-sidenav-ext', id, id, null, 'extensions_nav_focus');
    kiwi_storeWrite('last_admin_ext_nav', id);
    w3_show(id +'-container');
    w3_call(id +'_config_focus');
@@ -3054,6 +3087,7 @@ function ext_admin_config(id, nav_text, ext_html, focus_blur_cb)
 	var ci = ext_seq % admin_colors.length;
 	w3_el('id-sidenav-ext').innerHTML +=
 		w3_nav(admin_colors[ci] + ' w3-border', nav_text, 'id-sidenav-ext', id, 'extensions_nav');
+	admin_sdr.ext_nav[ext_seq] = id;
 	ext_seq++;
 	w3_el('id-extensions-config').innerHTML += w3_div('id-'+ id +'-container w3-hide|width:95%', ext_html);
 }
