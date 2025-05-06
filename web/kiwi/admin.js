@@ -4520,30 +4520,22 @@ function admin_draw(sdr_mode)
          var e = tabs.length - 1;
          var k = ev.key.toLowerCase();
          if (k.length == 1 && k >= 'a' && a <= 'z') {    // lcase/ucase char match next/prev
-            var dir = (ev.key == k.toUpperCase())? -1:1;
-            for (j = i + dir; j != i; j += dir) {
-               if (j > e) j = 0;
-               if (j < 0) j = e;
+            dir = (ev.key == k.toUpperCase())? -1:1;
+            j = w3_wrap(i + dir, 0, e);
+            while (j != i) {
+               //console_nv('kd', {dir}, {e}, {j}, {i});
                if (tabs[j].toLowerCase()[0] == k) {
                   admin_nav_focus(tabs[j]);
                   break;
                }
+               j = w3_wrap(j + dir, 0, e);
             }
             //console.log('char dir='+ dir +' j='+ j +' '+ tabs[j]);
          } else
          if (k.startsWith('arrow')) {     // left/right arrow
-            var match = true;
-            if (k[5] == 'l') {
-               //console.log('L i='+ i +' e='+ e +' '+ admin.current_tab_name);
-               i = i? i-1 : e;
-            } else
-            if (k[5] == 'r') {
-               //console.log('R i='+ i +' e='+ e +' '+ admin.current_tab_name);
-               i = (i == e)? 0 : i+1;
-            } else
-               match = false;
-            //console.log('dir i='+ i +' '+ tabs[i]);
-            if (match) admin_nav_focus(tabs[i]);
+            dir = (k[5] == 'l')? -1 : ((k[5] == 'r')? 1:0);
+            j = w3_wrap(i + dir, 0, e);
+            if (j != i) admin_nav_focus(tabs[j]);
          }
       }
    );

@@ -592,6 +592,13 @@ function w3_clamp3(v, min, max, clamp_min, clamp_max, clamp_NaN)
    return v;
 }
 
+function w3_wrap(v, min, max)
+{
+   if (v < min) v = max; else
+   if (v > max) v = min;
+   return v;
+}
+
 
 ////////////////////////////////
 // HTML

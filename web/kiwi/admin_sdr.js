@@ -2999,22 +2999,13 @@ function extensions_keydown(ev)
    if (!isString(ev.key)) return;
    var list = admin_sdr.ext_nav;
    var cur = admin_sdr.ext_cur_nav.toLowerCase();
-   var i = w3_array_el_seq(list, cur, { toLower:1 }), j;
+   var i = w3_array_el_seq(list, cur, { toLower:1 });
    var e = list.length - 1;
    var k = ev.key.toLowerCase();
    if (k.startsWith('arrow')) {     // up/down arrow
-      var match = true;
-      if (k[5] == 'u') {
-         //console.log('U i='+ i +' e='+ e +' '+ cur);
-         i = i? i-1 : e;
-      } else
-      if (k[5] == 'd') {
-         //console.log('D i='+ i +' e='+ e +' '+ cur);
-         i = (i == e)? 0 : i+1;
-      } else
-         match = false;
-      //console.log('dir i='+ i +' '+ list[i]);
-      if (match) extensions_nav_focus(list[i]);
+      var dir = (k[5] == 'u')? -1 : ((k[5] == 'd')? 1:0);
+      var j = w3_wrap(i + dir, 0, e);
+      if (j != i) extensions_nav_focus(list[j]);
    }
 }
 
