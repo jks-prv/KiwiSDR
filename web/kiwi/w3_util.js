@@ -436,11 +436,13 @@ function w3_obj_key_seq(obj, key)
    return seq;
 }
 
-function w3_array_el_seq(arr, el)
+function w3_array_el_seq(arr, el, opt)
 {
+   var toLower = w3_opt(opt, 'toLower', false);
    var seq = null;
    arr.forEach(function(a_el, i) {
-      if (a_el == el) seq = i;
+      var ael = toLower? a_el.toLowerCase() : a_el;
+      if (ael == el) seq = i;
    });
    return seq;
 }
