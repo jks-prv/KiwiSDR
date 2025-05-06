@@ -531,6 +531,8 @@ function ale_2g_get_nets_done_cb(nets)
 
          if (rv.found_menu_match)
             p.shift();
+      } else {
+         rv = { found_menu_match: false };
       }
 
       p.forEach(function(a, i) {
