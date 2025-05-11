@@ -3,7 +3,6 @@
 var tdoa = {
    ext_name:   'TDoA',  // NB: must match tdoa.cpp:tdoa_ext.name
    first_time: true,
-   new_polling_method: true,
    old_algorithm: false,
    all_results: false,
    prev_ui:    false,
@@ -931,10 +930,10 @@ function tdoa_style_marker(marker, idx, name, type, map)
                   rh.have_event_listeners[i] = true;
                   el.addEventListener('click', function(ev) {
                      tdoa_marker_click(ev.target, ev);
-                  });
+                  }, w3.BUBBLING);
                   el.addEventListener('dblclick', function(ev) {
                      tdoa_marker_dblclick(ev.target);
-                  });
+                  }, w3.BUBBLING);
                   el.addEventListener('mouseenter', function(ev) {
                      //console.log('tooltip mouseenter z='+ el.style.zIndex);
                      //console.log(ev);
@@ -943,7 +942,7 @@ function tdoa_style_marker(marker, idx, name, type, map)
                         el.style.zIndex = 9001;    // put highlighted marker on top
                      }
                      tdoa_clear_unspiderfy_timeout();
-                  });
+                  }, w3.BUBBLING);
                   el.addEventListener('mouseleave', function(ev) {
                      //console.log('tooltip mouseleave z='+ el.style.zIndex);
                      //console.log(ev);
@@ -955,7 +954,7 @@ function tdoa_style_marker(marker, idx, name, type, map)
                         el.style.zIndex = 9000;    // NB: "z-index: 9000" in TDoA.css
                      }
                      tdoa_set_unspiderfy_timeout();
-                  });
+                  }, w3.BUBBLING);
                }
             }
          }
@@ -2103,63 +2102,41 @@ function tdoa_submit_button_cb2()
    tdoa.last_menu_select = undefined;
    tdoa.response = {};
    tdoa.response.seq = 0;
-   
-   if (tdoa.new_polling_method) {
-      tdoa.response.key = (Date.now() % 100000).leadingZeros(5);
-      kiwi_ajax_progress(tdoa.url_base +'php/tdoa.php'+ tdoa.a[0] +'&key='+ tdoa.response.key + s,
-         function(json) {     // done callback
-            //console.log('$TDoA tdoa.php DONE json='+ json);
-         }, 0,
-         
-         0,    // timeout
-         
-         '', 0
-         /*
-         function(json) {     // progress callback
-         
-            // Have to get the key using the old php realtime output method
-            // before polling for the $key/progress.json file can begin
-            
-            //console.log('$TDoA tdoa.php PROGRESS json='+ json);
-            var key_s = '{"key":"';
-            if (!tdoa.response.key && json.startsWith(key_s)) {
-               // don't use parseInt here because key is a 5-digit number that can start with zero
-               tdoa.response.key = json.substr(key_s.length, 5);
-               console.log('$TDoA key='+ tdoa.response.key);
-            }
-         }, 0
-         */
-      );
-      //console.log('$TDoA tdoa.php RUNNING');
+   tdoa.response.key = (Date.now() % 100000).leadingZeros(5);
+
+   kiwi_ajax_progress(tdoa.url_base +'php/tdoa.php'+ tdoa.a[0] +'&key='+ tdoa.response.key + s,
+      function(json) {     // done callback
+         //console.log('$TDoA tdoa.php DONE json='+ json);
+      }, 0,
       
-      tdoa.progress_interval = setInterval(function() {
-         if (tdoa.response.key) {
-            kiwi_ajax(tdoa.url_files + tdoa.response.key +'/progress.json',
-               function(json) {
-                  tdoa_protocol_response_cb(json);
-                  if (tdoa.response.seq == tdoa.SEQ_DONE) {
-                     kiwi_clearInterval(tdoa.progress_interval);
-                     //console.log('$TDoA /progress.json DONE');
-                  }
+      0,    // timeout
+      
+      '', 0
+   );
+   //console.log('$TDoA tdoa.php RUNNING');
+   
+   var expire = Date.now() + 200000;   // tdoa.php has 180s timeout
+   //var expire = Date.now() + 21000;  // testing
+   //console.log('$TDoA /progress.json START');
+   tdoa.progress_interval = setInterval(function() {
+      //console.log('$TDoA /progress.json RUN');
+      if (tdoa.response.key) {
+         kiwi_ajax(tdoa.url_files + tdoa.response.key +'/progress.json',
+            function(json) {
+               tdoa_protocol_response_cb(json);
+               if (tdoa.response.seq == tdoa.SEQ_DONE) {
+                  kiwi_clearInterval(tdoa.progress_interval);
+                  //console.log('$TDoA /progress.json DONE');
                }
-            );
-         }
-      }, 500);
-   } else {
-      kiwi_ajax_progress(tdoa.url_base +'php/tdoa.php'+ tdoa.a[0] + s,
-         function(json) {     // done callback
-            //console.log('DONE');
-            tdoa_protocol_response_cb(json);
-         }, 0,
-         
-         0,    // timeout
-         
-         function(json) {     // progress callback
-            //console.log('PROGRESS');
-            tdoa_protocol_response_cb(json);
-         }, 0
-      );
-   }
+            }
+         );
+      }
+      if (Date.now() > expire) {
+         kiwi_clearInterval(tdoa.progress_interval);
+         console.log('$TDoA /progress.json TIMEOUT');
+         tdoa_submit_status_new_cb(0, true);
+      }
+   }, 2000);
 
    if (!tdoa.rerun) {
       tdoa.field.forEach(function(f, i) {
@@ -2261,11 +2238,17 @@ function tdoa_sample_status_cb(status)
    }
 }
 
-function tdoa_submit_status_new_cb(no_rerun_files)
+function tdoa_submit_status_new_cb(no_rerun_files, timeout)
 {
    //console.log('TDoA tdoa_submit_status_new_cb no_rerun_files='+ no_rerun_files);
    if (no_rerun_files) {
       tdoa_submit_status_old_cb(no_rerun_files);
+      return;
+   }
+   
+   if (timeout) {
+      w3_button_text('id-tdoa-submit-button', 'Submit', 'w3-css-yellow', 'w3-red');
+      tdoa_submit_state(tdoa.ERROR, 'Protocol timeout');
       return;
    }
    
