@@ -546,11 +546,11 @@ function hfdl_place_gs_marker(gs_n)
             var mkr = ev.target;
             hfdl.saved_color = mkr.style.background;
             mkr.style.background = 'yellow';
-         });
+         }, w3.BUBBLING);
          el.addEventListener('mouseleave', function(ev) {
             var mkr = ev.target;
             mkr.style.background = hfdl.saved_color;
-         });
+         }, w3.BUBBLING);
          el.addEventListener('click', function(ev) {
          
             // match on freq and gs name both to distinguish multiple gs on same freq
@@ -572,7 +572,7 @@ function hfdl_place_gs_marker(gs_n)
                hfdl_pre_select_cb(rv2.match_menu, rv2.match_val, false);
                hfdl_pre_select_cb(rv.match_menu, rv.match_val, false);
             }
-         });
+         }, w3.BUBBLING);
 
          el.innerHTML = ((hfdl.bf[i].toString().length < 2)? '&nbsp;' : '') + hfdl.bf[i];
          el.style.background = hfdl.bf_color[i];

@@ -896,7 +896,7 @@ function ext_panel_init()
 		//event_dump(evt, 'Escape-ext');
 		if (evt.key == 'Escape' && evt.target.nodeName == 'INPUT')
 			extint_panel_hide();
-	}, false);
+	}, w3.BUBBLING);
 	*/
 
 	// close ext panel if escape key
@@ -910,7 +910,7 @@ function ext_panel_init()
 	            w3_el('id-ext-controls-close').click();
 	         }
 	      }
-	   }, true);
+	   }, w3.CAPTURING);
 }
 
 function ext_show_spectrum(which)

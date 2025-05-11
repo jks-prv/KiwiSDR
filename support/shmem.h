@@ -117,6 +117,8 @@ typedef struct {
     net_t net_shmem;
     int CAT_last_freqHz;
     u4_t zoom_all, zoom_all_seq;
+    int debug_v, debug_v2;
+    int debug_v_set, debug_v2_set;
 
     u4_t rv_u4_t[MAX_RX_CHANS];
     

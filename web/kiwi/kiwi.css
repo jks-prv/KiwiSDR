@@ -584,6 +584,11 @@ input.kiwi-pw
     background: cyan;
 }
 
+.cl-admin-console-color
+{
+    background: #a8a8a8;
+}
+
 .ws_keep_conn
 {
     position: absolute;

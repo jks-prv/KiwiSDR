@@ -66,7 +66,6 @@ Boston, MA  02110-1301, USA.
 kstr_t *cpu_stats_buf;
 volatile float audio_kbps[MAX_RX_CHANS+1], waterfall_kbps[MAX_RX_CHANS+1], waterfall_fps[MAX_RX_CHANS+1], http_kbps;
 volatile u4_t audio_bytes[MAX_RX_CHANS+1], waterfall_bytes[MAX_RX_CHANS+1], waterfall_frames[MAX_RX_CHANS+1], http_bytes;
-int debug_v;
 
 #ifdef USE_SDR
 
@@ -1322,9 +1321,10 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     idx1 = CLAMP(idx1, 0, cur_len - 1);
 
                     // search starting from given index
+                    dx_print_search(true, "DX_ADM_SEARCH_IDENT idx1=%d\n", idx1);
                     dx_t *dp = &cur_list[idx1];
                     for (i = idx1; dp < &cur_list[cur_len]; i++, dp++) {
-                        dx_print_search(true, "DX_ADM_SEARCH_IDENT LOOP1 <%s> <%s> #%d\n", dp->ident_s, ident, i);
+                        dx_print_search(true, "DX_ADM_SEARCH_IDENT LOOP1 %.2f <%s> <%s> #%d\n", dp->freq, dp->ident_s, ident, i);
                         if (strcasestr(dp->ident_s, ident) != NULL) {
                             pos = i;
                             break;
@@ -1335,7 +1335,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     if (pos == -1) {
                         dx_t *dp = &cur_list[0];
                         for (i = 0; dp < &cur_list[cur_len]; i++, dp++) {
-                            dx_print_search(true, "DX_ADM_SEARCH_IDENT LOOP2 <%s> <%s> #%d\n", dp->ident_s, ident, i);
+                            dx_print_search(true, "DX_ADM_SEARCH_IDENT LOOP2 %.2f <%s> <%s> #%d\n", dp->freq, dp->ident_s, ident, i);
                             if (strcasestr(dp->ident_s, ident) != NULL) {
                                 pos = i;
                                 break;
@@ -1358,9 +1358,10 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     idx1 = CLAMP(idx1, 0, cur_len - 1);
 
                     // search starting from given index
+                    dx_print_search(true, "DX_ADM_SEARCH_NOTES idx1=%d\n", idx1);
                     dx_t *dp = &cur_list[idx1];
                     for (i = idx1; dp < &cur_list[cur_len]; i++, dp++) {
-                        dx_print_search(dp->notes, "DX_ADM_SEARCH_NOTES LOOP1 <%s> <%s> #%d\n", dp->notes_s, notes, i);
+                        dx_print_search(dp->notes, "DX_ADM_SEARCH_NOTES LOOP1 %.2f <%s> <%s> #%d\n", dp->freq, dp->notes_s, notes, i);
                         if (dp->notes && strcasestr(dp->notes_s, notes) != NULL) {
                             pos = i;
                             break;
@@ -1371,7 +1372,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     if (pos == -1) {
                         dx_t *dp = &cur_list[0];
                         for (i = 0; dp < &cur_list[cur_len]; i++, dp++) {
-                            dx_print_search(dp->notes, "DX_ADM_SEARCH_NOTES LOOP2 <%s> <%s> #%d\n", dp->notes_s, notes, i);
+                            dx_print_search(dp->notes, "DX_ADM_SEARCH_NOTES LOOP2 %.2f <%s> <%s> #%d\n", dp->freq, dp->notes_s, notes, i);
                             if (dp->notes && strcasestr(dp->notes_s, notes) != NULL) {
                                 pos = i;
                                 break;
@@ -2178,11 +2179,20 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
 	// SECURITY: only used during debugging
 	// arg check: OK
     case CMD_DEBUG_VAL:
-        n = sscanf(cmd, "SET dbug_v=%d,%d", &i, &j);
-        if (n == 2) {
-            debug_v = i;
-            kiwi.dbgUs = j;
-            printf("SET dbug_v=%d dbgUs=%d\n", debug_v, kiwi.dbgUs);
+        int v_set, v2_set;
+        n = sscanf(cmd, "SET dbug_v=%d,%d,%d,%d,%d", &i, &v_set, &j, &v2_set, &k);
+        if (n == 5) {
+            if (v_set) {
+                shmem->debug_v = i;
+                shmem->debug_v_set = 1;
+            }
+            if (v2_set) {
+                shmem->debug_v2 = j;
+                shmem->debug_v2_set = 1;
+            }
+            kiwi.dbgUs = k;
+            printf("SET dbug_v=%d dbug_v_set=%d dbug_v2=%d dbug_v2_set=%d dbgUs=%d\n",
+                shmem->debug_v, shmem->debug_v_set, shmem->debug_v2, shmem->debug_v2_set, kiwi.dbgUs);
             return true;
         }
 	    break;

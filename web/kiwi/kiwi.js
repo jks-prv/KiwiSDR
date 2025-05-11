@@ -175,6 +175,7 @@ var kiwi = {
    
    no_reopen_retry: false,
    wf_preview_mode: false,
+   
    _ver_: 1.578,
    _last_: null
 };
@@ -690,10 +691,12 @@ function config_save2(kiwi_cfg, cfg)
 
 function cfg_save_json(id, path, val)
 {
-	//console.log('cfg_save_json: BEGIN from='+ id +' path='+ path + (isArg(val)? (' val='+ val) : ''));
+   var val_s = isArg(val)? (' val=<'+ val +'>') : '';
+	//console.log('cfg_save_json: BEGIN from='+ id +' path='+ path + val_s);
 	//if (path.includes('kiwisdr_com_register')) kiwi_trace();
 	//if (path.includes('rev_')) kiwi_trace();
 	//if (path.includes('rx_gps')) kiwi_trace();
+	//if (isUndefined(val)) kiwi_trace();
 
 	var s;
 	if (path.startsWith('adm.')) {
@@ -708,7 +711,7 @@ function cfg_save_json(id, path, val)
 	} else {    // cfg.*
       config_save('cfg', cfg);
 	}
-	console.log('cfg_save_json: from='+ id +' path='+ path +' val=<'+ val +'> DONE');
+	console.log('cfg_save_json: from='+ id +' path='+ path + val_s +' DONE');
 }
 
 ////////////////////////////////
@@ -907,7 +910,7 @@ function time_display_html(ext_name, top)
 var ansi = {
    colors:  [
    
-      // colors optimized for contrast against id-console-msg #a8a8a8 background
+      // colors optimized for contrast against cl-admin-console-color
       // regular and bright pallet are the same because MacOS regular colors were too dim
 
       // regular

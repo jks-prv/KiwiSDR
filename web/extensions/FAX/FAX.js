@@ -314,9 +314,9 @@ function fax_controls_setup()
 	fax.data_canvas.ctx = fax.data_canvas.getContext("2d");
 	fax.copy_canvas.ctx = fax.copy_canvas.getContext("2d");
 	fax.data_canvas.imd = fax.data_canvas.ctx.createImageData(fax_w, 1);
-	fax.data_canvas.addEventListener("mousedown", fax_mousedown, false);
+	fax.data_canvas.addEventListener("mousedown", fax_mousedown, w3.BUBBLING);
 	if (kiwi_isMobile())
-		fax.data_canvas.addEventListener('touchstart', fax_touchstart, false);
+		fax.data_canvas.addEventListener('touchstart', fax_touchstart, w3.BUBBLING);
 
    fax.data_canvas.height = fax_h.toString();
    fax.copy_canvas.height = fax_h.toString();

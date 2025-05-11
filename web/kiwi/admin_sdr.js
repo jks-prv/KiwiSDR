@@ -1045,9 +1045,9 @@ function webpage_html_save_cb(path)
 
 function webpage_panel_readme_save_cb(path)
 {
-   console.log('webpage_panel_readme_save_cb');
+   //console.log('webpage_panel_readme_save_cb');
    var el = w3_el('panel_readme');
-   console.log('val='+ el.value);
+   //console.log('val='+ el.value);
    webpage_html_cb('panel_readme', el.value);
    w3_schedule_highlight(el);
 }
@@ -2147,6 +2147,7 @@ function dx_list_sched_del_cb(path, idx)
 function dx_search_freq_cb(path, val, first)
 {
    if (first) return;
+   //console.log('dx_search_freq_cb path='+ path +' val='+ val);
    val = val.parseFloatWithUnits('kM', 1e-3);
    if (isNaN(val)) {
       w3_set_value(path, '');
@@ -2154,28 +2155,31 @@ function dx_search_freq_cb(path, val, first)
       //console.log('dx_search_freq_cb val='+ val);
       ext_send('SET MARKER search_freq='+ val);
    }
+	return w3.RETAIN_FOCUS;
 }
 
 function dx_search_ident_cb(path, val, first, cb_a)
 {
    if (first) return;
    //console.log('dx_search_ident_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
-   if (cb_a[1] == 'ev') return;     // so we don't run twice
+   if (kiwi_isFirefox() && cb_a[1] == 'ev') return;   // so we don't run twice
    if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
 	ext_send('SET MARKER idx='+ idx +' search_ident='+ encodeURIComponent(val));
+	return w3.RETAIN_FOCUS;
 }
 
 function dx_search_notes_cb(path, val, first, cb_a)
 {
    if (first) return;
    //console.log('dx_search_notes_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
-   if (cb_a[1] == 'ev') return;     // so we don't run twice
+   if (kiwi_isFirefox() && cb_a[1] == 'ev') return;   // so we don't run twice
    if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
 	ext_send('SET MARKER idx='+ idx +' search_notes='+ encodeURIComponent(val));
+	return w3.RETAIN_FOCUS;
 }
 
 // callback from "SET MARKER idx= search_xxx=" above
@@ -3035,7 +3039,7 @@ function extensions_focus()
    );
    // REMINDER: w3_do_when_cond() returns immediately
    
-   window.addEventListener("keydown", extensions_keydown);
+   window.addEventListener("keydown", extensions_keydown, w3.BUBBLING);
 
 	// get updates while the extensions tab is selected
 	admin_update_start();
@@ -3045,7 +3049,7 @@ function extensions_blur()
 {
    //console.log('extensions_blur');
    if (admin_sdr.ext_cur_nav) w3_call(admin_sdr.ext_cur_nav +'_config_blur');
-   window.removeEventListener("keydown", extensions_keydown);
+   window.removeEventListener("keydown", extensions_keydown, w3.BUBBLING);
 	admin_update_stop();
 }
 
