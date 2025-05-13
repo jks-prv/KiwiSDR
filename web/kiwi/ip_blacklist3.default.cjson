@@ -8,6 +8,7 @@
 //
 // Updates:
 //
+// 14 may 25 159.226.19.19/32 repeated old API accesses, Computer Network Information Center of Chinese Academy of Sciences
 // 14 mar 25 23.123.206.34/32 AT&T proxy attack
 //  5 mar 25 66.245.192.0/21 (192.0:199.255) 66.245.196.27 constant/vultr/choopa repeating CMD_MARKER unknown variant
 //  4 mar 25 107.191.32.0/19 (32.0:63.255) 107.191.49.208 constant/vultr/choopa repeating CMD_MARKER unknown variant
@@ -198,6 +199,7 @@
     "152.32.0.0/16",
     "155.138.128.0/17",
     "158.247.192.0/18",
+    "159.226.19.19/32",
     "161.117.0.0/16",
     "162.211.0.0/16",
     "167.86.96.0/19",
