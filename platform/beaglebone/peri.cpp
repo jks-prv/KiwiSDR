@@ -37,9 +37,9 @@
 #include <string.h>
 
 // debugging
-#define SHOW_IO_SETUP
-#define SHOW_CHECK_PMUX
-#define SHOW_GPIO_STATE
+//#define SHOW_IO_SETUP
+//#define SHOW_CHECK_PMUX
+//#define SHOW_GPIO_STATE
 
 static volatile u4_t *prcm_m, *pmux_m[NPMUX];
 volatile u4_t *spi_m, *gpio_m[NGPIO];

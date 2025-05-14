@@ -257,7 +257,8 @@ var wf_compression = 1;
 var wf_interp = 13;  // WF_DROP + WF_CIC_COMP by default
 var wf_winf = 2;     // WIN_BLACKMAN_HARRIS
 var snd_winf = 0;    // WIN_BLACKMAN_NUTTALL
-var debug_v = 0;		// a general value settable from the URI to be used during debugging
+var debug_v = 0, debug_v2 = 0;;  // a general value settable from the URI to be used during debugging
+var debug_v_set = false, debug_v2_set = false;
 var sb_trace = 0;
 var kiwi_gc = 1;
 var kiwi_gc_snd = 0;
@@ -319,29 +320,29 @@ function kiwi_main_ready()
       w3_innerHTML(el, 'Keyboard modifier test');
 	   if (1) window.addEventListener("keydown",
 	      function(ev) {
-	         event_dump(ev, 'KD', true);
+	         event_dump(ev, 'KD', w3.CAPTURING);
 	      }
 	   );
 	   if (1) window.addEventListener("keypress",
 	      function(ev) {
-	         event_dump(ev, 'KP', true);
+	         event_dump(ev, 'KP', w3.CAPTURING);
 	      }
 	   );
 	   if (1) window.addEventListener("keyup",
 	      function(ev) {
-	         event_dump(ev, 'KU', true);
+	         event_dump(ev, 'KU', w3.CAPTURING);
 	      }
 	   );
 	   if (1) window.addEventListener("click",
 	      function(ev) {
-	         event_dump(ev, 'click', true);
+	         event_dump(ev, 'click', w3.CAPTURING);
 	      }
 	   );
       return;
    */
    
-   window.addEventListener("mousedown", function(evt) { mouse_button_state(evt); });
-   window.addEventListener("mouseup", function(evt) { mouse_button_state(evt); });
+   window.addEventListener("mousedown", function(evt) { mouse_button_state(evt); }, w3.BUBBLING);
+   window.addEventListener("mouseup", function(evt) { mouse_button_state(evt); }, w3.BUBBLING);
 
 	override_freq = parseFloat(kiwi_storeRead('last_freq'));
 	override_mode = kiwi_storeRead('last_mode');
@@ -472,7 +473,8 @@ function kiwi_main_ready()
 	s = 'tmobile'; if (q[s]) mobile_laptop_test = true;
 	s = 'ae'; if (q[s]) show_activeElement = true;
 	s = 'fnas'; if (q[s]) force_need_autoscale = true;
-	s = 'v'; if (q[s]) console.log('URL: debug_v = '+ (debug_v = q[s]));
+	s = 'v'; if (q[s]) { debug_v = q[s]; debug_v_set = true; console.log('URL: debug_v = '+ debug_v); }
+	s = 'v2'; if (q[s]) { debug_v2 = q[s]; debug_v2_set = true; console.log('URL: debug_v2 = '+ debug_v2); }
 
 	if (kiwi_gc_snd == -1) kiwi_gc_snd = kiwi_gc;
 	if (kiwi_gc_wf == -1) kiwi_gc_wf = kiwi_gc;
@@ -536,7 +538,7 @@ function kiwi_main_ready()
 	time_display_setup('id-topbar-R-container');
 	
 	window.setInterval(send_keepalive, 5000);
-	window.addEventListener('resize', openwebrx_resize);
+	window.addEventListener('resize', openwebrx_resize, w3.BUBBLING);
         
    if (param_nocache) {
       //msg_send("SET nocache="+ (nocache? 1:0));
@@ -549,7 +551,7 @@ function kiwi_main_ready()
 
 	// FIXME: eliminate most of these
 	snd_send("SERVER DE CLIENT openwebrx.js SND");
-	snd_send("SET dbug_v="+ debug_v +','+ (dbgUs? 1:0));
+	snd_send("SET dbug_v="+ debug_v +','+ (debug_v_set? 1:0) +','+ debug_v2 +','+ (debug_v2_set? 1:0) +','+ (dbgUs? 1:0));
 
    // setup gen when configuration loaded
    w3_do_when_cond(
@@ -662,7 +664,7 @@ function init_panel_toggle(type, panel, scrollable, timeo, color)
 			'</a>';
 	}
 
-	var visOffset = divPanel.activeWidth - visIcon;
+	var visOffset = (divPanel.activeWidth || 0) - visIcon;
 	//console.log("init_panel_toggle "+panel+" right="+rightSide+" off="+visOffset);
 	if (rightSide) {
 		divVis.style.right = px(0);
@@ -841,7 +843,7 @@ function init_top_bar()
 	w3_el("id-main-container").style.top = px(0);
 	rx_photo_set_height(true);
 
-   w3_el('id-topbar').addEventListener('click', freqset_select, false);
+   w3_el('id-topbar').addEventListener('click', freqset_select, w3.BUBBLING);
    var rx_loc = w3_json_to_string('RX_LOC', cfg.index_html_params.RX_LOC);
    w3_innerHTML('id-rx-desc',
       rx_loc +' | Grid '+
@@ -1624,9 +1626,9 @@ function add_shift_listener(el)
 {
    // couldn't get these global keyup/down to fire properly
    // so just call shift_event() from existing global keyup/down event handlers (hack)
-	//el.addEventListener("keydown", shift_event, true);     // called via keyboard_shortcut_event()
-	//el.addEventListener("keyup", shift_event, true);       // called via mouse_freq_remove()
-	el.addEventListener("mouseover", shift_event, true);
+	//el.addEventListener("keydown", shift_event, w3.CAPTURING);   // called via keyboard_shortcut_event()
+	//el.addEventListener("keyup", shift_event, w3.CAPTURING);     // called via mouse_freq_remove()
+	el.addEventListener("mouseover", shift_event, w3.CAPTURING);
 }
 
 function shift_event(evt, from)
@@ -1794,8 +1796,8 @@ var scale_canvas, band_canvas, dx_div, dx_canvas;
 
 function scale_setup()
 {
-	w3_el('id-scale-container').addEventListener("mouseover", scale_container_mouseover, false);
-	w3_el('id-scale-container').addEventListener("mouseout", scale_container_mouseout, false);
+	w3_el('id-scale-container').addEventListener("mouseover", scale_container_mouseover, w3.BUBBLING);
+	w3_el('id-scale-container').addEventListener("mouseout", scale_container_mouseout, w3.BUBBLING);
    
 	scale_canvas = w3_el("id-scale-canvas");
 	scale_ctx = scale_canvas.getContext("2d");
@@ -1841,16 +1843,16 @@ function scale_setup()
 
 function add_scale_listener(obj)
 {
-	obj.addEventListener("mousedown", scale_canvas_mousedown, false);
-	obj.addEventListener("mousemove", scale_canvas_mousemove, false);
-	obj.addEventListener("mouseup", scale_canvas_mouseup, false);
-	obj.addEventListener("contextmenu", scale_canvas_contextmenu, false);
-	obj.addEventListener("wheel", canvas_mousewheel_ev, false);    // yes, canvas_*, not scale_canvas_*
+	obj.addEventListener("mousedown", scale_canvas_mousedown, w3.BUBBLING);
+	obj.addEventListener("mousemove", scale_canvas_mousemove, w3.BUBBLING);
+	obj.addEventListener("mouseup", scale_canvas_mouseup, w3.BUBBLING);
+	obj.addEventListener("contextmenu", scale_canvas_contextmenu, w3.BUBBLING);
+	obj.addEventListener("wheel", canvas_mousewheel_ev, w3.BUBBLING);    // yes, canvas_*, not scale_canvas_*
 
 	if (kiwi_isMobile()) {
-		obj.addEventListener('touchstart', scale_canvas_touchStart, false);
-		obj.addEventListener('touchmove', scale_canvas_touchMove, false);
-		obj.addEventListener('touchend', scale_canvas_touchEnd, false);
+		obj.addEventListener('touchstart', scale_canvas_touchStart, w3.BUBBLING);
+		obj.addEventListener('touchmove', scale_canvas_touchMove, w3.BUBBLING);
+		obj.addEventListener('touchend', scale_canvas_touchEnd, w3.BUBBLING);
 	}
 }
 
@@ -2635,7 +2637,7 @@ function init_wf_container()
    canvas_annotation.style.zIndex = 1;    // make on top of waterfall
 	wf_container.appendChild(canvas_annotation);
 	add_canvas_listener(canvas_annotation);
-	w3_el('id-kiwi-body').addEventListener('keyup', mouse_freq_remove, false);
+	w3_el('id-kiwi-body').addEventListener('keyup', mouse_freq_remove, w3.BUBBLING);
 	
 	// annotation div for text containing links etc.
 	annotation_div = w3_el('id-annotation-div');
@@ -2693,40 +2695,40 @@ function init_wf_container()
    // REMINDER: w3_do_when_rendered() returns immediately
 	
 	// done at document level because mouse_freq_add() updates owrx.last_page[XY] as a side-effect
-	document.addEventListener("mousemove", mouse_freq_add, false);
+	document.addEventListener("mousemove", mouse_freq_add, w3.BUBBLING);
 }
 
 function add_canvas_listener(obj)
 {
-	obj.addEventListener("mouseover", canvas_mouseover, false);
-	obj.addEventListener("mouseout", canvas_mouseout, false);
-	obj.addEventListener("mousedown", canvas_mousedown, false);
-	obj.addEventListener("mousemove", canvas_mousemove, false);
-	obj.addEventListener("mouseup", canvas_mouseup, false);
-	obj.addEventListener("contextmenu", canvas_contextmenu, false);
-	obj.addEventListener("wheel", canvas_mousewheel_ev, false);
+	obj.addEventListener("mouseover", canvas_mouseover, w3.BUBBLING);
+	obj.addEventListener("mouseout", canvas_mouseout, w3.BUBBLING);
+	obj.addEventListener("mousedown", canvas_mousedown, w3.BUBBLING);
+	obj.addEventListener("mousemove", canvas_mousemove, w3.BUBBLING);
+	obj.addEventListener("mouseup", canvas_mouseup, w3.BUBBLING);
+	obj.addEventListener("contextmenu", canvas_contextmenu, w3.BUBBLING);
+	obj.addEventListener("wheel", canvas_mousewheel_ev, w3.BUBBLING);
 
 	if (kiwi_isMobile()) {
-		obj.addEventListener('touchstart', canvas_touchStart, false);
-		obj.addEventListener('touchmove', canvas_touchMove, false);
-		obj.addEventListener('touchend', canvas_touchEnd, false);
+		obj.addEventListener('touchstart', canvas_touchStart, w3.BUBBLING);
+		obj.addEventListener('touchmove', canvas_touchMove, w3.BUBBLING);
+		obj.addEventListener('touchend', canvas_touchEnd, w3.BUBBLING);
 	}
 }
 
 function remove_canvas_listener(obj)
 {
-	obj.removeEventListener("mouseover", canvas_mouseover, false);
-	obj.removeEventListener("mouseout", canvas_mouseout, false);
-	obj.removeEventListener("mousedown", canvas_mousedown, false);
-	obj.removeEventListener("mousemove", canvas_mousemove, false);
-	obj.removeEventListener("mouseup", canvas_mouseup, false);
-	obj.removeEventListener("contextmenu", canvas_contextmenu, false);
-	obj.removeEventListener("wheel", canvas_mousewheel_ev, false);
+	obj.removeEventListener("mouseover", canvas_mouseover, w3.BUBBLING);
+	obj.removeEventListener("mouseout", canvas_mouseout, w3.BUBBLING);
+	obj.removeEventListener("mousedown", canvas_mousedown, w3.BUBBLING);
+	obj.removeEventListener("mousemove", canvas_mousemove, w3.BUBBLING);
+	obj.removeEventListener("mouseup", canvas_mouseup, w3.BUBBLING);
+	obj.removeEventListener("contextmenu", canvas_contextmenu, w3.BUBBLING);
+	obj.removeEventListener("wheel", canvas_mousewheel_ev, w3.BUBBLING);
 
 	if (kiwi_isMobile()) {
-		obj.removeEventListener('touchstart', canvas_touchStart, false);
-		obj.removeEventListener('touchmove', canvas_touchMove, false);
-		obj.removeEventListener('touchend', canvas_touchEnd, false);
+		obj.removeEventListener('touchstart', canvas_touchStart, w3.BUBBLING);
+		obj.removeEventListener('touchmove', canvas_touchMove, w3.BUBBLING);
+		obj.removeEventListener('touchend', canvas_touchEnd, w3.BUBBLING);
 	}
 }
 
@@ -4360,7 +4362,7 @@ function spectrum_init()
 
    spec.spectrum_image = spec.ctx.createImageData(spec.canvas.width, spec.canvas.height);
    
-   if (!wf.audioFFT_active && rx_chan >= wf_chans && !kiwi.wf_share) {
+   if (!wf.audioFFT_active && rx_chan >= wf_chans) {
 		// clear entire spectrum canvas to black
 		var sw = spec.canvas.width;
 		var sh = spec.canvas.height;
@@ -4837,7 +4839,7 @@ function wf_init_ready()
 {
 	init_wf_container();
 
-   wf.audioFFT_active = (rx_chan >= wf_chans && !kiwi.wf_share);
+   wf.audioFFT_active = (rx_chan >= wf_chans);
 	resize_waterfall_container(false);
 	resize_wf_canvases();
 	bands_init();
@@ -5141,7 +5143,7 @@ function waterfall_add(data_raw, audioFFT)
       if (kiwi_gc_wf) u32View = null;	// gc
       x_zoom_server = u32 & 0xffff;
       var flags = (u32 >> 16) & 0xffff;
-   
+      
       data_arr_u8 = new Uint8Array(data_raw, 16);	// unsigned dBm values, converted to signed later on
       var bytes = data_arr_u8.length;
    
@@ -8082,7 +8084,7 @@ function confirmation_panel_init2()
 	         confirmation.close_cb();
             toggle_or_set_hide_panels(0);    // cancel panel hide mode
 	      }
-	   }, true);
+	   }, w3.CAPTURING);
 }
 
 function confirmation_show_content(s, w, h, close_cb, bg_color)
@@ -9121,7 +9123,7 @@ function dx_filter(shift_plus_ctl_alt)
       );
 
    confirmation_show_content(s, 450, 140, dx_filter_panel_close);
-   w3_field_select('id-dx-filter-ident', {mobile:1});    // select the field
+   w3_field_select('id-dx-filter-ident', {mobile:1});    // initially select the ident field
 }
 
 function dx_filter_reset_cb(el, val)
@@ -9150,6 +9152,7 @@ function dx_filter_cb(path, val, first, no_close)
 	   ' c='+ dx.filter_case +' w='+ dx.filter_wild +' g='+ dx.filter_grep);
 	w3_remove_then_add('id-dx-container', 'whiteSmoke cl-dx-filtered', filtered? 'cl-dx-filtered' : 'whiteSmoke');
 	if (!filtered && !no_close) dx_filter_panel_close();
+   return w3.RETAIN_FOCUS;
 }
 
 function dx_filter_opt_cb(path, val, first)
@@ -9169,7 +9172,7 @@ function dx_filter_opt_cb(path, val, first)
    if (val && path != 'dx.filter_case') {
       dx_filter_opt_cb((path == 'dx.filter_wild')? 'dx.filter_grep' : 'dx.filter_wild', 0);
    }
-   w3_field_select('id-dx-filter-ident', {mobile:1});    // reselect the field
+   w3_field_select('id-dx-filter-ident', {mobile:1});    // after opt change select the ident field
 }
 
 function dx_filter_field_err(err)
@@ -10459,7 +10462,7 @@ function keyboard_shortcut_init()
          )
       );
 
-	w3_el('id-kiwi-body').addEventListener('keydown', keyboard_shortcut_event, true);
+	w3_el('id-kiwi-body').addEventListener('keydown', keyboard_shortcut_event, w3.CAPTURING);
 }
 
 function keyboard_shortcut_help()
@@ -10732,7 +10735,7 @@ function keyboard_shortcut_event(evt)
    var field_or_slider = (evt.target.nodeName == 'INPUT');
    var slider_not_field = (evt.target.type == 'range');
    var ae = w3_activeElement();
-   var no_other_input_elements_have_focus = (ae == 'id-kiwi-body');
+   var no_other_input_elements_have_focus = w3_noElHasFocus();
 
    // mobile: if a field input key and the freq input field is not selected, then select it
    // before processing the key.
@@ -10956,7 +10959,7 @@ function panels_setup()
 
 	// Need to capture click event to override parent (id-topbar) click event.
 	// Otherwise when the ident input field is click freqset_select() is called and the focus is taken away.
-	el.addEventListener('click', function(evt) { return cancelEvent(evt); }, true);
+	el.addEventListener('click', function(evt) { return cancelEvent(evt); }, w3.CAPTURING);
 	
 	var mobile = kiwi_isMobile()?
 	   (' inputmode='+ dq(kiwi_is_iOS()? 'decimal' : 'tel') +' ontouchstart="popup_keyboard_touchstart(event)" onclick="this.select()"') : '';
@@ -11478,7 +11481,7 @@ function panels_setup()
 	   //console.log('id-readme ev='+ ev);
 	   cancelEvent(ev);
 	   toggle_panel('id-readme');
-	}, true);
+	}, w3.CAPTURING);
 	*/
 	
 	//console.log('README='+ cfg.panel_readme);
@@ -11559,7 +11562,6 @@ function panels_setup()
 function update_wf_stats()
 {
    var s = 'span '+ zoom_span_Hz.toUnits(true) +'Hz, '+ kiwi.wf_fps.toFixed(0) +' fps';
-   if (kiwi.wf_share) s += ', share mode';
    w3_innerHTML('id-status-wf',
       w3_text('w3-text-css-orange', 'WF'),
       w3_text('', s)

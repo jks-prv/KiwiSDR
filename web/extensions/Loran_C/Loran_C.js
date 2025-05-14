@@ -415,7 +415,7 @@ function loran_c_controls_setup()
 
 	loran_c.scope = w3_el('id-loran_c-scope');
 	loran_c.scope.ct = loran_c.scope.getContext("2d");
-	loran_c.scope.addEventListener("mousedown", loran_c_mousedown, false);
+	loran_c.scope.addEventListener("mousedown", loran_c_mousedown, w3.BUBBLING);
 
 	loran_c.data = w3_el('id-loran_c-data');
 	Loran_C_environment_changed( {resize:1} );

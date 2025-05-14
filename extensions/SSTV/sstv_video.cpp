@@ -23,8 +23,8 @@ void sstv_video_init(sstv_chan_t *e, SSTV_REAL rate, u1_t mode)
     e->pic.modespec = m;
 
     SSTV_REAL spp = rate * m->LineTime / m->ImgWidth;
-    //e->fm_sample_interval = debug_v? debug_v : ((int) (spp * 3/4));
-    //printf("SSTV: spp=%.1f fm_sample_interval=%d %s\n", spp, e->fm_sample_interval, debug_v? "(v=)":"");
+    //e->fm_sample_interval = shmem->debug_v_set? shmem->debug_v : ((int) (spp * 3/4));
+    //printf("SSTV: spp=%.1f fm_sample_interval=%d %s\n", spp, e->fm_sample_interval, shmem->debug_v_set? "(v=)":"");
     e->fm_sample_interval = (int) (spp * 3/4);
     printf("SSTV: sstv_video_init rate=%.3f spp=%.1f fm_sample_interval=%d\n", rate, spp, e->fm_sample_interval);
     

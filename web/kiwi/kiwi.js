@@ -27,7 +27,6 @@ var kiwi = {
    
    WIN_WIDTH_MIN: 1400,
    
-   wf_share: false,
    force_mobile: false,
    mdev: false,
    mdev_s: '',
@@ -120,7 +119,7 @@ var kiwi = {
    BAND_SCALE_ONLY: 4,
    BAND_MENU_ONLY: 5,
 
-   RX4_WF4:0, RX8_WF2:1, RX3_WF3:2, RX14_WF0:3, RX_WB:4, RX8_WF8:5,
+   RX4_WF4:0, RX8_WF2:1, RX3_WF3:2, RX14_WF0:3, RX_WB:4,
    
    NAM:0, DUC:1, PUB:2, SIP:3, REV:4,
    
@@ -175,6 +174,7 @@ var kiwi = {
    
    no_reopen_retry: false,
    wf_preview_mode: false,
+   
    _ver_: 1.578,
    _last_: null
 };
@@ -690,10 +690,12 @@ function config_save2(kiwi_cfg, cfg)
 
 function cfg_save_json(id, path, val)
 {
-	//console.log('cfg_save_json: BEGIN from='+ id +' path='+ path + (isArg(val)? (' val='+ val) : ''));
+   var val_s = isArg(val)? (' val=<'+ val +'>') : '';
+	//console.log('cfg_save_json: BEGIN from='+ id +' path='+ path + val_s);
 	//if (path.includes('kiwisdr_com_register')) kiwi_trace();
 	//if (path.includes('rev_')) kiwi_trace();
 	//if (path.includes('rx_gps')) kiwi_trace();
+	//if (isUndefined(val)) kiwi_trace();
 
 	var s;
 	if (path.startsWith('adm.')) {
@@ -708,7 +710,7 @@ function cfg_save_json(id, path, val)
 	} else {    // cfg.*
       config_save('cfg', cfg);
 	}
-	console.log('cfg_save_json: from='+ id +' path='+ path +' val=<'+ val +'> DONE');
+	console.log('cfg_save_json: from='+ id +' path='+ path + val_s +' DONE');
 }
 
 ////////////////////////////////
@@ -907,7 +909,7 @@ function time_display_html(ext_name, top)
 var ansi = {
    colors:  [
    
-      // colors optimized for contrast against id-console-msg #a8a8a8 background
+      // colors optimized for contrast against cl-admin-console-color
       // regular and bright pallet are the same because MacOS regular colors were too dim
 
       // regular
@@ -3156,10 +3158,6 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 
 		case "wf_chans_real":
 			wf_chans_real = parseInt(param[1]);
-			break;
-
-		case "wf_share":
-			kiwi.wf_share = parseInt(param[1]);
 			break;
 
 		case "rx_chan":

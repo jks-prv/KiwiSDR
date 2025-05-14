@@ -722,8 +722,9 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
     }
 
     if (conn->mc != NULL) {
-        cprintf(conn, "#### SND hash=0x%04x key=%d \"%s\"\n", snd_cmd_hash.cur_hash, key, cmd);
-        cprintf(conn, "SND BAD PARAMS: sl=%d %d|%d|%d [%s] ip=%s ####################################\n",
+        cprintf(conn, "### SND hash=0x%04x key=%d \"%s\"\n", snd_cmd_hash.cur_hash, key, cmd);
+        u4_t type = conn->unknown_cmd_recvd? PRINTF_REG : PRINTF_LOG;
+        ctprintf(conn, type, "### BAD PARAMS: SND sl=%d %d|%d|%d [%s] ip=%s\n",
             strlen(cmd), cmd[0], cmd[1], cmd[2], cmd, conn->remote_ip);
         conn->unknown_cmd_recvd++;
     }

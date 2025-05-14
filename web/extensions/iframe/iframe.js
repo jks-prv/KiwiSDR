@@ -212,7 +212,7 @@ function iframe_controls_setup()
       }
    };
 
-   window.addEventListener("message", iframe.msg_handler);
+   window.addEventListener("message", iframe.msg_handler, w3.BUBBLING);
 
    /*
       // example of sending message to iframe
@@ -260,7 +260,7 @@ function iframe_blur()
    w3_innerHTML('id-iframe-container', '');
    
    if (iframe.msg_handler) {
-      window.removeEventListener("message", iframe.msg_handler);
+      window.removeEventListener("message", iframe.msg_handler, w3.BUBBLING);
       iframe.msg_handler = null;
    }
 }

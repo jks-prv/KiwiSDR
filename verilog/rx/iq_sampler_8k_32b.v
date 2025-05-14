@@ -15,7 +15,7 @@ module IQ_SAMPLER_8K_32B (
 
     input  wire rd_clk,
     input  wire rd_rst,
-    input  wire rd_sync,			// set rd_addr to (wr_addr + 15), +15 is crucial look-ahead to previous buffer contents
+    input  wire rd_sync,			// set rd_addr to (wr_addr + rd_offset), crucial look-ahead to previous buffer contents
     input  wire rd_i,
     input  wire rd_q,
     input  wire [12:0] rd_offset,

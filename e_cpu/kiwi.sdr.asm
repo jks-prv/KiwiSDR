@@ -31,7 +31,8 @@ nrx_samps:		u16		0
 #if SND_SEQ_CHECK
 rx_seq:			u16		0
 #endif
-				// called at audio buffer flip rate (i.e. every NRX_SAMPS audio samples)
+				// this routing called from main loop at audio buffer flip rate (i.e. every NRX_SAMPS audio samples)
+				// when polling with rdReg GET_RX_SRQ finds rx_srq asserted
 RX_Buffer:
 				// if nrx_samps has not been set yet hardware will not interrupt at correct rate
 				push	nrx_samps
@@ -173,7 +174,9 @@ CmdGetWFSamples:
 				wrReg2	SET_WF_CHAN			;
 getWFSamples2:
 				wrEvt	HOST_RST
-				loop_ct NWF_SAMPS           ; cnt-1
+                push    nwf_samps_m1        ; &nwf_samps_m1
+                fetch16                     ; nwf_samps_m1
+                to_loop                     ;
                 ALIGN
 wf_loop:
 				wrEvt2	GET_WF_SAMP_I
@@ -189,12 +192,17 @@ CmdGetWFContSamps:
 				wrReg2	WF_SAMPLER_RST
 				br		getWFSamples2
 
+nwf_samps_m1:   u16		0
+
 CmdSetWFOffset:	
 				rdReg	HOST_RX				; wf_chan
 				wrReg2	SET_WF_CHAN         ;
                 rdReg	HOST_RX				; offset
 				wrReg2	SET_WF_OFFSET		;
-				ret
+				rdReg	HOST_RX				; nwf_samps_m1
+				push	nwf_samps_m1        ; nwf_samps_m1 &nwf_samps_m1
+				store16                     ; &nwf_samps_m1
+				pop.r                       ;
 
 CmdSetWFFreq:	rdReg	HOST_RX				; wf_chan
 				wrReg2	SET_WF_CHAN			;

@@ -7,6 +7,7 @@
 
 var admin_sdr = {
    ext_cur_nav: null,
+   ext_nav: [],
    
    comp_s: [ 'last', 'on', 'off' ],
    setup_s: [ 'show all', 'RF spec + WF', 'WF only', 'DX labels only', 'top bar only' ],
@@ -1044,9 +1045,9 @@ function webpage_html_save_cb(path)
 
 function webpage_panel_readme_save_cb(path)
 {
-   console.log('webpage_panel_readme_save_cb');
+   //console.log('webpage_panel_readme_save_cb');
    var el = w3_el('panel_readme');
-   console.log('val='+ el.value);
+   //console.log('val='+ el.value);
    webpage_html_cb('panel_readme', el.value);
    w3_schedule_highlight(el);
 }
@@ -2146,6 +2147,7 @@ function dx_list_sched_del_cb(path, idx)
 function dx_search_freq_cb(path, val, first)
 {
    if (first) return;
+   //console.log('dx_search_freq_cb path='+ path +' val='+ val);
    val = val.parseFloatWithUnits('kM', 1e-3);
    if (isNaN(val)) {
       w3_set_value(path, '');
@@ -2153,28 +2155,31 @@ function dx_search_freq_cb(path, val, first)
       //console.log('dx_search_freq_cb val='+ val);
       ext_send('SET MARKER search_freq='+ val);
    }
+	return w3.RETAIN_FOCUS;
 }
 
 function dx_search_ident_cb(path, val, first, cb_a)
 {
    if (first) return;
    //console.log('dx_search_ident_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
-   if (cb_a[1] == 'ev') return;     // so we don't run twice
+   if (kiwi_isFirefox() && cb_a[1] == 'ev') return;   // so we don't run twice
    if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
 	ext_send('SET MARKER idx='+ idx +' search_ident='+ encodeURIComponent(val));
+	return w3.RETAIN_FOCUS;
 }
 
 function dx_search_notes_cb(path, val, first, cb_a)
 {
    if (first) return;
    //console.log('dx_search_notes_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
-   if (cb_a[1] == 'ev') return;     // so we don't run twice
+   if (kiwi_isFirefox() && cb_a[1] == 'ev') return;   // so we don't run twice
    if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
 	ext_send('SET MARKER idx='+ idx +' search_notes='+ encodeURIComponent(val));
+	return w3.RETAIN_FOCUS;
 }
 
 // callback from "SET MARKER idx= search_xxx=" above
@@ -2992,6 +2997,22 @@ function extensions_html()
 	return s;
 }
 
+function extensions_keydown(ev)
+{
+   //console.log(ev);
+   if (!isString(ev.key)) return;
+   var list = admin_sdr.ext_nav;
+   var cur = admin_sdr.ext_cur_nav.toLowerCase();
+   var i = w3_array_el_seq(list, cur, { toLower:1 });
+   var e = list.length - 1;
+   var k = ev.key.toLowerCase();
+   if (k.startsWith('arrow')) {     // up/down arrow
+      var dir = (k[5] == 'u')? -1 : ((k[5] == 'd')? 1:0);
+      var j = w3_wrap(i + dir, 0, e);
+      if (j != i) extensions_nav_focus(list[j]);
+   }
+}
+
 function extensions_focus()
 {
    //console.log('extensions_focus');
@@ -3003,10 +3024,13 @@ function extensions_focus()
          return admin.ext_configs_done;
       },
       function() {
-         var ext_tab = kiwi_url_param(0);
-         if (ext_tab) ext_tab = ext_tab.split(',')[1];
-         if (isNonEmptyString(ext_tab)) {
-            kiwi_storeWrite('last_admin_ext_nav', ext_tab);
+         if (!admin_sdr.url_once) {
+            var ext_tab = kiwi_url_param(0);
+            if (ext_tab) ext_tab = ext_tab.split(',')[1];
+            if (isNonEmptyString(ext_tab)) {
+               kiwi_storeWrite('last_admin_ext_nav', ext_tab);
+            }
+            admin_sdr.url_once = true;
          }
          
          w3_click_nav('id-sidenav-ext', kiwi_toggle(toggle_e.FROM_COOKIE | toggle_e.SET, 'wspr', 'wspr', 'last_admin_ext_nav'), 'extensions_nav');
@@ -3014,6 +3038,8 @@ function extensions_focus()
       200
    );
    // REMINDER: w3_do_when_cond() returns immediately
+   
+   window.addEventListener("keydown", extensions_keydown, w3.BUBBLING);
 
 	// get updates while the extensions tab is selected
 	admin_update_start();
@@ -3023,12 +3049,14 @@ function extensions_blur()
 {
    //console.log('extensions_blur');
    if (admin_sdr.ext_cur_nav) w3_call(admin_sdr.ext_cur_nav +'_config_blur');
+   window.removeEventListener("keydown", extensions_keydown, w3.BUBBLING);
 	admin_update_stop();
 }
 
 function extensions_nav_focus(id, cb_arg)
 {
    //console.log('extensions_nav_focus id='+ id +' cb_arg='+ cb_arg);
+   w3_click_nav('id-sidenav-ext', id, id, null, 'extensions_nav_focus');
    kiwi_storeWrite('last_admin_ext_nav', id);
    w3_show(id +'-container');
    w3_call(id +'_config_focus');
@@ -3054,6 +3082,7 @@ function ext_admin_config(id, nav_text, ext_html, focus_blur_cb)
 	var ci = ext_seq % admin_colors.length;
 	w3_el('id-sidenav-ext').innerHTML +=
 		w3_nav(admin_colors[ci] + ' w3-border', nav_text, 'id-sidenav-ext', id, 'extensions_nav');
+	admin_sdr.ext_nav[ext_seq] = id;
 	ext_seq++;
 	w3_el('id-extensions-config').innerHTML += w3_div('id-'+ id +'-container w3-hide|width:95%', ext_html);
 }

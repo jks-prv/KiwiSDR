@@ -203,6 +203,10 @@
 
 
 var w3 = {
+   CAPTURING: true,
+   BUBBLING: false,
+   RETAIN_FOCUS: true,
+   
    _last_: 0
 };
 
@@ -436,11 +440,13 @@ function w3_obj_key_seq(obj, key)
    return seq;
 }
 
-function w3_array_el_seq(arr, el)
+function w3_array_el_seq(arr, el, opt)
 {
+   var toLower = w3_opt(opt, 'toLower', false);
    var seq = null;
    arr.forEach(function(a_el, i) {
-      if (a_el == el) seq = i;
+      var ael = toLower? a_el.toLowerCase() : a_el;
+      if (ael == el) seq = i;
    });
    return seq;
 }
@@ -590,6 +596,13 @@ function w3_clamp3(v, min, max, clamp_min, clamp_max, clamp_NaN)
    return v;
 }
 
+function w3_wrap(v, min, max)
+{
+   if (v < min) v = max; else
+   if (v > max) v = min;
+   return v;
+}
+
 
 ////////////////////////////////
 // HTML
@@ -715,6 +728,13 @@ function w3_activeElement()
 {
    // returns 'id-NULL' if activeElement is null
    return w3_id(document.activeElement);
+}
+
+function w3_noElHasFocus()
+{
+   var ae = w3_activeElement();
+   //console.log('ae='+ ae);
+   return (ae == 'id-kiwi-body');
 }
 
 // assign innerHTML, silently failing if element doesn't exist
@@ -932,9 +952,11 @@ function w3_field_select(el_id, opts)
    if (opts['scanning'] && extint.scanning) return;
    
    var focus=0, select=0, blur=0, dismiss=0;
-   if (opts['mobile'] && kiwi_isMobile()) blur = 1; else focus = select = 1;
+   if (opts['mobile']) {
+      if (kiwi_isMobile()) blur = 1; else focus = select = 1;
+   }
    if (opts['blur']) blur = 1;
-   if (opts['dismiss_kybd']) dismiss = 1;
+   if (opts['dismiss_kybd'] && kiwi_isMobile()) dismiss = 1;
    if (opts['focus_select']) focus = select = 1;
    if (opts['focus_only']) { focus = 1; select = 0; }
    if (opts['select_only']) select = 1;
@@ -1548,6 +1570,7 @@ function w3_check_cfg_reload(el_id)
 
 function w3_set_value(path, val)
 {
+   //console.log('w3_set_value path='+ path +' val='+ val);
    path = w3_add_id(path);
    if (1) {
       // set all similarly named elements
@@ -1770,6 +1793,7 @@ function w3int_init()
 function w3int_post_action()
 {
    // if it exists, re-select the main page frequency field
+   //console.log('w3int_post_action freqset_select');
    w3_call('freqset_select');
 }
 
@@ -1924,7 +1948,7 @@ function w3_event_log(el, id, event_name)
       function() {
          console.log('w3_event_log '+ id +': '+ event_name);
          //canvas_log(event_name);
-      }
+      }, w3.BUBBLING
    );
 }
 
@@ -2750,7 +2774,7 @@ function w3int_input_keydown(ev, path, cb)
    var disabled = w3_parent_with(el, 'w3-disabled');
    //w3_remove(el, 'kiwi-pw');
    var trace = w3_contains(el, 'w3-trace');
-   if (trace) console.log('w3int_input_keydown k='+ k + (ctrl? ' CTRL ':'') +' val=<'+ el.value +'> cb='+ cb +' disabled='+ disabled);
+   if (trace) console.log('w3int_input_keydown CE k='+ k + (ctrl? ' CTRL ':'') +' val=<'+ el.value +'> cb='+ cb +' disabled='+ disabled);
    var cb_a = cb.split('|');
    
    if (disabled) {
@@ -2767,108 +2791,150 @@ function w3int_input_keydown(ev, path, cb)
 	if (ev.key == 'Enter') {
       if (input_any_change) {
          // consider unchanged input value followed by Enter, at the end of input text, to be an input change
-         //console.log('w3int_input_keydown: w3-input-any-change + Enter');
+         if (trace) console.log('w3int_input_keydown: w3-input-any-change + Enter');
 
          // A newline is going to be added to el.value after w3int_input_keydown() returns.
          // If we are currently positioned somewhere in the potential run of newlines at the end of the text
          // then remove all the trailing newlines so only a single newline will remain.
          s = el.value;
-         //console.log('newline strip: ss='+ el.selectionStart +' tl='+ el.textLength);
-         for (i = el.selectionStart; i < el.textLength; i++) {
+         var textLength = el.value.length;   // no el.textLength in Safari & Chrome!
+         if (trace) console.log('newline strip: ss='+ el.selectionStart +' tl='+ textLength);
+         for (i = el.selectionStart; i < textLength; i++) {
             if (s.charAt(i) != '\n')
                break;
          }
-         //console.log('newline strip: i='+ i +' tl='+ el.textLength);
-         if (i == el.textLength) {
+         if (trace) console.log('newline strip: i='+ i +' tl='+ textLength);
+         if (i == textLength) {
             while (s.endsWith('\n'))
                s = s.slice(0, -1);
-            //console.log('s='+ JSON.stringify(s));
+            if (trace) console.log('s='+ JSON.stringify(s));
             w3_set_value(el, s);    // update field so el.selectionStart etc below are also updated
          }
 
-         if (trace) console.log('ss='+ el.selectionStart +' se='+ el.selectionEnd +' tl='+ el.textLength);
+         if (trace) console.log('ss='+ el.selectionStart +' se='+ el.selectionEnd +' tl='+ textLength);
          if (
             // cursor at end of text
-            (el.selectionStart == el.selectionEnd && el.selectionStart == el.textLength) ||
+            (el.selectionStart == el.selectionEnd && el.selectionStart == textLength) ||
             
             // all text is selected
-            (el.selectionStart == 0 && el.selectionEnd == el.textLength) ||
+            (el.selectionStart == 0 && el.selectionEnd == textLength) ||
             
             // cause empty input lines followed by Enter to send empty command to shell
             (el.value == '')
             
             ) {
-            if (trace) console.log('w3_input_change...');
-            //console.log('el.value='+ JSON.stringify(w3_el('id-ale_2g-user-textarea').value));
-            //console.log(el);
-            w3_input_change(path, cb, 'kd');
-            w3_dismiss_keyboard(el);
+            if (trace) {
+               console.log('w3_input_change '+ path +' ...');
+               console.log('el.value='+ JSON.stringify(el.value));
+               console.log(el);
+            }
+            w3_input_change(path, cb, 'kd1');
+            if (trace) {
+               console.log('w3_input_change '+ path +'(2)...');
+               console.log('el.value='+ JSON.stringify(el.value));
+               console.log(el);
+            }
+            //w3_dismiss_keyboard(el);
          }
       } else
 	   if (el.value == '') {
          // cause empty input lines followed by Enter to send empty command to shell
-         //console.log('w3int_input_keydown: empty line + Enter');
-         w3_input_change(path, cb, 'kd');
+         if (trace) console.log('w3int_input_keydown: empty line + Enter');
+         w3_input_change(path, cb, 'kd2');
          w3_dismiss_keyboard(el);
       }
 	}
 
    // if Delete key (Backspace) when entire value is selected then consider it an input change
 	if (ev.key == 'Backspace' && input_any_change && el.selectionStart == 0 && el.selectionEnd == el.value.length) {
-      //console.log('w3int_input_keydown Delete: len='+ el.value.length +' ss='+ el.selectionStart +' se='+ el.selectionEnd);
+      if (trace) console.log('w3int_input_keydown Delete: len='+ el.value.length +' ss='+ el.selectionStart +' se='+ el.selectionEnd);
       el.value = '';
-      w3_input_change(path, cb, 'kd');
+      w3_input_change(path, cb, 'kd3');
       w3_dismiss_keyboard(el);
 	}
+
+	// prevent dom parents from seeing bubbling event
+	// Don't call cancelEvent() because that does a stopImmediatePropagation() which prevents the
+	// subsequent keyup & change/input events from occurring.
+	ev.stopPropagation();
+	
+   if (trace) {
+      console.log('w3_input_change '+ path +'(3)...');
+      console.log('el.value='+ JSON.stringify(el.value));
+      console.log(el);
+   }
 }
 
 function w3int_input_keyup(ev, path, cb)
 {
-/*
+   var k = ev.key.toUpperCase();
+   var ctrl = ev.ctrlKey;
 	var el = w3_el(path);
-	if (ev.key == 'Backspace' && el.value == '')
-      w3_input_change(path, cb, 'ku');
-*/
+   if (!el) return;
+
+   /*
+      if (ev.key == 'Backspace' && el.value == '')
+         w3_input_change(path, cb, 'ku');
+   */
+
+   var disabled = w3_parent_with(el, 'w3-disabled');
+   var trace = w3_contains(el, 'w3-trace');
+   if (trace) console.log('w3int_input_keyup CE k='+ k + (ctrl? ' CTRL ':'') +' path='+ path +' val=<'+ el.value +'> cb='+ cb +' disabled='+ disabled);
+	
+	// prevent dom parents from seeing bubbling event
+	// Don't call cancelEvent() because that does a stopImmediatePropagation() which prevents the
+	// subsequent keyup & change/input events from occurring.
+	ev.stopPropagation();
 }
 
 // event generated from w3_input_force()
-function w3_input_process(ev)
+function w3int_input_process(ev)
 {
    var a = ev.detail.split('|');
    var path = a[0];
    var cb = a[1];
-   //console_nv('w3_input_process', {ev}, {a}, {path}, {cb});
+   //console_nv('w3int_input_process', {ev}, {a}, {path}, {cb});
 	var el = w3_el(path);
 	if (el) {
       var trace = w3_contains(el, 'w3-trace');
-      if (trace) console.log('w3_input_process path='+ path +' val='+ el.value +' cb='+ cb);
-      w3_input_change(path, cb, 'w3_input_process');
+      if (trace) console.log('w3int_input_process path='+ path +' val='+ el.value +' cb='+ cb);
+      w3int_input_change(ev, path, cb, 'w3int_input_process');
    }
+}
+
+function w3_input_change(path, cb, from)
+{
+   w3int_input_change(null, path, cb, from);
 }
 
 // 'from' arg (that is appended to w3_call() cb_a[] arg) is:
 //    'ev' if called from normal onchange event
 //    'kd' or 'ku' if 'w3-input-any-change' is specified and the "any change" criteria is met
 //    'in' if 'w3-input-evt' is specified and an input event has been generated
-function w3_input_change(path, cb, from)
+function w3int_input_change(ev, path, cb, from)
 {
+   var val = '???';
+   var retain = false;
+   var trace = false;
 	var el = w3_el(path);
 	if (el) {
-      var trace = w3_contains(el, 'w3-trace');
-      if (trace) console.log('w3_input_change path='+ path +' from='+ from);
+      trace = w3_contains(el, 'w3-trace');
+      if (trace) console.log('w3int_input_change path='+ path +' from='+ from);
       
       // cb is a string because can't pass an object to onclick
       if (cb) {
          var cb_a = cb.split('|');
          if (isArg(from)) cb_a.push(from);
          //el.select();
-         w3_call(cb_a[0], path, el.value, /* first */ false, cb_a);
+         retain = w3_call(cb_a[0], path, el.value, /* first */ false, cb_a);
          if (from == 'in') return;
       }
 
       w3_check_restart_reboot(el);
       //w3_check_cfg_reload(el);
+      if (trace) kiwi_trace();
       w3_schedule_highlight(el);
+      val = el.value;
 
 /*
       if (el.value != '' && w3_contains(el, 'w3-encrypted')) {
@@ -2879,7 +2945,17 @@ function w3_input_change(path, cb, from)
    }
 	
    w3_dismiss_keyboard(el);
-   w3int_post_action();
+   if (trace) console.log('w3int_input_change path='+ path +' val='+ val +' retain='+ retain +' ev='+ ev);
+   if (retain === true) {
+      w3_field_select(el, {mobile:1});    // retain field selection
+   } else {
+      w3int_post_action();
+   }
+
+	// prevent dom parents from seeing bubbling event
+	// Don't call cancelEvent() because that does a stopImmediatePropagation() which prevents the
+	// subsequent keyup & change/input events from occurring.
+	if (isArg(ev)) ev.stopPropagation();
 }
 
 function w3int_input_up_down_cb(path, cb_param, first, ev)
@@ -2895,7 +2971,7 @@ function w3int_input_up_down_cb(path, cb_param, first, ev)
    w3_input_force(id_s, cb_s, val.toFixed(0));
 }
 
-// No cb_param here because w3_input_change() passes the input value as the callback parameter.
+// No cb_param here because w3int_input_change() passes the input value as the callback parameter.
 // But can specify a composite callback name (i.e. "cb|param0|param1") that is passed to callback routine.
 //
 // NB: using w3_esc_dq(val) below eliminates the need to call admin_set_decoded_value() via
@@ -2910,8 +2986,8 @@ function w3_input(psa, label, path, val, cb, placeholder)
 	cb = cb || '';
 	var phold = placeholder? ('placeholder="'+ placeholder +'"') : '';
 	var custom = psa.includes('w3-custom-events');
-	var onchange = ' onchange="w3_input_change('+ sq(path) +', '+ sq(cb) +', '+ sq('ev') +')"';
-	var oninput = psa.includes('w3-input-evt')? (' oninput="w3_input_change('+ sq(path) +', '+ sq(cb) +', '+ sq('in') +')"') : '';
+	var onchange = ' onchange="w3int_input_change(event, '+ sq(path) +', '+ sq(cb) +', '+ sq('ev') +')"';
+	var oninput = psa.includes('w3-input-evt')? (' oninput="w3int_input_change(event, '+ sq(path) +', '+ sq(cb) +', '+ sq('in') +')"') : '';
 	var onkeydown = ' onkeydown="w3int_input_keydown(event, '+ sq(path) +', '+ sq(cb) +')"';
 	var onkeyup = ' onkeyup="w3int_input_keyup(event, '+ sq(path) +', '+ sq(cb) +')"';
 	var events = (path && !custom)? (onchange + oninput + onkeydown + onkeyup) : '';
@@ -2964,10 +3040,10 @@ function w3_input_force(path, cb, input)
    //console_nv('w3_input_force', {path}, {cb}, {input});
    var el = w3_el(path);
    if (!el) return;
-   el.addEventListener('input', w3_input_process, true);
+   el.addEventListener('input', w3int_input_process, w3.CAPTURING);
    el.value = input.replace('&vbar;', '|');
    el.dispatchEvent(new CustomEvent('input', { detail: path +'|'+ cb }));
-   el.removeEventListener('input', w3_input_process, true);
+   el.removeEventListener('input', w3int_input_process, w3.CAPTURING);
 }
 
 /*
@@ -3021,7 +3097,7 @@ function w3_input_get(psa, label, path, cb, init_val, placeholder)
 // The test for 'w3-input-any-change' that suppresses inclusion of the 'onchange=' event handler
 // fixes a strange problem we noticed: With the 'onchange=' the actual onchange event is long-delayed
 // until the first unrelated click completely outside the textarea! This ends up causing double calls
-// to w3_input_change(). The first from w3int_input_keydown() due to w3-input-any-change and the second
+// to w3int_input_change(). The first from w3int_input_keydown() due to w3-input-any-change and the second
 // from the delayed change event.
 //
 // The problem doesn't seem to occur when w3-input-any-change is used with w3_input()
@@ -3031,7 +3107,7 @@ function w3_textarea(psa, label, path, val, rows, cols, cb)
 	var id = w3_add_id(path);
 	var spacing = (label != '')? ' w3-margin-T-8' : '';
 	var custom = psa.includes('w3-custom-events');
-	var onchange = psa.includes('w3-input-any-change')? '' : (' onchange="w3_input_change('+ sq(path) +', '+ sq(cb) +')"');
+	var onchange = psa.includes('w3-input-any-change')? '' : (' onchange="w3int_input_change(event, '+ sq(path) +', '+ sq(cb) +')"');
 	var onkeydown = ' onkeydown="w3int_input_keydown(event, '+ sq(path) +', '+ sq(cb) +')"';
 	var onkeyup = ' onkeyup="w3int_input_keyup(event, '+ sq(path) +', '+ sq(cb) +')"';
 	var events = (path && !custom)? (onchange + onkeydown + onkeyup) : '';
@@ -3720,9 +3796,9 @@ function w3_menu_items(id, arr, max_vis)
    if (kiwi_isMobile()) {
       if (mobile_laptop_test) console.log('w3_menu_items MOBILE '+ id);
       w3_iterate_children(id, function(el, i) {
-         el.addEventListener('touchmove', w3int_menu_touch_move, false);
+         el.addEventListener('touchmove', w3int_menu_touch_move, w3.BUBBLING);
          if (mobile_laptop_test)
-            el.addEventListener('mousemove', w3int_menu_mouse_move, false);
+            el.addEventListener('mousemove', w3int_menu_mouse_move, w3.BUBBLING);
       });
    }
 }
@@ -3806,10 +3882,10 @@ function w3_menu_popup(id, close_func, x, y)
 	// close menu if escape key while menu is displayed
 	w3int.menu_close_func = close_func;
    w3int.menu_first = true;
-	window.addEventListener("keyup", w3int_menu_event, false);
-	window.addEventListener("mousedown", w3int_menu_event, false);
-	window.addEventListener("touchstart", w3int_menu_event, false);
-	window.addEventListener("click", w3int_menu_event, false);
+	window.addEventListener("keyup", w3int_menu_event, w3.BUBBLING);
+	window.addEventListener("mousedown", w3int_menu_event, w3.BUBBLING);
+	window.addEventListener("touchstart", w3int_menu_event, w3.BUBBLING);
+	window.addEventListener("click", w3int_menu_event, w3.BUBBLING);
 }
 
 function w3_menu_active()
@@ -3855,10 +3931,10 @@ function w3int_menu_onclick(ev, id, cb, cb_param)
    if (w3int.menu_debug)
       canvas_log('NOT_VIS');
    w3int.menu_active = false;
-   window.removeEventListener("keyup", w3int_menu_event, false);
-   window.removeEventListener("mousedown", w3int_menu_event, false);
-   window.removeEventListener("touchstart", w3int_menu_event, false);
-   window.removeEventListener("click", w3int_menu_event, false);
+   window.removeEventListener("keyup", w3int_menu_event, w3.BUBBLING);
+   window.removeEventListener("mousedown", w3int_menu_event, w3.BUBBLING);
+   window.removeEventListener("touchstart", w3int_menu_event, w3.BUBBLING);
+   window.removeEventListener("click", w3int_menu_event, w3.BUBBLING);
 
    // allow right-button to select menu items
 	if (ev != null) {

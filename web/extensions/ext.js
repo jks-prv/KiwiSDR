@@ -282,8 +282,12 @@ var ext_zoom = {
 
 // mode, zoom and passband are optional
 function ext_tune(freq_dial_kHz, mode, zoom, zlevel, low_cut, high_cut, opt) {
-	if (isUndefined(freq_dial_kHz)) freq_dial_kHz = freq_displayed_Hz / 1000;
+	if (!isArg(freq_dial_kHz)) {
+	   //console.log('ext_tune freq_dial_kHz='+ freq_dial_kHz +' freq_displayed_Hz='+ freq_displayed_Hz);
+	   freq_dial_kHz = freq_displayed_Hz / 1000;
+	}
    var freq_dial_bb_kHz = kiwi_freq_without_offset_kHz(freq_dial_kHz);
+   //console.log('ext_tune freq_dial_kHz='+ freq_dial_kHz +' freq_dial_bb_kHz='+ freq_dial_bb_kHz);
 
    var pb_specified = (isArg(low_cut) && isArg(high_cut));
 	//console.log('ext_tune: '+ freq_dial_bb_kHz +', '+ mode +', '+ zoom +', '+ zlevel);
@@ -896,7 +900,7 @@ function ext_panel_init()
 		//event_dump(evt, 'Escape-ext');
 		if (evt.key == 'Escape' && evt.target.nodeName == 'INPUT')
 			extint_panel_hide();
-	}, false);
+	}, w3.BUBBLING);
 	*/
 
 	// close ext panel if escape key
@@ -910,7 +914,7 @@ function ext_panel_init()
 	            w3_el('id-ext-controls-close').click();
 	         }
 	      }
-	   }, true);
+	   }, w3.CAPTURING);
 }
 
 function ext_show_spectrum(which)

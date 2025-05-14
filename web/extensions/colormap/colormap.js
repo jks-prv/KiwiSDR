@@ -203,9 +203,9 @@ function colormap_controls_setup()
 	}
 	
 	var el = w3_el('id-colormap-controls');
-	el.addEventListener("mousedown", colormap_transfer_mousedown_cb, false);
-	el.addEventListener("mousemove", colormap_transfer_mousemove_cb, false);
-	el.addEventListener("mouseup", colormap_transfer_mouseup_cb, false);
+	el.addEventListener("mousedown", colormap_transfer_mousedown_cb, w3.BUBBLING);
+	el.addEventListener("mousemove", colormap_transfer_mousemove_cb, w3.BUBBLING);
+	el.addEventListener("mouseup", colormap_transfer_mouseup_cb, w3.BUBBLING);
 
 	cmap.ramp_canvas = w3_el('id-cmap-ramp-canvas');
 	cmap.ramp_canvas.ctx = cmap.ramp_canvas.getContext("2d");

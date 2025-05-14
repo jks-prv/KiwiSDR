@@ -287,9 +287,9 @@ function sstv_controls_setup()
 	sstv.data_canvas = w3_el('id-sstv-data-canvas');
 	sstv.data_canvas.ctx = sstv.data_canvas.getContext("2d");
 	sstv.data_canvas.imd = sstv.data_canvas.ctx.createImageData(sstv.w, 1);
-	sstv.data_canvas.addEventListener("mousedown", sstv_mousedown, false);
+	sstv.data_canvas.addEventListener("mousedown", sstv_mousedown, w3.BUBBLING);
 	if (kiwi_isMobile())
-		sstv.data_canvas.addEventListener('touchstart', sstv_touchstart, false);
+		sstv.data_canvas.addEventListener('touchstart', sstv_touchstart, w3.BUBBLING);
    ext_set_data_height(sstv.h);
    sstv.data_canvas.height = sstv.h;
 

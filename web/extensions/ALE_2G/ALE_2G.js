@@ -482,6 +482,7 @@ function ale_2g_get_nets_done_cb(nets)
       var found_scan_param = false;
       
       // look for user scan list
+      var list_len = 0;
       if (isNumber(m_freq) && p.length >= 2) {
          var stop = false;
          p.forEach(function(a, i) {
@@ -489,6 +490,7 @@ function ale_2g_get_nets_done_cb(nets)
             if (!isNumber(f)) stop = true;
             if (stop) return;
             ale.user_scan_list.push(f);
+            list_len++;
          });
       }
       
@@ -502,14 +504,14 @@ function ale_2g_get_nets_done_cb(nets)
                lsb = true;
          });
 
-         if (lsb) ale.user_scan_list.unshift("lsb");
+         if (lsb) ale.user_scan_list.unshift('lsb');
          ale.user_scan_list.unshift(0);   // add 'scan' entry to front of list
          if (dbgUs) console.log('user_scan_list=...');
          if (dbgUs) console.log(ale.user_scan_list);
          ale_2g_render_menus();     // must render again before ale_2g_pre_select_cb() below
-         // -1 below because ale_2g_render_menus() has added +1 to array for 'scan' entry at front
-         for (var i = 0; i < ale.user_scan_list.length-1; i++)
+         for (var i = 0; i < list_len; i++)
             p.shift();
+         console.log(p);
       }
 
       // process any format:N param before matching menu items in case menu re-sorted or collapsed
@@ -531,6 +533,8 @@ function ale_2g_get_nets_done_cb(nets)
 
          if (rv.found_menu_match)
             p.shift();
+      } else {
+         rv = { found_menu_match: false };
       }
 
       p.forEach(function(a, i) {
@@ -553,6 +557,9 @@ function ale_2g_get_nets_done_cb(nets)
                ale_2g_scan_t_custom_cb('id-ale_2g-scan-t-custom', r.num);
                ale_2g_scan_t_cb('id-ale_2g-scan-t', ale.scan_t_custom_i);
             }
+         } else
+         if (w3_ext_param('lsb', a).match) {
+            // handled above
          } else
          if ((r = w3_ext_param('limit_le', a)).match) {
             if (r.has_value) {
@@ -860,8 +867,10 @@ function ale_2g_tune_ack(f_kHz, go_back_override)
    if (dbgUs) console.log('ale_2g_tune_ack rx f='+ f_kHz +' isActive='+ ale.isActive +' go_back_override='+ go_back_override);
    if (ale.isActive && go_back_override != true) return;
    ale.freq = f_kHz;
-   //ext_tune(f_kHz, 'usb', ext_zoom.CUR, undefined, undefined, undefined, {no_set_freq:1});
-   ext_tune(f_kHz, ale.lsb? 'lsb':'usb', ext_zoom.CUR);
+   if (ale.lsb)
+      ext_tune(f_kHz, 'lsb', ext_zoom.CUR, 0, -ale.pb.hi, -ale.pb.lo);
+   else
+      ext_tune(f_kHz, 'usb', ext_zoom.CUR, 0, ale.pb.lo, ale.pb.hi);
 }
 
 function ale_2g_set_scan(val)
@@ -1286,7 +1295,8 @@ function ALE_2G_help(show)
                'The first URL parameter can be a frequency entry from one of the menus (e.g. "3596") ' +
                'or the name of a menu scan list (e.g. "MARS" in the Amateur menu). ' +
                'Or it can be a list of frequencies separated by commas. Such a list will appear as the first entry in the ' +
-               '<i>Local</i> menu for subsequent selection. The parameter <i>lsb</i> will make this list use lsb mode.' +
+               '<i>Local</i> menu for subsequent selection. The parameter <i>lsb</i> will make this list use LSB mode ' +
+               'and should appear <i>after</i> the list.' +
                '<br><br>' +
                'Frequencies can use the suffixes \'k\' and \'M\'. [0123] refers to the order of selections in the corresponding menu.' +
                '<br><br>' +

@@ -393,6 +393,11 @@ input[type=range]::-moz-range-thumb {
     cursor: not-allowed !important;
 }
 
+.w3-no-caret
+{
+    caret-color: transparent;   /* make caret of contenteditable elements invisible */
+}
+
 .w3-pointer-events-none
 {
     pointer-events: none
@@ -763,7 +768,7 @@ input[type=range]::-moz-range-thumb {
         w3-padding-LR-{2,3,4,6,8,10}
         w3-padding-R-0
         w3-padding-TB-{0,7,8,10,15,16,24}
-        w3-padding-B-8
+        w3-padding-B-{2,8}
 */
 
 .w3-padding-smaller
@@ -876,6 +881,11 @@ input[type=range]::-moz-range-thumb {
 .w3-padding-TB-24
 {
     padding: 24px 0
+}
+
+.w3-padding-B-2
+{
+    padding: 0 0 2px 0
 }
 
 .w3-padding-B-8

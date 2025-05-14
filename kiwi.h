@@ -56,6 +56,7 @@ typedef struct {
     
     int current_nusers;
     bool dbgUs;
+    
     #define RESTART_DELAY_30_SEC 1
     #define RESTART_DELAY_MAX 7
     int restart_delay;
@@ -92,8 +93,6 @@ typedef struct {
 	int lowres_lat, lowres_lon;
 	
 	daily_restart_e daily_restart;
-
-    bool wf_share;
 } kiwi_t;
 
 extern kiwi_t kiwi;
@@ -109,7 +108,7 @@ extern int wf_sim, wf_real, wf_time, ev_dump, wf_flip, wf_exit, wf_start, down,
 	meas, monitors_max, rx_yield, gps_chans, wf_max, rx_num, wf_num, do_gps, do_sdr, wf_olap,
 	spi_clkg, spi_speed, spi_mode, spi_delay, spi_no_async, bg, dx_print, snr_meas, wf_full_rate,
 	port, print_stats, ecpu_cmds, ecpu_tcmds, serial_number, ip_limit_mins, is_locked, test_flag, n_camp,
-	use_spidev, inactivity_timeout_mins, S_meter_cal, waterfall_cal, debug_v, debian_ver,
+	use_spidev, inactivity_timeout_mins, S_meter_cal, waterfall_cal, debian_ver,
 	utc_offset, dst_offset, reg_kiwisdr_com_status, kiwi_reg_lo_kHz, kiwi_reg_hi_kHz,
 	debian_maj, debian_min, gps_debug, gps_var, gps_lo_gain, gps_cg_gain, use_foptim, web_caching_debug,
 	drm_nreg_chans, snr_meas_interval_hrs, snr_all, snr_HF, ant_connected, spi_test,
@@ -134,7 +133,7 @@ extern int p_i[8];
 
 typedef enum { DOM_SEL_NAM=0, DOM_SEL_DUC=1, DOM_SEL_PUB=2, DOM_SEL_SIP=3, DOM_SEL_REV=4 } dom_sel_e;
 
-typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3, RX8_WF8=4 } firmware_e;
+typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3 } firmware_e;
 
 #define	KEEPALIVE_SEC		    60
 #define KEEPALIVE_SEC_NO_AUTH   20      // don't hang the rx channel as long if waiting for password entry

@@ -369,7 +369,7 @@ function fft_controls_setup()
 	fft.integ_canvas = w3_el('id-fft-integ-canvas');
 	fft.integ_canvas.ctx = fft.integ_canvas.getContext("2d");
 	fft.integ_canvas.im = fft.integ_canvas.ctx.createImageData(fft.integ_w, 1);
-	fft.integ_canvas.addEventListener("mousedown", fft_mousedown, false);
+	fft.integ_canvas.addEventListener("mousedown", fft_mousedown, w3.BUBBLING);
 
 	fft.wf1_canvas = w3_el('id-fft-wf1-canvas');
 	fft.wf1_canvas.ctx = fft.wf1_canvas.getContext("2d");

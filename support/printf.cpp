@@ -412,6 +412,14 @@ void clprintf(conn_t *c, const char *fmt, ...)
 	va_end(ap);
 }
 
+void ctprintf(conn_t *c, u4_t printf_type, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	ll_printf(printf_type, c, fmt, ap);
+	va_end(ap);
+}
+
 void clfprintf(conn_t *c, u4_t printf_type, const char *fmt, ...)
 {
 	va_list ap;

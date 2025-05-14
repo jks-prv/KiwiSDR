@@ -816,13 +816,13 @@ function navtex_location_update(loc_name, lat, lon, url, color)
                      mkr.style.color = 'black';
                      mkr.style.background = 'yellow';
                      mkr.style.zIndex = 9001;
-                  });
+                  }, w3.BUBBLING);
                   el.addEventListener('mouseleave', function(ev) {
                      var mkr = ev.target;
                      mkr.style.color = nt.saved_color;
                      mkr.style.background = nt.saved_bkg;
                      mkr.style.zIndex = 9000;
-                  });
+                  }, w3.BUBBLING);
                   el.addEventListener('click', function(ev) {
                      console.log('*click*');
                      if (!url) return;
@@ -833,7 +833,7 @@ function navtex_location_update(loc_name, lat, lon, url, color)
                      console.log(a);
                      a.click();
                      document.body.removeChild(a);
-                  });
+                  }, w3.BUBBLING);
                }
             );
          }

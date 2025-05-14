@@ -56,19 +56,19 @@ Boston, MA  02110-1301, USA.
 #define	WF_BETTER_LOOKING	2	// increase in FFT size for better looking display
 
 #define WF_OUTPUT	1024	// conceptually same as WF_WIDTH although not required
-#define WF_C_NFFT	(WF_OUTPUT * WF_USING_HALF_FFT * WF_USING_HALF_CIC * WF_BETTER_LOOKING)	// worst case FFT size needed
-#define WF_C_NSAMPS	WF_C_NFFT
+#define WF_NFFT	    (WF_OUTPUT * WF_USING_HALF_FFT * WF_USING_HALF_CIC * WF_BETTER_LOOKING)	// worst case FFT size needed
+#define WF_NBUF     8192    // max hardware sample buffer length
 
-#define	WF_WIDTH		1024	// width of waterfall display
+#define	WF_WIDTH        1024	// width of waterfall display
 
-#define MAX_FFT_USED	MAX(WF_C_NFFT / WF_USING_HALF_FFT, WF_WIDTH)
+#define MAX_FFT_USED	MAX(WF_NFFT / WF_USING_HALF_FFT, WF_WIDTH)
 
-#define MAX_ZOOM        (kiwi.wf_share ? 11 : 14)
+#define MAX_ZOOM        14
 #define	MAX_START(z)	((WF_WIDTH << MAX_ZOOM) - (WF_WIDTH << (MAX_ZOOM - z)))
 
 struct fft_t {
-	fftwf_complex hw_c_samps[WF_C_NSAMPS];
-	fftwf_complex hw_fft[WF_C_NFFT];
+	fftwf_complex hw_c_samps[WF_NFFT];
+	fftwf_complex hw_fft[WF_NFFT];
 };
 
 struct wf_pkt_t {
@@ -122,11 +122,11 @@ static const char *interp_s[] = { "max", "min", "last", "drop", "cma" };
 
 struct wf_inst_t {
 	conn_t *conn;
-	int rx_chan, hw_chan;
+	int rx_chan;
 	int fft_used, plot_width, plot_width_clamped;
 	int maxdb, mindb, send_dB;
 	float fft_scale[WF_WIDTH], fft_scale_div2[WF_WIDTH], fft_offset;
-	u2_t fft2wf_map[WF_C_NFFT / WF_USING_HALF_FFT];		// map is 1:1 with fft
+	u2_t fft2wf_map[WF_NFFT / WF_USING_HALF_FFT];		// map is 1:1 with fft
 	u2_t wf2fft_map[WF_WIDTH];							// map is 1:1 with plot
 	u2_t drop_sample[WF_WIDTH];
 	int start, prev_start, zoom, prev_zoom;
@@ -134,16 +134,12 @@ struct wf_inst_t {
 	u4_t mark;
 	int speed, fft_used_limit;
 	bool new_map, new_map2, new_map3, compression, no_sync, isWF, isFFT;
-	int flush_wf_pipe;
 	bool cic_comp;
 	wf_interp_t interp;
 	int window_func;
-	bool trigger;
 	u4_t zoom_all_seq;
 	
 	tid_t tid;
-	u4_t lock_seq;
-	bool lock_wait;
 	
 	int tr_cmds;
 	u4_t cmd_recv;
@@ -190,14 +186,13 @@ struct wf_inst_t {
 #define N_WF_WINF               4
 
 struct wf_shmem_t {
-    wf_inst_t wf_inst[MAX_RX_CHANS];        // NB: MAX_RX_CHANS even though there may be fewer MAX_WF_CHANS
-    fft_t fft_inst[MAX_WF_CHANS];           // NB: MAX_WF_CHANS not MAX_RX_CHANS
+    wf_inst_t wf_inst[MAX_RX_CHANS];        // NB: MAX_RX_CHANS even though there may be fewer MAX_WF_DDC
+    fft_t fft_inst[MAX_RX_CHANS];
 	fftwf_plan hw_dft_plan;
-    float window_function[N_WF_WINF][WF_C_NSAMPS];
-    float CIC_comp[WF_C_NSAMPS];
+    float window_function[N_WF_WINF][WF_NFFT];
+    float CIC_comp[WF_NFFT];
     int n_chunks;
-    u1_t wf_lock[MAX_WF_CHANS];
-    u4_t lock_seq;
+    int chunk_wait_scale;
 };     
 
 #include "shmem_config.h"

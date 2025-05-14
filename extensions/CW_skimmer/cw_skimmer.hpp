@@ -5,6 +5,13 @@
 #include <string.h>
 #include <math.h>
 
+// these are here after above includes to prevent our "#define printf ALT_PRINTF" mechanism being disturbed by c++
+#include "kiwi.h"
+#include "coroutines.h"
+#include "data_pump.h"
+#include "mem.h"
+#include "printf.h"
+
 #define MAX_SCALES   (16)
 #define MAX_CHANNELS (MAX_SND_RATE / 2 / 100)
 #undef  MAX_INPUT

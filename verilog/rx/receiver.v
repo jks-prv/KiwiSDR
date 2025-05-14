@@ -293,8 +293,8 @@ module receiver (
 	MUX #(.WIDTH(16), .SEL(V_WF_CHANS)) wf_dout_mux(.in(wfn_dout_C), .sel(wf_channel_C), .out(wf_dout_C));
 
 	wire rst_wf_sampler_C =	wrReg2 & op_11[WF_SAMPLER_RST];
-	wire get_wf_samp_i_C =	wrEvt2 & op_11[GET_WF_SAMP_I];
-	wire get_wf_samp_q_C =	(wrEvt2 & op_11[GET_WF_SAMP_Q]) || (wrEvtL & op_11[GET_WF_SAMP_Q_LOOP]);
+	wire get_wf_samp_i_C  =	wrEvt2 & op_11[GET_WF_SAMP_I];
+	wire get_wf_samp_q_C  =	(wrEvt2 & op_11[GET_WF_SAMP_Q]) || (wrEvtL & op_11[GET_WF_SAMP_Q_LOOP]);
 	assign wf_rd_C =		get_wf_samp_i_C || get_wf_samp_q_C;
 
 	wire samp_wf_rd_rst_C = tos[WF_SAMP_RD_RST];
