@@ -262,22 +262,22 @@ module rx_audio_mem (
 	wire [15:0] rx_din_A;
 	MUX #(.WIDTH(16), .SEL(V_RX_CHANS)) rx_mux(.in(rxn_din_A), .sel(rxn_d[L2RX:0]), .out(rx_din_A));
 	
-	reg  [15:0] buf_ctr;
+	reg  [15:0] buf_ctr_A;
 	wire [15:0] buf_ctr_C;
 
-    // continuously sync buf_ctr => buf_ctr_C
+    // continuously sync buf_ctr_A => buf_ctr_C
 	SYNC_REG #(.WIDTH(16)) sync_buf_ctr (
-	    .in_strobe(1),      .in_reg(buf_ctr),       .in_clk(adc_clk),
+	    .in_strobe(1),      .in_reg(buf_ctr_A),     .in_clk(adc_clk),
 	    .out_strobe(),      .out_reg(buf_ctr_C),    .out_clk(cpu_clk)
 	);
 
 	always @ (posedge adc_clk)
 		if (reset_bufs_A)
 		begin
-			buf_ctr <= 0;
+			buf_ctr_A <= 0;
 		end
 		else
-	    buf_ctr <= buf_ctr + inc_A;
+	    buf_ctr_A <= buf_ctr_A + inc_A;
 
     localparam RXBUF_MSB = clog2(RXBUF_SIZE) - 1;
 	reg [RXBUF_MSB:0] waddr, raddr;
@@ -306,7 +306,7 @@ module rx_audio_mem (
 	wire [15:0] din =
 	    use_ts?
 	        ( (tsel == 0)? ticks_A[15 -:16] : ( (tsel == 1)? ticks_A[31 -:16] : ticks_A[47 -:16]) ) :
-	        ( use_ctr? buf_ctr : rx_din_A );
+	        ( use_ctr? buf_ctr_A : rx_din_A );
     wire [15:0] dout;
 
     // Transfer size is 1012 16-bit words to match 2kB limit of SPI transfers,
