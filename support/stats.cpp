@@ -129,9 +129,9 @@ static void webserver_collect_print_stats(int print)
 		#define NO_API_TIME 20
 		bool both_no_api = (!c->snd_cmd_recv_ok && !c->wf_cmd_recv_ok);
 		if (c->auth && both_no_api && (now - c->arrival) >= NO_API_TIME) {
-            clprintf(c, "\"%s\"%s%s%s%s incomplete connection kicked\n",
+            clprintf(c, "\"%s\"%s%s%s%s incomplete connection kicked (snd=%02x wf=%02x)\n",
                 kiwi_nonEmptyStr(c->ident_user)? c->ident_user : "(no identity)", c->isUserIP? "":" ", c->isUserIP? "":c->remote_ip,
-                c->geo? " ":"", c->geo? c->geo:"");
+                c->geo? " ":"", c->geo? c->geo:"", c->snd_cmd_recv, c->wf_cmd_recv);
             c->kick = true;
 		}
 		

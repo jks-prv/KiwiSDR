@@ -74,6 +74,7 @@ typedef struct conn_st {
 	bool tdoa_antsw_early;
 
 	// set only in STREAM_SOUND
+	u1_t snd_cmd_recv;
 	bool snd_cmd_recv_ok;
 	bool inactivity_timeout;
 	int freqHz, last_freqHz;
@@ -88,6 +89,7 @@ typedef struct conn_st {
 	bool is_locked;
 	
 	// set only in STREAM_WATERFALL
+	u1_t wf_cmd_recv;
 	bool wf_cmd_recv_ok;
 	char *dx_filter_ident, *dx_filter_notes;
 	bool dx_has_preg_ident, dx_has_preg_notes;
@@ -128,7 +130,6 @@ typedef struct conn_st {
 	// debug
 	int debug;
 	int wf_frames;
-	u4_t wf_loop, wf_lock, wf_get;
 	u4_t audio_underrun, sequence_errors;
 	u4_t spurious_timestamps_recvd, unknown_cmd_recvd;
 	char *browser;

@@ -31,6 +31,7 @@ void printf_init();
 void cprintf(conn_t *c, const char *fmt, ...);
 void clprintf(conn_t *c, const char *fmt, ...);
 void clfprintf(conn_t *c, u4_t printf_type, const char *fmt, ...);
+void ctprintf(conn_t *c, u4_t printf_type, const char *fmt, ...);
 void real_printf(const char *fmt, ...);
 void lfprintf(u4_t printf_type, const char *fmt, ...);
 void lprintf(const char *fmt, ...);

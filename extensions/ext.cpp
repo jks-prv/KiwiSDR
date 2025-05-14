@@ -473,9 +473,11 @@ void extint_c2s(void *param)
                 continue;
             }
         
-            printf("EXT extint_c2s: %s CONN%d(%p) unknown command: sl=%d %d|%d|%d [%s] ip=%s ==================================\n",
-                conn_ext->ext? conn_ext->ext->name:"?", conn_ext->self_idx, conn_ext,
+            u4_t type = conn_ext->unknown_cmd_recvd? PRINTF_REG : PRINTF_LOG;
+            ctprintf(conn_ext, type, "### BAD PARAMS: EXT %s CONN-%02d sl=%d %d|%d|%d [%s] ip=%s\n",
+                conn_ext->ext? conn_ext->ext->name:"?", conn_ext->self_idx,
                 strlen(cmd), cmd[0], cmd[1], cmd[2], cmd, conn_ext->remote_ip);
+            conn_ext->unknown_cmd_recvd++;
 
             continue;       // keep checking until no cmds in queue
         }
