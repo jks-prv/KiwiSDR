@@ -197,13 +197,22 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
                 decim = (CIC2_DECIM << r2) | (CIC1_DECIM << r1);
             #endif
             
-            float samp_wait_us =  WF_C_NSAMPS * (1 << zm1) / conn->adc_clock_corrected * 1000000.0;
-            wf->chunk_wait_us = (int) ceilf(samp_wait_us / n_chunks);
-            wf->samp_wait_ms = (int) ceilf(samp_wait_us / 1000);
-            #ifdef WF_INFO
-            if (!bg) cprintf(conn, "---- WF%d Z%d zm1 %d/%d R%04x n_chunks %d samp_wait_us %.1f samp_wait_ms %d chunk_wait_us %d\n",
-                rx_chan, wf->zoom, zm1, 1<<zm1, decim, n_chunks, samp_wait_us, wf->samp_wait_ms, wf->chunk_wait_us);
+            #define WF_CHUNK_WAIT_ADJ           3       // i.e. make the adjustment proportional to the samp_wait_us used
+            #define WF_CHUNK_WAIT_ADJ_Z         7       // only applies at higher zoom levels
+            
+            //#define WF_DDC_CHANGE_DELAY_MEAS
+            #ifdef WF_DDC_CHANGE_DELAY_MEAS
+                WF_SHMEM->chunk_wait_scale = shmem->debug_v_set? shmem->debug_v : ((wf->zoom >= WF_CHUNK_WAIT_ADJ_Z)? WF_CHUNK_WAIT_ADJ : 0);
+            #else
+                WF_SHMEM->chunk_wait_scale = ((wf->zoom >= WF_CHUNK_WAIT_ADJ_Z)? WF_CHUNK_WAIT_ADJ : 0);
             #endif
+
+            float samp_wait_us =  WF_NFFT * (1 << zm1) / conn->adc_clock_corrected * 1000000.0;
+            wf->chunk_wait_us = (int) ceilf(samp_wait_us / (n_chunks - WF_SHMEM->chunk_wait_scale));
+            wf->samp_wait_ms = (int) ceilf(samp_wait_us / 1000);
+            wf_printf("---- WF%d Z%d zm1 %d/%d R%04x n_chunks %d samp_wait_us %.1f samp_wait_ms %d chunk_wait_us %d(%d)\n",
+                rx_chan, wf->zoom, zm1, 1<<zm1, decim, n_chunks,
+                samp_wait_us, wf->samp_wait_ms, wf->chunk_wait_us, WF_SHMEM->chunk_wait_scale);
         
             wf->new_map = wf->new_map2 = wf->new_map3 = TRUE;
         
@@ -214,10 +223,8 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
         
             if (wf->isWF) {
                 wf->decim = decim;
-                if (!kiwi.wf_share) {
-                    spi_set(CmdSetWFDecim, rx_chan, decim);
-                    spi_set(CmdSetWFOffset, rx_chan, wf_rd_offset);
-                }
+                spi_set(CmdSetWFDecim, rx_chan, decim);
+                spi_set4_noduplex(CmdSetWFOffset, rx_chan, wf_rd_offset, nwf_samps - 1);    // -1 is important!
             }
         
             // We've seen cases where the wf connects, but the sound never does.
@@ -228,19 +235,13 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
             }
             conn->zoom = wf->zoom;      // for logging purposes
         
-            //jksd
-            //printf("ZOOM z=%d ->z=%d\n", wf->zoom, wf->zoom);
-            //wf->prev_zoom = (wf->zoom == -1)? wf->zoom : wf->zoom;
             wf->cmd_recv |= CMD_ZOOM;
         }
     
         if (wf->start_f != _start) start_chg = true;
         wf->start_f = _start;
-        //cprintf(conn, "WF: START %.0f ", start);
         int maxstart = MAX_START(wf->zoom);
         wf->start_f = CLAMP(wf->start_f, 0, maxstart);
-        
-        //printf(" CLAMPED %.0f %.3f\n", wf->start_f, wf->start_f * wf->HZperStart / kHz);
 
         wf->off_freq = wf->start_f * wf->HZperStart;
         wf->off_freq_inv = ((float) maxstart - wf->start_f) * wf->HZperStart;
@@ -248,33 +249,16 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
         wf->i_offset = (u64_t) (s64_t) ((wf->spectral_inversion? wf->off_freq_inv : wf->off_freq) / conn->adc_clock_corrected * pow(2,48));
         wf->i_offset = -wf->i_offset;
 
-        #ifdef WF_INFO
-        if (!bg) cprintf(conn, "WF z%d OFFSET %.3f kHz i_offset 0x%012llx\n",
-            wf->zoom, wf->off_freq/kHz, wf->i_offset);
-        #endif
+        wf_printf("WF z%d OFFSET %.3f kHz i_offset 0x%012llx\n", wf->zoom, wf->off_freq/kHz, wf->i_offset);
     
-        /*
-        if (wf->isWF && kiwi.wf_share) {
-            wf->trigger = true;
-			real_printf(BLUE "%d%dD%dT%012llx " NORM, rx_chan, wf->hw_chan, wf->decim, wf->i_offset);
-		}
-		*/
-        if (wf->isWF && !kiwi.wf_share)
+        if (wf->isWF)
             spi_set3(CmdSetWFFreq, rx_chan, (wf->i_offset >> 16) & 0xffffffff, wf->i_offset & 0xffff);
 
-        //jksd
-        //printf("START s=%d ->s=%d\n", wf->start_f, wf->start);
-        //wf->prev_start = (wf->start == -1)? wf->start_f : wf->start;
         wf->start = wf->start_f;
         wf->new_scale_mask = true;
         wf->cmd_recv |= CMD_START;
     
         send_msg(conn, SM_NO_DEBUG, "MSG zoom=%d start=%d", wf->zoom, (u4_t) wf->start_f);
-        //printf("waterfall: send zoom %d start %d\n", wf->zoom, wf->start_f);
-        //jksd
-        //wf->flush_wf_pipe = 6;
-        //printf("flush_wf_pipe %d\n", debug_v);
-        //wf->flush_wf_pipe = debug_v;
         
         // this also catches "start=" changes from panning
         if (wf->aper == AUTO && start_chg && !zoom_chg) {
@@ -416,9 +400,7 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
         break;
     
     default:
-        if (conn->mc != NULL)
-            cprintf(conn, "#### WF key=%d DEFAULT CASE <%s>\n", key, cmd);
-        did_cmd = true;     // force skip
+        did_cmd = false;
         break;
  
     }   // switch
@@ -426,8 +408,9 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
     if (did_cmd) return;
 
     if (conn->mc != NULL) {
-        cprintf(conn, "#### WF hash=0x%04x key=%d \"%s\"\n", wf_cmd_hash.cur_hash, key, cmd);
-        cprintf(conn, "WF BAD PARAMS: sl=%d %d|%d|%d [%s] ip=%s ####################################\n",
+        cprintf(conn, "### WF hash=0x%04x key=%d \"%s\"\n", wf_cmd_hash.cur_hash, key, cmd);
+        u4_t type = conn->unknown_cmd_recvd? PRINTF_REG : PRINTF_LOG;
+        ctprintf(conn, type, "### BAD PARAMS: WF sl=%d %d|%d|%d [%s] ip=%s\n",
             strlen(cmd), cmd[0], cmd[1], cmd[2], cmd, conn->remote_ip);
         conn->unknown_cmd_recvd++;
     }

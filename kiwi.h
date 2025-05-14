@@ -93,8 +93,6 @@ typedef struct {
 	int lowres_lat, lowres_lon;
 	
 	daily_restart_e daily_restart;
-
-    bool wf_share;
 } kiwi_t;
 
 extern kiwi_t kiwi;
@@ -135,7 +133,7 @@ extern int p_i[8];
 
 typedef enum { DOM_SEL_NAM=0, DOM_SEL_DUC=1, DOM_SEL_PUB=2, DOM_SEL_SIP=3, DOM_SEL_REV=4 } dom_sel_e;
 
-typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3, RX8_WF8=4 } firmware_e;
+typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3 } firmware_e;
 
 #define	KEEPALIVE_SEC		    60
 #define KEEPALIVE_SEC_NO_AUTH   20      // don't hang the rx channel as long if waiting for password entry

@@ -66,7 +66,8 @@ kiwi_t kiwi;
 int version_maj, version_min;
 int fw_sel, fpga_id, rx_chans, rx_wb_buf_chans, wf_chans, wb_chans, nrx_bufs,
     nrx_samps, nrx_samps_total, nrx_samps_wb,
-    snd_rate, snd_rate_i, wb_rate, rx_decim, rx1_decim, rx2_decim;
+    snd_rate, snd_rate_i, wb_rate, rx_decim, rx1_decim, rx2_decim,
+    nwf_nxfer, nwf_samps;
 
 int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, down,
 	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, rx_num, wf_num, snr_meas=1,
@@ -356,12 +357,13 @@ int main(int argc, char *argv[])
     } else {
         fw_sel = admcfg_default_int("firmware_sel", FW_SEL_SDR_RX4_WF4, &update_admcfg);
     }
+    fw_sel = CLAMP_TO(fw_sel, FW_OTHER, N_FW_MAX, 0);
     
     if (wb_sel_override != -1) {
         wb_sel = wb_sel_override;
     } else {
         wb_sel = admcfg_default_int("wb_sel", 0, &update_admcfg);
-        if (wb_sel < 0 || wb_sel > 6) wb_sel = 0;
+        wb_sel = CLAMP_TO(wb_sel, 0, 6, 0);
         const int wb_bw[] = { 72, 108, 144, 192, 204, 240, 300 };
         wb_sel = wb_bw[wb_sel];
     }
@@ -391,19 +393,6 @@ int main(int argc, char *argv[])
         rx2_decim = RX2_STD_DECIM;
         nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
         lprintf("firmware: SDR_RX8_WF2\n");
-    } else
-    if (fw_sel == FW_SEL_SDR_RX8_WF8) {
-        fpga_id = FPGA_ID_RX8_WF2;
-        rx_chans = 8;
-        wf_chans = 2;
-        kiwi.wf_share = true;
-        snd_rate = SND_RATE_8CH;
-        snd_rate_i = SND_RATE_8CH_I;
-        rx_decim = RX_DECIM_8CH;
-        rx1_decim = RX1_STD_DECIM;
-        rx2_decim = RX2_STD_DECIM;
-        nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
-        lprintf("firmware: SDR_RX8_WF2 (wf_share)\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX3_WF3) {
         fpga_id = FPGA_ID_RX3_WF3;
@@ -498,7 +487,7 @@ int main(int argc, char *argv[])
         lprintf("firmware: RX rx_srate=%.3f(%d,%d) wb_srate=%d bufs=%d samps=%d intr_usec=%d\n",
             ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate, snd_rate_i, wb_rate, nrx_bufs, nrx_samps, snd_intr_usec);
 
-        check(wf_chans <= MAX_WF_CHANS);
+        check(wf_chans <= MAX_WF_DDC);
         check(wb_chans <= MAX_WB_CHANS);
 
         // NB: For wideband the value used by rx_audio_mem_wb.v must be (nrx_samps * v_wb_buf_chans),
@@ -511,7 +500,9 @@ int main(int argc, char *argv[])
         check(nrx_samps < FASTFIR_OUTBUF_SIZE);    // see data_pump.h
         check(nrx_samps_wb < MAX_WB_SAMPS);        // see data_pump.h
 
-        lprintf("firmware: WF xfer=%d samps=%d\n", NWF_NXFER, NWF_SAMPS);
+        nwf_nxfer = (WF_NFFT * NIQ / SPIBUF_W) + 1;
+        nwf_samps = (WF_NFFT / nwf_nxfer) + 1;
+        lprintf("firmware: WF nfft=%d xfer=%d samps=%d\n", WF_NFFT, nwf_nxfer, nwf_samps);
 
         rx_num = rx_chans, wf_num = wf_chans;
         monitors_max = (rx_chans * N_CAMP) + N_QUEUERS;

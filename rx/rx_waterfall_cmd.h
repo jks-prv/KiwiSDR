@@ -40,12 +40,12 @@ Boston, MA  02110-1301, USA.
 #include "non_block.h"
 
 //#define WF_INFO
-//#define WF_APER_INFO
-//#define WF_SPEC_INV_DEBUG
-
-//#define SHOW_MAX_MIN_IQ
-//#define SHOW_MAX_MIN_PWR
-//#define SHOW_MAX_MIN_DB
+#ifdef WF_INFO
+	#define wf_printf(fmt, ...) \
+		if (!bg) cprintf(wf->conn, fmt, ## __VA_ARGS__)
+#else
+	#define wf_printf(fmt, ...)
+#endif
 
 #define	CMD_ZOOM	0x01
 #define	CMD_START	0x02

@@ -27,7 +27,6 @@ var kiwi = {
    
    WIN_WIDTH_MIN: 1400,
    
-   wf_share: false,
    force_mobile: false,
    mdev: false,
    mdev_s: '',
@@ -120,7 +119,7 @@ var kiwi = {
    BAND_SCALE_ONLY: 4,
    BAND_MENU_ONLY: 5,
 
-   RX4_WF4:0, RX8_WF2:1, RX3_WF3:2, RX14_WF0:3, RX_WB:4, RX8_WF8:5,
+   RX4_WF4:0, RX8_WF2:1, RX3_WF3:2, RX14_WF0:3, RX_WB:4,
    
    NAM:0, DUC:1, PUB:2, SIP:3, REV:4,
    
@@ -3159,10 +3158,6 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 
 		case "wf_chans_real":
 			wf_chans_real = parseInt(param[1]);
-			break;
-
-		case "wf_share":
-			kiwi.wf_share = parseInt(param[1]);
 			break;
 
 		case "rx_chan":

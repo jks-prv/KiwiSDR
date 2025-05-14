@@ -138,14 +138,6 @@
 `define DEF_RX1_STAGES 1
 	localparam RX2_STAGES = 5;    // DEFp 0x5
 `define DEF_RX2_STAGES 1
-	localparam NWF_FFT = 8192;    // DEFp 0x2000
-`define DEF_NWF_FFT 1
-	localparam NWF_IQW = 2;    // DEFp 0x2
-`define DEF_NWF_IQW 1
-	localparam NWF_NXFER = 9;    // DEFp 0x9
-`define DEF_NWF_NXFER 1
-	localparam NWF_SAMPS = 911;    // DEFp 0x38f
-`define DEF_NWF_SAMPS 1
 `define USE_WF_1CIC 1    // DEFh 0x1
 `define USE_WF_CIC24 1    // DEFh 0x1
 //`define USE_WF_MEM24    // DEFh 0x0

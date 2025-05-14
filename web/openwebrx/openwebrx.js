@@ -664,14 +664,12 @@ function init_panel_toggle(type, panel, scrollable, timeo, color)
 			'</a>';
 	}
 
-	var visOffset = divPanel.activeWidth - visIcon;
+	var visOffset = (divPanel.activeWidth || 0) - visIcon;
 	//console.log("init_panel_toggle "+panel+" right="+rightSide+" off="+visOffset);
 	if (rightSide) {
 		divVis.style.right = px(0);
 		//console.log("RS2");
 	} else {
-	   var aw = divPanel.activeWidth;
-	   console_nv('init_panel_toggle', {panel}, {visOffset}, {divPanel}, {aw}, {visHoffset});
 		divVis.style.left = px(visOffset + visHoffset);
 	}
 	divVis.style.top = px(visBorder);
@@ -4364,7 +4362,7 @@ function spectrum_init()
 
    spec.spectrum_image = spec.ctx.createImageData(spec.canvas.width, spec.canvas.height);
    
-   if (!wf.audioFFT_active && rx_chan >= wf_chans && !kiwi.wf_share) {
+   if (!wf.audioFFT_active && rx_chan >= wf_chans) {
 		// clear entire spectrum canvas to black
 		var sw = spec.canvas.width;
 		var sh = spec.canvas.height;
@@ -4841,7 +4839,7 @@ function wf_init_ready()
 {
 	init_wf_container();
 
-   wf.audioFFT_active = (rx_chan >= wf_chans && !kiwi.wf_share);
+   wf.audioFFT_active = (rx_chan >= wf_chans);
 	resize_waterfall_container(false);
 	resize_wf_canvases();
 	bands_init();
@@ -5146,10 +5144,6 @@ function waterfall_add(data_raw, audioFFT)
       x_zoom_server = u32 & 0xffff;
       var flags = (u32 >> 16) & 0xffff;
       
-      // make WF tab "slow dev" button flash when a different WF DDC is being used
-      if (dbgUs && kiwi.wf_share)
-         w3_el('id-button-slow-dev').style.background = (flags & wf.DDC1)? 'cyan':'';
-   
       data_arr_u8 = new Uint8Array(data_raw, 16);	// unsigned dBm values, converted to signed later on
       var bytes = data_arr_u8.length;
    
@@ -11568,7 +11562,6 @@ function panels_setup()
 function update_wf_stats()
 {
    var s = 'span '+ zoom_span_Hz.toUnits(true) +'Hz, '+ kiwi.wf_fps.toFixed(0) +' fps';
-   if (kiwi.wf_share) s += ', share mode';
    w3_innerHTML('id-status-wf',
       w3_text('w3-text-css-orange', 'WF'),
       w3_text('', s)
@@ -11685,7 +11678,6 @@ var wf = {
    
    COMPRESSED: 1,
    NO_SYNC: 2,
-   DDC1: 4,
    
    scroll_multiple: 3,
    no_sync: false,
