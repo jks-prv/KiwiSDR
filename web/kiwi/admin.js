@@ -202,7 +202,6 @@ var mode_icon_snd12 = w3_icon('w3-text-blue', 'fa-volume-up', 28) +'&nbsp;';
 var mode_icon_snd20 = w3_icon('w3-text-red', 'fa-volume-up', 28) +'&nbsp;';
 var mode_icon_fft   = w3_icon('w3-text-green', 'fa-bar-chart', 28) +'&nbsp;';
 var mode_icon_wf    = w3_icon('w3-text-amber', 'fa-area-chart', 28) +'&nbsp;';
-var mode_icon_wfs   = w3_icon('', 'fa-area-chart fa-gradient', 28) +'&nbsp;';
 
 function mode_html()
 {
@@ -210,18 +209,9 @@ function mode_html()
    var pw = 113, pwpx = px(pw);
    var ci = 0;
    
-   var wfs = dbgUs;
    var max = (admin.is_multi_core);
    var wb = 0;
    
-   var wfs1_s = '';
-   if (wfs)
-      wfs1_s += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Waterfall share', 'id-sidenav-fw', kiwi.RX8_WF8, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF8));
-
-   var wfs2_s = '';
-   if (wfs)
-      wfs2_s += w3_div('id-fw-wfs w3-flex w3-padding-TB-6');
-
    var s1 = '';
    if (max)
       s1 += w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Max channels', 'id-sidenav-fw', kiwi.RX14_WF0, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX14_WF0));
@@ -247,14 +237,12 @@ function mode_html()
             w3_sidenav('id-sidenav-fw|width:'+ bwpx +';border-collapse:collapse',
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'Kiwi classic', 'id-sidenav-fw', kiwi.RX4_WF4, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX4_WF4)),
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More receivers', 'id-sidenav-fw', kiwi.RX8_WF2, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX8_WF2)),
-               wfs1_s,
                w3_nav(admin_colors[ci++] +' w3-border w3-padding-xxlarge w3-restart', 'More bandwidth', 'id-sidenav-fw', kiwi.RX3_WF3, 'firmware_sel_cb', (adm.firmware_sel == kiwi.RX3_WF3)),
                s1
             ),
             w3_div('w3-margin-left w3-left',
                w3_div('id-fw-4ch w3-flex w3-padding-TB-6'),
                w3_div('id-fw-8ch w3-flex w3-padding-TB-6'),
-               wfs2_s,
                w3_div('id-fw-3ch w3-flex w3-padding-TB-6'),
                s2
             )
@@ -269,9 +257,6 @@ function mode_html()
             w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
             w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
             w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf),  w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
-            wfs?
-               w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wfs), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 11-level zoom, shared hardware architecture'))
-               : '',
             w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12/20 kHz max bandwidth'))
          ),
 		   w3_div('w3-margin-T-16', '<hr>'),
@@ -295,14 +280,6 @@ function mode_html()
             'the usual waterfall. This works because it requires no additional FPGA resources.' +
             '<br><br></li>' +
 
-            (wfs?
-               ('<li><b>Waterfall share</b><br>' +
-               'This is an 8 channel mode in which the two waterfall FPGA cores of the "more receivers" mode above are shared across all ' +
-               'receiver channels. This has an update speed penalty when many channels are using high zoom levels. Also, the ' +
-               'maximum zoom level is limited to z11 (span 15 kHz) instead of z14 (span 1.8 kHz) ' +
-               '<br><br></li>')
-               : '') +
-            
             '<li><b>More bandwidth</b><br>' +
             'In this mode the audio bandwidth is increased from 12 to 20 kHz. ' +
             'This supports wide passbands for hi-fidelity listening of AM BCB and SW stations. ' +
@@ -357,7 +334,6 @@ function mode_focus()
 
    //var rx12wf = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, mode_icon_fft, '<br>', mode_icon_wf);
    var rx12_wf  = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wf);
-   var rx12_wfs = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_wfs);
    var rx20_wf  = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd20, '<br>', mode_icon_wf);
    
    var rx12_afft = w3_div('w3-margin-left w3-border w3-border-light-blue w3-center|width:'+ iwpx, mode_icon_snd12, '<br>', mode_icon_fft);
@@ -371,10 +347,6 @@ function mode_focus()
    for (i = 0; i < 2; i++) s += rx12_wf;
    for (i = 2; i < 8; i++) s += rx12_afft;
    w3_innerHTML('id-fw-8ch', s);
-
-   s = '';
-   for (i = 0; i < 8; i++) s += rx12_wfs;
-   w3_innerHTML('id-fw-wfs', s);
 
    s = '';
    for (i = 0; i < 3; i++) s += rx20_wf;
@@ -3668,6 +3640,9 @@ function console_html()
    //admin.console.isMobile = true;
    admin.console.always_char_oriented = admin.console.isMobile? false : true;
    
+   kiwi.CONSOLE_KEY_ORIG = true;
+   var console_msg_psa = kiwi.CONSOLE_KEY_ORIG? '' : ' w3-no-caret||contenteditable="true" spellcheck="false"';
+   
    var dbg = (0 && dbgUs);
 
 	var s =
@@ -3675,7 +3650,7 @@ function console_html()
 		w3_div('w3-container',
 		   w3_div('',
             w3_label('w3-show-inline', 'Beagle Debian console'),
-            w3_button('w3-aqua|margin-left:10px', 'Connect', 'console_connect_cb'),
+            w3_button('id-console-connect-btn w3-aqua|margin-left:10px', 'Connect', 'console_connect_cb'),
 
             (dbg)?
                w3_button('w3-aqua|margin-left:16px', 'ANSI', 'console_cmd_cb', 'console_input_cb|cd tools;mr')
@@ -3707,7 +3682,8 @@ function console_html()
                'console_input_cb|ping -c3 kiwisdr.com')
          ),
          
-			w3_div('id-console-msg w3-margin-T-8 w3-text-output w3-scroll-always-y w3-scroll-down w3-small w3-text-black|background-color:#a8a8a8',
+			w3_div('id-console-msg w3-margin-T-8 w3-text-output w3-scroll-always-y w3-scroll-down w3-small w3-text-black ' +
+			   'cl-admin-console-color' + console_msg_psa,
 			   '<pre><code id="id-console-msgs"></code></pre>'
 			),
 			
@@ -3788,8 +3764,8 @@ function console_key_cb(ev, called_from_w3_input)
 {
    called_from_w3_input = called_from_w3_input || false;
    //console.log('console_key_cb called_from_w3_input='+ called_from_w3_input);
-
 	//event_dump(ev, 'console_key_cb', 1);
+	//console.log(ev);
    if (!ev || !ev.key) return;
    var k = ev.key;
    var ord_k = ord(k);
@@ -3913,6 +3889,12 @@ function console_key_cb(ev, called_from_w3_input)
    // but let meta keys go through for things like page reload (meta-R), cut/paste etc.
    if (!ev.metaKey)
       ev.preventDefault();
+
+	// prevent dom parents from seeing bubbling event
+	// Don't call cancelEvent() because that does a stopImmediatePropagation() which prevents the
+	// subsequent keyup & change/input events from occurring.
+	//console.log('console_key_cb stopPropagation');
+	ev.stopPropagation();
 }
 
 // paste single char every 10 msec
@@ -3996,15 +3978,20 @@ function console_calc_rows_cols(init)
    }
 }
 
+function console_open()
+{
+   ext_send('SET console_open');
+   console_calc_rows_cols(1);
+   console_is_char_oriented();
+   admin.console_open = true;
+   console_focus();
+}
+
 function console_connect_cb(id)
 {
    //console.log('console_connect_cb id='+ id);
    if (admin.console_open) return;
-   
-	ext_send('SET console_open');
-   console_calc_rows_cols(1);
-   console_is_char_oriented();
-   admin.console_open = true;
+   console_open();
 }
 
 function console_cmd_cb(id, cb_param)
@@ -4013,10 +4000,7 @@ function console_cmd_cb(id, cb_param)
    var delay = 1;
    
    if (!admin.console_open) {
-	   ext_send('SET console_open');
-      console_calc_rows_cols(1);
-      console_is_char_oriented();
-      admin.console_open = true;
+      console_open();
       delay = 1000;
    }
    
@@ -4065,15 +4049,59 @@ function console_resize()
 
 function console_focus(id)
 {
-	document.addEventListener("keydown", console_key_cb, false);
-	document.addEventListener("paste", console_paste_cb, false);
+   //console.log('console_focus console_open='+ admin.console_open);
+   
+   if (admin.console_open) {
+      if (kiwi.CONSOLE_KEY_ORIG) {
+      
+         // console_key_cb() has to be a document keydown event so console window immediately has focus
+         // when the console tab is selected. But since it's being dynamically added/removed by the
+         // console focus/blur routines the global admin_navkey_cb() must be removed because otherwise
+         // it will be first in the event dispatch list. Put it back when another tab is selected.
+         // Downside: There is (currently) no key assigned that will blur the console giving
+         // keydown events back to admin_navkey_cb()
+         if (admin.admin_navkey_cb_added) {
+            document.removeEventListener("keydown", admin_navkey_cb, w3.BUBBLING);
+            admin.admin_navkey_cb_added = false;
+         }
+         document.addEventListener("keydown", console_key_cb, w3.BUBBLING);
+         document.addEventListener("paste", console_paste_cb, w3.BUBBLING);
+      } else {
+      
+         // This is an alternative to the above where the keydown event is attached to the
+         // id-console-msg div. But the div must have contenteditable set to receive such events.
+         // And being contenteditable has some side-effects (i.e. w3-no-caret spellcheck="false")
+         // Another requirement is that when the console is selected a id-console-msg focus
+         // must be made to match CONSOLE_KEY_ORIG behavior.
+         // So in the end this scheme really has no advantage over the CONSOLE_KEY_ORIG option.
+         var tgt = w3_el('id-console-msg');
+         tgt.addEventListener("keydown", console_key_cb, w3.BUBBLING);
+         tgt.addEventListener("paste", console_paste_cb, w3.BUBBLING);
+         tgt.focus();
+      }
+   }
+   
 	console_resize();
 }
 
 function console_blur(id)
 {
-	document.removeEventListener("keydown", console_key_cb, false);
-	document.removeEventListener("paste", console_paste_cb, false);
+   //console.log('console_blur console_open='+ admin.console_open);
+   
+   if (admin.console_open) {
+      if (kiwi.CONSOLE_KEY_ORIG) {
+         document.removeEventListener("keydown", console_key_cb, w3.BUBBLING);
+         document.removeEventListener("paste", console_paste_cb, w3.BUBBLING);
+         if (!admin.admin_navkey_cb_added) {
+            document.addEventListener("keydown", admin_navkey_cb, w3.BUBBLING);
+            admin.admin_navkey_cb_added = true;
+         }
+      } else {
+         var tgt = w3_el('id-console-msg');
+         tgt.removeEventListener("keydown", console_key_cb, w3.BUBBLING);
+         tgt.removeEventListener("paste", console_paste_cb, w3.BUBBLING);
+      }
+   }
 }
 
 
@@ -4305,7 +4333,7 @@ var admin_colors = [
 function admin_main()
 {
 	ext_send("SET browser="+ navigator.userAgent);
-	window.addEventListener('resize', admin_resize);
+	window.addEventListener('resize', admin_resize, w3.BUBBLING);
 }
 
 //var arseq = 0;
@@ -4370,9 +4398,8 @@ function admin_draw(sdr_mode)
 {
 	var ci = 0;
 	
-   var tabs;
    if (sdr_mode)
-      tabs = [
+      admin.tabs = [
          'Status', 'Mode',    'Control',    'Users', 'Connect',
          'Config', 'Webpage', 'Public',     'DX',
          'Update', 'Backup',  'Network',
@@ -4380,7 +4407,7 @@ function admin_draw(sdr_mode)
          'Log',    'Console', 'Extensions', 'Security'
       ];
    else
-      tabs = [
+      admin.tabs = [
          'GPS',
          'Status', 'Mode',    'Control',    'Users', 'Connect',
          'Update', 'Backup',  'Network',
@@ -4388,7 +4415,7 @@ function admin_draw(sdr_mode)
       ];
    
    var s = '';
-   tabs.forEach(
+   admin.tabs.forEach(
       function(tab,i) {
          s += w3_nav(admin_colors[ci++], tab, 'id-navbar-admin', tab.toLowerCase(), 'admin_nav');
       }
@@ -4460,7 +4487,10 @@ function admin_draw(sdr_mode)
 	w3_innerHTML('id-kiwi-container',
 	   w3_div('id-admin w3-margin-L-16',
 		   w3_inline_percent('id-admin-top/',
-			   w3_header('w3-container w3-teal/id-mdev-msg', 5, 'Admin interface'), 95,
+			   w3_header('w3-container w3-teal/id-mdev-msg', 5,
+			      'Admin interface'+
+			      w3_text('w3-margin-L-32 w3-padding-B-2 w3-font-14px', "Type 'h' or '?' for help")
+			   ), 95,
 			   w3_button('w3-aqua w3-margin-left', 'User page', 'admin_user_page_cb')
 			),
 			
@@ -4491,11 +4521,13 @@ function admin_draw(sdr_mode)
 	var nav_def = sdr_mode? 'status' : 'gps';
 	
 	admin.init = true;
+	   var help = false;
 	   var tab = kiwi_url_param(0, null);
 	   if (tab) tab = tab.split(',')[0];
 	   if (isNonEmptyString(tab)) {
+	      if (tab == 'help') help = true;
 	      var found = false;
-	      tabs.forEach(
+	      admin.tabs.forEach(
 	         function(s,i) {
 	            s = s.toLowerCase();
 	            if (!found && s.startsWith(tab)) {
@@ -4509,36 +4541,17 @@ function admin_draw(sdr_mode)
 	   
 	   if (kiwi_storeRead('last_admin_navbar') == 'sdr_hu') kiwi_storeWrite('last_admin_navbar', 'public');
       w3_click_nav('id-navbar-admin', kiwi_toggle(toggle_e.FROM_COOKIE | toggle_e.SET, nav_def, nav_def, 'last_admin_navbar'), 'admin_nav');
+
+      // setup "user connection style" confirmation panel for admin help
+      confirmation_panel_init();
+	   init_panel_toggle(ptype.POPUP, 'id-confirmation', false, popt.CLOSE);
+      confirmation_panel_init2();
+      if (help) admin_show_help();
 	admin.init = false;
 	
 	// navigate navbar using keys
-   window.addEventListener("keydown",
-      function(ev) {
-         //console.log(ev);
-         if (!isString(ev.key)) return;
-         var i = w3_array_el_seq(tabs, admin.current_tab_name, { toLower:1 }), j;
-         var e = tabs.length - 1;
-         var k = ev.key.toLowerCase();
-         if (k.length == 1 && k >= 'a' && a <= 'z') {    // lcase/ucase char match next/prev
-            dir = (ev.key == k.toUpperCase())? -1:1;
-            j = w3_wrap(i + dir, 0, e);
-            while (j != i) {
-               //console_nv('kd', {dir}, {e}, {j}, {i});
-               if (tabs[j].toLowerCase()[0] == k) {
-                  admin_nav_focus(tabs[j]);
-                  break;
-               }
-               j = w3_wrap(j + dir, 0, e);
-            }
-            //console.log('char dir='+ dir +' j='+ j +' '+ tabs[j]);
-         } else
-         if (k.startsWith('arrow')) {     // left/right arrow
-            dir = (k[5] == 'l')? -1 : ((k[5] == 'r')? 1:0);
-            j = w3_wrap(i + dir, 0, e);
-            if (j != i) admin_nav_focus(tabs[j]);
-         }
-      }
-   );
+   document.addEventListener("keydown", admin_navkey_cb, w3.BUBBLING);
+   admin.admin_navkey_cb_added = true;
 
 	setTimeout(function() { setInterval(status_periodic, 5000); }, 1000);
 }
@@ -4547,6 +4560,8 @@ function admin_user_page_cb() { kiwi_open_or_reload_page({ tab:1 }); }
 
 function admin_nav_focus(id, cb_arg)
 {
+   if (confirmation && confirmation.close_cb)
+      confirmation.close_cb();
    id = id.toLowerCase();
    //console.log('admin_nav_focus id='+ id);
    admin.current_tab_name = id;
@@ -4558,6 +4573,106 @@ function admin_nav_blur(id, cb_arg)
 {
    //console.log('admin_nav_blur id='+ id);
    w3_call(id +'_blur');
+}
+
+function admin_navkey_cb(ev) {
+	//event_dump(ev, 'admin_navkey_cb', 1);
+   //console.log(ev);
+   if (!isString(ev.key)) return;
+   var k = ev.key.toLowerCase();
+
+   if (k == 'h' || k == '?') {
+      admin_show_help();
+      return;
+   }
+   if (k == 'escape') {
+      confirmation.close_cb();
+      return;
+   }
+   
+   if (k == 'enter' && admin.current_tab_name == 'console' && !admin.console_open) {
+      w3_schedule_highlight('id-console-connect-btn');
+      console_open();
+   }
+   
+   var tabs = admin.tabs;
+   var i = w3_array_el_seq(tabs, admin.current_tab_name, { toLower:1 }), j;
+   var e = tabs.length - 1;
+   if (k.length == 1 && k >= 'a' && a <= 'z') {    // lcase/ucase char match next/prev
+      dir = (ev.key == k.toUpperCase())? -1:1;
+      i = w3_wrap(i, 0, e);
+      j = w3_wrap(i + dir, 0, e);
+      var looping = 0;
+      while (j != i) {
+         //console_nv('kd', {dir}, {e}, {j}, {i});
+         if (tabs[j].toLowerCase()[0] == k) {
+            admin_nav_focus(tabs[j]);
+            break;
+         }
+         j = w3_wrap(j + dir, 0, e);
+         if (looping > 32) {
+            admin_nav_focus(tabs[0]);
+            break;
+         }
+         looping++;
+      }
+      //console.log('char dir='+ dir +' j='+ j +' '+ tabs[j]);
+   } else
+   if (k.startsWith('arrow')) {     // left/right arrow
+      dir = (k[5] == 'l')? -1 : ((k[5] == 'r')? 1:0);
+      j = w3_wrap(i + dir, 0, e);
+      if (j != i) admin_nav_focus(tabs[j]);
+   }
+}
+
+function admin_show_help()
+{
+   var s =
+      w3_text('w3-medium w3-bold w3-text-aqua', 'Admin interface help') +
+      w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
+         w3_div('w3-margin-R-8',
+            w3_inline('w3-padding-tiny',
+               'See the ' +
+               w3_link('w3-link-darker-color w3-bold', '//kiwisdr.com/info/#id-config', 'Kiwi documentation') +
+               ' for more information. <br> Use the escape key, or click <x1>X</x1> at upper right, to dismiss this panel.'
+            ),
+            
+            w3_inline('w3-padding-tiny w3-bold w3-text-aqua  w3-margin-T-8', 'URL parameters'),
+            w3_inline('w3-padding-tiny',
+               'The URL connecting to the admin page can specify which tab to initially select. ' +
+               'And if the <x1>Extensions</x1> tab is selected a second parameter can select the  ' +
+               'entry in the extensions list. The tab names can be abbreviated.' +
+               '<br>Example:<br>' +
+               w3_text('|color:orange', 'my_kiwi:8073/admin?users &nbsp; my_kiwi:8073/admin?ext,ft8')
+            ),
+            
+            w3_inline('w3-padding-tiny w3-bold w3-text-aqua  w3-margin-T-8', 'Navigation bar shortcuts'),
+            w3_inline('w3-padding-tiny',
+               'In addition to clicking on the navigation bar tabs you can also use keyboard shortcuts. ' +
+               'Type the beginning character of a tab name to switch to it, e.g. "d" for the <x1>DX</x1> tab. ' +
+               'If more than one tab is matched they will cycle left-to-right, ' +
+               'e.g. "s" selects between <x1>Status</x1> and <x1>Security</x1>. ' +
+               'Typing a capital letter cycles right-to-left. The left/right arrow keys also work. ' +
+               'On the <x1>Extensions</x1> tab the up/down arrow keys cycle the extension menu on the left side.'
+            ),
+
+            w3_inline('w3-padding-tiny w3-bold w3-text-aqua w3-margin-T-8', 'Console tab'),               
+            w3_inline('w3-padding-tiny',
+               'Shortcut: Instead of clicking on the <x1>Connect</x1> button use the return key.' +
+               '<br><br>' +
+               'One quirk to the navigation shortcuts is the console tab.' +
+               'When the console is not connected the shortcuts work as expected. ' +
+               'But when connected the shortcut keys don\'t function. This is because the console ' +
+               'needs to intercept every key. Consider what happens when you run a screen-based text editor ' +
+               'like "nano". It makes use of essentially all keys, including control characters and arrow keys. ' +
+               'So if the console is open and you are on another tab and cycle into <x1>Console</x1> by using "c" ' +
+               'the cycling will "lock" as soon as the console tab is hiy. Because the open console now captures ' +
+               'all the keystrokes. In this case simply use the mouse to move on to another tab.'
+            )
+         )
+      );
+   confirmation_show_content(s, 550, 585);
+   w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
 }
 
 function admin_close()
