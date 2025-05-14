@@ -3,6 +3,26 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.810  April 15, 2025
+    Admin interface (desktop):
+        Type "h" or "?" to see a help panel for the admin page.
+        
+        Keyboard shortcuts: Tired of reaching for the mouse or trackpad to select a new tab in the
+        admin navigation bar? Now just type the beginning character of a tab name to switch to it,
+        e.g. 'd' for the DX tab. If more than one tab is matched they will cycle left-to-right e.g.
+        's' selects between "Status" and "Security". Typing a capital letter cycles right-to-left.
+        The left/right keys also works. On the extensions tab the up/down arrow keys cycle the
+        extension menu on the left side. There is a quirk related to the console tab described in
+        the help panel.
+    
+    Fixed bug that broke "retain focus" mode of certain input fields. Like the "DX label filter"
+    accessed from the "@" shortcut key. When you make an entry in the "ident" or "notes" field
+    those entries are supposed to remain selected so that you can make subsequent entries without
+    have to reselect the field (e.g. by clicking on it). Same for the "freq/ident/notes" fields
+    on the admin page "DX" tab. I'm surprised no one complained about this!
+    
+    Fixed ALE extension processing of URL parameters. (thanks DK9FI)
+
 v1.809  April 5, 2025
     The output from my.kiwisdr.com has been expanded to include additional information:
         Proxy links in addition to local IP links if proxy mode is setup and running.
