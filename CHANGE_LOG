@@ -21,7 +21,7 @@ v1.810  April 15, 2025
     have to reselect the field (e.g. by clicking on it). Same for the "freq/ident/notes" fields
     on the admin page "DX" tab. I'm surprised no one complained about this!
     
-    Fixed ALE extension processing of URL parameters. (thanks DK9FI)
+    Fixed ALE extension processing of URL parameters including lsb mode fix. (thanks DK9FI)
 
 v1.809  April 5, 2025
     The output from my.kiwisdr.com has been expanded to include additional information:
