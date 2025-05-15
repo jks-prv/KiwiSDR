@@ -12193,6 +12193,12 @@ function wf_autoscale_cb()
    freqset_select();
 }
 
+function wf_autoscale()
+{
+   if (wf.aper == kiwi.APER_AUTO)
+      wf_autoscale_cb();
+}
+
 var spectrum_slow_dev = 0;
 
 function toggle_or_set_slow_dev(set, val)

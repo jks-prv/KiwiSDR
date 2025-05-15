@@ -222,7 +222,7 @@ function waterfall_maxmin_cb()
    var auto = (wf.aper == kiwi.APER_AUTO);
    var max = auto? (wf.auto_maxdb + wf.auto_ceil.val) : maxdb;
    var min = auto? (wf.auto_mindb + wf.auto_floor.val) : mindb;
-	//console.log('auto='+ TF(auto) +' min='+ min +' max='+ max);   
+	//console.log('auto='+ TF(auto) +' min='+ min +' max='+ max);
    var dyn_range = max - min;
    var total_s = min.toString().positiveWithSign() +','+ max.toString().positiveWithSign();
 	if (auto) {
