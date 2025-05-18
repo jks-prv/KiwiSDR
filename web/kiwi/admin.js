@@ -2193,7 +2193,7 @@ function network_blacklist_validate(bl)
 
    var ip_bl_s = '';
    nn.forEach(function(o, i) {
-      ip_bl_s = ip_bl_s +' '+ (o.whitelist? '+':'') + kiwi_ip_str(o.ip) +'/'+ o.nmd;
+      ip_bl_s = w3_sb(ip_bl_s, (o.whitelist? '+':'') + kiwi_ip_str(o.ip) +'/'+ o.nmd);
    });
    
    return ip_bl_s;

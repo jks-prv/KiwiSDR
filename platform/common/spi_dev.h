@@ -48,12 +48,7 @@ typedef struct {
     SPI_MISO spi_junk_miso, pingx_miso;
     SPI_MOSI spi_tx[N_SPI_TX];
     SPI_MOSI misc_mosi;
-
-    #ifdef OPTION_WF_CONSOLIDATE_SPI
-        SPI_MISO wf_miso[MAX_RX_CHANS][NWF_NXFER];      // FIXME: check perf if [NWF_NXFER] => [16]
-    #else
-        SPI_MISO wf_miso[MAX_RX_CHANS];
-    #endif
+    SPI_MISO wf_miso[MAX_RX_CHANS];
 } spi_shmem_t;
 
 #include "shmem_config.h"

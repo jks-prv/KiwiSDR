@@ -555,17 +555,6 @@ void sample_wf(int rx_chan)
     u4_t now, now2, diff;
     u64_t now64, deadline;
     
-    #ifdef SHOW_MAX_MIN_IQ
-        static void *IQi_state;
-        static void *IQf_state;
-        if (wf->new_map3) {
-            if (IQi_state != NULL) kiwi_ifree(IQi_state, "wf iq");
-            IQi_state = NULL;
-            if (IQf_state != NULL) kiwi_ifree(IQf_state, "wf iq");
-            IQf_state = NULL;
-        }
-    #endif
-
     // create waterfall
     
     #define DESIRED_SCALE 2         // makes >= z11 overlapped
@@ -671,11 +660,6 @@ void sample_wf(int rx_chan)
 
             float fi = ((float) ii) * window[sn];
             float fq = ((float) qq) * window[sn];
-            
-            #ifdef SHOW_MAX_MIN_IQ
-                print_max_min_stream_i(&IQi_state, P_MAX_MIN_DEMAND, "IQi", k, 2, ii, qq);
-                print_max_min_stream_f(&IQf_state, P_MAX_MIN_DEMAND, "IQf", k, 2, (double) fi, (double) fq);
-            #endif
             
             fft->hw_c_samps[sn][I] = fi;
             fft->hw_c_samps[sn][Q] = fq;
@@ -868,6 +852,13 @@ void compute_frame(int rx_chan)
 	// log10(n) = l(n)/l(10)
 	// 10^x = e^(x*ln(10)) = e(x*l(10))
 	
+    #ifdef WF_INFO
+	    float max_dB = wf->maxdb;
+	    float min_dB = wf->mindb;
+	    float range_dB = max_dB - min_dB;
+	    float pix_per_dB = 255.0 / range_dB;
+	#endif
+
 	int bin=0, _bin=-1;
 	float p, dB;
 
