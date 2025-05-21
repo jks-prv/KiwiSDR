@@ -193,19 +193,30 @@
 	localparam HOST_RX = 3;    // DEFb: bit number for value: 0x8
 	localparam GET_RX_SRQ = 4;    // DEFb: bit number for value: 0x10
 	localparam GET_STATUS = 5;    // DEFb: bit number for value: 0x20
-	localparam REG_NO = 6;    // DEFb: bit number for value: 0xc0
-	localparam REG_0 = 0;    // DEFb: bit number for value: 0x0
-	localparam REG_1 = 6;    // DEFb: bit number for value: 0x40
-	localparam REG_2 = 7;    // DEFb: bit number for value: 0x80
-	localparam REG_3 = 6;    // DEFb: bit number for value: 0xc0
+	localparam REG_NO = 192;    // DEFp 0xc0
+`define DEF_REG_NO 1
+	localparam REG_0 = 0;    // DEFp 0x0
+//`define DEF_REG_0
+	localparam REG_1 = 64;    // DEFp 0x40
+`define DEF_REG_1 1
+	localparam REG_2 = 128;    // DEFp 0x80
+`define DEF_REG_2 1
+	localparam REG_3 = 192;    // DEFp 0xc0
+`define DEF_REG_3 1
 	localparam GET_CPU_CTR = 8;    // DEFb: bit number for value: 0x100
-	localparam GET_CPU_CTR0 = 8;    // DEFb: bit number for value: 0x100
-	localparam GET_CPU_CTR1 = 6;    // DEFb: bit number for value: 0x140
-	localparam GET_CPU_CTR2 = 7;    // DEFb: bit number for value: 0x180
-	localparam GET_CPU_CTR3 = 6;    // DEFb: bit number for value: 0x1c0
+	localparam GET_CPU_CTR0 = 256;    // DEFp 0x100
+`define DEF_GET_CPU_CTR0 1
+	localparam GET_CPU_CTR1 = 320;    // DEFp 0x140
+`define DEF_GET_CPU_CTR1 1
+	localparam GET_CPU_CTR2 = 384;    // DEFp 0x180
+`define DEF_GET_CPU_CTR2 1
+	localparam GET_CPU_CTR3 = 448;    // DEFp 0x1c0
+`define DEF_GET_CPU_CTR3 1
 	localparam GET_ADC_CTR = 9;    // DEFb: bit number for value: 0x200
-	localparam GET_ADC_CTR0 = 9;    // DEFb: bit number for value: 0x200
-	localparam GET_ADC_CTR1 = 6;    // DEFb: bit number for value: 0x240
+	localparam GET_ADC_CTR0 = 512;    // DEFp 0x200
+`define DEF_GET_ADC_CTR0 1
+	localparam GET_ADC_CTR1 = 576;    // DEFp 0x240
+`define DEF_GET_ADC_CTR1 1
 	localparam RDREG_400 = 10;    // DEFb: bit number for value: 0x400
 	localparam HOST_TX = 0;    // DEFb: bit number for value: 0x1
 	localparam SET_GPS_MASK = 1;    // DEFb: bit number for value: 0x2
@@ -251,8 +262,10 @@
 	localparam CPU_CTR_CLR = 8;    // DEFb: bit number for value: 0x100
 	localparam CPU_CTR_ENA = 9;    // DEFb: bit number for value: 0x200
 	localparam CPU_CTR_DIS = 10;    // DEFb: bit number for value: 0x400
-	localparam WREVTL_LOOP_CTR0 = 0;    // DEFb: bit number for value: 0x0
-	localparam WREVTL_LOOP_CTR1 = 0;    // DEFb: bit number for value: 0x1
+	localparam WREVTL_LOOP_CTR0 = 0;    // DEFp 0x0
+//`define DEF_WREVTL_LOOP_CTR0
+	localparam WREVTL_LOOP_CTR1 = 1;    // DEFp 0x1
+`define DEF_WREVTL_LOOP_CTR1 1
 	localparam GET_MEMORY_LOOP = 1;    // DEFb: bit number for value: 0x2
 	localparam GET_RX_SAMP_LOOP = 2;    // DEFb: bit number for value: 0x4
 	localparam GET_WF_SAMP_Q_LOOP = 3;    // DEFb: bit number for value: 0x8
