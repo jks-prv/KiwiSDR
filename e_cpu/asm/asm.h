@@ -1,3 +1,5 @@
+// Copyright (c) 2013-2025 John Seamons, ZL4VO/KF6VO
+
 #ifndef _ASM_H_
 #define _ASM_H_
 
@@ -12,9 +14,16 @@
 #include <string.h>
 #include <fcntl.h>
 
+extern char ASCII[256][8];
+void init_ASCII();
+
 #define NIFILES_LIST 32
 extern char ifiles_list[NIFILES_LIST][32];
-extern int curline, debug;
+
+#define NIFILES_NEST 3
+extern char ifiles[NIFILES_NEST][32];
+
+extern int ifn, ifl, curline, debug;
 extern char *fn, *bfs, *cfs, *hfs, *vfs, *efs;
 
 #define	assert(cond) _assert(cond, # cond, __FILE__, __LINE__);
@@ -76,11 +85,14 @@ typedef struct {
 extern tokens_t *tp_start, *tp_end;
 
 const char *ttype(token_type_e ttype_e);
+char *token(tokens_t *tp);
 void token_dump(tokens_t *tp);
 void dump_tokens(const char *pass, tokens_t *f, tokens_t *l);
 void dump_tokens_until_eol(const char *id, tokens_t *f);
+void dump_tokens_incl_eol(const char *id, tokens_t *f);
 void insert(int n, tokens_t *tp, tokens_t **ep);
 void pullup(tokens_t *dp, tokens_t *sp, tokens_t **ep);
+void sym_undefined(tokens_t *tp);
 
 
 // pre-processor
@@ -97,8 +109,11 @@ void pullup(tokens_t *dp, tokens_t *sp, tokens_t **ep);
 #define	PP_ENDF		8
 #define	PP_FCALL	9
 #define	PP_IF		10
-#define	PP_ELSE		11
-#define	PP_ENDIF	12
+#define	PP_ELIF		11
+#define	PP_ELSE		12
+#define	PP_ENDIF	13
+#define	PP_ERROR	14
+#define	PP_DISPLAY	15
 
 // pre-processor operators
 #define	OPR_INC		0
@@ -167,15 +182,15 @@ int exp_macro(tokens_t **dp, tokens_t **to);
 
 void sys_panic(const char *str);
 void panic(const char *str, tokens_t *t = NULL);
-void _syntax(bool note, int cond, tokens_t *tp, const char *fmt, ...);
-void syntax2(int cond, const char *fmt, ...);
+void _syntax(int cond, tokens_t *tp, const char *fmt, ...);
+void _note(const char *color, tokens_t *tp, const char *fmt, ...);
 void _assert(int cond, const char *str, const char *file, int line);
-void errmsg(const char *str, tokens_t *t = NULL);
+void errmsg(tokens_t *t, const char *fmt, ...);
 
-#define syntax(cond, tp, fmt, ...) _syntax(false, cond, tp, fmt, ## __VA_ARGS__)
-#define note(cond, tp, fmt, ...) _syntax(true, cond, tp, fmt, ## __VA_ARGS__)
+#define syntax(cond, tp, fmt, ...) _syntax(cond, tp, fmt, ## __VA_ARGS__)
+#define note(color, tp, fmt, ...) _note(color, tp, fmt, ## __VA_ARGS__)
 
 char *str_ends_with(char *s, const char *cs);
-int count_ones(u4_t v);
+int count_ones(u4_t v, int *bit_no = NULL);
 
 #endif

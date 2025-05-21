@@ -22,6 +22,7 @@
 ; Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include ../kiwi.config
+                #display RX_CFG
 
 				MACRO	loop_ct count
 				 push   count - 1
@@ -44,14 +45,6 @@
 				 nop
 				 nop
 				 nop
-				ENDM
-
-				MACRO	StackCheck	which expected
-#if STACK_CHECK
-				 push	which
-				 push	expected
-				 call	stack_check
-#endif
 				ENDM
 
 				MACRO	push32 hi lo
@@ -91,12 +84,6 @@ Entry:
 				nop									; FIXME: due to pipelining of insn BRAM
 				nop									; first two insns are not executed
 				
-#if STACK_CHECK
-				push	sp_reenter
-				incr16
-				pop
-#endif
-
 				push	0							; disable any channel srqs
 				wrReg	SET_GPS_MASK
 				rdReg	GET_SRQ
@@ -107,8 +94,6 @@ Ready:
 				wrEvt	HOST_RDY
 				push	CTRL_CMD_READY
 				call	ctrl_set			        ; signal cmd finished
-
-				StackCheck	sp_ready 0
 
 NoCmd:
 				// poll for srqs
@@ -126,21 +111,11 @@ gps_srq_loop:   push	0
 #if USE_SDR
 				rdReg	GET_RX_SRQ					; host_srq gps_srq(gps_chans-1) ... (0) 0
 				rdBit1								; host_srq gps_srq(gps_chans-1) ... (0) rx_srq
-				
+
 				brZ		no_rx_svc
 			wrEvt2	CPU_CTR_ENA
 				call	RX_Buffer
 			wrEvt2	CPU_CTR_DIS
-
-#if STACK_CHECK
-                // CAUTION: untested replacement code below for GPS_CHANS => gps_chans transition
-				//StackCheck	sp_rx (GPS_CHANS + 1)
-				
-				push	sp_rx                       ; which
-                call    push_gps_chans_m1           ; which #chans_m1
-				addi    2                           ; which expected(gps_chans_m1+2 = gps_chans+1)
-				call	stack_check
-#endif
 
 no_rx_svc:											; host_srq gps_srq(gps_chans-1) ... (0)
 
@@ -180,38 +155,6 @@ cmd_ok:
 				push	CTRL_CMD_READY
 				call	ctrl_clr			        ; signal cmd busy
 
-#if STACK_CHECK
-				dup
-				push	0xff
-				call	ctrl_clr
-				push	0xff
-				and
-				call	ctrl_set					; remember last cmd received
-				
-				shl									; cmd*2
-				dup
-				shl									; cmd*2 cmd*4
-				push	sp_cmds_save				; don't leave stack mis-aligned during command run
-				store16
-				pop									; cmd*2
-				push	Commands
-				add									; &Commands[cmd*2]
-				fetch16
-				push	sp_return
-				to_r
-				to_r
-				ret
-sp_return:
-				push	sp_cmds_save
-				fetch16
-				push	sp_cmds
-				add
-				push	0							; sp_cmds+cmd*4 0
-				call	stack_check
-				br		Ready
-
-sp_cmds_save:	u16		0
-#else
 				shl
 				push	Commands
 				add									; &Commands[cmd*2]
@@ -220,7 +163,6 @@ sp_cmds_save:	u16		0
 				to_r
 				to_r
 				ret
-#endif
 
 ; ============================================================================
 
@@ -246,12 +188,7 @@ CmdPing:
                 fetch16
                 wrReg	HOST_TX
 
-#if STACK_CHECK
-                push	sp_reenter
-                fetch16
-#else
 				push	0
-#endif
                 wrReg	HOST_TX
                 
                 push	0xbabe
@@ -344,89 +281,8 @@ tr_id:			u16		0
 				drop.r
 #endif
 
-#if STACK_CHECK
-stack_check:                                ; addr #sp
-				addi	3                   ; addr #sp+4			StackCheck macro did 2 pushes, we're just about to do 2 more
-				push	0                   ; addr #sp+4 0
-				push	0                   ; addr #sp+4 0 0
-				sp_rp                       ; addr #sp+4 rp sp
-				swap                        ; addr #sp+4 sp rp
-				pop                         ; addr #sp+4 sp
-				dup                         ; addr #sp+4 sp sp
-				rot                         ; addr sp sp #sp+4
-				sub                         ; addr sp (#sp+4 == sp)?
-				brNZ	stack_bad           ; addr sp
-				pop                         ; addr
-				pop.r                       ;
-stack_bad:                                  ; addr sp
-				push	4                   ; correct by 4 from above
-				sub
-				swap                        ; sp-4 addr				the last bad sp value
-				store16                     ; addr
-				addi	2                   ; addr++				how many times it has happened
-				incr16                      ; *addr++
-				pop.r
-
-CmdUploadStackCheck:
-				// upload stack check info				
-				wrEvt	HOST_RST
-                push	0xbeef
-                wrReg	HOST_TX
-
-                push	sp_counters
-sp_more:
-				dup                         ; a a
-                fetch16
-                wrReg	HOST_TX             ; a
-                addi	2
-                dup                         ; a+2 a+2
-                push	sp_counters_end
-                sub
-                brNZ	sp_more             ; a+2
-                pop
-                
-                push	sp_seq
-                fetch16
-                wrReg	HOST_TX
-
-                push	0x8bad
-                wrReg	HOST_TX
-
-                push	sp_reenter
-                fetch16
-                wrReg	HOST_TX
-
-                push	0xfeed
-                wrReg	HOST_TX
-
-                push	sp_seq
-                incr16
-                drop.r
-
-sp_seq:			u16		0xc11c
-sp_reenter:		u16		0
-
-sp_counters:
-sp_ready:		u16		0			        ; the last bad sp value
-				u16		0			        ; how many times it has happened
-sp_rx:			u16		0
-				u16		0
-				REPEAT	GPS_MAX_CHANS
-sp_gps # <iter> # :
-				 u16		0
-				 u16		0
-				ENDR
-sp_cmds:
-                REPEAT	NUM_CMDS
-				 u16	0
-				 u16	0
-				ENDR
-sp_counters_end:
-
-#else
 CmdUploadStackCheck:
 				ret
-#endif
 
 ; ============================================================================
 
