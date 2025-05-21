@@ -4577,8 +4577,7 @@ function admin_nav_blur(id, cb_arg)
 
 function admin_navkey_cb(ev) {
 	//event_dump(ev, 'admin_navkey_cb', 1);
-   //console.log(ev);
-   if (!isString(ev.key)) return;
+   if (!isString(ev.key) || any_modifier_key_except_shift(ev)) return;
    var k = ev.key.toLowerCase();
 
    if (k == 'h' || k == '?') {
@@ -4587,6 +4586,10 @@ function admin_navkey_cb(ev) {
    }
    if (k == 'escape') {
       confirmation.close_cb();
+      return;
+   }
+   if (k == '@') {
+	   ext_send('SET log_state');
       return;
    }
    
@@ -4668,10 +4671,13 @@ function admin_show_help()
                'So if the console is open and you are on another tab and cycle into <x1>Console</x1> by using "c" ' +
                'the cycling will "lock" as soon as the console tab is hiy. Because the open console now captures ' +
                'all the keystrokes. In this case simply use the mouse to move on to another tab.'
-            )
+            ),
+            
+            w3_inline('w3-padding-tiny w3-bold w3-text-aqua w3-margin-T-8', 'Other shortcuts'),               
+            w3_inline_percent('w3-padding-tiny', '@', 15, 'Same as "Log state" button on Log tab (debugging aid)')
          )
       );
-   confirmation_show_content(s, 550, 585);
+   confirmation_show_content(s, 600, 625);
    w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
 }
 
