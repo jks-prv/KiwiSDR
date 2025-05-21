@@ -105,7 +105,7 @@ extern bool background_mode, need_hardware, is_multi_core, any_preempt_autorun, 
 	snr_local_time, log_local_ip, DRM_enable, have_snd_users, admin_keepalive;
 
 extern int wf_sim, wf_real, wf_time, ev_dump, wf_flip, wf_exit, wf_start, down,
-	meas, monitors_max, rx_yield, gps_chans, wf_max, rx_num, wf_num, do_gps, do_sdr, wf_olap,
+	meas, monitors_max, rx_yield, gps_chans, wf_max, cfg_no_wf, do_gps, do_sdr, wf_olap,
 	spi_clkg, spi_speed, spi_mode, spi_delay, spi_no_async, bg, dx_print, snr_meas, wf_full_rate,
 	port, print_stats, ecpu_cmds, ecpu_tcmds, serial_number, ip_limit_mins, is_locked, test_flag, n_camp,
 	use_spidev, inactivity_timeout_mins, S_meter_cal, waterfall_cal, debian_ver,

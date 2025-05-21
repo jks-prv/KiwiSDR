@@ -363,11 +363,6 @@ void c2s_sound(void *param)
 			continue;
 		}
 
-		if (rx_chan >= rx_num) {
-			TaskSleepMsec(1000);
-			continue;
-		}
-		
 		if (conn->stop_data) {
 			//clprintf(conn, "SND stop_data rx_server_remove()\n");
 			rx_enable(rx_chan, RX_CHAN_FREE);

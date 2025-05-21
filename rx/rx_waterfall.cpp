@@ -218,10 +218,12 @@ void c2s_waterfall_setup(void *param)
 	send_msg(conn, SM_WF_DEBUG, "MSG kiwi_up=1 rx_chan=%d", rx_chan);       // rx_chan needed by extint_send_extlist() on js side
 	extint_send_extlist(conn);
 
-    // If not wanting a wf (!conn->isWF_conn) send wf_chans=0 to force audio FFT to be used.
+    // If not wanting a wf, because specifically requested none via !conn->isWF_conn or configured none via cfg_no_wf,
+    // send wf_chans=0 to force audio FFT to be used.
     // But need to send actual value via wf_chans_real for use elsewhere.
+    bool no_wf = (!conn->isWF_conn || cfg_no_wf);
 	send_msg(conn, SM_WF_DEBUG, "MSG wf_fft_size=1024 wf_fps=%d wf_fps_max=%d zoom_max=%d rx_chans=%d wf_chans=%d wf_chans_real=%d wf_cal=%d wf_setup",
-		WF_SPEED_FAST, WF_SPEED_MAX, MAX_ZOOM, rx_chans, conn->isWF_conn? wf_chans:0, wf_chans, waterfall_cal);
+		WF_SPEED_FAST, WF_SPEED_MAX, MAX_ZOOM, rx_chans, no_wf? 0:wf_chans, wf_chans, waterfall_cal);
 	if (do_gps && !do_sdr) send_msg(conn, SM_WF_DEBUG, "MSG gps");
 
     dx_last_community_download();
@@ -368,12 +370,6 @@ void c2s_waterfall(void *param)
 			panic("shouldn't return");
 		}
 
-        // FIXME: until we figure out if no WF cmds are needed when no wf is present just occasionally wake up and check
-		if (rx_chan >= wf_num) {
-			TaskSleepMsec(500);
-			continue;
-		}
-		
         // Handle LOG_ARRIVED and missing ident for WF-only connections.
         bool too_much = ((wf->cmd_recv & CMD_SET_ZOOM) && (timer_sec() > (conn->arrival + 15)));
         if (conn->isMaster && !conn->arrived && (conn->ident || too_much)) {
