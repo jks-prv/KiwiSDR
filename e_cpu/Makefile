@@ -11,6 +11,9 @@ TOOLS_DIR = $(BUILD_DIR)/tools
 GEN_DIR = $(BUILD_DIR)/gen
 
 CFLAGS = -I. -I./asm -I.. -D_GNU_SOURCE -g 
+ifeq ($(ASAN),1)
+    CFLAGS += -fsanitize=address
+endif
 
 ASM = $(TOOLS_DIR)/asm
 
@@ -26,6 +29,7 @@ info: $(ASM)
 
 gen_other: $(ASM)
 	$(ASM) -o $(GEN_DIR) -g $(OTHER_DIR)
+	sum $(GEN_DIR)/kiwi.aout
 
 $(TOOLS_DIR):
 	@mkdir -p $(TOOLS_DIR)

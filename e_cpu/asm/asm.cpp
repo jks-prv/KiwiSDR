@@ -33,7 +33,7 @@ int show_bin, gen=1, only_gen_other=0, write_coe;
 char linebuf[LBUF];
 
 #define	TBUF	64*1024
-tokens_t tokens[TBUF], *pass1, *pass2, *pass3, *pass4;
+tokens_t tokens[TBUF], *pass0, *pass1, *pass2, *pass3, *pass4;
 tokens_t *tp_start, *tp_end;
 
 typedef struct {
@@ -175,10 +175,10 @@ init_code_t init_code[] = {
 #define	FN_PREFIX	"kiwi"
 
 int ifn, ifl;
-char ifiles_list[NIFILES_LIST][32];
+char ifiles_list[NIFILES_LIST][N_FN];
 char *last_file;
 
-char ifiles[NIFILES_NEST][32];
+char ifiles[NIFILES_NEST][N_FN];
 int lineno[NIFILES_NEST];
 
 int main(int argc, char *argv[])
@@ -238,8 +238,11 @@ int main(int argc, char *argv[])
 	}
 	
 	// pass 0: tokenize
+	pass0 = tp;
 	bool need_other_config = true;
 	strcpy(basename, "./other.config");
+    tp->ttype = TT_FILE; tp->str = ifiles_list[ifl]; tp++;
+
 	
 	while (ifn >= 0) {
 
@@ -407,12 +410,14 @@ int main(int argc, char *argv[])
 		
 		ifl++;
 		strcpy(ifiles_list[ifl], fn);
+        tp->ttype = TT_FILE; tp->str = ifiles_list[ifl]; tp++;
 		//printf("FILE %s(%d)\n", fn, ifl);
 	}
 
 	fn = ifiles[0];
     strcpy(ifiles_list[ifl], fn);
 	ep0 = tp; pass1 = ep0;
+	if (debug) dump_tokens("pass0", pass0, ep0);
 	if (debug) printf("\ntokenize pass 0: %d strings %ld tokens\n\n", num_strings(), (long) (ep0-tokens));
 	if (parse_errors) panic("parse errors");
 
@@ -461,7 +466,7 @@ int main(int argc, char *argv[])
 	static int ifdef_lvl=0;
 	curline=1;
 	int dbg_elif = (0 && debug);
-    int lock;
+    int lock = 0;
 
     tp_start = pass1; tp_end = pass2;
 	for (tp=pass1, to=pass2; tp != ep1;) {
@@ -471,6 +476,12 @@ int main(int argc, char *argv[])
 		    if (debug) printf("---- EOL %s:%03d\n", fn, curline);
 		}
 
+		if (tp->ttype == TT_FILE) {
+		    last_file = tp->str;
+		    //note(RED, tp, "last_file <%s>", last_file);
+		    tp++; continue;
+		}
+		
 		// remove #if / #endif
 		if (tp->ttype == TT_PRE && tp->num == PP_IF) {
 			ifdef_lvl++;
@@ -562,11 +573,6 @@ int main(int argc, char *argv[])
 		}
 		
 		// process new DEF
-		if (tp->ttype == TT_FILE) {
-		    last_file = tp->str;
-		    tp++; continue;
-		}
-		
 		if (tp->ttype == TT_PRE && tp->num == PP_DEF) {
 			pp->flags = tp->flags;
 			tp++; syntax(tp->ttype == TT_SYM, tp, "expected DEF name");
@@ -578,8 +584,15 @@ int main(int argc, char *argv[])
 				pp->flags |= TF_FIELD;
 			}
 			tp = expr(tp, &ep1, &val, 1);
-			pp->str = t->str; pp->ptype = PT_DEF; sscanf(last_file, "%*[^a-z]%[a-z]", pp->config_prefix);
-			if (debug) printf("DEF \"%s\" %d (from file %s <%s>)\n", pp->str, val, last_file, pp->config_prefix);
+            //note(CYAN, tp, "last_file <%s> pp=%p", last_file? last_file : "(NULL)", pp);
+			pp->str = t->str; pp->ptype = PT_DEF;
+			if (last_file) {
+			    sscanf(last_file, "%*[^a-z]%[a-z]", pp->config_prefix);
+			    if (debug) printf("DEF \"%s\" %d (from file %s <%s>)\n", pp->str, val, last_file, pp->config_prefix);
+			} else {
+			    if (debug) note(YELLOW, tp, "DEF \"%s\" %d (no last_file?)", pp->str, val);
+			    pp->config_prefix[0] = '\0';
+			}
 			pp->val = val;
 			if (redef)
 			    note(YELLOW, tp, "redefined %s from %d to %d", t->str, prior_val, val);

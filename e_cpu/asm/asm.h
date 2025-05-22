@@ -17,11 +17,12 @@
 extern char ASCII[256][8];
 void init_ASCII();
 
+#define N_FN 64
 #define NIFILES_LIST 32
-extern char ifiles_list[NIFILES_LIST][32];
+extern char ifiles_list[NIFILES_LIST][N_FN];
 
 #define NIFILES_NEST 3
-extern char ifiles[NIFILES_NEST][32];
+extern char ifiles[NIFILES_NEST][N_FN];
 
 extern int ifn, ifl, curline, debug;
 extern char *fn, *bfs, *cfs, *hfs, *vfs, *efs;
