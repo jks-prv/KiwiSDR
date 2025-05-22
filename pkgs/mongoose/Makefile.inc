@@ -26,7 +26,7 @@ mgs:
 	@(cd web; ls -la web.h web.cpp web_util.cpp web_server.cpp)
 
 mgtouch:
-	(cd pkgs/mongoose; touch mongoose/*)
+	(touch pkgs/mongoose/mongoose/* web/web/* )
 
 mgd5:
 	colordiff -br ../proj/mongoose/diff-5.6 pkgs/mongoose/mongoose

@@ -32,7 +32,7 @@ void mg_response_complete(struct mg_connection *mc)
 {
     mg_http_printf_chunk(mc, "");
     mc->is_resp = 0;    // response is complete
-    mc->is_draining = 0;    // drain and close connection
+    mc->is_draining = 1;    // drain and close connection
 }
 
 // caller must free() result
@@ -75,7 +75,6 @@ void mg_http_send_header(struct mg_connection *mc, const char *name, const char 
 {
     if (which == MG_FIRST_HEADER) mg_printf(mc, "HTTP/1.1 200 OK\r\n");
     mg_printf(mc, "%s: %s\r\n", name, v);
-    if (len) mg_printf(mc, "Content-Length: %d\r\n", len);
     if (which == MG_LAST_HEADER) {
         mg_printf(mc, "%s\r\n\r\n", (mc->te_chunked == 0)? "Transfer-Encoding: chunked" : "");
     }
@@ -181,13 +180,12 @@ void mg_http_send_standard_headers(struct mg_connection *mc, const char *path, c
         "Last-Modified: %s\r\n"
         "Etag: %s\r\n"
         "Content-Type: %s\r\n"
-        "Content-Length: %d\r\n"
         "Connection: keep-alive\r\n"
         "Accept-Ranges: bytes\r\n"
         "Transfer-Encoding: chunked\r\n",
         msg, date,
         lm, etag,
-        mime, cache->size);
+        mime);
     mc->te_chunked = 1;
 }
 
