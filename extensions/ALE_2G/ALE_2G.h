@@ -7,7 +7,6 @@
 
 #include "types.h"
 #include "kiwi.h"
-#include "config.h"
 #include "kiwi_assert.h"
 #include "mem.h"
 #include "coroutines.h"

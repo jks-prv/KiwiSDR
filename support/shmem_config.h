@@ -21,6 +21,10 @@ Boston, MA  02110-1301, USA.
 
 #include "sanitizer.h"
 
+
+#define DRM_MAX_RX 4
+
+
 #ifdef USE_ASAN
     #warning SHMEM_DISABLE_ALL due to USE_ASAN
     #define SHMEM_DISABLE_ALL

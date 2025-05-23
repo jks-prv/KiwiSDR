@@ -19,8 +19,8 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2018-2024 Christoph Mayer, DL1CH
 
 #include "types.h"
+#include "kiwi.h"
 #include "options.h"
-#include "config.h"
 #include "kiwi.h"
 #include "mode.h"
 #include "printf.h"

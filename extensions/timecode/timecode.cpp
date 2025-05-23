@@ -3,7 +3,7 @@
 #include "ext.h"	// all calls to the extension interface begin with "ext_", e.g. ext_register()
 
 #include "types.h"
-#include "kiwi.h"
+#include "rx.h"
 #include "mode.h"
 #include "printf.h"
 #include "clk.h"

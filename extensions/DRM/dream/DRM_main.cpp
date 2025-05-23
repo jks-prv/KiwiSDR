@@ -26,7 +26,8 @@
  *
 \******************************************************************************/
 
-#include <DRM_main.h>
+#include "DRM_shmem.h"
+#include "DRM_main.h"
 
 #if defined(__unix__) && !defined(__APPLE__)
 # include <csignal>
@@ -40,6 +41,7 @@
 //#include "DrmSimulation.h"
 #include "util/Settings.h"
 #include <iostream>
+#include <unistd.h>
 
 #ifdef DRM_SHMEM_DISABLE
     static u4_t drm_last_start;

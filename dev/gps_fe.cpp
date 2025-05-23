@@ -18,7 +18,7 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2023 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
-#include "kiwi.h"
+#include "kiwi.gen.h"
 #include "config.h"
 #include "gps_fe.h"
 #include "fpga.h"

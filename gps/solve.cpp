@@ -24,6 +24,7 @@
 #include <math.h>
 
 #include "types.h"
+#include "kiwi.h"
 #include "gps.h"
 #include "clk.h"
 #include "ephemeris.h"

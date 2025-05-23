@@ -8,7 +8,6 @@
 #pragma once
 
 #include "types.h"
-#include "kiwi.h"
 #include "kiwi_assert.h"
 #include "coroutines.h"
 #include "data_pump.h"

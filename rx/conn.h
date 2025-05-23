@@ -22,6 +22,7 @@ Boston, MA  02110-1301, USA.
 // mongoose.h struct mg_connection *
 // types.h funcP_t
 
+#include "config.h"         // NET_ADDRSTRLEN
 #include "nbuf.h"           // ndesc_t
 #include "ext.h"            // ext_t
 #include "non_block.h"      // non_blocking_cmd_t

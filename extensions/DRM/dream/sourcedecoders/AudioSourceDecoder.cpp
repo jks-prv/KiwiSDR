@@ -26,6 +26,7 @@
  *
 \******************************************************************************/
 
+#include "DRM_shmem.h"
 #include <DRM_main.h>
 #include "AudioSourceDecoder.h"
 #include "printf.h"

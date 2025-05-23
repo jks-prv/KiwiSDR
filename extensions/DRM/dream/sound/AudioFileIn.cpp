@@ -28,6 +28,7 @@
 
 // Copyright (c) 2017-2023 John Seamons, ZL4VO/KF6VO
 
+#include "DRM_shmem.h"
 #include "DRM_main.h"
 #include "AudioFileIn.h"
 

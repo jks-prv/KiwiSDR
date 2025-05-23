@@ -21,10 +21,8 @@
 #pragma once
 
 #include "types.h"
-#include "kiwi.h"
-#include "config.h"
-#include "printf.h"
-#include "coroutines.h"
+#include "kiwi.gen.h"
+#include "timing.h"
 
 #include <inttypes.h>
 #include <math.h>

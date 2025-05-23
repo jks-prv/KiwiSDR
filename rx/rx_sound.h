@@ -20,7 +20,7 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "kiwi.h"
+#include "rx.h"
 #include "options.h"
 #include "cuteSDR.h"
 #include "ima_adpcm.h"

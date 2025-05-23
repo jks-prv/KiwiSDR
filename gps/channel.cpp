@@ -19,6 +19,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "gps.h"
+#include "kiwi.h"
 #include "spi.h"
 #include "spi_dev.h"
 #include "misc.h"

@@ -11,7 +11,6 @@
 #define AGCX_H
 
 #include "datatypes.h"
-#include "kiwi.h"
 
 #define MAX_DELAY_BUF 2048
 

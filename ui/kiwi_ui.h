@@ -20,8 +20,7 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "config.h"
-#include "kiwi.h"
+#include "conn.h"
 
 void sd_backup(conn_t *conn, bool from_admin);
 void sd_upgrade(conn_t *conn);

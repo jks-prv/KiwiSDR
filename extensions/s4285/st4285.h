@@ -4,7 +4,6 @@
 
 #ifdef EXT_S4285
 
-#include "kiwi.h"
 #undef B
 
 #include <string>

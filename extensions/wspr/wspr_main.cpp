@@ -28,7 +28,7 @@
 // Copyright (c) 2024 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
-#include "config.h"
+#include "kiwi.h"
 #include "mem.h"
 #include "net.h"
 #include "rx.h"

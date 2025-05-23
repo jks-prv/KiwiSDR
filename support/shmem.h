@@ -20,13 +20,11 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "kiwi.h"
 #include "str.h"
 #include "printf.h"
-#include "net.h"
+#include "net.h"        // net_t
 #include "spi.h"
 
-//#include "data_pump_shmem.h"
 #include "data_pump.h"
 #include "spi_dev.h"
 #include "rx_waterfall.h"
@@ -40,6 +38,7 @@ Boston, MA  02110-1301, USA.
 // needed because Debian 7 configs don't include extensions/DRM in search paths
 #ifdef DRM
  #include "DRM.h"
+ #include "DRM_shmem.h"
 #else
  #define DRM_SHMEM_DISABLE
  

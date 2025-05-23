@@ -1,8 +1,10 @@
-// Copyright (c) 2017-2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2025 John Seamons, ZL4VO/KF6VO
 
 #include "ext.h"	// all calls to the extension interface begin with "ext_", e.g. ext_register()
 
 #include "DRM.h"
+#include "DRM_shmem.h"
+#include "kiwi.h"
 #include "mem.h"
 #include "rx_util.h"
 

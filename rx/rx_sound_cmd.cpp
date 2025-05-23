@@ -18,9 +18,8 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
-#include "options.h"
-#include "config.h"
 #include "kiwi.h"
+#include "options.h"
 #include "mode.h"
 #include "printf.h"
 #include "rx.h"

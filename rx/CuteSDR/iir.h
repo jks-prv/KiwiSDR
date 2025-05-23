@@ -39,7 +39,6 @@
 #define IIR_H
 
 #include "datatypes.h"
-#include "kiwi.h"
 
 
 class CIir

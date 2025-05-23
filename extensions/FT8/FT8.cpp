@@ -7,6 +7,7 @@
 #include "conn.h"
 #include "rx_util.h"
 #include "data_pump.h"
+#include "net.h"
 #include "mem.h"
 #include "misc.h"
 #include "wspr.h"

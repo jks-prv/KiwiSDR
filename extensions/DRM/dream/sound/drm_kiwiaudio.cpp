@@ -31,6 +31,7 @@
 // NB v1.470: Because of the C_LINKAGE() change
 
 #include "drm_kiwiaudio.h"
+#include "DRM_shmem.h"
 #include "DRM_main.h"
 
 #include <iostream>

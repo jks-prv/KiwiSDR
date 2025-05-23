@@ -3,6 +3,7 @@
 #ifdef KIWI
 
 #include "HFDL.h"
+#include "kiwi.h"
 
 static hfdl_t hfdl;
 static hfdl_chan_t hfdl_chan[MAX_RX_CHANS];

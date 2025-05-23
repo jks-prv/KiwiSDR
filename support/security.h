@@ -20,9 +20,6 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "kiwi.h"
-#include "printf.h"
-#include "misc.h"
 
 //#define CRYPT_PW
 

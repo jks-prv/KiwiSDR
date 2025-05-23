@@ -10,7 +10,7 @@
 //
 
 #include "types.h"
-#include "kiwi.h"
+#include "rx.h"
 #include "mode.h"
 #include "kiwi_assert.h"
 #include "wdsp.h"

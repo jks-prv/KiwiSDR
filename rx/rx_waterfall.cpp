@@ -18,7 +18,6 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
-#include "config.h"
 #include "kiwi.h"
 #include "clk.h"
 #include "misc.h"

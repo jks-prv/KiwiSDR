@@ -1,7 +1,6 @@
 #pragma once
 
 #include "datatypes.h"
-#include "kiwi.h"
 #include "rx.h"
 
 #define LMSLEN      121
