@@ -17,9 +17,9 @@
 `define DEF_ADC_BITS 1
 	localparam DEFAULT_NSYNC = 2;    // DEFp 0x2
 `define DEF_DEFAULT_NSYNC 1
+`define USE_OPTIONAL 1    // DEFh 0x1
 //`define USE_WB    // DEFh 0x0
 `define USE_RX_CICF 1    // DEFh 0x1
-`define USE_OPTIONAL 1    // DEFh 0x1
 `define USE_LOGGER 1    // DEFh 0x1
 `define USE_CPU_CTR 1    // DEFh 0x1
 `define USE_GEN 1    // DEFh 0x1
