@@ -3,6 +3,14 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.811  May 29, 2025
+    Web server:
+        Return connection error until local IP known so local-IP exemption works. (thanks Palomar)
+        Don't send Content-Length header since chunked encoding used. (thanks G7GSF)
+    Don't apply admin shortcut keys when control/option/meta modifier keys used. (thanks F5LFE)
+    SNR measurement now works even if admin control tab "disable waterfalls" is set. (thanks VA3ROM)
+    When antennas are switched an auto aperture measurement is made, if enabled. (thanks jimjackii)
+
 v1.810  May 15, 2025
     Admin interface (desktop):
         Type "h" or "?" to see a help panel for the admin page.
@@ -23,7 +31,7 @@ v1.810  May 15, 2025
     
     Fixed ALE extension processing of URL parameters including lsb mode fix. (thanks DK9FI)
 
-v1.809  April 5, 2025
+v1.809  May 5, 2025
     The output from my.kiwisdr.com has been expanded to include additional information:
         Proxy links in addition to local IP links if proxy mode is setup and running.
         Connection type & status (i.e. settings on admin page "connect" tab).
