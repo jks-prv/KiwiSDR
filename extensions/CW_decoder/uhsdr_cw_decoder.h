@@ -8,7 +8,6 @@
 #ifndef AUDIO_CW_CW_DECODER_H_
 #define AUDIO_CW_CW_DECODER_H_
 
-#include "kiwi.h"
 #include "datatypes.h"
 
 #include <stdint.h>

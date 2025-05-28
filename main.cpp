@@ -70,7 +70,7 @@ int fw_sel, fpga_id, rx_chans, rx_wb_buf_chans, wf_chans, wb_chans, nrx_bufs,
     nwf_nxfer, nwf_samps;
 
 int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, down,
-	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, rx_num, wf_num, snr_meas=1,
+	rx_yield=1000, gps_chans=GPS_MAX_CHANS, wf_max, cfg_no_wf, snr_meas=1,
 	spi_clkg, spi_speed, spi_mode = -1, spi_no_async, spi_test,
 	do_gps, do_sdr=1, wf_olap, meas, spi_delay=100, debian_ver, monitors_max, bg,
 	print_stats, ecpu_cmds, ecpu_tcmds, use_spidev, spidev_maj = -1, spidev_min = -1,
@@ -207,8 +207,8 @@ int main(int argc, char *argv[])
 		if (ARG("-v")) {} else      // dummy arg so Kiwi version can appear in e.g. htop
 		
 		if (ARG("-test")) { ARGL(test_flag); printf("test_flag %d(0x%x)\n", test_flag, test_flag); } else
-		if (ARG("-snr_meas")) snr_meas = 0; else
-		if (ARG("-wf_full")) wf_full_rate = 1; else
+		if (ARG("-snrmeas")) snr_meas = 0; else
+		if (ARG("-wffull")) wf_full_rate = 1; else
 		if (ARG("-mm")) kiwi.test_marine_mobile = true; else
 		if (ARG("-dx")) { ARGL(dx_print); printf("dx %d(0x%x)\n", dx_print, dx_print); } else
 		if (ARG("-led") || ARG("-leds")) disable_led_task = true; else
@@ -236,8 +236,6 @@ int main(int argc, char *argv[])
 		if (ARG("-olap")) wf_olap = 1; else
 		if (ARG("-meas")) meas = 1; else
 		
-		if (ARG("-rx")) { ARGL(rx_num); } else
-		if (ARG("-wf")) { ARGL(wf_num); } else
 		if (ARG("-clkg")) spi_clkg = 1; else
 		if (ARG("-spispeed")) { ARGL(spi_speed); } else
 		if (ARG("-spimode")) { ARGL(spi_mode); } else
@@ -473,8 +471,7 @@ int main(int argc, char *argv[])
         else
             asprintf(&fpga_file, "rx%d.wf%d%s", rx_chans, wf_chans, fw_test? ".test" : "");
     
-        bool no_wf = cfg_true("no_wf");
-        if (no_wf) wf_chans = 0;
+        cfg_no_wf = cfg_true("no_wf");
 
         lprintf("firmware: rx_chans=%d rx_wb_buf_chans=%d wb_chans=%d wf_chans=%d gps_chans=%d\n",
             rx_chans, rx_wb_buf_chans, wb_chans, wf_chans, gps_chans);
@@ -504,7 +501,6 @@ int main(int argc, char *argv[])
         nwf_samps = (WF_NFFT / nwf_nxfer) + 1;
         lprintf("firmware: WF nfft=%d xfer=%d samps=%d\n", WF_NFFT, nwf_nxfer, nwf_samps);
 
-        rx_num = rx_chans, wf_num = wf_chans;
         monitors_max = (rx_chans * N_CAMP) + N_QUEUERS;
     }
     

@@ -28,7 +28,7 @@
 // Copyright (c) 2024 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
-#include "config.h"
+#include "kiwi.h"
 #include "mem.h"
 #include "net.h"
 #include "rx.h"
@@ -1019,7 +1019,7 @@ bool wspr_update_vars_from_config(bool called_at_init_or_restart)
             wspr_arun_band[instance] = autorun;
             wspr_arun_preempt[instance] = preempt;
         }
-        if (wspr_c.rcall == NULL || *wspr_c.rcall == '\0' || wspr_c.rgrid[0] == '\0') {
+        if (num_autorun && (wspr_c.rcall == NULL || *wspr_c.rcall == '\0' || wspr_c.rgrid[0] == '\0')) {
             printf("WSPR autorun: reporter callsign and grid square fields must be entered on WSPR section of admin page\n");
             num_autorun = num_non_preempt = 0;
         }

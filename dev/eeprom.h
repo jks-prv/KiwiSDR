@@ -19,7 +19,6 @@ Boston, MA  02110-1301, USA.
 
 #pragma once
 
-#include "kiwi.h"
 #include "peri.h"
 
 #define EEPROM_KEY_LEN 29

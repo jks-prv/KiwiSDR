@@ -1,6 +1,8 @@
 #
 # assembler for the embedded processor
 #
+# Copyright (c) 2013-2025 John Seamons, ZL4VO/KF6VO
+
 
 include ../Makefile.comp.inc
 
@@ -9,17 +11,25 @@ TOOLS_DIR = $(BUILD_DIR)/tools
 GEN_DIR = $(BUILD_DIR)/gen
 
 CFLAGS = -I. -I./asm -I.. -D_GNU_SOURCE -g 
+ifeq ($(ASAN),1)
+    CFLAGS += -fsanitize=address
+endif
 
 ASM = $(TOOLS_DIR)/asm
 
 all: $(ASM) no_gen
 
-gen_includes: $(ASM)
+gen_includes debug2: $(ASM)
 	$(ASM) -o $(GEN_DIR) $(OTHER_DIR)
+	sum $(GEN_DIR)/kiwi.aout
+
+info: $(ASM)
+	$(ASM) -i -o $(GEN_DIR) $(OTHER_DIR)
 	sum $(GEN_DIR)/kiwi.aout
 
 gen_other: $(ASM)
 	$(ASM) -o $(GEN_DIR) -g $(OTHER_DIR)
+	sum $(GEN_DIR)/kiwi.aout
 
 $(TOOLS_DIR):
 	@mkdir -p $(TOOLS_DIR)

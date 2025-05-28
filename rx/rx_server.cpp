@@ -202,7 +202,8 @@ void rx_server_remove(conn_t *c)
     if (c->unknown_cmd_recvd)
         clprintf(c, "### BAD PARAMS: %s total=%d\n", rx_conn_type(c), c->unknown_cmd_recvd);
     if (c->arrived) rx_loguser(c, LOG_LEAVING);
-    clprintf(c, "--- connection closed -----------------------------------------------------\n");
+    if (c->isMaster)
+        clprintf(c, "--- connection closed -----------------------------------------------------\n");
 
 	webserver_connection_cleanup(c);
 	kiwi_free("ident_user", c->ident_user);
@@ -296,6 +297,8 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 	u64_t tstamp;
 	char *type_m = NULL, *uri_m = NULL;
 	int n = 0;
+    int _wf_chans = (cfg_no_wf && !internal)? 0 : wf_chans;
+	conn_printf("rx_server_websocket _wf_chans=%d cfg_no_wf=%d internal=%d %s\n", _wf_chans, cfg_no_wf, internal, uri_ts);
 
 
 	// The new mongoose API requires something in the URL to distinguish web socket connections from
@@ -650,9 +653,10 @@ retry:
                         return NULL;
                     }
                 } else {
-                    if (st->type == STREAM_WATERFALL && rx_n >= wf_chans) {
+                    if (st->type == STREAM_WATERFALL && rx_n >= _wf_chans) {
                 
                         // Kiwi UI handles no-WF condition differently -- don't send error
+                        // see c2s_waterfall_setup()
                         if (!isKiwi_UI) {
                             conn_printf("(case 1: too many wf channels open for %s)\n", st->uri);
                             if (!internal) send_msg_mc(mc, SM_NO_DEBUG, "MSG too_busy=%d", rx_chans);
@@ -681,9 +685,10 @@ retry:
                     return NULL;
                 }
     
-                if (st->type == STREAM_WATERFALL && cother->rx_channel >= wf_chans) {
+                if (st->type == STREAM_WATERFALL && cother->rx_channel >= _wf_chans) {
     
                     // Kiwi UI handles no-WF condition differently -- don't send error
+                    // see c2s_waterfall_setup()
                     if (!isKiwi_UI) {
                         conn_printf("(case 2: too many wf channels open for %s)\n", st->uri);
                         mc->connection_param = NULL;

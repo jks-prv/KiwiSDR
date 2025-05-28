@@ -15,13 +15,11 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2023-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
 #include "types.h"
-#include "config.h"
-#include "kiwi.h"
 #include "conn.h"
 #include "web.h"
 

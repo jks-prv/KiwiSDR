@@ -3,7 +3,6 @@
 #pragma once
 
 #include "types.h"
-#include "config.h"
 
 #define FT8_PASSBAND_LO     100
 #define FT8_PASSBAND_HI     3100

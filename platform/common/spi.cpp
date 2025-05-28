@@ -21,6 +21,7 @@
 // Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
+#include "kiwi.h"
 #include "misc.h"
 #include "spi.h"
 #include "spi_dev.h"

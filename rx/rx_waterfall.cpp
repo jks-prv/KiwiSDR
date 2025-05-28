@@ -18,7 +18,6 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
-#include "config.h"
 #include "kiwi.h"
 #include "clk.h"
 #include "misc.h"
@@ -218,10 +217,12 @@ void c2s_waterfall_setup(void *param)
 	send_msg(conn, SM_WF_DEBUG, "MSG kiwi_up=1 rx_chan=%d", rx_chan);       // rx_chan needed by extint_send_extlist() on js side
 	extint_send_extlist(conn);
 
-    // If not wanting a wf (!conn->isWF_conn) send wf_chans=0 to force audio FFT to be used.
+    // If not wanting a wf, because specifically requested none via !conn->isWF_conn or configured none via cfg_no_wf,
+    // send wf_chans=0 to force audio FFT to be used.
     // But need to send actual value via wf_chans_real for use elsewhere.
+    bool no_wf = (!conn->isWF_conn || cfg_no_wf);
 	send_msg(conn, SM_WF_DEBUG, "MSG wf_fft_size=1024 wf_fps=%d wf_fps_max=%d zoom_max=%d rx_chans=%d wf_chans=%d wf_chans_real=%d wf_cal=%d wf_setup",
-		WF_SPEED_FAST, WF_SPEED_MAX, MAX_ZOOM, rx_chans, conn->isWF_conn? wf_chans:0, wf_chans, waterfall_cal);
+		WF_SPEED_FAST, WF_SPEED_MAX, MAX_ZOOM, rx_chans, no_wf? 0:wf_chans, wf_chans, waterfall_cal);
 	if (do_gps && !do_sdr) send_msg(conn, SM_WF_DEBUG, "MSG gps");
 
     dx_last_community_download();
@@ -368,12 +369,6 @@ void c2s_waterfall(void *param)
 			panic("shouldn't return");
 		}
 
-        // FIXME: until we figure out if no WF cmds are needed when no wf is present just occasionally wake up and check
-		if (rx_chan >= wf_num) {
-			TaskSleepMsec(500);
-			continue;
-		}
-		
         // Handle LOG_ARRIVED and missing ident for WF-only connections.
         bool too_much = ((wf->cmd_recv & CMD_SET_ZOOM) && (timer_sec() > (conn->arrival + 15)));
         if (conn->isMaster && !conn->arrived && (conn->ident || too_much)) {
@@ -555,17 +550,6 @@ void sample_wf(int rx_chan)
     u4_t now, now2, diff;
     u64_t now64, deadline;
     
-    #ifdef SHOW_MAX_MIN_IQ
-        static void *IQi_state;
-        static void *IQf_state;
-        if (wf->new_map3) {
-            if (IQi_state != NULL) kiwi_ifree(IQi_state, "wf iq");
-            IQi_state = NULL;
-            if (IQf_state != NULL) kiwi_ifree(IQf_state, "wf iq");
-            IQf_state = NULL;
-        }
-    #endif
-
     // create waterfall
     
     #define DESIRED_SCALE 2         // makes >= z11 overlapped
@@ -671,11 +655,6 @@ void sample_wf(int rx_chan)
 
             float fi = ((float) ii) * window[sn];
             float fq = ((float) qq) * window[sn];
-            
-            #ifdef SHOW_MAX_MIN_IQ
-                print_max_min_stream_i(&IQi_state, P_MAX_MIN_DEMAND, "IQi", k, 2, ii, qq);
-                print_max_min_stream_f(&IQf_state, P_MAX_MIN_DEMAND, "IQf", k, 2, (double) fi, (double) fq);
-            #endif
             
             fft->hw_c_samps[sn][I] = fi;
             fft->hw_c_samps[sn][Q] = fq;
@@ -868,6 +847,13 @@ void compute_frame(int rx_chan)
 	// log10(n) = l(n)/l(10)
 	// 10^x = e^(x*ln(10)) = e(x*l(10))
 	
+    #ifdef WF_INFO
+	    float max_dB = wf->maxdb;
+	    float min_dB = wf->mindb;
+	    float range_dB = max_dB - min_dB;
+	    float pix_per_dB = 255.0 / range_dB;
+	#endif
+
 	int bin=0, _bin=-1;
 	float p, dB;
 

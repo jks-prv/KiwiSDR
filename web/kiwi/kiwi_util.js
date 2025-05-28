@@ -1110,6 +1110,26 @@ function event_dump(evt, id, oneline)
    }
 }
 
+function any_alternate_click_event(evt)
+{
+	return (evt && (evt.shiftKey || evt.ctrlKey || evt.altKey || evt.button == mouse.MIDDLE || evt.button == mouse.RIGHT));
+}
+
+function any_alternate_click_event_except_shift(evt)
+{
+	return (evt && (evt.ctrlKey || evt.altKey || evt.button == mouse.MIDDLE || evt.button == mouse.RIGHT));
+}
+
+function any_modifier_key(evt)
+{
+	return (evt && (evt.shiftKey || evt.ctrlKey || evt.altKey));
+}
+
+function any_modifier_key_except_shift(evt)
+{
+	return (evt && (evt.ctrlKey || evt.altKey || evt.metaKey));
+}
+
 // NB: returns a function reference
 function kiwi_rateLimit(cb, msec)
 {

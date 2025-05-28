@@ -20,9 +20,7 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "kiwi.h"
 #include "str.h"
-#include "printf.h"
 
 
 typedef struct {

@@ -13,7 +13,6 @@
 #define FASTFIR_H
 
 #include "datatypes.h"
-#include "kiwi.h"
 #include <fftw3.h>
 
 // Must be <= FFT size. Make 1/2 +1 if want output to be in power of 2

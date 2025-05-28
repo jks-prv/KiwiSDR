@@ -30,6 +30,7 @@
 
 // NB v1.470: Because of the C_LINKAGE() change
 
+#include "DRM_shmem.h"
 #include "DRM_main.h"
 #include "printf.h"
 

@@ -1,8 +1,11 @@
+// Copyright (c) 2017-2025 John Seamons, ZL4VO/KF6VO
+
 #pragma once
 
 #include "types.h"
+#include "str.h"            // kstr_t
+#include "shmem_config.h"   // DRM_MAX_RX
 #include "datatypes.h"      // TYPESTEREO16
-#include "coroutines.h"     // tid_t
 
 #define DRM_CHECKING
 #ifdef DRM_CHECKING
@@ -39,7 +42,7 @@ typedef struct {
     DRM_CHECK(u4_t magic1;)
 	bool init;
 	int rx_chan;
-	tid_t tid;
+	int tid;
 	int iq_rd_pos, iq_bpos, remainingIQ;
 	bool monitor, reset;
 	int run;
@@ -86,62 +89,12 @@ typedef struct {
     DRM_CHECK(u4_t magic2;)
 } drm_t;
 
-#ifndef DRM_MAX_RX
-    #define DRM_MAX_RX 4
-#endif
-
-#define DRM_NREG_CHANS_DEFAULT 3
-
 typedef struct {
     drm_t drm[DRM_MAX_RX];
     drm_buf_t drm_buf[DRM_MAX_RX];
 } drm_shmem_t;
 
-#include "shmem_config.h"
-
-#ifdef DRM
-    #ifdef MULTI_CORE
-        //#define DRM_SHMEM_DISABLE_TEST
-        #ifdef DRM_SHMEM_DISABLE_TEST
-            #warning do not forget to remove DRM_SHMEM_DISABLE_TEST
-            #define DRM_SHMEM_DISABLE
-            #define RX_SHMEM_DISABLE
-        #else
-            // shared memory enabled
-        #endif
-    #else
-        // normally shared memory disabled
-        // but could be enabled for testing
-        #define DRM_SHMEM_DISABLE
-        #define RX_SHMEM_DISABLE
-    #endif
-#else
-    #define DRM_SHMEM_DISABLE
-#endif
-
-#include "shmem.h"
-
-#ifdef DRM_SHMEM_DISABLE
-    extern drm_shmem_t *drm_shmem_p;
-    #define DRM_SHMEM drm_shmem_p
-
-    #define DRM_YIELD() NextTask("drm Y");
-    #define DRM_YIELD_LOWER_PRIO() TaskSleepReasonUsec("drm YLP", 1000);
-#else
-    #define DRM_SHMEM (&shmem->drm_shmem)
-    
-    #ifdef MULTI_CORE
-        // Processes run in parallel simultaneously and communicate w/ shmem mechanism.
-        // But sleep a little bit to reduce cpu busy looping waiting for updates to shmem.
-        // But don't sleep _too_ much else insufficient throughput.
-        #define DRM_YIELD() kiwi_usleep(30000);
-        //#define DRM_YIELD() kiwi_usleep(10000);
-        #define DRM_YIELD_LOWER_PRIO() kiwi_usleep(1000);
-    #else
-        // experiment with shmem mechanism on uni-processors
-        #define DRM_YIELD() kiwi_usleep(100);  // force process switch
-    #endif
-#endif
+#define DRM_NREG_CHANS_DEFAULT 3
 
 int DRM_rx_chan();
 void DRM_msg_encoded(drm_msg_e msg_type, const char *cmd, kstr_t *ks);

@@ -3480,22 +3480,24 @@ void mg_send_standard_headers(struct mg_connection *mc, const char *path, file_s
   construct_etag(etag, sizeof(etag), st);
 
   n = mg_snprintf(headers, sizeof(headers),
-                  "HTTP/1.1 %d %s\r\n"
-                  "Date: %s\r\n"
-                  "Last-Modified: %s\r\n"
-                  "Etag: %s\r\n"
-                  "Content-Type: %.*s\r\n"
-                  "Content-Length: %" INT64_FMT "\r\n"
-                  "Connection: %s\r\n"
-                  "Accept-Ranges: bytes\r\n"
-                  "%s%s%s%s",
-                  mc->status_code, msg,
-                  date,
-                  lm, etag,
-                  (int) mime_vec.len, mime_vec.ptr,
-                  c->cl, suggest_connection_header(mc),
-                  range, extra_headers == NULL ? "" : extra_headers,
-                  MONGOOSE_USE_EXTRA_HTTP_HEADERS, term_cr_nl? "\r\n" : "");
+      "HTTP/1.1 %d %s\r\n"
+      "Date: %s\r\n"
+      "Last-Modified: %s\r\n"
+      "Etag: %s\r\n"
+      "Content-Type: %.*s\r\n"
+      // shouldn't be sending "Content-Length" when using "Transfer-Encoding: chunked"
+      // "Content-Length: %" INT64_FMT "\r\n"
+      "Connection: %s\r\n"
+      "Accept-Ranges: bytes\r\n"
+      "%s%s%s%s",
+      mc->status_code, msg,
+      date,
+      lm, etag,
+      (int) mime_vec.len, mime_vec.ptr,
+      //c->cl,
+      suggest_connection_header(mc),
+      range, extra_headers == NULL ? "" : extra_headers,
+      MONGOOSE_USE_EXTRA_HTTP_HEADERS, term_cr_nl? "\r\n" : "");
   ns_send(c->ns_conn, headers, n);
 }
 

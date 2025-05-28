@@ -16,7 +16,7 @@
 #define FIR_H
 
 #include "datatypes.h"
-#include "kiwi.h"
+#include "printf.h"
 
 #define MAX_NUMCOEF 97
 

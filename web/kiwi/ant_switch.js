@@ -324,8 +324,8 @@ function ant_switch_process_reply(ant_selected_antenna) {
       ant_sw.exantennas = ant_selected_antenna;
       
       // need to re-evaluate auto aperture because antenna might have significantly different gain
-      //console.log('ant_switch_process_reply: waterfall_maxmin_cb');
-      w3_call('waterfall_maxmin_cb');
+      //console.log('ant_switch_process_reply: wf_autoscale');
+      w3_call('wf_autoscale');
    }
    
    if (ant_selected_antenna == 'g') {

@@ -12193,6 +12193,12 @@ function wf_autoscale_cb()
    freqset_select();
 }
 
+function wf_autoscale()
+{
+   if (wf.aper == kiwi.APER_AUTO)
+      wf_autoscale_cb();
+}
+
 var spectrum_slow_dev = 0;
 
 function toggle_or_set_slow_dev(set, val)
@@ -13165,21 +13171,6 @@ function mode_over(evt, el)
    }
 
    el.title = evt.shiftKey? 'restore passband' : s;
-}
-
-function any_alternate_click_event(evt)
-{
-	return (evt && (evt.shiftKey || evt.ctrlKey || evt.altKey || evt.button == mouse.MIDDLE || evt.button == mouse.RIGHT));
-}
-
-function any_alternate_click_event_except_shift(evt)
-{
-	return (evt && (evt.ctrlKey || evt.altKey || evt.button == mouse.MIDDLE || evt.button == mouse.RIGHT));
-}
-
-function any_modifier_key(evt)
-{
-	return (evt && (evt.shiftKey || evt.ctrlKey || evt.altKey));
 }
 
 function restore_passband(mode)

@@ -39,8 +39,6 @@
 #define NOISEPROC_H
 
 #include "datatypes.h"
-#include "kiwi.h"
-#include "rx.h"
 #include "noise_blank.h"
 
 class CNoiseProc

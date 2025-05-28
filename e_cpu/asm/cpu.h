@@ -1,3 +1,5 @@
+// Copyright (c) 2013-2025 John Seamons, ZL4VO/KF6VO
+
 #define	CPU_RAM_SIZE	2048
 
 #define OCM_NONE        0x0000

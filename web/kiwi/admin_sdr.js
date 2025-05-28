@@ -2671,7 +2671,7 @@ function band_bar_render()
    var freq_l = 'Min kHz '+ w3_icon(icon +'||title='+ dq(freq_i), 'fa-info-circle', 20);
    var band_i = 'Name that appears in both the band bar\nand select band menu entry.';
    var band_l = 'Band name '+ w3_icon(icon +'||title='+ dq(band_i), 'fa-info-circle', 20);
-   var svc_i = 'Service class as defined by next section.';
+   var svc_i = 'Service class as defined by the\nband service menu section below.';
    var svc_l = 'Service '+ w3_icon(icon +'||title='+ dq(svc_i), 'fa-info-circle', 20);
    var itu_i = 'ITU region or visibility of band bar or frequency entry.';
    var itu_l = 'ITU / Visibility '+ w3_icon(icon +'||title='+ dq(itu_i), 'fa-info-circle', 20);

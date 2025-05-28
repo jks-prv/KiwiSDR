@@ -3,6 +3,8 @@
 #include "ext.h"    // all calls to the extension interface begin with "ext_", e.g. ext_register()
 
 #include "types.h"
+#include "rx.h"
+#include "datatypes.h"
 #include "clk.h"
 #include "pll.h"
 

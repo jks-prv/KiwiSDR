@@ -7,6 +7,7 @@
 #include "conn.h"
 #include "rx_util.h"
 #include "data_pump.h"
+#include "net.h"
 #include "mem.h"
 #include "misc.h"
 #include "wspr.h"
@@ -333,13 +334,15 @@ bool ft8_update_vars_from_config(bool called_at_init_or_restart)
             ft8_arun_band[instance] = autorun;
             ft8_arun_preempt[instance] = preempt;
         }
-        if (snd_rate != MIN_SND_RATE) {
-            printf("FT8 autorun: Only works on Kiwis configured for 12 kHz wide channels\n");
-            num_autorun = num_non_preempt = 0;
-        }
-        if (ft8_conf2.rcall == NULL || *ft8_conf2.rcall == '\0' || ft8_conf.rgrid[0] == '\0') {
-            printf("FT8 autorun: reporter callsign and grid square fields must be entered on FT8 section of admin page\n");
-            num_autorun = num_non_preempt = 0;
+        if (num_autorun) {
+            if (snd_rate != MIN_SND_RATE) {
+                printf("FT8 autorun: Only works on Kiwis configured for 12 kHz wide channels\n");
+                num_autorun = num_non_preempt = 0;
+            }
+            if (ft8_conf2.rcall == NULL || *ft8_conf2.rcall == '\0' || ft8_conf.rgrid[0] == '\0') {
+                printf("FT8 autorun: reporter callsign and grid square fields must be entered on FT8 section of admin page\n");
+                num_autorun = num_non_preempt = 0;
+            }
         }
         ft8_conf2.num_autorun = num_autorun;
         cfg_update_int("ft8.autorun", num_non_preempt, &update_cfg);

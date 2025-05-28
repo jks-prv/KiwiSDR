@@ -252,6 +252,15 @@ static int ev_handler(struct mg_connection *mc, int ev)
 
     switch (ev) {
         case MG_EV_HTTP_MSG:
+                // don't accept connections until we have private IP for checking local connection exemptions
+                if (net.pvt_valid == IPV_NONE) {
+                    lprintf("WEB: HTTP 503 reply because no valid private IP yet\n");
+                    mg_http_reply(mc, 503, NULL, "");
+                    mg_printf_data(mc, "503: Service Unavailable\r\n");
+                    mg_connection_close(mc);
+                    return MG_TRUE;
+                }
+	
                 if (mc->is_websocket) {
                     //printf("ev_handler ev%d(%s) WEBSOCKET len=%d\n", ev, names[ev], mc->content_len);
                     return websocket_request(mc, ev);

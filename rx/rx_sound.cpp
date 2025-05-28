@@ -19,8 +19,8 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2018-2024 Christoph Mayer, DL1CH
 
 #include "types.h"
+#include "kiwi.h"
 #include "options.h"
-#include "config.h"
 #include "kiwi.h"
 #include "mode.h"
 #include "printf.h"
@@ -363,11 +363,6 @@ void c2s_sound(void *param)
 			continue;
 		}
 
-		if (rx_chan >= rx_num) {
-			TaskSleepMsec(1000);
-			continue;
-		}
-		
 		if (conn->stop_data) {
 			//clprintf(conn, "SND stop_data rx_server_remove()\n");
 			rx_enable(rx_chan, RX_CHAN_FREE);

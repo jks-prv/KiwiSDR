@@ -75,7 +75,7 @@ module GPS (
     //////////////////////////////////////////////////////////////////////////
     // Serial read
 
-	// The use of rdReg like this has the side-effect of a tos <= 0 for subsequent rdBits,
+	// The use of rdReg like this has the side-effect of a tos <= 0 for use by subsequent rdBits,
 	// plus latches ser_sel which is what a wrEvt alone could have done.
 	
 	// [2:0] = [GET_SNAPSHOT, GET_SRQ, GET_CHAN_IQ]

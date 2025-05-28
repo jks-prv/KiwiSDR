@@ -23,7 +23,7 @@
 		need runtime args instead of hardcoded stuff
 */
 
-// Copyright (c) 2013-2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2013-2025 John Seamons, ZL4VO/KF6VO
 
 #include "asm.h"
 
@@ -33,7 +33,7 @@ int show_bin, gen=1, only_gen_other=0, write_coe;
 char linebuf[LBUF];
 
 #define	TBUF	64*1024
-tokens_t tokens[TBUF], *pass1, *pass2, *pass3, *pass4;
+tokens_t tokens[TBUF], *pass0, *pass1, *pass2, *pass3, *pass4;
 tokens_t *tp_start, *tp_end;
 
 typedef struct {
@@ -64,8 +64,11 @@ dict_t dict[] = {
 	{ "ENDF",		TT_PRE,		PP_ENDF },
 	{ "FCALL",		TT_PRE,		PP_FCALL },
 	{ "#if",		TT_PRE,		PP_IF },        // supports '#if NUM|SYM (implied != 0)' and '#if SYM|NUM OPR SYM|NUM'
+	{ "#elif",		TT_PRE,		PP_ELIF },
 	{ "#else",		TT_PRE,		PP_ELSE },
 	{ "#endif",		TT_PRE,		PP_ENDIF },
+	{ "#error",		TT_PRE,		PP_ERROR },
+	{ "#display",   TT_PRE,		PP_DISPLAY },
 
 	{ "push",		TT_OPC,		OC_PUSH,            0,              OCM_CONST },
 	{ "nop",		TT_OPC,		OC_NOP },
@@ -171,11 +174,11 @@ init_code_t init_code[] = {
 
 #define	FN_PREFIX	"kiwi"
 
-char ifiles_list[NIFILES_LIST][32];
+int ifn, ifl;
+char ifiles_list[NIFILES_LIST][N_FN];
 char *last_file;
 
-#define NIFILES_NEST 3
-char ifiles[NIFILES_NEST][32];
+char ifiles[NIFILES_NEST][N_FN];
 int lineno[NIFILES_NEST];
 
 int main(int argc, char *argv[])
@@ -187,19 +190,19 @@ int main(int argc, char *argv[])
 	char *ifs = (char *) FN_PREFIX ".asm";                  // source input
 	char *ofs;                                              
 
-	int ifn, ifl;
 	FILE *ifp[NIFILES_NEST], *ofp, *efp;
 	
 	int bfd;
 	char *lp = linebuf, *cp, *scp, *np, *sp;
 	dict_t *dp;
 	token_type_e ttype;
-	tokens_t *tp = tokens, *tpp, *ltp = tokens, *ep0, *ep1, *ep2, *ep3, *ep4, *t, *tt, *to;
+	tokens_t *tp = tokens, *ltp = tokens, *ep0, *ep1, *ep2, *ep3, *ep4, *t, *tt, *to;
 	preproc_t *pp = preproc, *p;
 	strs_t *st;
-	int compare_code=0, stats=0;
+	int compare_code=0, stats=0, info=0;
 	char fullpath[256], basename[256];
-	bool test = false;
+	bool parse_errors = false, global_error = false, test = false;
+	init_ASCII();
 	
 	for (i=1; i < argc; i++)
         if (argv[i][0] == '-') switch (argv[i][1]) {
@@ -212,6 +215,7 @@ int main(int argc, char *argv[])
             case 's': stats=1; break;
             case 'o': i++; odir = argv[i]; break;
             case 'x': i++; other_dir = argv[i]; break;
+            case 'i': info=1; break;
         }
 	
 	if (!test) {
@@ -234,8 +238,11 @@ int main(int argc, char *argv[])
 	}
 	
 	// pass 0: tokenize
+	pass0 = tp;
 	bool need_other_config = true;
 	strcpy(basename, "./other.config");
+    tp->ttype = TT_FILE; tp->str = ifiles_list[ifl]; tp++;
+
 	
 	while (ifn >= 0) {
 
@@ -317,7 +324,10 @@ int main(int argc, char *argv[])
 	
 					for (dp=dict; dp->str; dp++) {		// check for reserved names
 						if (strcmp(dp->str, sym) == 0) {
-							if (*cp==':') panic("resv name as label");
+							if (*cp==':') {
+							    errmsg(NULL, "resv name as label");
+							    parse_errors = true;
+							}
 							tp->ttype = dp->ttype;
 							tp->str = (char *) dp->str;
 							tp->num = dp->val;
@@ -370,9 +380,8 @@ int main(int argc, char *argv[])
 				}
 				if (dp->str) continue;
 				
-				errmsg("unknown symbol: ");
-				printf("\"%s\" followed by 0x%02x <%c>\n", sym, *cp, *cp);
-				panic("errors detected");
+				errmsg(NULL, "unknown symbol: \"%s\" followed by %s", sym, ASCII[*cp]);
+				parse_errors = true;
 				cp++;
 			}
 			
@@ -401,11 +410,16 @@ int main(int argc, char *argv[])
 		
 		ifl++;
 		strcpy(ifiles_list[ifl], fn);
+        tp->ttype = TT_FILE; tp->str = ifiles_list[ifl]; tp++;
+		//printf("FILE %s(%d)\n", fn, ifl);
 	}
 
 	fn = ifiles[0];
+    strcpy(ifiles_list[ifl], fn);
 	ep0 = tp; pass1 = ep0;
+	if (debug) dump_tokens("pass0", pass0, ep0);
 	if (debug) printf("\ntokenize pass 0: %d strings %ld tokens\n\n", num_strings(), (long) (ep0-tokens));
+	if (parse_errors) panic("parse errors");
 
 
 	// pass 1: MACRO
@@ -447,25 +461,35 @@ int main(int argc, char *argv[])
 
 
 	// pass 2: IF, DEF, STRUCT/MEMBER
-	#define NIFDEF_NEST 8
+	#define NIFDEF_NEST 32
 	static int keep[NIFDEF_NEST] = {1};
 	static int ifdef_lvl=0;
 	curline=1;
+	int dbg_elif = (0 && debug);
+    int lock = 0;
 
     tp_start = pass1; tp_end = pass2;
 	for (tp=pass1, to=pass2; tp != ep1;) {
-		tpp = tp+1;
 
 		if (tp->ttype == TT_EOL) {
 			curline = tp->num;
+		    if (debug) printf("---- EOL %s:%03d\n", fn, curline);
 		}
 
+		if (tp->ttype == TT_FILE) {
+		    last_file = tp->str;
+		    //note(RED, tp, "last_file <%s>", last_file);
+		    tp++; continue;
+		}
+		
 		// remove #if / #endif
 		if (tp->ttype == TT_PRE && tp->num == PP_IF) {
 			ifdef_lvl++;
 			if (ifdef_lvl >= NIFDEF_NEST) panic("too many nested #if");
+			lock = 0;
 
 			// skip in this level if skipping in previous level
+			// i.e. don't even need to consider #if expr value
 			if (!keep[ifdef_lvl-1]) {
 				keep[ifdef_lvl] = 0;
 			} else {
@@ -475,9 +499,34 @@ int main(int argc, char *argv[])
 			if (debug) printf("IF %s:%03d %s\n", fn, curline, keep[ifdef_lvl]? "YES":"NO");
 		}
 		
+		if (tp->ttype == TT_PRE && tp->num == PP_ELIF) {
+		
+			// only make decision if not skipping in previous level
+			// if current level hasn't made a choice yet consider expr value
+			int skip = 0, eval = 0;
+			if (!keep[ifdef_lvl-1]) {
+				keep[ifdef_lvl] = 0;
+				skip = 1;
+			    if (dbg_elif) dump_tokens_until_eol("#elif SKIP", tp);
+			} else {
+                if (keep[ifdef_lvl]) {
+                    lock = 1;
+			        if (dbg_elif) dump_tokens_until_eol("#elif LOCK", tp);
+                } else {
+			        if (dbg_elif) dump_tokens_until_eol("#elif EVAL", tp);
+                    tp = cond(tp+1, &ep1, &val);
+                    keep[ifdef_lvl] = (val != 0);
+                }
+            }
+			if (debug && skip) printf("ELIF %s:%03d SKIP\n", fn, curline);
+			if (debug && eval) printf("ELIF %s:%03d cond=%s\n", fn, curline, keep[ifdef_lvl]? "YES":"NO");
+			if (debug && lock) printf("ELIF %s:%03d LOCK\n", fn, curline);
+		}
+		
 		if (tp->ttype == TT_PRE && tp->num == PP_ELSE) {
 		
-			// only act if not skipping in previous level
+			// only make decision if not skipping in previous level
+			// decision is complement of current level's last state
 			if (keep[ifdef_lvl-1]) keep[ifdef_lvl] ^= 1;
 			if (debug) printf("ELSE %s:%03d %s\n", fn, curline, keep[ifdef_lvl]? "YES":"NO");
 			tp += 2; continue;
@@ -486,16 +535,25 @@ int main(int argc, char *argv[])
 		if (tp->ttype == TT_PRE && tp->num == PP_ENDIF) {
 			ifdef_lvl--;
 			if (ifdef_lvl < 0) panic("unbalanced #if/#endif");
+			lock = 0;
 			if (debug) printf("ENDIF\n");
 			tp += 2; continue;
 		}
 
-		if (!keep[ifdef_lvl]) {
+		if (!keep[ifdef_lvl] || lock) {
+		    if (debug) printf("%s %s\n", lock? "LOCK":"SKIP", token(tp));
 			tp++; continue;
 		}
+        if (debug) printf("KEEP %s\n", token(tp));
 
-		// perform expansion
+		// copy or perform expansion
 		if (def(tp, &ep1)) ; else
+
+		if (tp->ttype == TT_PRE && tp->num == PP_ERROR) {
+		    errmsg(tp, "#error");
+		    global_error = true;
+		    tp++; continue;
+	    }
 
 		// process STRUCT/MEMBER
 		if (tp->ttype == TT_SYM) {
@@ -515,28 +573,44 @@ int main(int argc, char *argv[])
 		}
 		
 		// process new DEF
-		if (tp->ttype == TT_FILE) {
-		    last_file = tp->str;
-		    tp++; continue;
-		}
-		
 		if (tp->ttype == TT_PRE && tp->num == PP_DEF) {
 			pp->flags = tp->flags;
 			tp++; syntax(tp->ttype == TT_SYM, tp, "expected DEF name");
-			if (pre(tp->str, PT_NONE)) syntax(0, tp, "re-defined: %s", tp->str);
+			preproc_t *redef = pre(tp->str, PT_NONE);
+			int prior_val = redef? redef->val : 0;
 			t = tp; tp++;
 			if (tp->flags & TF_FIELD) {		// fixme: not quite right wrt expr()
 				pp->width = tp->width;
 				pp->flags |= TF_FIELD;
 			}
 			tp = expr(tp, &ep1, &val, 1);
-			pp->str = t->str; pp->ptype = PT_DEF; sscanf(last_file, "%*[^a-z]%[a-z]", pp->config_prefix);
-			if (debug) printf("DEF \"%s\" %d (from file %s <%s>)\n", pp->str, val, last_file, pp->config_prefix);
-			tp++;	// remove extra \n
+            //note(CYAN, tp, "last_file <%s> pp=%p", last_file? last_file : "(NULL)", pp);
+			pp->str = t->str; pp->ptype = PT_DEF;
+			if (last_file) {
+			    sscanf(last_file, "%*[^a-z]%[a-z]", pp->config_prefix);
+			    if (debug) printf("DEF \"%s\" %d (from file %s <%s>)\n", pp->str, val, last_file, pp->config_prefix);
+			} else {
+			    if (debug) note(YELLOW, tp, "DEF \"%s\" %d (no last_file?)", pp->str, val);
+			    pp->config_prefix[0] = '\0';
+			}
 			pp->val = val;
+			if (redef)
+			    note(YELLOW, tp, "redefined %s from %d to %d", t->str, prior_val, val);
 			pp++; continue;
 		}
 		
+		if (tp->ttype == TT_PRE && tp->num == PP_DISPLAY) {
+		    tp++;
+		    if (tp->ttype == TT_SYM) {
+                preproc_t *pp = pre(tp->str, PT_NONE);
+                if (pp)
+		            note(GREEN, tp, "#display %s = %d", tp->str, pp->val);
+		        else
+		            note(RED, tp, "#display %s not assigned a value yet?", tp->str);
+		    }
+		    tp++; continue;
+	    }
+
 		// process new STRUCT
 		if (tp->ttype == TT_PRE && tp->num == PP_STRUCT) {
 			int size, offset;
@@ -878,10 +952,12 @@ int main(int argc, char *argv[])
             if (p->flags & TF_DOT_H) {
                 fprintf(hfp, "%s#define %s    // DEFh 0x%x\n", p->val? "":"//", p->str, p->val);
                 fprintf(hfp, "#define VAL_%s %d\n", p->str, p->val);
+                if (info) printf("INFO DEFh %s 0x%x\n", p->str, p->val);
                 if (vfp) fprintf(vfp, "%s`define %s%s    // DEFh 0x%x\n", p->val? "":"//", p->str, p->val? " 1":"", p->val);
             }
             if (p->flags & TF_DOT_VP) {
                 fprintf(hfp, "#define %s %d    // DEFp 0x%x\n", p->str, p->val, p->val);
+                if (info) printf(CYAN "INFO DEFp %s 0x%x" NONL, p->str, p->val);
                 if (vfp) {
                     if (p->flags & TF_FIELD)
                         fprintf(vfp, "\tlocalparam %s = %d\'d%d;    // DEFp 0x%x\n", p->str, p->width, p->val, p->val);
@@ -893,8 +969,17 @@ int main(int argc, char *argv[])
             if (p->flags & TF_DOT_VB) {
                 fprintf(hfp, "#define %s %d    // DEFb 0x%x\n", p->str, p->val, p->val);
                 // determine bit position number
-                if (p->val) for (i=0; ((1<<i) & p->val)==0; i++) ; else i=0;
-                if (vfp) fprintf(vfp, "\tlocalparam %s = %d;    // DEFb: bit number for value: 0x%x\n", p->str, i, p->val);
+                int bit_no;
+                int ones = count_ones(p->val, &bit_no);
+                if (ones != 1) {
+                    if (ones == 0)
+                        errmsg(NULL, "DEFb %s %d -- zero value?", p->str, p->val);
+                    else
+                        errmsg(NULL, "DEFb %s 0x%x -- multiple bits, did you mean to use DEFp?", p->str, p->val);
+                    global_error = true;
+                }
+                if (info) printf(YELLOW "INFO DEFb %s 0x%x is bit %d" NONL, p->str, p->val, bit_no);
+                if (vfp) fprintf(vfp, "\tlocalparam %s = %d;    // DEFb: bit number for value: 0x%x\n", p->str, bit_no, p->val);
             }
 		}
 
@@ -944,10 +1029,11 @@ int main(int argc, char *argv[])
 	curline=1;
 	bool error = FALSE;
 	char comma = ' ';
+	enum { OPT_NONE, OPT_NUM, OPT_SYM, OPT_EOL };
 
     tp_start = pass4; tp_end = ep4;
 	for (tp=pass4; tp != ep4; tp++) {
-		int op, oc, operand_type=0;
+		int op, oc, operand_type = OPT_NONE;
 		u2_t val_2;
 		u4_t val;
 		static u2_t out;
@@ -968,13 +1054,13 @@ int main(int argc, char *argv[])
 		if (tp->ttype == TT_DATA) {
 			t = tp+1;
 			if (t->ttype == TT_NUM) {
-				val = t->num, operand_type=1;
+				val = t->num, operand_type = OPT_NUM;
 			} else
 			if (t->ttype == TT_SYM) {
 			    st = string_find(t->str);
 			    if (st) {
 			        if (st->flags & SF_DEFINED) {
-				        val = st->val, operand_type=2;
+				        val = st->val, operand_type = OPT_SYM;
 			        } else {
                         syntax(0, t, "symbol not defined: %s", t->str);
                     }
@@ -983,7 +1069,7 @@ int main(int argc, char *argv[])
 			    }
 			}
 			if (debug || show_bin) printf("\t%04x u%d ", a, tp->num*8);
-			if ((debug || show_bin) && operand_type==2) printf("%s ", st->str);
+			if ((debug || show_bin) && operand_type == OPT_SYM) printf("%s ", st->str);
 			if (tp->num==2) {
 				assert(val <= 0xffff);
 				val_2 = val & 0xffff;
@@ -1027,13 +1113,13 @@ int main(int argc, char *argv[])
 			
 			// opcode & operand
 			if (t->ttype == TT_NUM) {
-				oper = t->num; operand_type = 1;
+				oper = t->num; operand_type = OPT_NUM;
 			} else
 			if ((t->ttype == TT_SYM) && ((st = string_find(t->str)) && (st->flags & SF_DEFINED))) {
-				oper = st->val; operand_type = 2;
+				oper = st->val; operand_type = OPT_SYM;
 			} else
 			if (t->ttype == TT_EOL) {
-				oper = 0; operand_type = 3;
+				oper = 0; operand_type = OPT_EOL;
 			}
 			
 			// check operand
@@ -1051,20 +1137,26 @@ int main(int argc, char *argv[])
 								syntax(oper >= 0 && oper < (CPU_RAM_SIZE<<1), t, "destination address out of range");
 								break;
 
-				case OC_RDREG:
 				case OC_WRREG:
-				case OC_WRREG2:
 				case OC_WREVT:
 				case OC_WREVT2:
 				case OC_WREVTL: {
 								syntax(oper >= 1 && oper <= 0x7ff, t, "i/o specifier outside range 1..0x7ff: 0x%04x", oper);
 								int ones = count_ones(oper);
-								// 3 currently because of kiwi.config: FREQ_L and REG_NO definitions
+								syntax(ones <= 1, t, "too many bits (%d) in i/o specifier 0x%04x", ones, oper);
+								break;
+				}
+
+				case OC_RDREG:
+				case OC_WRREG2: {
+								syntax(oper >= 1 && oper <= 0x7ff, t, "i/o specifier outside range 1..0x7ff: 0x%04x", oper);
+								int ones = count_ones(oper);
+								// 3 currently because of kiwi.config: SET_WF_OP, REG_NO and FREQ_L definitions
 								syntax(ones <= 3, t, "too many bits (%d) in i/o specifier 0x%04x", ones, oper);
 								break;
 				}
 
-				default:		if (operand_type != 3) {
+				default:		if (operand_type != OPT_EOL) {
 									syntax(0, t, "instruction takes no operand");
 								}
 								break;
@@ -1085,11 +1177,11 @@ int main(int argc, char *argv[])
 				fprintf(efp, "%c\n%04x", comma, op);
 				comma = ',';
 			}
-			if (operand_type==1) {
+			if (operand_type == OPT_NUM) {
 				if (debug || show_bin) printf("%04x", t->num);
 				tp++;
 			} else
-			if (operand_type==2) {
+			if (operand_type == OPT_SYM) {
 				if (debug || show_bin) printf("%s", st->str);
 				tp++;
 			}
@@ -1115,7 +1207,8 @@ int main(int argc, char *argv[])
 						break;
 					}
 				}
-				syntax2(ic->addr != -1, "not in init_code");
+				if (ic->addr != -1)
+				    errmsg(NULL, "not in init_code");
 			}
 			
 			if (debug || show_bin) printf("\n");
@@ -1160,10 +1253,10 @@ int main(int argc, char *argv[])
 		} else
 		
 		{
-			errmsg("found unexpected: ", tp);
+		    char *s = token(tp);
+			errmsg(tp, "found unexpected: %s", s);
+			free(s);
 			error = TRUE;
-			token_dump(tp);
-			printf("\n");
 		}
 	}
 	
@@ -1175,7 +1268,7 @@ int main(int argc, char *argv[])
 		fclose(efp);
 	}
 	
-	if (error) panic("errors detected");
+	if (error || global_error) panic("errors detected");
 
 	printf("used %d/%d CPU RAM (%d insns remaining)\n", a/2, CPU_RAM_SIZE, CPU_RAM_SIZE - a/2);
 	

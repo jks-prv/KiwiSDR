@@ -20,9 +20,23 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "kiwi.h"
-#include "conn.h"
-#include "web.h"
+#include "kiwi.gen.h"   // RXO_BITS
+#include "conn.h"       // conn_t
+
+#define	I	0
+#define	Q	1
+#define	NIQ	2
+
+#define RX_CHAN0  0
+#define RX_CHANS 32
+
+// The hardware returns RXO_BITS (typically 24-bits) and scaling down by RXOUT_SCALE
+// will convert this to a +/- 1.0 float.
+// But the CuteSDR code assumes a scaling of +/- 32.0k, so we scale up by CUTESDR_SCALE.
+#define	RXOUT_SCALE	(RXO_BITS-1)	// s24 -> +/- 1.0
+#define	CUTESDR_SCALE	15			// +/- 1.0 -> +/- 32.0k (s16 equivalent)
+#define CUTESDR_MAX_VAL ((float) ((1 << CUTESDR_SCALE) - 1))
+#define CUTESDR_MAX_PWR (CUTESDR_MAX_VAL * CUTESDR_MAX_VAL)
 
 typedef struct {
 	bool chan_enabled;

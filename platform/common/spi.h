@@ -22,7 +22,9 @@
 
 #pragma once
 
-#include "kiwi.h"
+#include "kiwi.gen.h"
+#include "config.h"
+#include "datatypes.h"
 #include "other.gen.h"
 
 #ifdef USE_OTHER

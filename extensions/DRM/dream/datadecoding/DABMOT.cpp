@@ -31,7 +31,7 @@
  *
 \******************************************************************************/
 
-#include "DRM.h"
+#include "DRM_shmem.h"
 #include "DABMOT.h"
 #include "../util/Utilities.h"
 #include <algorithm>

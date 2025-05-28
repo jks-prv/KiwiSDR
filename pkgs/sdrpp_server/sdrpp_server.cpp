@@ -19,6 +19,7 @@ Boston, MA  02110-1301, USA.
 
 #include "sdrpp_server.h"
 #include "spyserver_protocol.h"
+#include "kiwi.h"
 #include "data_pump.h"
 #include "printf.h"
 #include "rx/rx.h"

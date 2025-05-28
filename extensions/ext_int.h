@@ -20,8 +20,6 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "config.h"
-#include "kiwi.h"
 #include "conn.h"
 #include "web.h"
 #include "coroutines.h"

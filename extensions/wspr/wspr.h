@@ -28,7 +28,6 @@
 #pragma once
 
 #include "types.h"
-#include "config.h"
 #include "ext.h"
 #include "misc.h"
 #include "fano.h"

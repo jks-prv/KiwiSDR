@@ -20,28 +20,12 @@ Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "types.h"
-#include "kiwi.gen.h"
 #include "str.h"
 #include "printf.h"
 #include "datatypes.h"
 #include "coroutines.h"
 #include "cfg.h"
 #include "non_block.h"
-
-#define	I	0
-#define	Q	1
-#define	NIQ	2
-
-#define RX_CHAN0  0
-#define RX_CHANS 32
-
-// The hardware returns RXO_BITS (typically 24-bits) and scaling down by RXOUT_SCALE
-// will convert this to a +/- 1.0 float.
-// But the CuteSDR code assumes a scaling of +/- 32.0k, so we scale up by CUTESDR_SCALE.
-#define	RXOUT_SCALE	(RXO_BITS-1)	// s24 -> +/- 1.0
-#define	CUTESDR_SCALE	15			// +/- 1.0 -> +/- 32.0k (s16 equivalent)
-#define CUTESDR_MAX_VAL ((float) ((1 << CUTESDR_SCALE) - 1))
-#define CUTESDR_MAX_PWR (CUTESDR_MAX_VAL * CUTESDR_MAX_VAL)
 
 typedef enum { KiwiSDR_1 = 1, KiwiSDR_2 = 2 } model_e;
 
@@ -105,7 +89,7 @@ extern bool background_mode, need_hardware, is_multi_core, any_preempt_autorun, 
 	snr_local_time, log_local_ip, DRM_enable, have_snd_users, admin_keepalive;
 
 extern int wf_sim, wf_real, wf_time, ev_dump, wf_flip, wf_exit, wf_start, down,
-	meas, monitors_max, rx_yield, gps_chans, wf_max, rx_num, wf_num, do_gps, do_sdr, wf_olap,
+	meas, monitors_max, rx_yield, gps_chans, wf_max, cfg_no_wf, do_gps, do_sdr, wf_olap,
 	spi_clkg, spi_speed, spi_mode, spi_delay, spi_no_async, bg, dx_print, snr_meas, wf_full_rate,
 	port, print_stats, ecpu_cmds, ecpu_tcmds, serial_number, ip_limit_mins, is_locked, test_flag, n_camp,
 	use_spidev, inactivity_timeout_mins, S_meter_cal, waterfall_cal, debian_ver,

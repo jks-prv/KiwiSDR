@@ -1,5 +1,7 @@
-#include "asm.h"
+// Copyright (c) 2013-2025 John Seamons, ZL4VO/KF6VO
 
+#include "asm.h"
+#include "../bits.h"
 
 // debug
 
@@ -19,41 +21,62 @@ static void remove_files()
 	}
 }
 
+char ASCII[256][8];
+
+void init_ASCII()
+{
+    int i;
+    #define asm_snprintf_buf(buf, fmt, ...) snprintf(buf, sizeof(buf), fmt, ## __VA_ARGS__)
+	for (i = 0; i < 32; i++) asm_snprintf_buf(ASCII[i], "^%c", '@'+i);
+	asm_snprintf_buf(ASCII[ 8], "\\b");
+	asm_snprintf_buf(ASCII[ 9], "\\t");
+	asm_snprintf_buf(ASCII[10], "\\n");
+	asm_snprintf_buf(ASCII[13], "\\r");
+	asm_snprintf_buf(ASCII[27], "\\e");
+	for (i = 32; i < 0x7f; i++) asm_snprintf_buf(ASCII[i], "%c", i);
+	for (i = 0x7f; i <= 0xff; i++) asm_snprintf_buf(ASCII[i], "\\x%2X", i);
+}
+
 char *token(tokens_t *tp);
 
-static void _errmsg(char *str, tokens_t *t = NULL, char *prefix = NULL)
+static void _errmsg(const char *color, char *str, tokens_t *t = NULL, char *prefix = NULL)
 {
     if (!prefix) prefix = (char *) "error";
-    //dump_tokens("errmsg", tp_start, tp_end);
+    //if (t) dump_tokens_until_eol("_errmsg", t);
     if (t == NULL)
-	    printf("%s: %s", prefix, str);
+	    printf("%s%s:%d %s: %s" NONL, color, ifiles_list[ifl], curline, prefix, str);
 	else {
         for (; t->ttype != TT_EOL; t++) {
             //printf("DBG %s %s ifl=%d %s:%d\n", ttype(t->ttype), token(t), t->ifl, ifiles_list[t->ifl], t->num-1);
             ;
         }
         //printf("DBG %s %s ifl=%d %s:%d\n", ttype(t->ttype), token(t), t->ifl, ifiles_list[t->ifl], t->num-1);
-	    printf("%s:%d %s: %s", ifiles_list[t->ifl], t->num-2, prefix, str);
+	    printf("%s%s:%d %s: %s" NONL, color, ifiles_list[t->ifl], t->num-2, prefix, str);
 	}
 }
 
-void errmsg(const char *str, tokens_t *t)
+void errmsg(tokens_t *t, const char *fmt, ...)
 {
-    _errmsg((char *) str, t);
+    va_list ap;
+    va_start(ap, fmt);
+    char *buf;
+    vasprintf(&buf, fmt, ap);
+    va_end(ap);
+    _errmsg(YELLOW, buf, t);
 }
 
 void sys_panic(const char *str)
 {
-	printf("panic: ");
+	printf(RED "panic: ");
 	perror(str);
+	printf(NORM);
 	remove_files();
 	exit(-1);
 }
 
 static void _panic(char *str, tokens_t *t = NULL)
 {
-	_errmsg(str, t);
-	printf("\n");
+	_errmsg(RED, str, t);
 	remove_files();
 	exit(-1);
 }
@@ -63,48 +86,56 @@ void panic(const char *str, tokens_t *t)
     _panic((char *) str, t);
 }
 
-void _syntax(bool isNote, int cond, tokens_t *tp, const char *fmt, ...)
+void _syntax(int cond, tokens_t *tp, const char *fmt, ...)
 {
 	if (!cond) {
-        tokens_t *t;
-        printf("\ntokens: ");
-
-        // find first token
-        for (t = tp; t->ttype != TT_EOL; t--)
-            ;
-
-        // dump until EOL
-        for (t = t+1; t->ttype != TT_EOL; t++) {
-            token_dump(t);
+        tokens_t *t = tp;
+        
+        if (t) {
+            printf(YELLOW "tokens: ");
+    
+            // find first token
+            for (; t->ttype != TT_EOL; t--)
+                ;
+    
+            // dump until EOL
+            for (t = t+1; t->ttype != TT_EOL; t++) {
+                token_dump(t);
+            }
+        } else {
+	        dump_tokens("syntax", tp_start, tp_end);
         }
         
-        printf("\n");
         va_list ap;
         va_start(ap, fmt);
         char *buf;
 		vasprintf(&buf, fmt, ap);
         va_end(ap);
         
-        if (isNote) {
-            _errmsg(buf, t, (char *) "note");
-	        printf("\n");
-        } else {
-		    _panic(buf, t);
-		}
+        printf(NONL);
+        _panic(buf, t);
 	}
 }
 
-void syntax2(int cond, const char *fmt, ...)
+void _note(const char *color, tokens_t *tp, const char *fmt, ...)
 {
-	if (!cond) {
-	    dump_tokens("syntax2", tp_start, tp_end);
-        va_list ap;
-        va_start(ap, fmt);
-        char *buf;
-		vasprintf(&buf, fmt, ap);
-        va_end(ap);
-		_panic(buf);
-	}
+    tokens_t *t;
+
+    // find first token
+    for (t = tp; t->ttype != TT_EOL; t--)
+        ;
+
+    // dump until EOL
+    for (t = t+1; t->ttype != TT_EOL; t++)
+        ;
+    
+    va_list ap;
+    va_start(ap, fmt);
+    char *buf;
+    vasprintf(&buf, fmt, ap);
+    va_end(ap);
+    
+    _errmsg(color, buf, t, (char *) "note");
 }
 
 void _assert(int cond, const char *str, const char *file, int line)
@@ -115,11 +146,15 @@ void _assert(int cond, const char *str, const char *file, int line)
 	}
 }
 
-int count_ones(u4_t v)
+int count_ones(u4_t v, int *bit_no)
 {
 	int ones = 0;
-    for (int bit = 31; bit >= 0; bit--)
-        if (v & (1 << bit)) ones++;
+    for (int bit = 0; bit <= 31; bit++) {
+        if (v & (1 << bit)) {
+            ones++;
+            if (bit_no != NULL) *bit_no = bit;
+        }
+    }
 	return ones;
 }
 
@@ -234,12 +269,24 @@ void dump_tokens(const char *pass, tokens_t *f, tokens_t *l)
 
 void dump_tokens_until_eol(const char *id, tokens_t *f)
 {
-    printf("%s ", id);
+    printf("%s: ", id);
 	tokens_t *t = f;
 	while (t->ttype != TT_EOL) {
         token_dump(t);
         t++;
 	}
+	printf("\n");
+}
+
+void dump_tokens_incl_eol(const char *id, tokens_t *f)
+{
+    printf("%s: ", id);
+	tokens_t *t = f;
+	do {
+        token_dump(t);
+        if (t->ttype != TT_EOL) break;
+        t++;
+	} while (1);
 	printf("\n");
 }
 
@@ -260,6 +307,12 @@ void pullup(tokens_t *dp, tokens_t *sp, tokens_t **ep)
 	*ep -= n;
 }
 
+void sym_undefined(tokens_t *tp)
+{
+    if (tp->ttype == TT_SYM)
+        printf(YELLOW "is %s undefined?" NONL, token(tp));
+}
+
 
 // pre-processor
 
@@ -275,7 +328,7 @@ preproc_t *pre(char *str, preproc_type_e ptype)
 			if (p->ptype == ptype) return p;
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 
@@ -322,6 +375,7 @@ tokens_t *expr_collapse(tokens_t *t, tokens_t **ep, int *val)
     int e_val;
 
     // NUM OPR NUM -> NUM
+    //printf("expr_collapse t:%s t1:%s t2:%s\n", token(t), token(t1), token(t2));
     if (tp->ttype == TT_NUM && t1->flags & TF_2OPR && t2->ttype == TT_NUM) {
         if (debug) printf("COLLAPSE %d %s %d -> ", tp->num, t1->str, t2->num);
         expr(tp, ep, &e_val, 0); tp->num = e_val;
@@ -367,6 +421,8 @@ tokens_t *cond(tokens_t *t, tokens_t **ep, int *val)
 		    continue;
 		}
 		
+		sym_undefined(tp);
+		sym_undefined(tp+2);
         syntax(0, t-1, "expected \"NUM OPR NUM\" or \"NUM OPR\"");
 	}
 	
@@ -442,6 +498,8 @@ tokens_t *expr_parens(tokens_t *t, tokens_t **ep, int *val)
 		    continue;
 		}
 		
+		sym_undefined(tp);
+		sym_undefined(tp+2);
         syntax(0, t-1, "expected \"NUM OPR NUM\" or \"NUM OPR\"");
 	}
 	
