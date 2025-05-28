@@ -713,6 +713,11 @@ static void pvt_NET(void *param)
     }
 
     DNS_lookup("kiwisdr.com", &net.ips_kiwisdr_com, N_IPS, KIWISDR_COM_PUBLIC_IP);
+    
+    //#define TEST_DELAYED_LOCAL_IP
+    #ifdef TEST_DELAYED_LOCAL_IP
+        TaskSleepSec(10);
+    #endif
 
 	for (retry = 0; true; retry++) {
 
@@ -752,6 +757,7 @@ static void pvt_NET(void *param)
 
         if (net.pvt_valid == IPV4)
             break;
+
         // if ipv6 only continue to search for an ipv4 address
         TaskSleepSec(10);
     }
