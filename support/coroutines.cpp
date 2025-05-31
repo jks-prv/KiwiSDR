@@ -369,17 +369,8 @@ static int soft_fail;
 void TaskDump(u4_t flags)
 {
 	int i, j;
-	TASK *t;
-	u64_t now_us = timer_us64();
-	u4_t elapsed = now_us - last_dump;
-	last_dump = now_us;
-	float f_elapsed = ((float) elapsed) / 1e6;
-	float f_sum = 0;
-	float f_idle = ((float) idle_us) / 1e6;
-	idle_us = 0;
 	u4_t printf_type = flags & PRINTF_FLAGS;
-    NextTask("TaskDump");
-	
+	TASK *t;
 	TASK *ct = cur_task;
 
 	int tused = 1;      // count main() because it doesn't have a ctx[].init set
@@ -414,6 +405,15 @@ void TaskDump(u4_t flags)
 	//lfprintf(printf_type, "Tttt Pd# cccccccc xxx.xxx xxxxx.xxx xxx.x%% xxxxxx xxxxx xxxxx xxx xxxxx xxx xxxxx xxxxx xxxxx xxxx.xxxuu xxx%% cN\n");
 	  lfprintf(printf_type, "     I # RWSPBLHq   run S    max mS   cpu%%  #runs  cmds   st1       st2       #wu   nrs retry   deadline stk%% ch task______ where___________________ longest ________________\n");
 
+    NextTask("TaskDump");
+	u64_t now_us = timer_us64();
+	u4_t elapsed = now_us - last_dump;
+	last_dump = now_us;
+	float f_elapsed = ((float) elapsed) / 1e6;
+	float f_sum = 0;
+	float f_idle = ((float) idle_us) / 1e6;
+	idle_us = 0;
+	
 	for (i=0; i <= max_task; i++) {
 		t = Tasks + i;
 		if (!t->valid)
@@ -425,6 +425,7 @@ void TaskDump(u4_t flags)
 		float deadline=0;
 		const char *dline = "", *dunit = "";
 		if (t->deadline > 0) {
+	        now_us = timer_us64();      // update now_us since this loop does a NextTask()
 		    if (t->deadline < now_us) {
 		        dline = "has past";
 		    } else {
