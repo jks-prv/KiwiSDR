@@ -701,6 +701,7 @@ bool gps_isValid(const char *lat_lon)
     return (
         lat_lon != NULL &&
         strcmp(lat_lon, "(-37.631120, 176.172210)") != 0 &&
+        strcmp(lat_lon, "(-37.631016, 176.172019)") != 0 &&
         strcmp(lat_lon, "(0.00, 0.00)") != 0 &&
         strcmp(lat_lon, "(0.000000, 0.000000)") != 0
     );
