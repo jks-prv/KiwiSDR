@@ -267,6 +267,7 @@
 [4996.00, "CWN", "RWM RUS", "time signal", {"T5":1}],
 [5000.00, "AM", "WWVH / WWV", "time signals", {"T5":1}],
 [5000.00, "AM", "BPM", "time signal", {"T5":1}],
+[5006.00, "CW", "JG2XA <a href=%22//www.hfunderground.com/wiki/JG2XA%22 target=%22_blank%22>info</a>", "propagation beacon", {"T4":1}],
 [5077.50, "USB", "STANAG JHQ", "Commcen Bodø, Norway ", {"T8":1}],
 [5100.00, "USB", "FAX AUS", "VMC", {"T11":1, "p":"fax,*"}],
 [5153.70, "CWN", "D marker", "Sevastopol UKR", {"T8":1}],
