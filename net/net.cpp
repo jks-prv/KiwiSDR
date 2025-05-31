@@ -200,6 +200,9 @@ bool find_local_IPs(int retry)
         }
     }
 	
+    lprintf("ip4_valid=%d ip4_6_valid=%d ip6_valid=%d ip6LL_valid=%d\n",
+        net.ip4_valid, net.ip4_6_valid, net.ip6_valid, net.ip6LL_valid);
+
 	if (net.ip4_valid) {
 		net.nm_bits4 = inet_nm_bits(AF_INET, &net.netmask4);
 		lprintf("NET(%d): private IPv4 <%s> 0x%08x /%d 0x%08x %s\n", retry, net.ip4_pvt_s, net.ip4_pvt,
@@ -465,11 +468,13 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
                     bool match = ((ip_client6[i] & netmask6[i]) == (ip_server6[i] & netmask6[i]));
                     if (!match)
                         local = false;
-                    if (ip6_n) {
-                        net_printf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
-                    } else {
-                        net_printf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
-                    }
+                    #if 0
+                        if (ip6_n) {
+                            net_printf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
+                        } else {
+                            net_printf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
+                        }
+                    #endif
                 }
                 /*
                 if (!local) for (i=0; i < 16; i++) {
@@ -645,7 +650,7 @@ int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, int n_ips, const cha
     char **ip_list = r_ips->ip_list;
 
     assert(n_ips <= N_IPS);
-    asprintf(&cmd_p, "dig +short +noedns +time=3 +tries=3 %s A %s AAAA", domain_name, domain_name);
+    asprintf(&cmd_p, "dig +short +noedns +time=2 +tries=2 %s A %s AAAA", domain_name, domain_name);
     //printf("LOOKUP: \"%s\" <%s>\n", domain_name, cmd_p);
 	kstr_t *reply = non_blocking_cmd(cmd_p, &status);
 	

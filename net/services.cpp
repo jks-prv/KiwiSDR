@@ -712,8 +712,6 @@ static void pvt_NET(void *param)
         system("echo nameserver 1.1.1.1 >>/etc/resolv.conf");
     }
 
-    DNS_lookup("kiwisdr.com", &net.ips_kiwisdr_com, N_IPS, KIWISDR_COM_PUBLIC_IP);
-    
     //#define TEST_DELAYED_LOCAL_IP
     #ifdef TEST_DELAYED_LOCAL_IP
         TaskSleepSec(10);
@@ -743,9 +741,11 @@ static void pvt_NET(void *param)
             net.pvt_valid = IPV4;
         }
 
+        // give preference to IPv4 by waiting 10s before accepting any IPv6 addresses
         #define LOCAL_IP_RETRY 3
-        if (retry >= LOCAL_IP_RETRY && net.ip6_valid) {     // NB: not ip6LL_valid
-            lprintf("NET: no private ipv4 address after %d retries, but ipv6 address found\n", retry);
+        if (retry >= LOCAL_IP_RETRY && net.pvt_valid == IPV_NONE && (net.ip6_valid || net.ip6LL_valid)) {
+            lprintf("NET: no private ipv4 address after %d retries, but ipv6%s address found\n",
+                retry, !net.ip6_valid? "(local link)" : "");
             net.pvt_valid = IPV6;
 	    }
 	    
@@ -755,16 +755,17 @@ static void pvt_NET(void *param)
             net.auto_nat_valid = true;
 	    }
 
-        if (net.pvt_valid == IPV4)
+        if (net.pvt_valid != IPV_NONE)
             break;
 
-        // if ipv6 only continue to search for an ipv4 address
-        TaskSleepSec(10);
+        TaskSleepSec(3);
     }
     
-    if (net.pvt_valid == IPV4) {
+    if (net.pvt_valid != IPV_NONE) {
         rx_send_config(SM_SND_ADM_ALL);
     }
+
+    DNS_lookup("kiwisdr.com", &net.ips_kiwisdr_com, N_IPS, KIWISDR_COM_PUBLIC_IP);
 }
 
 static void pub_NET(void *param)

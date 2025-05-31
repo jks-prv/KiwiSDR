@@ -256,7 +256,7 @@ static int ev_handler(struct mg_connection *mc, int ev)
                 if (net.pvt_valid == IPV_NONE) {
                     lprintf("WEB: HTTP 503 reply because no valid private IP yet\n");
                     mg_http_reply(mc, 503, NULL, "");
-                    mg_printf_data(mc, "503: Service Unavailable\r\n");
+                    mg_printf_data(mc, "503: Service Unavailable, determining local IP address -- try again in 10 seconds\r\n");
                     mg_connection_close(mc);
                     return MG_TRUE;
                 }

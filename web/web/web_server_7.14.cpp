@@ -295,7 +295,7 @@ static void ev_handler_http(struct mg_connection *mc, int ev, void *ev_data)
             // don't accept connections until we have private IP for checking local connection exemptions
             if (net.pvt_valid == IPV_NONE) {
                 lprintf("WEB: HTTP 503 reply because no valid private IP yet\n");
-                mg_http_reply(mc, 503, NULL, "503: Service Unavailable");
+                mg_http_reply(mc, 503, NULL, "503: Service Unavailable, determining local IP address -- try again in 10 seconds");
                 mg_connection_close(mc);
                 return;
             }
