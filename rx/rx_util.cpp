@@ -770,7 +770,7 @@ static void dump_task(void *param)
 	int i;
 
     while (1) {
-        TaskSleep();
+        bool doPanic = (bool) TaskSleep();
     
         lprintf("\n");
         lprintf("dump --------\n");
@@ -806,14 +806,16 @@ static void dump_task(void *param)
         ip_blacklist_dump(false);
         mt_dump();
         data_pump_dump();
+        lprintf("done --------\n");
+        if (doPanic) panic("dump");
     }
 }
 
 static tid_t dump_tid;
 
-void dump()
+void dump(bool doPanic)
 {
-	TaskWakeup(dump_tid);
+	TaskWakeupP(dump_tid, TO_VOID_PARAM(doPanic));
 }
 
 void dump_init()
