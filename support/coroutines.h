@@ -123,6 +123,7 @@ C_LINKAGE(void _TaskWakeup(int id, u4_t flags, void *wake_param));
 #define TaskWakeup(id)          _TaskWakeup(id, TWF_NONE, 0);
 #define TaskWakeupF(id,f)       _TaskWakeup(id, f, 0);
 #define TaskWakeupFP(id,f,p)    _TaskWakeup(id, f, p);
+#define TaskWakeupP(id,p)       _TaskWakeup(id, TWF_NONE, p);
 
 typedef enum {
 	CALLED_FROM_INIT,

@@ -26,15 +26,7 @@
  *
 \******************************************************************************/
 
-// NB v1.470: Because of the C_LINKAGE() change
-
 #include "DRM.h"
-
-#ifdef DRM_SHMEM_DISABLE
-    void drm_next_task(const char *id);
-#else
-    #define drm_next_task(...)
-#endif
 
 #define DRM_LOWEST_SIGSRATE 24000
 #if MAX_SND_RATE > DRM_LOWEST_SIGSRATE

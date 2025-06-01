@@ -322,6 +322,17 @@ void update_vars_from_config(bool called_at_init)
         cfg_rem_string("index_html_params.RX_GMAP");
     }
 
+	if ((s = cfg_string("rx_gps", NULL, CFG_OPTIONAL)) != NULL) {
+	    if (
+            strcmp(s, "(-37.631120, 176.172210)") == 0 ||
+            strcmp(s, "(-37.631016, 176.172019)") == 0
+	        ) {
+		    cfg_set_string("rx_gps", "(0.000000, 0.000000)");
+	        update_cfg = cfg_gdb_break(true);
+	    }
+	    cfg_string_free(s);
+	}
+
     // pcb.jpg => pcb.png since new pcb photo has alpha channel that only .png supports.
     // Won't disturb an RX_PHOTO_FILE set to kiwi.config/photo.upload by admin photo upload process.
 	if ((s = cfg_string("index_html_params.RX_PHOTO_FILE", NULL, CFG_OPTIONAL)) != NULL) {

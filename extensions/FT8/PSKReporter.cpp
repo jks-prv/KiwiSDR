@@ -476,6 +476,16 @@ static void PSKreport(void *param)      // task
 	}
 }
 
+static void PSKReporter_init()
+{
+    #define BACKUP_PSKREPORTER_PUBLIC_IP "74.116.41.13"
+    static ip_lookup_t ips_pskreporter;
+    DNS_lookup("report.pskreporter.info", &ips_pskreporter, N_IPS, BACKUP_PSKREPORTER_PUBLIC_IP);
+    u1_t a,b,c,d;
+    inet4_h2d(ips_pskreporter.ip[0], &a,&b,&c,&d);
+    asprintf(&pr_conf.upload_url, "udp://%d.%d.%d.%d:%d", a,b,c,d, PR_UPLOAD_PORT);
+}
+
 int PSKReporter_setup(int rx_chan)
 {
     pr_conf_t *pr = &pr_conf;
@@ -483,6 +493,8 @@ int PSKReporter_setup(int rx_chan)
     // only launch once
     #ifdef PR_USE_CALLSIGN_HASHTABLE
         if (!pr->task_created) {
+            PSKReporter_init();
+            
             bool no_call_or_grid = true;
             const char *rcall = cfg_string("ft8.callsign", NULL, CFG_OPTIONAL);
             const char *rgrid = cfg_string("ft8.grid", NULL, CFG_OPTIONAL);
@@ -527,14 +539,4 @@ int PSKReporter_setup(int rx_chan)
         #warning FT8: PSKReporter upload code not enabled
         return -1;
     #endif
-}
-
-void PSKReporter_init()
-{
-    #define BACKUP_PSKREPORTER_PUBLIC_IP "74.116.41.13"
-    static ip_lookup_t ips_pskreporter;
-    DNS_lookup("report.pskreporter.info", &ips_pskreporter, N_IPS, BACKUP_PSKREPORTER_PUBLIC_IP);
-    u1_t a,b,c,d;
-    inet4_h2d(ips_pskreporter.ip[0], &a,&b,&c,&d);
-    asprintf(&pr_conf.upload_url, "udp://%d.%d.%d.%d:%d", a,b,c,d, PR_UPLOAD_PORT);
 }

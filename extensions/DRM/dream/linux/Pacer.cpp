@@ -1,7 +1,5 @@
 
-// NB v1.470: Because of the C_LINKAGE() change
-
-#include "DRM_main.h"
+#include "DRM.h"
 #include "../util/Pacer.h"
 
 #include <sys/time.h>
@@ -39,25 +37,14 @@ void CPacer::wait()
 {
     uint64_t delay_ns = nstogo();
     
-    #ifdef DRM_SHMEM_DISABLE
-        //if (delay_ns > 100000ULL)       // min time to wait 100 usec
-        //if (delay_ns > 10000000ULL)     // min time to wait 10 msec
-        if (delay_ns > 20000000ULL)     // min time to wait 20 msec
-        {
-            u4_t usec = (u4_t) (delay_ns / 1000ULL);
-            //printf("[%d] ", usec); fflush(stdout);
-            TaskSleepUsec(usec);
-        }
-    #else
-        if (delay_ns > 20000000ULL)     // min time to wait 20 msec
-        {
-            timespec delay;
-            delay.tv_sec = delay_ns / 1000000000ULL;
-            delay.tv_nsec = delay_ns % 1000000000ULL;
-            //printf("(%ld,%ld) ", delay.tv_sec, delay.tv_nsec/1000); fflush(stdout);
-            nanosleep(&delay, nullptr);
-        }
-    #endif
+    //if (delay_ns > 100000ULL)       // min time to wait 100 usec
+    //if (delay_ns > 10000000ULL)     // min time to wait 10 msec
+    if (delay_ns > 20000000ULL)     // min time to wait 20 msec
+    {
+        DRM_sleep_ns(delay_ns);
+    } else {
+        DRM_next_task("drm pacer");
+    }
 
     timekeeper += interval;
 }

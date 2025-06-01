@@ -16,6 +16,22 @@ norm="printf \033[m"
 $yellow; echo "takes about 20 minutes depending on the speed of your Internet and SD card"; $norm
 echo " "
 
+error_exit () {
+    rm -f ${SHA} ${IMG}*
+	exit ${err}
+}
+
+write_failure () {
+	$red; echo "SD card write error"; $norm
+    err=94
+    error_exit
+}
+
+flush_cache () {
+	sync
+	blockdev --flushbufs ${destination} || true
+}
+
 root_drive="$(cat /proc/cmdline | sed 's/ /\n/g' | grep root=UUID= | awk -F 'root=' '{print $2}' || true)"
 if [ ! "x${root_drive}" = "x" ] ; then
 	root_drive="$(/sbin/findfs ${root_drive} || true)"
@@ -38,10 +54,12 @@ fi
 
 if [ ! -b "${destination}" ] ; then
 	$red; echo "no SD card detected"; $norm
-    exit 1
+    err=1
+    error_exit
 fi
 
 cd /root
+#rm -f ${SHA}
 rm -f ${SHA} ${IMG}*
 
 FREE=$((`df . | tail -1 | /usr/bin/tr -s ' ' | cut -d' ' -f 4`/1000))
@@ -49,7 +67,8 @@ echo "disk free ${FREE} MB"
 NEED=800
 if [ ${FREE} -lt ${NEED} ] ; then
 	$red; echo "not enough free disk space! (need ${NEED} MB)"; $norm
-	exit 92
+	err=92
+    error_exit
 fi
 
 echo " "
@@ -59,26 +78,37 @@ SHA_CHECK=`cat /root/${SHA}`
 echo "checksum: ${SHA_CHECK}"
 
 echo " "
-echo "getting image file \"${IMG}\" from kiwisdr.com"
-curl -Ls kiwisdr.com/files/${IMG} --output ${FILE}
+if [ ! -f ${FILE} ] ; then
+    echo "getting image file \"${IMG}\" from kiwisdr.com"
+    curl -Ls kiwisdr.com/files/${IMG} --output ${FILE}
+else
+    echo "already seem to have file \"${IMG}\""
+fi
+
 echo "computing checksum of \"${IMG}\""
 SHASUM=`sha256sum ${FILE}`
 set -- ${SHASUM}
 SHASUM=$1
 echo "checksum: ${SHASUM}"
-
 #echo `echo ${SHASUM} | sum` `echo ${SHA_CHECK} | sum`
 if [ "x${SHASUM}" != "x${SHA_CHECK}" ] ; then
 	$red; echo "checksums differ!"; $norm
-	exit 93
+	err=93
+    error_exit
 fi
 $cyan; echo "checksums match"; $norm
 
 echo " "
 echo "copying image to SD card ${destination}"
-xzcat ${FILE} | dd of=${destination}
-sync
-blockdev --flushbufs ${destination}
+xzcat ${FILE} | dd of=${destination} || write_failure
+flush_cache
+echo "reloading partition table of ${destination}"
+sfdisk -R ${destination}
+sleep 2
+
+echo " "
+echo "list of block devices:"
+lsblk
 
 echo " "
 echo "copying configuration data from kiwi.config to SD card"
@@ -87,14 +117,15 @@ mkdir -p /media/sd
 #echo "mount ${root} /media/sd"
 mount ${root} /media/sd
 #echo "rsync -av /root/kiwi.config/ /media/sd/root/kiwi.config/"
-rsync -av /root/kiwi.config/ /media/sd/root/kiwi.config/
+rsync -av /root/kiwi.config/ /media/sd/root/kiwi.config/ || write_failure
 #echo "umount /media/sd"
 umount /media/sd
-#echo "sync"
-sync
-#echo "blockdev --flushbufs ${destination}"
-blockdev --flushbufs ${destination}
+#echo "flush_cache"
+flush_cache
 
+#$red; echo "CAUTION: not removing file ${IMG}"; $norm
+#rm -f ${SHA}
 rm -f ${SHA} ${IMG}*
+
 echo " "
 $green; echo "SD card copy complete"; $norm

@@ -26,7 +26,7 @@
  *
 \******************************************************************************/
 
-#include "DRM_shmem.h"
+#include "DRM.h"
 #include "DRM_main.h"
 
 #if defined(__unix__) && !defined(__APPLE__)
@@ -43,44 +43,9 @@
 #include <iostream>
 #include <unistd.h>
 
-#ifdef DRM_SHMEM_DISABLE
-    static u4_t drm_last_start;
-    
-    // NB v1.470: Because of the C_LINKAGE(void _NextTask(...)) change
-    // we need to touch this file so that ../build/obj_keep/DRM_main.o
-    // gets rebuilt and doesn't end up with a link time error.
-
-    void drm_next_task(const char *id)
-    {
-        #if 0
-            static u4_t epoch;
-            if (epoch == 0) epoch = timer_ms();
-            static u4_t drm_last_start;
-            static const char *last_id;
-            u4_t now = timer_ms();
-            u4_t t = now - drm_last_start;
-            if (t == 0) return;
-            if (t > 30) {
-                drm_t *drm = &DRM_SHMEM->drm[0];
-                iq_buf_t *iq = &RX_SHMEM->iq_buf[drm->rx_chan];
-                int rd = pos_wrap_diff(iq->iq_wr_pos, drm->iq_rd_pos, N_DPBUF);
-                real_printf("%6.3f %4d %2dr %5dni %5dss %s %s\n",
-                    (now - epoch)/1e3, t, rd, drm->no_input, drm->sent_silence, last_id, id);
-                //fflush(stdout);
-            }
-            DRM_YIELD();
-            drm_last_start = timer_ms();
-            last_id = id;
-        #else
-            DRM_YIELD();
-        #endif
-    }
-#endif
-
 void DRM_loop(int rx_chan)
 {
-    TaskSetUserParam(TO_VOID_PARAM(rx_chan));
-    drm_t *drm = &DRM_SHMEM->drm[rx_chan];
+    drm_t *drm = DRM_drm_p(rx_chan);
     //printf("$$$$ DRM_loop rx_chan=%d run=%d pid=%d\n", rx_chan, drm->run, getpid());
     assert(drm->init);
     
@@ -117,11 +82,7 @@ void DRM_loop(int rx_chan)
             if (!drm->run) {
                 //printf("DRM stopped\n");
                 while (!drm->run) {
-                    #ifdef DRM_SHMEM_DISABLE
-                        TaskSleepSec(1);
-                    #else
-                        sleep(1);
-                    #endif
+                    DRM_run_sleep();
                     //real_printf("-%d- ", getpid()); fflush(stdout);
                 }
                 //printf("DRM running\n");

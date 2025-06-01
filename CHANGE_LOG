@@ -3,6 +3,11 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.812  June 1, 2025
+    Fixed DRM broken in last release.
+    Fixes affecting point-to-point Ethernet connections, e.g. direct to laptop. (thanks Karl-Heinz)
+    Improvements to D11 upgrade function regarding configuration copying. (thanks DK9SAS)
+
 v1.811  May 29, 2025
     Web server:
         Return connection error until local IP known so local-IP exemption works. (thanks Palomar)

@@ -326,6 +326,7 @@ function sd_done(err)
 	   case 91: e = 'Kiwi must use BeagleBone Green or Black'; break;
 	   case 92: e = 'Not enough free disk space'; break;
 	   case 93: e = 'Image file checksum failed'; break;
+	   case 94: e = 'SD card write error'; break;
 	   default: e = 'unknown code '+ err; break;
 	}
 	console.log('sd_done: err='+ err +' e='+ e);

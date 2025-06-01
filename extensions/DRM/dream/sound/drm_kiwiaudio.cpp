@@ -28,11 +28,12 @@
 
 // Copyright (c) 2017-2023 John Seamons, ZL4VO/KF6VO
 
-// NB v1.470: Because of the C_LINKAGE() change
-
 #include "drm_kiwiaudio.h"
-#include "DRM_shmem.h"
 #include "DRM_main.h"
+#include "config.h"         // snd_rate
+#include "ext.h"            // RX_CHAN_CUR
+#include "kiwi.gen.h"       // SND_RATE_4CH
+#include "printf.h"         // panic()
 
 #include <iostream>
 #include <cstring>
@@ -146,8 +147,8 @@ CSoundOutKiwi::~CSoundOutKiwi()
 bool
 CSoundOutKiwi::Init(int iSampleRate, int iNewBufferSize, bool bNewBlocking)
 {
-    drm_buf_t *drm_buf = &DRM_SHMEM->drm_buf[(int) FROM_VOID_PARAM(TaskGetUserParam())];
-    //printf("$$$$ drm_kiwiaudio rx_chan=%d pid=%d\n", TaskGetUserParam(), getpid());
+    drm_buf_t *drm_buf = DRM_buf_p();
+    //printf("$$$$ drm_kiwiaudio rx_chan=%d pid=%d\n", DRM_rx_chan(), getpid());
     drm_buf->out_rd_pos = drm_buf->out_wr_pos = drm_buf->out_pos = 0;
     drm_buf->out_samps = (snd_rate == SND_RATE_4CH)? 4800 : 8100;
     return hw.Init(iSampleRate, iNewBufferSize, bNewBlocking);
@@ -156,12 +157,12 @@ CSoundOutKiwi::Init(int iSampleRate, int iNewBufferSize, bool bNewBlocking)
 bool
 CSoundOutKiwi::Write(CVector<short>& psData)
 {
-    drm_buf_t *drm_buf = &DRM_SHMEM->drm_buf[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+    drm_buf_t *drm_buf = DRM_buf_p();
 
     size_t mono_samps = psData.Size();
     size_t stereo_samps = mono_samps/2;
     if (stereo_samps != drm_buf->out_samps) {
-        printf("CSoundOutKiwi::Write mono=%d stereo=%d out_samps=%d N_DRM_OSAMPS=%d\n", mono_samps, stereo_samps, drm_buf->out_samps, N_DRM_OSAMPS);
+        printf("CSoundOutKiwi::Write mono=%zu stereo=%zu out_samps=%d N_DRM_OSAMPS=%d\n", mono_samps, stereo_samps, drm_buf->out_samps, N_DRM_OSAMPS);
         panic("drm_kiwiaudio");
     }
     TYPESTEREO16 *o_samps = drm_buf->out_samples[drm_buf->out_wr_pos];

@@ -27,6 +27,76 @@
     drm_shmem_t *drm_shmem_p = &drm_shmem;
 #endif
 
+#ifdef DRM_SHMEM_DISABLE
+    static u4_t drm_last_start;
+    
+    void DRM_next_task(const char *id)
+    {
+        #if 0
+            static u4_t epoch;
+            if (epoch == 0) epoch = timer_ms();
+            static u4_t drm_last_start;
+            static const char *last_id;
+            u4_t now = timer_ms();
+            u4_t t = now - drm_last_start;
+            if (t == 0) return;
+            if (t > 30) {
+                drm_t *drm = &DRM_SHMEM->drm[0];
+                iq_buf_t *iq = &RX_SHMEM->iq_buf[drm->rx_chan];
+                int rd = pos_wrap_diff(iq->iq_wr_pos, drm->iq_rd_pos, N_DPBUF);
+                real_printf("%6.3f %4d %2dr %5dni %5dss %s %s\n",
+                    (now - epoch)/1e3, t, rd, drm->no_input, drm->sent_silence, last_id, id);
+                //fflush(stdout);
+            }
+            DRM_yield();
+            drm_last_start = timer_ms();
+            last_id = id;
+        #else
+            DRM_yield();
+        #endif
+    }
+
+    void DRM_yield() { NextTask("drm Y"); }
+
+    void DRM_yield_lower_prio() { TaskSleepReasonUsec("drm YLP", 1000); }
+    
+    void DRM_run_sleep() { TaskSleepSec(1); }
+
+    void DRM_sleep_ns(u64_t delay_ns)
+    {
+        u4_t usec = (u4_t) (delay_ns / 1000ULL);
+        //real_printf("%d ", usec); fflush(stdout);
+        //real_printf("."); fflush(stdout);
+        TaskSleepUsec(usec);
+    }
+#else
+    void DRM_next_task(const char *id) { }
+    
+    void DRM_run_sleep() { sleep(1); }
+
+    void DRM_sleep_ns(u64_t delay_ns)
+    {
+        timespec delay;
+        delay.tv_sec = delay_ns / 1000000000ULL;
+        delay.tv_nsec = delay_ns % 1000000000ULL;
+        //printf("(%ld,%ld) ", delay.tv_sec, delay.tv_nsec/1000); fflush(stdout);
+        nanosleep(&delay, nullptr);
+    }
+
+    #ifdef MULTI_CORE
+        // Processes run in parallel simultaneously and communicate w/ shmem mechanism.
+        // But sleep a little bit to reduce cpu busy looping waiting for updates to shmem.
+        // But don't sleep _too_ much else insufficient throughput.
+        void DRM_yield() { kiwi_usleep(30000); }
+        //void DRM_yield() { kiwi_usleep(10000); }
+    
+        void DRM_yield_lower_prio() { kiwi_usleep(1000); }
+    #else
+        // experiment with shmem mechanism on uni-processors
+        void DRM_yield() { kiwi_usleep(100); }  // force process switch
+    #endif
+#endif
+
 static drm_info_t drm_info;
 
 void DRM_close(int rx_chan)
@@ -277,6 +347,24 @@ int DRM_rx_chan()
     return drm->rx_chan;
 }
 
+drm_t *DRM_drm_p(int rx_chan)
+{
+    if (rx_chan == -1) {
+        rx_chan = (int) FROM_VOID_PARAM(TaskGetUserParam());
+    } else {
+        TaskSetUserParam(TO_VOID_PARAM(rx_chan));
+    }
+
+    drm_t *drm = &DRM_SHMEM->drm[rx_chan];
+    return drm;
+}
+
+drm_buf_t *DRM_buf_p()
+{
+    drm_buf_t *drm_buf = &DRM_SHMEM->drm_buf[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+    return drm_buf;
+}
+
 // pass msg & data via shared mem buf since DRM_SHMEM might be enabled
 void DRM_msg_encoded(drm_msg_e msg_type, const char *cmd, kstr_t *ks)
 {
@@ -287,7 +375,7 @@ void DRM_msg_encoded(drm_msg_e msg_type, const char *cmd, kstr_t *ks)
     kiwi_strncpy(drm->msg_cmd[msg_type], cmd, L_MSGCMD);
     kiwi_strncpy(drm->msg_buf[msg_type], kstr_sp(ks), L_MSGBUF);
     drm->msg_tx_seq[msg_type]++;
-    DRM_YIELD();
+    DRM_yield();
 }
 
 void DRM_data(u1_t cmd, u1_t *data, u4_t nbuf)
@@ -298,7 +386,7 @@ void DRM_data(u1_t cmd, u1_t *data, u4_t nbuf)
     memcpy(drm->data_buf, data, nbuf);
     drm->data_nbuf = nbuf;
     drm->data_tx_seq++;
-    DRM_YIELD();
+    DRM_yield();
 }
 
 void DRM_poll(int rx_chan)

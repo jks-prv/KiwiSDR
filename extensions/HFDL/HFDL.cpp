@@ -112,7 +112,7 @@ static void hfdl_task(void *param)
             
             //static int wakes;
             //real_printf("%d-", wakes++); fflush(stdout);
-            TaskWakeupFP(e->input_tid, TWF_NONE, TO_VOID_PARAM(out));
+            TaskWakeupP(e->input_tid, TO_VOID_PARAM(out));
         }
     }
 }
@@ -139,7 +139,7 @@ void hfdl_close(int rx_chan)
 #else
     // everything should shutdown when the input routine receives an EOF
     if (e->input_tid)
-        TaskWakeupFP(e->input_tid, TWF_NONE, TO_VOID_PARAM(0));
+        TaskWakeupP(e->input_tid, TO_VOID_PARAM(0));
 #endif
 
     ext_unregister_receive_cmds(e->rx_chan);

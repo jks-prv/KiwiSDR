@@ -136,7 +136,9 @@ void fpga_init();
 void update_freqs(bool *update_cfg = NULL);
 void update_vars_from_config(bool called_at_init = false);
 void cfg_adm_transition();
-void dump();
+
+#define DUMP_PANIC true
+void dump(bool doPanic = false);
 
 void c2s_sound_init();
 void c2s_sound_setup(void *param);

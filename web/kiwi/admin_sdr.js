@@ -1147,12 +1147,14 @@ function webpage_input_gps_cb(path, val, first, cb_a)
    
    val = '('+ lat.toFixed(resolution) +', '+ lon.toFixed(resolution) +')';
 
-	if (val == '(-37.631120, 176.172210)' || val == '(-37.631120%2C%20176.172210)') {
+	if (val == '(-37.631120, 176.172210)' || val == '(-37.631120%2C%20176.172210)' ||
+	    val == '(-37.631016, 176.172019)' || val == '(-37.631016%2C%20176.172019)'
+	   ) {
 	   val = '(0.000000, 0.000000)';
 	   set_cfg = true;
 	}
 
-	if (val == '(0.000000, 0.000000)') {
+	if (val == '(0.000000, 0.000000)' || val == '(0.00, 0.00)') {
 		w3_flag('rx_gps');
 
       // clear registration state
@@ -1419,7 +1421,13 @@ function kiwisdr_com_register_cb(path, idx, first)
    var no_url = (cfg.server_url == '');
    var bad_ip = (kiwi_inet4_d2h(cfg.server_url) != null && kiwi_inet4_d2h(cfg.server_url, { no_local_ip:1 }) == null);
    var no_passwordless_channels = (adm.user_password != '' && cfg.chan_no_pwd == 0);
-   var no_rx_gps = (cfg.rx_gps == '' || cfg.rx_gps == '(0.000000, 0.000000)' || cfg.rx_gps == '(0.000000%2C%200.000000)');
+   var no_rx_gps = (
+      cfg.rx_gps == '' ||
+      cfg.rx_gps == '(0.000000, 0.000000)' ||
+      cfg.rx_gps == '(0.000000%2C%200.000000)' ||
+      cfg.rx_gps == '(0.00, 0.00)' ||
+      cfg.rx_gps == '(0.00%2C%200.00)'
+      );
    var autorun_full = ((cfg.WSPR.autorun + cfg.ft8.autorun) >= rx_chans);
    //console.log('kiwisdr_com_register_cb has_u_pwd='+ (adm.user_password != '') +' chan_no_pwd='+ cfg.chan_no_pwd +' no_passwordless_channels='+ no_passwordless_channels);
    //console.log('cfg.server_url='+ cfg.server_url);

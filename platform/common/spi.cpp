@@ -368,6 +368,7 @@ void _spi_set(SPI_CMD cmd, uint16_t wparam, uint32_t lparam) {
 		spi_scan(wait, tx);
 		evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_set", "DONE");
     lock_leave(&spi_lock);
+
     spi_check_wakeup(cmd);		// must be done outside the lock
 }
 
@@ -382,6 +383,7 @@ void spi_set3(SPI_CMD cmd, uint16_t wparam, uint32_t lparam, uint16_t w2param) {
 		spi_scan(wait, tx);
 		evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_set3", "DONE");
     lock_leave(&spi_lock);
+
     spi_check_wakeup(cmd);		// must be done outside the lock
 }
 
@@ -404,6 +406,7 @@ void spi_set_noduplex(SPI_CMD cmd, uint16_t wparam, uint32_t lparam) {
 #endif
 		evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_setND", "DONE");
     lock_leave(&spi_lock);		// release block
+
     spi_check_wakeup(cmd);		// must be done outside the lock
 }
 
@@ -425,6 +428,7 @@ void spi_set4_noduplex(SPI_CMD cmd, uint16_t wparam, uint16_t w2param, uint16_t 
 #endif
 		evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_set4ND", "DONE");
     lock_leave(&spi_lock);		// release block
+
     spi_check_wakeup(cmd);		// must be done outside the lock
 }
 
@@ -439,6 +443,7 @@ void spi_set_buf_noduplex(SPI_CMD cmd, SPI_MOSI *tx, int bytes) {
 		spi_scan(wait, tx);           // Collect response to our own request
 
     lock_leave(&spi_lock);		// release block
+
     spi_check_wakeup(cmd);		// must be done outside the lock
 }
 
@@ -518,6 +523,7 @@ void spi_get_noduplex(SPI_CMD cmd, SPI_MISO *rx, int bytes, uint16_t wparam, uin
         evSpiStmt(float mbps = (float) bytes / msec;);
 		evSpi(EC_EVENT, EV_SPILOOP, -1, "spi_getND", evprintf("DONE %dB %.3f ms = %.3f MB/s (%.0f%%)", bytes, msec/1e3, mbps, mbps*100/6));
     lock_leave(&spi_lock);		// release block
+
     spi_check_wakeup(cmd);		// must be done outside the lock
 }
 
@@ -544,5 +550,6 @@ void spi_get3_noduplex(SPI_CMD cmd, SPI_MISO *rx, int bytes, uint16_t wparam, ui
         evSpiStmt(float mbps = (float) bytes / msec;);
 		evSpi(EC_EVENT, EV_SPILOOP, -1, "spi_get3ND", evprintf("DONE %dB %.3f ms = %.3f MB/s (%.0f%%)", bytes, msec/1e3, mbps, mbps*100/6));
     lock_leave(&spi_lock);		// release block
+
     spi_check_wakeup(cmd);		// must be done outside the lock
 }

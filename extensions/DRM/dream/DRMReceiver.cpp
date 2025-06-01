@@ -32,8 +32,6 @@
  *
 \******************************************************************************/
 
-// NB v1.470: Because of the C_LINKAGE() change
-
 #include "DRM_main.h"
 #include "DRMReceiver.h"
 
@@ -226,14 +224,14 @@ CDRMReceiver::DemodulateDRM(bool& bEnoughData)
     {
         bEnoughData = true;
     }
-    drm_next_task("InputResample");
+    DRM_next_task("InputResample");
 
     /* Frequency synchronization acquisition -------------------- */
     if (FreqSyncAcq.ProcessData(Parameters, InpResBuf, FreqSyncAcqBuf))
     {
         bEnoughData = true;
     }
-    drm_next_task("FreqSyncAcq");
+    DRM_next_task("FreqSyncAcq");
 
     /* Time synchronization ------------------------------------- */
     if (TimeSync.ProcessData(Parameters, FreqSyncAcqBuf, TimeSyncBuf))
@@ -251,7 +249,7 @@ CDRMReceiver::DemodulateDRM(bool& bEnoughData)
                 SetInStartMode();
         }
     }
-    drm_next_task("TimeSync");
+    DRM_next_task("TimeSync");
 
     /* OFDM-demodulation ---------------------------------------- */
     if (OFDMDemodulation.
@@ -259,7 +257,7 @@ CDRMReceiver::DemodulateDRM(bool& bEnoughData)
     {
         bEnoughData = true;
     }
-    drm_next_task("OFDMDemodulation");
+    DRM_next_task("OFDMDemodulation");
 
     /* Synchronization in the frequency domain (using pilots) --- */
     if (SyncUsingPil.
@@ -267,7 +265,7 @@ CDRMReceiver::DemodulateDRM(bool& bEnoughData)
     {
         bEnoughData = true;
     }
-    drm_next_task("SyncUsingPil");
+    DRM_next_task("SyncUsingPil");
 
     /* Channel estimation and equalisation ---------------------- */
     if (ChannelEstimation.
@@ -280,7 +278,7 @@ CDRMReceiver::DemodulateDRM(bool& bEnoughData)
            Update synchronization parameters histories */
         PlotManager.UpdateParamHistories(eReceiverState);
     }
-    drm_next_task("ChannelEstimation");
+    DRM_next_task("ChannelEstimation");
 
     /* Demapping of the MSC, FAC, SDC and pilots off the carriers */
     if (OFDMCellDemapping.ProcessData(Parameters, ChanEstBuf,
@@ -289,7 +287,7 @@ CDRMReceiver::DemodulateDRM(bool& bEnoughData)
     {
         bEnoughData = true;
     }
-    drm_next_task("OFDMCellDemapping");
+    DRM_next_task("OFDMCellDemapping");
 }
 
 void
@@ -301,14 +299,14 @@ CDRMReceiver::DecodeDRM(bool& bEnoughData, bool& bFrameToSend)
         bEnoughData = true;
         bFrameToSend = true;
     }
-    drm_next_task("FACMLCDecoder");
+    DRM_next_task("FACMLCDecoder");
 
     /* SDC ------------------------------------------------------ */
     if (SDCMLCDecoder.ProcessData(Parameters, SDCCarDemapBuf, SDCDecBuf))
     {
         bEnoughData = true;
     }
-    drm_next_task("SDCMLCDecoder");
+    DRM_next_task("SDCMLCDecoder");
 
     /* MSC ------------------------------------------------------ */
 
@@ -317,21 +315,21 @@ CDRMReceiver::DecodeDRM(bool& bEnoughData, bool& bFrameToSend)
     {
         bEnoughData = true;
     }
-    drm_next_task("SymbDeinterleaver");
+    DRM_next_task("SymbDeinterleaver");
 
     /* MLC decoder */
     if (MSCMLCDecoder.ProcessData(Parameters, DeintlBuf, MSCMLCDecBuf))
     {
         bEnoughData = true;
     }
-    drm_next_task("MSCMLCDecoder");
+    DRM_next_task("MSCMLCDecoder");
 
     /* MSC demultiplexer (will leave FAC & SDC alone! */
     if (MSCDemultiplexer.ProcessData(Parameters, MSCMLCDecBuf, MSCDecBuf))
     {
         bEnoughData = true;
     }
-    drm_next_task("MSCDemultiplexer");
+    DRM_next_task("MSCDemultiplexer");
 }
 
 void
@@ -348,13 +346,13 @@ CDRMReceiver::UtilizeDRM(bool& bEnoughData)
 #if 0
         saveSDCtoFile();
 #endif
-    drm_next_task("UtilizeFACData");
+    DRM_next_task("UtilizeFACData");
 
     if (UtilizeSDCData.WriteData(Parameters, SDCUseBuf))
     {
         bEnoughData = true;
     }
-    drm_next_task("UtilizeSDCData");
+    DRM_next_task("UtilizeSDCData");
 
     /* Data decoding */
     if (iDataStreamID != STREAM_ID_NOT_USED)
@@ -363,7 +361,7 @@ CDRMReceiver::UtilizeDRM(bool& bEnoughData)
         if (DataDecoder.WriteData(Parameters, MSCUseBuf[iDataStreamID]))
             bEnoughData = true;
     }
-    drm_next_task("DataDecoder");
+    DRM_next_task("DataDecoder");
 
     /* Source decoding (audio) */
     if (iAudioStreamID != STREAM_ID_NOT_USED)
@@ -379,7 +377,7 @@ CDRMReceiver::UtilizeDRM(bool& bEnoughData)
              *                            the history */
             PlotManager.SetCurrentCDAud(AudioSourceDecoder.GetNumCorDecAudio());
         }
-        drm_next_task("audio");
+        DRM_next_task("audio");
     }
     
     #if 0
@@ -902,13 +900,13 @@ CDRMReceiver::process()
             {
                 bEnoughData = true;
             }
-            drm_next_task("WriteIQFile");
+            DRM_next_task("WriteIQFile");
         }
         else
         {
             /* No I/Q recording then receive data directly in DemodDataBuf */
             MEASURE_TIME("r", 4, ReceiveData.ReadData(Parameters, DemodDataBuf));
-            drm_next_task("read");
+            DRM_next_task("read");
         }
 
         switch (eReceiverMode)
