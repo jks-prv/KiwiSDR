@@ -26,8 +26,7 @@
  *
 \******************************************************************************/
 
-#include "DRM_shmem.h"
-#include <DRM_main.h>
+#include "DRM_main.h"
 #include "AudioSourceDecoder.h"
 #include "printf.h"
 #include "timer.h"
@@ -134,7 +133,7 @@ CAudioSourceDecoder::ProcessDataInternal(CParameter & Parameters)
         bool bCodecUpdated = false;
         bool bCurBlockFaulty = false; // just for Opus or any other codec with FEC
 
-        drm_next_task("superFrame");
+        DRM_next_task("superFrame");
         
         if (bGoodValues)
         {
@@ -161,7 +160,7 @@ CAudioSourceDecoder::ProcessDataInternal(CParameter & Parameters)
                         init_LPF = true;
                     }
                     
-                    drm_t *drm = &DRM_SHMEM->drm[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+                    drm_t *drm = DRM_drm_p();
                     if (init_LPF || use_LPF != drm->use_LPF) {
                         bool _20k = (outputSampleRate > 12000);
                         int attn = (drm->dbgUs && drm->p_i[0])? drm->p_i[0] : 20;

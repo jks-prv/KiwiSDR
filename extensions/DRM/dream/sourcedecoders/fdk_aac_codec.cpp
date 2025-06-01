@@ -28,9 +28,6 @@
 
 #ifdef HAVE_LIBFDK_AAC
 
-// NB v1.470: Because of the C_LINKAGE() change
-
-#include "DRM_shmem.h"
 #include "DRM_main.h"
 #include "printf.h"
 
@@ -292,7 +289,7 @@ FdkAacCodec::DecOpen(const CAudioParam& AudioParam, int& iAudioSampleRate)
         return true;
     }
 
-    drm_t *drm = &DRM_SHMEM->drm[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+    drm_t *drm = DRM_drm_p();
     drm->i_epoch = drm->i_samples = drm->i_tsamples = 0;
 
     iAudioSampleRate = iDefaultSampleRate;  // get from AudioParam if codec couldn't get it
@@ -302,7 +299,7 @@ FdkAacCodec::DecOpen(const CAudioParam& AudioParam, int& iAudioSampleRate)
 CAudioCodec::EDecError FdkAacCodec::Decode(const vector<uint8_t>& audio_frame, uint8_t aac_crc_bits,
     CVector<_REAL>& left, CVector<_REAL>& right)
 {
-    drm_t *drm = &DRM_SHMEM->drm[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+    drm_t *drm = DRM_drm_p();
 
     writeFile(audio_frame);
     vector<uint8_t> data;
@@ -325,9 +322,9 @@ CAudioCodec::EDecError FdkAacCodec::Decode(const vector<uint8_t>& audio_frame, u
     }
     UINT bytesValid = bufferSize;
 
-    drm_next_task("FDK fill enter");
+    DRM_next_task("FDK fill enter");
     AAC_DECODER_ERROR err = aacDecoder_Fill(hDecoder, &pData, &bufferSize, &bytesValid);
-    drm_next_task("FDK fill exit");
+    DRM_next_task("FDK fill exit");
     if (err != AAC_DEC_OK) {
         cerr << "FDK fill failed " << int(err) << endl;
         return CAudioCodec::DECODER_ERROR_UNKNOWN;
@@ -386,9 +383,9 @@ CAudioCodec::EDecError FdkAacCodec::Decode(const vector<uint8_t>& audio_frame, u
     }
 
     memset(decode_buf, 0, sizeof(int16_t)*output_size);
-    drm_next_task("FDK decode enter");
+    DRM_next_task("FDK decode enter");
     err = aacDecoder_DecodeFrame(hDecoder, decode_buf, output_size, 0);
-    drm_next_task("FDK decode exit");
+    DRM_next_task("FDK decode exit");
 
     if (err == AAC_DEC_OK) {
         //double d = 0.0;

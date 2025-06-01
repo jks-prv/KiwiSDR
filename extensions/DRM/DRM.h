@@ -97,5 +97,12 @@ typedef struct {
 #define DRM_NREG_CHANS_DEFAULT 3
 
 int DRM_rx_chan();
+drm_t *DRM_drm_p(int rx_chan = -1);
+drm_buf_t *DRM_buf_p();
+void DRM_next_task(const char *id);
+void DRM_yield();
+void DRM_yield_lower_prio();
+void DRM_run_sleep();
+void DRM_sleep_ns(u64_t delay_ns);
 void DRM_msg_encoded(drm_msg_e msg_type, const char *cmd, kstr_t *ks);
 void DRM_data(u1_t cmd, u1_t *data, u4_t nbuf);

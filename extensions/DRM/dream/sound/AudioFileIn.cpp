@@ -28,9 +28,12 @@
 
 // Copyright (c) 2017-2023 John Seamons, ZL4VO/KF6VO
 
-#include "DRM_shmem.h"
 #include "DRM_main.h"
 #include "AudioFileIn.h"
+#include "config.h"         // snd_rate
+#include "data_pump.h"      // N_DPBUF
+#include "timer.h"          // timer_sec()
+#include "kiwi_assert.h"    // assert()
 
 #include <iostream>
 #ifdef HAVE_LIBSNDFILE
@@ -57,7 +60,7 @@ CAudioFileIn::~CAudioFileIn()
 void
 CAudioFileIn::SetFileName(const string& strFileName, FileTyper::type type)
 {
-    drm_t *drm = &DRM_SHMEM->drm[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+    drm_t *drm = DRM_drm_p();
 
     strInFileName = strFileName;
     string ext = "x";
@@ -196,7 +199,7 @@ CAudioFileIn::SetFileName(const string& strFileName, FileTyper::type type)
 bool
 CAudioFileIn::Init(int iNewSampleRate, int iNewBufferSize, bool bNewBlocking)
 {
-    drm_t *drm = &DRM_SHMEM->drm[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+    drm_t *drm = DRM_drm_p();
 
 	//qDebug("CAudioFileIn::Init() iNewSampleRate=%i iNewBufferSize=%i bNewBlocking=%i", iNewSampleRate, iNewBufferSize, bNewBlocking);
     //printf("CAudioFileIn::Init() %s iNewSampleRate=%d iNewBufferSize=%d bNewBlocking=%d pFileReceiver=%p\n", strInFileName.c_str(), iNewSampleRate, iNewBufferSize, bNewBlocking, pFileReceiver);
@@ -284,7 +287,7 @@ CAudioFileIn::Init(int iNewSampleRate, int iNewBufferSize, bool bNewBlocking)
 bool
 CAudioFileIn::Read(CVector<short>& psData)
 {
-    drm_t *drm = &DRM_SHMEM->drm[(int) FROM_VOID_PARAM(TaskGetUserParam())];
+    drm_t *drm = DRM_drm_p();
 
     //real_printf("CAudioFileIn::Read pacer=%d pFileReceiver=%p too_small=%d direct=%d\n", pacer, pFileReceiver, (psData.Size() < iBufferSize), (eFmt == fmt_direct));
     if (pacer)
@@ -400,26 +403,25 @@ CAudioFileIn::Read(CVector<short>& psData)
                     #endif
                 } else {
                 
-                    // NB v1.470: Because of the C_LINKAGE(void *_TaskSleep(...)) change
-                    // we need to touch this file so that ../build/obj_keep/AudioFileIn.o
-                    // gets rebuilt and doesn't end up with a link time error.
-
                     //real_printf("[wait%d] ", iq->iq_wr_pos); fflush(stdout);
                     drm->iq_rd_pos = (drm->iq_rd_pos+1) & (N_DPBUF-1);
                     int trig = 0;
                     while (drm->iq_rd_pos == iq->iq_wr_pos) {
                         if (trig == 0) drm->no_input++;
                         trig = 1;
-                        if (drm->debug & 1) {
-                            NextTask("drm Y");
-                        } else
-                        if (drm->debug & 2) {
-                            TaskSleepReasonUsec("drm YLP", 1);
-                        } else
-                        if (drm->debug & 4) {
-                            TaskSleepReasonUsec("drm YLP", 100);
-                        } else {
-                            DRM_YIELD_LOWER_PRIO();     // TaskSleepReasonUsec("drm YLP", 1000)
+                        #if 0
+                            if (drm->debug & 1) {
+                                NextTask("drm Y");
+                            } else
+                            if (drm->debug & 2) {
+                                TaskSleepReasonUsec("drm YLP", 1);
+                            } else
+                            if (drm->debug & 4) {
+                                TaskSleepReasonUsec("drm YLP", 100);
+                            } else
+                        #endif
+                        {
+                            DRM_yield_lower_prio();
                         }
                     }
                     //real_printf("[r%dw%d] ", drm->iq_rd_pos, iq->iq_wr_pos); fflush(stdout);
@@ -546,7 +548,7 @@ CAudioFileIn::Read(CVector<short>& psData)
         }
     }
 
-    drm_next_task("afi");
+    DRM_next_task("afi");
     return bError;
 }
 
