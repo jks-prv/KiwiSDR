@@ -556,7 +556,6 @@ void FT8_main()
 {
 	ext_register(&ft8_ext);
     ft8_update_vars_from_config(false);
-	PSKReporter_init();
     ft8_autorun_start(true);
 
     //const char *fn = cfg_string("FT8.test_file", NULL, CFG_OPTIONAL);
