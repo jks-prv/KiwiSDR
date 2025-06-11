@@ -71,6 +71,7 @@ var kiwi = {
    is_multi_core: 0,
    log2_seq: 0,
    iframe_n_menu: 16,
+   snr_measuring: false,
    
    w3_text: 'w3-text-bottom w3-text-css-orange',
    inactivity_panel: false,
@@ -1127,7 +1128,7 @@ function kiwi_output_sgr(p)
          console.log(p.sgr.bg);
       }
       if (p.sgr.span) str += '</span>';
-      str += '<span style="'+ (p.sgr.fg? ('color:'+ kiwi_rgb(p.sgr.fg) +';') :'') + (p.sgr.bg? ('background-color:'+ kiwi_rgb(p.sgr.bg) +';') :'') +'">';
+      str += '<span style="'+ (p.sgr.fg? ('color:'+ kiwi_rgb(p.sgr.fg) +';') :'') + (p.sgr.bg? ('background:'+ kiwi_rgb(p.sgr.bg) +';') :'') +'">';
       p.sgr.span = 1;
    } else {
       if (dbg_sgr) console.log('SGR ERROR');
@@ -3046,7 +3047,7 @@ function kiwi_init_cfg(stream_name)
 }
 
 // called by both user and admin
-function kiwi_snr_stats(all, hf)
+function kiwi_snr_stats(all, hf, remain)
 {
    //console.log('SNR ', all, ':', hf, ' dB ');
    if (all == -1 && hf == -1) {
@@ -3058,12 +3059,25 @@ function kiwi_snr_stats(all, hf)
          w3_innerHTML('id-rx-snr', ', SNR ', all, ' dB');
    
          w3_els('id-msg-snr', function(el) { w3_innerHTML(el, 'SNR: All ', all, ' dB'); });
+         if (!kiwi.snr_measuring)
+            w3_innerHTML('id-msg-snr-now', 'SNR: All ', all, ' dB');
       } else {
          //w3_innerHTML('id-rx-snr', ', SNR: All ', all, ' dB, HF ', hf, ' dB');
          w3_innerHTML('id-rx-snr', ', SNR ', all, '/', hf, ' dB');
          w3_title('id-rx-snr', all +' dB, 0-30 MHz\n'+ hf +' dB, 1.8-30 MHz');
    
          w3_els('id-msg-snr', function(el) { w3_innerHTML(el, 'SNR: ', all, ' dB (0-30 MHz), ', hf, ' dB (1.8-30 MHz)'); });
+         if (!kiwi.snr_measuring)
+            w3_innerHTML('id-msg-snr-now', 'SNR: ', all, ' dB (0-30 MHz), ', hf, ' dB (1.8-30 MHz)');
+      }
+      
+      if (remain > 0) {
+         remain = Math.floor(remain/60);
+         if (remain == 0) remain = 'less than 1';
+         w3_innerHTML('id-snr-remain', 'Next measurement in '+ remain +' min');
+      } else
+      if (remain == -1) {
+         w3_innerHTML('id-snr-remain', w3_icon('', 'fa-refresh fa-spin', 24) + ' &nbsp; measuring..');
       }
    }
    
@@ -3351,7 +3365,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 				w3_call('update_web_grid');
 				w3_call('update_web_map');
 
-				kiwi_snr_stats(o.sa, o.sh);
+				kiwi_snr_stats(o.sa, o.sh, o.tr);
 				
 				w3_call('config_status_cb', o);     // admin only
 				time_display_cb(o);
@@ -3448,20 +3462,20 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 		
 		// NB: use of 'pref' vs 'prefs'
-		case 'pref_import_ch':
+		case "pref_import_ch":
 			kiwi.prefs_import_ch = +param[1];
 			break;
 
 		// NB: use of 'pref' vs 'prefs'
-		case 'pref_import':
+		case "pref_import":
 			prefs_import_cb(param[1], kiwi.prefs_import_ch);
 			break;
 
-		case 'adc_clk_nom':
+		case "adc_clk_nom":
 			extint.adc_clock_nom_Hz = +param[1];
 			break;
 
-		case 'notify_msg':
+		case "notify_msg":
 		   s = w3_json_to_html('notify_msg', param[1]);
 			console.log('notify_msg: '+ s);
 			if (confirmation.displayed) break;
@@ -3470,7 +3484,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
          setTimeout(confirmation_panel_close, 3000);
 			break;
 
-		case 'kiwi_kick':
+		case "kiwi_kick":
 		   p = decodeURIComponent(param[1]).split(',');
 		   var kicked = +p[0];
 		   //console.log('kiwi_kick kicked='+ kicked);
@@ -3483,9 +3497,10 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
          confirmation_show_content(s, 425, 75, null, 'red');
 			break;
 		
-		case 'snr_stats':
+		case "snr_stats":
+         kiwi.snr_measuring = false;
 		   p = param[1].split(',');
-         kiwi_snr_stats(p[0], p[1]);
+         kiwi_snr_stats(p[0], p[1], 0);
          break;
 
 		case "extint_list_json":

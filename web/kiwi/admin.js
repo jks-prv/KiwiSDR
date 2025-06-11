@@ -459,8 +459,7 @@ function control_html()
    var n_camp_u = [ 'disable camping' ];
    for (i = 1; i <= max_camp; i++)
       n_camp_u[i] = i.toFixed(0);
-   var snr_interval_u = [ 'disable', 'hourly', '4 hours', '6 hours', '24 hours' ];
-   var snr_interval = [ 0, 1, 4, 6, 24 ];
+   var snr_interval_u = [ 'disable', 'hourly', '4 hours', '6 hours', '24 hours', '1 min', '5 min', '10 min', 'custom' ];
 
 	var s3 =
 		'<hr>' +
@@ -501,14 +500,26 @@ function control_html()
 				   'signal-to-noise ratio (SNR) at the specified interval. <br>' +
 				   'Access SNR data in JSON format using <br>' +
 				   'URL of the form: <i>my_kiwi:8073/snr</i>'
-				)
+				),
+				w3_div('id-snr-remain w3-margin-top w3-bold')
 			), 30,
 			
 			w3_divs('/w3-tspace-8',
-            w3_checkbox_get_param('//w3-label-inline', 'Timestamp SNR with local time', 'snr_local_time', 'admin_bool_cb', true),
+			   w3_div('',
+               w3_checkbox_get_param('//w3-label-inline', 'Timestamp SNR with local time', 'snr_local_time', 'admin_bool_cb', true),
+               w3_checkbox_get_param('//w3-label-inline', 'Also measure ham bands and AM BCB', 'snr_meas_ham', 'admin_bool_cb', false),
+               w3_checkbox_get_param('//w3-label-inline', 'Measure on antenna change (after 5 second delay)', 'snr_meas_ant_sw', 'admin_bool_cb', false),
+               w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'admin_int_cb'),
+               w3_text('w3-margin-T-8 w3-text-teal w3-bold', 'Custom band:'),
+               w3_inline('w3-valign w3-gap-16 w3-halign-space-between/',
+                  w3_input_get('', 'Freq lo (kHz)', 'snr_meas_custom_lo', 'admin_int_cb'),
+                  w3_input_get('', 'Freq hi (kHz)', 'snr_meas_custom_hi', 'admin_int_cb'),
+                  w3_input_get('', 'Zoom', 'snr_meas_custom_zoom', 'admin_int_cb')
+               )
+            ),
             w3_inline('w3-margin-top w3-valign/',
                w3_button('w3-aqua', 'Measure SNR now', 'control_snr_measure_cb'),
-               w3_div('id-msg-snr id-msg-snr-now w3-margin-left w3-text-black')
+               w3_div('id-msg-snr-now w3-margin-left w3-text-black')
             )
          )
 		) +
@@ -543,7 +554,8 @@ function control_user_kick_cb(id, idx)
 
 function control_snr_measure_cb(id, idx)
 {
-   w3_innerHTML('id-msg-snr-now', 'measuring..');
+   kiwi.snr_measuring = true;
+   w3_innerHTML('id-msg-snr-now', w3_icon('', 'fa-refresh fa-spin', 24) + ' &nbsp; measuring..');
 	ext_send('SET snr_meas');
 }
 

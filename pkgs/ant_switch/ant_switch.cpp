@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <strings.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -122,6 +123,22 @@ void ant_switch_task_start(const char *cmd)
         (q_wr == q_rd)? "PROMPT" : "QUEUED", q_wr, q_rd, cmd);
     q_wr = (q_wr+1) & (N_CMD_Q-1);
     TaskWakeupF(antsw.task_tid, TWF_CANCEL_DEADLINE);
+    
+    char c = cmd[0];
+    if ((c == 'g' || isdigit(c)) && cfg_true("snr_meas_ant_sw")) {
+        bool report = false;
+        if (c == 'g') {
+            antsw.snr_ant = 0;
+            report = true;
+        } else {
+            if (sscanf(cmd, "%d", &antsw.snr_ant) == 1) {
+                report = true;                
+            }
+        }
+        if (report && SNR_meas_tid) {
+            TaskWakeupFP(SNR_meas_tid, TWF_NEW_DEADLINE, TO_VOID_PARAM(SEC_TO_USEC(5)));
+        }
+    }
 }
 
 void ant_switch_curl_cmd(char *antenna, int rx_chan);
@@ -241,6 +258,7 @@ void ant_switch_find_default_ant(bool mark_as_default)
 	        ant_switch_setantenna(ant, -1);
 	        kiwi_asfree(ant);
             ant_switch_request_status(1);
+            antsw.snr_ant = i;
 
 	        break;
 	    }

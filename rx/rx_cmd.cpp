@@ -1824,7 +1824,8 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 if (loc_free) cfg_string_free(loc);
                 if (grid_free) cfg_string_free(grid);
 
-                sb = kstr_asprintf(sb, ",\"sa\":%d,\"sh\":%d,\"sl\":%d", snr_all, freq.isOffset? -1 : snr_HF,
+                sb = kstr_asprintf(sb, ",\"sa\":%d,\"sh\":%d,\"tr\":%d,\"sl\":%d", snr_all, freq.isOffset? -1 : snr_HF,
+                    kiwi.snr_meas_active? -1 : (u4_t) (TaskWakeupF(SNR_meas_tid, TWF_TIME_REMAINING) / 1000000LL),
                     kiwi.spectral_inversion_lockout? 1:0);
             #endif
 

@@ -77,6 +77,7 @@ typedef struct {
 	tid_t task_tid;
 	int notify_rx_chan;
 	bool using_ground, using_tstorm;
+	int snr_ant;
 
 	#define N_ANT N_SHMEM_STATUS_STR_SMALL
 	char last_ant[N_ANT];
