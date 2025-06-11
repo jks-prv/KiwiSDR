@@ -216,7 +216,7 @@ struct TASK {
 
 static bool task_package_init;
 static int max_task;
-static TASK Tasks[MAX_TASKS], *cur_task, *last_task_run, *busy_helper_task, *itask;
+static TASK Tasks[MAX_TASKS], *cur_task, *last_task_run, *busy_helper_task, *snd_itask;
 static ctx_t ctx[MAX_TASKS]; 
 static TaskQ_t TaskQ[NUM_PRIORITY];
 static u64_t last_dump;
@@ -224,8 +224,8 @@ static u4_t idle_us;
 static u4_t task_all_hist[N_HIST];
 static u4_t previous_prio_inversion;
 
-static int itask_tid;
-static u64_t itask_last_tstart;
+static int snd_itask_tid;
+static u64_t snd_itask_last_tstart;
 
 
 // NB: These use static buffers. The intent is that these are called as args in other printfs (short lifetime).
@@ -399,11 +399,11 @@ void TaskDump(u4_t flags)
 	    soft_fail, spi.retry, spi_delay, asan_used);
 
 	if (flags & TDUMP_LOG)
-	//lfprintf(printf_type, "Tttt Pd# cccccccc xxx.xxx xxxxx.xxx xxx.x%% xxxxxx xxxxx xxxxx xxx xxxxx xxx xxxx.xxxuu xxx%% cN\n");
-	  lfprintf(printf_type, "     I # RWSPBLHq   run S    max mS   cpu%%  #runs  cmds   st1       st2       deadline stk%% ch task______ where___________________\n");
+	//lfprintf(printf_type, "Tttt Pd# cccccccc xxx.xxx xxxxx.xxx xxx.x%% xxxxxx xxxxx xxxxx xxx xxxxx xxx xxx.xxxuu xxx%% cN\n");
+	  lfprintf(printf_type, "     I # RWSPBLHq   run S    max mS   cpu%%  #runs  cmds   st1       st2      deadline stk%% ch task______ where___________________\n");
 	else
-	//lfprintf(printf_type, "Tttt Pd# cccccccc xxx.xxx xxxxx.xxx xxx.x%% xxxxxx xxxxx xxxxx xxx xxxxx xxx xxxxx xxxxx xxxxx xxxx.xxxuu xxx%% cN\n");
-	  lfprintf(printf_type, "     I # RWSPBLHq   run S    max mS   cpu%%  #runs  cmds   st1       st2       #wu   nrs retry   deadline stk%% ch task______ where___________________ longest ________________\n");
+	//lfprintf(printf_type, "Tttt Pd# cccccccc xxx.xxx xxxxx.xxx xxx.x%% xxxxxx xxxxx xxxxx xxx xxxxx xxx xxxxx xxxxx xxxxx xxx.xxxuu xxx%% cN\n");
+	  lfprintf(printf_type, "     I # RWSPBLHq   run S    max mS   cpu%%  #runs  cmds   st1       st2       #wu   nrs retry  deadline stk%% ch task______ where___________________ longest ________________\n");
 
     NextTask("TaskDump");
 	u64_t now_us = timer_us64();
@@ -423,36 +423,23 @@ void TaskDump(u4_t flags)
 		float f_longest = ((float) t->longest) / 1e3;
 
 		float deadline=0;
-		const char *dline = "", *dunit = "";
+		char *dline;
+		const char *dunit = "";
 		if (t->deadline > 0) {
 	        now_us = timer_us64();      // update now_us since this loop does a NextTask()
 		    if (t->deadline < now_us) {
-		        dline = "has past";
+		        dline = strdup("has past");
 		    } else {
-                deadline = (float) (t->deadline - now_us);
-                deadline /= 1e3;            // _mmm.uuu msec
-                dunit = "ms";
-                if (deadline >= 3600000) {  // >= 60 min
-                    deadline /= 3600000;    // hhhh.fff hr
-                    dunit = "Hr";
-                } else
-                if (deadline >= 60000) {    // >= 60 secs
-                    deadline /= 60000;      // mmmm.fff min
-                    dunit = "Mn";
-                } else
-                if (deadline >= 1000) {     // >= 1 sec
-                    deadline /= 1000;       // ssss.fff sec
-                    dunit = "s";
-                }
-                dline = stnprintf(0, "%8.3f%-2s", deadline, dunit);
+                dline = kiwi_fmt_usec((double) (t->deadline - now_us));
             }
-		}
+		} else
+		    dline = strdup("");
 		
 		int rx_channel = (t->flags & CTF_RX_CHANNEL)? (t->flags & CTF_CHANNEL) : -1;
 		const char *rx_s = (rx_channel == -1)? "  " : stnprintf(1, "c%d", rx_channel);
 
 		if (flags & TDUMP_LOG)
-		lfprintf(printf_type, "%c%03d %c%d%c %c%c%c%c%c%c%c%c %7.3f %9.3f %5.1f%% %6s %5d %5d %-3s %5d %-3s %10s %3d%c %s %-10s %-24s\n",
+		lfprintf(printf_type, "%c%03d %c%d%c %c%c%c%c%c%c%c%c %7.3f %9.3f %5.1f%% %6s %5d %5d %-3s %5d %-3s %9s %3d%c %s %-10s %-24s\n",
 		    (t == ct)? '*':'T', i, (t->flags & CTF_PRIO_INVERSION)? 'I':'P', t->priority, t->lock_marker,
 			t->stopped? 'T':'R', t->wakeup? 'W':'_', t->sleeping? 'S':'_', t->pending_sleep? 'P':'_', t->busy_wait? 'B':'_',
 			t->lock.wait? 'L':'_', t->lock.hold? 'H':'_', t->minrun? 'q':'_',
@@ -463,7 +450,7 @@ void TaskDump(u4_t flags)
 			rx_s, t->name, t->where? t->where : "-"
 		);
 		else
-		lfprintf(printf_type, "%c%03d %c%d%c %c%c%c%c%c%c%c%c %7.3f %9.3f %5.1f%% %6s %5d %5d %-3s %5d %-3s %5d %5d %5d %10s %3d%c %s %-10s %-24s %-24s\n",
+		lfprintf(printf_type, "%c%03d %c%d%c %c%c%c%c%c%c%c%c %7.3f %9.3f %5.1f%% %6s %5d %5d %-3s %5d %-3s %5d %5d %5d %9s %3d%c %s %-10s %-24s %-24s\n",
 		    (t == ct)? '*':'T', i, (t->flags & CTF_PRIO_INVERSION)? 'I':'P', t->priority, t->lock_marker,
 			t->stopped? 'T':'R', t->wakeup? 'W':'_', t->sleeping? 'S':'_', t->pending_sleep? 'P':'_', t->busy_wait? 'B':'_',
 			t->lock.wait? 'L':'_', t->lock.hold? 'H':'_', t->minrun? 'q':'_',
@@ -474,6 +461,7 @@ void TaskDump(u4_t flags)
 			dline, t->stack_hiwat*100 / t->ctx->stack_size_u64, (t->flags & CTF_STACK_MED)? 'M' : ((t->flags & CTF_STACK_LARGE)? 'L' : '%'),
 			rx_s, t->name, t->where? t->where : "-", t->long_name? t->long_name : "-"
 		);
+		kiwi_asfree(dline);
 		
 		bool detail = false;
 		if (t->lock.waiting)
@@ -613,10 +601,10 @@ static void task_init(TASK *t, int id, funcP_t funcP, void *param, const char *n
 		busy_helper_task = t;
 	}
 
-	if (flags & CTF_POLL_INTR) {
-		assert(!itask);
-		itask = t;
-		itask_tid = id;
+	if (flags & CTF_POLL_SND_INTR) {
+		assert(!snd_itask);
+		snd_itask = t;
+		snd_itask_tid = id;
 	}
 
 	TenQ(t, priority);
@@ -890,47 +878,41 @@ void TaskCheckStacks(bool report)
 	if (stk_panic) panic("TaskCheckStacks");
 }
 
-bool itask_run;
+bool snd_itask_run;
 static ipoll_from_e last_from = CALLED_FROM_INIT;
 static const char *poll_from[] = { "INIT", "NEXTTASK", "LOCK", "SPI", "FASTINTR" };
 
 void TaskPollForInterrupt(ipoll_from_e from)
 {
-	if (!itask) {
+	if (!snd_itask) {
 		return;
 	}
 
-	if (GPIO_READ_BIT(SND_INTR) && itask->sleeping) {
+	if (snd_itask && GPIO_READ_BIT(SND_INTR) && snd_itask->sleeping) {
 		evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("CALLED_FROM_%s TO INTERRUPT TASK <===========================",
 			poll_from[from]));
 
 		// can't call TaskWakeup() from within NextTask()
 		if (from == CALLED_WITHIN_NEXTTASK) {
-			itask->wu_count++;
-			RUNNABLE_YES(itask);
-            itask->wake_param = TO_VOID_PARAM(itask->last_run_time);  // return how long task ran last time
-			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from CALLED_WITHIN_NEXTTASK of itask, wake_param=%d", poll_from[from], itask->wake_param));
+			snd_itask->wu_count++;
+			RUNNABLE_YES(snd_itask);
+            snd_itask->wake_param = TO_VOID_PARAM(snd_itask->last_run_time);  // return how long task ran last time
+			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from CALLED_WITHIN_NEXTTASK of snd_itask, wake_param=%d", poll_from[from], snd_itask->wake_param));
 		} else {
-			TaskWakeup(itask_tid);
-			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from TaskWakeup of itask", poll_from[from]));
-		}
-	} else {
-		if (last_from != CALLED_WITHIN_NEXTTASK) {	// eliminate repeated messages from idle loop
-			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("CALLED_FROM_%s %s <===========================",
-				poll_from[from], itask->sleeping? "NO PENDING INTERRUPT" : "INTERRUPT TASK PENDING"));
-			last_from = from;
+			TaskWakeup(snd_itask_tid);
+			evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("from %s, return from TaskWakeup of snd_itask", poll_from[from]));
 		}
 	}
+    #ifdef EV_MEAS
+	    else {
+            if (last_from != CALLED_WITHIN_NEXTTASK) {	// eliminate repeated messages from idle loop
+                evNT(EC_TASK_INTR, EV_NEXTTASK, -1, "PollIntr", evprintf("CALLED_FROM_%s %s <===========================",
+                    poll_from[from], snd_itask->sleeping? "NO PENDING INTERRUPT" : "INTERRUPT TASK PENDING"));
+                last_from = from;
+            }
+        }
+    #endif
 }
-
-#if 0
-void TaskFastIntr()
-{
-	if (GPIO_READ_BIT(SND_INTR)) {
-		TaskPollForInterrupt(CALLED_FROM_FASTINTR);
-	}
-}
-#endif
 
 void TaskRemove(int id)
 {
@@ -1240,10 +1222,11 @@ void _NextTask(const char *where, u4_t param, u_int64_t pc)
 					} else
 
 					if (!t->stopped && t->long_run) {
-						u4_t last_time_run = now_us - itask_last_tstart;
-						if (!itask || !itask_run || (itask_run && last_time_run < 4000)) {
+						u4_t last_time_run = now_us - snd_itask_last_tstart;
+						
+						if (!snd_itask || !snd_itask_run || (snd_itask_run && last_time_run < 4000)) {
 							evNT(EC_EVENT, EV_NEXTTASK, -1, "NextTask", evprintf("OKAY for LONG RUN %s, interrupt last ran @%.6f, %d us ago",
-								task_s(t), (float) itask_last_tstart / 1000000, last_time_run));
+								task_s(t), (float) snd_itask_last_tstart / 1000000, last_time_run));
 							//if (ev_dump) evNT(EC_DUMP, EV_NEXTTASK, ev_dump, "NextTask", evprintf("DUMP IN %.3f SEC", ev_dump/1000.0));
 							t->long_run = false;
 							
@@ -1263,7 +1246,7 @@ void _NextTask(const char *where, u4_t param, u_int64_t pc)
                             #endif
                             #if 0
                             evNT(EC_EVENT, EV_NEXTTASK, -1, "not elig", evprintf("NOT OKAY for LONG RUN %s, interrupt last ran @%.6f, %d us ago",
-                                task_s(t), (float) itask_last_tstart / 1000000, last_time_run));
+                                task_s(t), (float) snd_itask_last_tstart / 1000000, last_time_run));
                             if (ev_dump) evNT(EC_DUMP, EV_NEXTTASK, ev_dump, "not elig", evprintf("DUMP IN %.3f SEC", ev_dump/1000.0));
                             #endif
                         }
@@ -1365,7 +1348,7 @@ void _NextTask(const char *where, u4_t param, u_int64_t pc)
 	#endif
 	
 	t->tstart_us = now_us;
-	if (t->flags & CTF_POLL_INTR) itask_last_tstart = now_us;
+	if (t->flags & CTF_POLL_SND_INTR) snd_itask_last_tstart = now_us;
 
 	ct->last_last_run_time = ct->last_run_time;
 	ct->last_run_time = quanta;
@@ -1427,7 +1410,9 @@ static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, u4_t *wakeup
 	if (usec > 0) {
     	t->deadline = timer_us64() + usec;
         t->wakeup_test = NULL;
-    	kiwi_snprintf_buf(t->reason, "(%.3f msec) ", (float) usec/1000.0);
+        char *usec_s = kiwi_fmt_usec(usec);
+    	kiwi_snprintf_buf(t->reason, "(%s) ", usec_s);
+    	kiwi_asfree(usec_s);
 		evNT(EC_EVENT, EV_NEXTTASK, -1, "TaskSleep", evprintf("sleeping usec %lld %s Qrunnable %d", usec, task_ls(t), t->tq->runnable));
 	} else {
 	    assert(usec == 0);
@@ -1496,17 +1481,33 @@ void TaskSleepID(int id, u64_t usec)
     }
 }
 
-void _TaskWakeup(tid_t tid, u4_t flags, void *wake_param)
+u64_t _TaskWakeup(tid_t tid, u4_t flags, void *wake_param)
 {
     TASK *t = Tasks + tid;
     
-    if (!t->valid) return;
+    if (!t->valid) return 0;
 
+    if (flags & (TWF_TIME_REMAINING | TWF_NEW_DEADLINE)) {
+        u64_t remaining = 0, now_us = timer_us64();
+
+        if (flags & TWF_TIME_REMAINING) {
+            if (t->deadline > now_us)
+                remaining = t->deadline - now_us;
+        }
+        if (flags & TWF_NEW_DEADLINE) {
+            //TaskDump(TDUMP_LOG | PRINTF_REG);
+            t->deadline = now_us + (u64_t) FROM_VOID_PARAM(wake_param);
+            //TaskDump(TDUMP_LOG | PRINTF_REG);
+        }
+        //printf("_TaskWakeup tid=%d flags=0x%x wake_param=%lld remaining=%lld\n", tid, flags, (u64_t) FROM_VOID_PARAM(wake_param), remaining);
+        return remaining;
+    }
+    
     // Don't wakeup a task sleeping on a time interval (as opposed to unconditional sleeping)
     // This is generally the default.
     if ((flags & TWF_CANCEL_DEADLINE) == 0 && t->deadline > 0) {
         evNT(EC_EVENT, EV_NEXTTASK, -1, "TaskWakeup", evprintf("%s still deadline of %08x|%08x", task_ls(t), PRINTF_U64_ARG(t->deadline)));
-        return;
+        return 0;
     }
 
     t->deadline = 0;	// cancel any outstanding deadline
@@ -1515,7 +1516,7 @@ void _TaskWakeup(tid_t tid, u4_t flags, void *wake_param)
 		assert(!t->stopped || (t->stopped && t->lock.wait));
 		t->pending_sleep = FALSE;
         evNT(EC_EVENT, EV_NEXTTASK, -1, "TaskWakeup", evprintf("%s not already sleeping, wakeup %d", task_ls(t), t->wakeup));
-		return;	// not already sleeping
+		return 0;	// not already sleeping
 	}
 	
 	// Should be okay to do this to a third-party task because e.g., in the case of waking up
@@ -1538,6 +1539,8 @@ void _TaskWakeup(tid_t tid, u4_t flags, void *wake_param)
     	kiwi_snprintf_buf(t->reason, "TaskWakeup: HIGHER PRIO %p", wake_param);
     	NextTask(t->reason);
     }
+    
+    return 0;
 }
 
 u4_t TaskPriority(int priority)

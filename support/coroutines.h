@@ -77,22 +77,22 @@ void TaskInitCfg();
 void TaskCollect();
 
 #define CTF_CHANNEL         (MAX_RX_CHANS - 1)
-#define CTF_RX_CHANNEL		0x0010
-#define CTF_BUSY_HELPER		0x0020
-#define CTF_POLL_INTR		0x0040
-#define CTF_FORK_CHILD		0x0080
-#define CTF_PRIO_INVERSION  0x0100
-#define CTF_NO_CHARGE		0x0200
-#define CTF_TNAME_FREE		0x0400
-#define CTF_NO_PRIO_INV		0x0800
+#define CTF_RX_CHANNEL		0x00010
+#define CTF_BUSY_HELPER		0x00020
+#define CTF_POLL_SND_INTR   0x00040
+#define CTF_FORK_CHILD		0x00100
+#define CTF_PRIO_INVERSION  0x00200
+#define CTF_NO_PRIO_INV		0x00400
+#define CTF_NO_CHARGE		0x00800
 
-#define CTF_STACK_SIZE		0x3000
-#define CTF_STACK_REG		0x0000
-#define CTF_STACK_MED		0x1000
-#define CTF_STACK_LARGE		0x2000
+#define CTF_STACK_SIZE		0x03000
+#define CTF_STACK_REG		0x00000
+#define CTF_STACK_MED		0x01000
+#define CTF_STACK_LARGE		0x02000
 
-#define CTF_SOFT_FAIL		0x4000
-#define CTF_NO_LOG		    0x8000
+#define CTF_TNAME_FREE		0x04000
+#define CTF_SOFT_FAIL		0x08000
+#define CTF_NO_LOG		    0x10000
 
 C_LINKAGE(int _CreateTask(funcP_t entry, const char *name, void *param, int priority, u4_t flags, int f_arg));
 #define CreateTask(f, param, priority)				    _CreateTask(f, #f, param, priority, 0, 0)
@@ -118,22 +118,24 @@ void TaskSleepID(int id, u64_t usec);
 #define TWF_NONE                0x0000
 #define TWF_CHECK_WAKING        0x0001
 #define TWF_CANCEL_DEADLINE     0x0002
+#define TWF_NEW_DEADLINE        0x0004
+#define TWF_TIME_REMAINING      0x0008
 
-C_LINKAGE(void _TaskWakeup(int id, u4_t flags, void *wake_param));
-#define TaskWakeup(id)          _TaskWakeup(id, TWF_NONE, 0);
-#define TaskWakeupF(id,f)       _TaskWakeup(id, f, 0);
-#define TaskWakeupFP(id,f,p)    _TaskWakeup(id, f, p);
-#define TaskWakeupP(id,p)       _TaskWakeup(id, TWF_NONE, p);
+C_LINKAGE(u64_t _TaskWakeup(int id, u4_t flags, void *wake_param));
+#define TaskWakeup(id)          _TaskWakeup(id, TWF_NONE, 0)
+#define TaskWakeupF(id,f)       _TaskWakeup(id, f, 0)
+#define TaskWakeupFP(id,f,p)    _TaskWakeup(id, f, p)
+#define TaskWakeupP(id,p)       _TaskWakeup(id, TWF_NONE, p)
 
 typedef enum {
 	CALLED_FROM_INIT,
 	CALLED_WITHIN_NEXTTASK,
-	CALLED_FROM_LOCK,
+	CALLED_FROM_LOCK,           // not currently used
 	CALLED_FROM_SPI,
 	CALLED_FROM_FASTINTR,
 } ipoll_from_e;
 
-extern bool itask_run;
+extern bool snd_itask_run;
 void TaskPollForInterrupt(ipoll_from_e from);
 #define TaskFastIntr(s)			if (GPIO_READ_BIT(SND_INTR)) TaskPollForInterrupt(CALLED_FROM_FASTINTR);
 
@@ -190,10 +192,10 @@ int TaskStat(u4_t s1_func, int s1_val, const char *s1_units, u4_t s2_func DEF_0,
 #define NT_FAST_CHECK   3
 
 C_LINKAGE(void _NextTask(const char *s, u4_t param, u_int64_t pc));
-#define NextTaskW(s,p)  _NextTask(s, p, 0);
-#define NextTask(s)		NextTaskW(s, NT_NONE);
-#define NextTaskP(s,p)  NextTaskW(s, p);
-#define NextTaskFast(s) NextTaskW(s, NT_FAST_CHECK);
+#define NextTaskW(s,p)  _NextTask(s, p, 0)
+#define NextTask(s)		NextTaskW(s, NT_NONE)
+#define NextTaskP(s,p)  NextTaskW(s, p)
+#define NextTaskFast(s) NextTaskW(s, NT_FAST_CHECK)
 
 #define LOCK_MAGIC_B	0x10ccbbbb
 #define LOCK_MAGIC_E	0x10cceeee
