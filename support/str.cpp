@@ -913,6 +913,27 @@ char *kiwi_str_clean(char *str, int type)
     return str;
 }
 
+char *kiwi_fmt_usec(double usec)
+{
+    usec /= 1e3;            // mmm.uuu ms
+    const char *dunit = "ms";
+    if (usec >= 3600000) {  // >= 60 min
+        usec /= 3600000;    // _hh.fff hr
+        dunit = "Hr";
+    } else
+    if (usec >= 60000) {    // >= 60 secs
+        usec /= 60000;      // _mm.fff min
+        dunit = "Mn";
+    } else
+    if (usec >= 1000) {     // >= 1 sec
+        usec /= 1000;       // _ss.fff sec
+        dunit = "s";
+    }
+    char *rv;
+    asprintf(&rv, "%7.3f%-2s", usec, dunit);
+    return rv;
+}
+
 void kiwi_chrrep(char *str, const char from, const char to)
 {
 	char *cp;
@@ -1252,4 +1273,3 @@ u2_t str_hash_lookup(str_hash_t *hashp, char *str, bool debug)
     
     return key;
 }
-

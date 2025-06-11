@@ -90,6 +90,9 @@ int kiwi_split(char *ocp, char **mbuf, const char *delims, str_split_t argv[], i
 enum { KCLEAN_DELETE = 1, KCLEAN_REPL_SPACE = 2 };
 char *kiwi_str_clean(char *s, int type);
 
+// caller must kiwi_asfree() result
+char *kiwi_fmt_usec(double usec);
+
 extern char ASCII[256][8];
 extern char COLORS[8][16];
 
