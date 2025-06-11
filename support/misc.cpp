@@ -97,25 +97,37 @@ int median_i(int *i, int len, int *pct_1, int *pct_2)
      return i[len/2];
 }
 
-static int misc_miso_busy[2];
+static int misc_miso_busy[N_MISC_MISO], misc_miso_user[N_MISC_MISO];
+static char misc_miso_tname[N_MISC_MISO][16];
 
-SPI_MISO *get_misc_miso(int which)
+SPI_MISO *get_misc_miso(int caller, int which)
 {
-    assert(misc_miso_busy[which] == 0);
+    check(which >= 0 && which < N_MISC_MISO);
+    if (misc_miso_busy[which]) {
+        printf("BUSY: caller=%s(%d) user=%s(%d) which=%d\n",
+            TaskName(), caller, misc_miso_tname[which], misc_miso_user[which], which);
+        dump(DUMP_PANIC);
+        while (1) NextTask("get_misc_miso");
+    }
+    misc_miso_user[which] = caller;
+    strcpy(misc_miso_tname[which], TaskName());
     misc_miso_busy[which]++;
     return &SPI_SHMEM->misc_miso[which];
 }
 
 void release_misc_miso(int which)
 {
+    check(which >= 0 && which < N_MISC_MISO);
     misc_miso_busy[which]--;
+    misc_miso_user[which] = 0;
+    misc_miso_tname[which][0] = '\0';
 }
 
 static int misc_mosi_busy;
 
 SPI_MOSI *get_misc_mosi()
 {
-    assert(misc_mosi_busy == 0);
+    check(misc_mosi_busy == 0);
     misc_mosi_busy++;
     return &SPI_SHMEM->misc_mosi;
 }
@@ -387,7 +399,7 @@ float ecpu_use()
 	
 	if (down) return 0;
 
-	SPI_MISO *cpu = get_misc_miso();
+	SPI_MISO *cpu = get_misc_miso(MISO_ECPU_CTR);
 	spi_get_noduplex(CmdGetCPUCtr, cpu, sizeof(u2_t[3]));
 	release_misc_miso();
 	c = (ctr_t*) &cpu->word[0];

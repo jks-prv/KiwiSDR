@@ -27,9 +27,10 @@ Boston, MA  02110-1301, USA.
 #include <stdarg.h>
 #include <stdlib.h>
 
+#define N_MISC_MISO 3
 void misc_init();
-
-SPI_MISO *get_misc_miso(int which = 0);
+enum get_misc_miso_e { MISO_ECPU_CTR, MISO_ECPU_STK, MISO_CTRL, MISO_STAT, MISO_GETMEM, MISO_ADC_CTR };
+SPI_MISO *get_misc_miso(int caller, int which = 0);
 void release_misc_miso(int which = 0);
 
 SPI_MOSI *get_misc_mosi();

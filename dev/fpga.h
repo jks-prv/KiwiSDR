@@ -33,7 +33,7 @@ typedef union {
         u2_t fpga_id:4, stat_user:4, fpga_ver:4, fw_id:3, ovfl:1;
     };
 } stat_reg_t;
-stat_reg_t stat_get();
+stat_reg_t stat_get(int which = -1);
 
 u64_t fpga_dna();
 u2_t getmem(u2_t addr);
