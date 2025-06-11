@@ -116,6 +116,7 @@ extern time_t mtime_obj_keep_edata_always2_o;
 void webserver_connection_cleanup(conn_t *c);
 
 // client to server
+#define INTERNAL_CONNECTION true
 int web_to_app(conn_t *c, nbuf_t **nbp, bool internal_connection = false);
 void web_to_app_done(conn_t *c, nbuf_t *nb);
 
