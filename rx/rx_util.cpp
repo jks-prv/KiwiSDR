@@ -1226,8 +1226,8 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom = 0)
             }
         }
         
-        printf("SNR_calc-%d min,max=%d,%d noise(50%%)=%d signal(95%%)=%d %ssnr=%d%s\n",
-            band, -(data->min), -(data->max), -(data->pct_50), -(data->pct_95), GREEN, data->snr, NORM);
+        printf("SNR_calc-%d min,max=%d,%d noise(50%%)=%d signal(95%%)=%d snr=%d\n",
+            band, -(data->min), -(data->max), -(data->pct_50), -(data->pct_95), data->snr);
     } else {
         printf("SNR_calc-%d WARNING: not enough bins for meaningful measurement\n", band);
     }
@@ -1421,7 +1421,7 @@ void SNR_meas(void *param)
             #endif
 
             if (on_demand) {
-                printf(YELLOW "SNR_meas: admin measure now %d:%d" NONL, snr_all, freq.offset_kHz? -1 : snr_HF);
+                printf("SNR_meas: admin measure now %d:%d\n", snr_all, freq.offset_kHz? -1 : snr_HF);
                 snd_send_msg(SM_SND_ADM_ALL, SM_NO_DEBUG,
                     "MSG snr_stats=%d,%d", snr_all, freq.offset_kHz? -1 : snr_HF);
             }
@@ -1432,13 +1432,13 @@ void SNR_meas(void *param)
         
         // an on_demand occurs where there is an on-demand request, such as the admin control tab
         // "measure SNR now" button or the /snr?meas control URL
-        printf(CYAN "SNR_meas: SLEEP min=%d" NONL, min);
+        printf("SNR_meas: SLEEP min=%d\n", min);
         kiwi.snr_meas_active = false;
         // rv > 0: deadline expired
         // rv == 0: on-demand measurement or antenna switched
         int rv = (int) FROM_VOID_PARAM(TaskSleepSec(min * 60));
         on_demand = (rv == 0)? true:false;
-        printf(RED "SNR_meas: WAKEUP on_demand=%d snr_ant=%d seq=%d" NONL, on_demand, antsw.snr_ant & SNR_F_ANT, snr_seq);
+        printf("SNR_meas: WAKEUP on_demand=%d snr_ant=%d seq=%d\n", on_demand, antsw.snr_ant & SNR_F_ANT, snr_seq);
     } while (1);
 }
 
