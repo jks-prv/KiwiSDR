@@ -29,8 +29,9 @@ v1.813  June 14, 2025
         JSON output changes to the /snr URL interface:
         The measurement interval field "ihr" (hours) is now "imin" (minutes).
         A new field "ant" shows the antenna that was selected when the measurement was made.
-        A value of zero means antennas are grounded. Note that for antenna mixing setups only the
-        last antenna switched is given. Not all the antennas cumulatively.
+        A value of zero means antennas are grounded or the antenna switch is not configured.
+        Note that for antenna mixing setups only the last antenna switched is given. Not all the
+        antennas cumulatively.
 
     Changes to support camp mode by kiwirecorder: (thanks Ben)
         You may know that when all channels are full, and you try to connect, you are presented with
