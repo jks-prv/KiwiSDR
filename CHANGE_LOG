@@ -3,6 +3,53 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.813  June 14, 2025
+    SNR measurement changes: (thanks VA3ROM et al)
+        Additions to admin control tab, SNR section:
+            New measurement intervals: 1, 5, 10 minutes and custom interval.
+            Remaining minutes to next measurement shown.
+            One custom band definition with frequency/zoom fields.
+            Checkbox to also measure ham bands and AM broadcast band.
+            Checkbox to force measurement after an antenna change.
+
+        Discussion:
+        The custom band, if setup, is added to the current default bands appearing in the
+        my_kiwi:8073/snr query JSON result. There is no user interface feedback if you enter
+        invalid values into the custom band fields. So check your combination of freq lo/hi and zoom
+        carefully to make sure they result in a freq range that fits entirely within a single
+        waterfall span. Otherwise the custom band will be ignored and not appear in the JSON result.
+        
+        The ham/AM band checkbox adds all 12 ham bands and the AM broadcast band to the JSON result.
+        The ITU setting determines the upper freq limit of some bands (e.g. 40m 7200 vs 7300 kHz,
+        AM BCB 1602 vs 1700 kHz).
+        
+        When "measure on antenna change" is active there is a 5 second delay after the last antenna
+        selection before the measurement starts.
+        
+        JSON output changes to the /snr URL interface:
+        The measurement interval field "ihr" (hours) is now "imin" (minutes).
+        A new field "ant" shows the antenna that was selected when the measurement was made.
+        A value of zero means antennas are grounded. Note that for antenna mixing setups only the
+        last antenna switched is given. Not all the antennas cumulatively.
+
+    Changes to support camp mode by kiwirecorder: (thanks Ben)
+        You may know that when all channels are full, and you try to connect, you are presented with
+        a camp/queue panel that allows you to "camp" onto another listener's channel and hear what
+        they are hearing. But without being able to control anything (except volume/mute).
+        Kiwirecorder now has this capability. Changes were needed on the Kiwi side to support this.
+        
+        The envisioned use case is as follows. You have an application running on another computer
+        that processes streamed audio via the netcat option of kiwirecorder. But you want to use
+        a regular Kiwi connection and its full user interface. You just want the netcat stream to
+        "follow" what the Kiwi UI is hearing so your external application can process the same audio.
+        An example of such an application might be a modulation classifier that could never run on
+        the Kiwi itself due to the limited processing power of the Beagle. To achieve this you
+        simply tell kiwirecorder which Kiwi channel number to camp on. In camp mode kiwirecorder
+        will do this instead of making a new, separate connection to the Kiwi.
+    
+    DRM extension: Improved sorting when station schedules are displayed by time.
+    Fixed bug preventing timezone setup when only source of lat/lon was IP address geolocation info.
+
 v1.812  June 1, 2025
     Fixed DRM broken in last release.
     Fixes affecting point-to-point Ethernet connections, e.g. direct to laptop. (thanks Karl-Heinz)
