@@ -1190,7 +1190,7 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom = 0)
         data->fkHz_lo = f_lo; data->fkHz_hi = f_hi;
         int pct_95 = 95;
         int pct_50 = median_i(dB, bins, &pct_95);    // does int qsort on dB array
-        #define TEST_USE_MAX
+        //#define TEST_USE_MAX
         #ifdef TEST_USE_MAX
             pct_95 = dB[bins-1];
         #endif
