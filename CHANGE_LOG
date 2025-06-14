@@ -46,8 +46,10 @@ v1.813  June 14, 2025
         An example of such an application might be a modulation classifier that could never run on
         the Kiwi itself due to the limited processing power of the Beagle. To achieve this you
         simply tell kiwirecorder which Kiwi channel number to camp on. In camp mode kiwirecorder
-        will do this instead of making a new, separate connection to the Kiwi.
+        will do this instead of making a new, separate connection to the Kiwi. Communication over a
+        separate stream back to the Kiwi with application results is still to be implemented.
     
+    Fixed problem with Debian 11 upgrade function on admin backup tab. (thanks 2E0SXX)
     DRM extension: Improved sorting when station schedules are displayed by time.
     Fixed bug preventing timezone setup when only source of lat/lon was IP address geolocation info.
 
