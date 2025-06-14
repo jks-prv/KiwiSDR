@@ -20,6 +20,7 @@ Boston, MA  02110-1301, USA.
 #include "types.h"
 #include "config.h"
 #include "kiwi.h"
+#include "shmem.h"
 #include "rx.h"
 #include "rx_util.h"
 #include "str.h"
@@ -39,6 +40,29 @@ Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 
 bool backup_in_progress;
+
+// consume faster than we produce so (in theory) only a single shmem buffer is needed
+#define SD_CMD_PRODUCE_POLL_MSEC 250
+#define SD_CMD_CONSUME_POLL_MSEC 100
+
+#define SD_CMD_SHMEM_STATUS shmem->status_u4[N_SHMEM_ST_SD_CMD][RX_CHAN0][0]
+#define SD_CMD_SHMEM_ERR    shmem->status_u4[N_SHMEM_ST_SD_CMD][RX_CHAN0][1]
+
+static int _sd_cmd_func(void *param)
+{
+	nbcmd_args_t *args = (nbcmd_args_t *) param;
+	args->cmd_poll_msec = SD_CMD_PRODUCE_POLL_MSEC;
+	if (args->kstr == NULL) {
+	    SD_CMD_SHMEM_STATUS = SHMEM_STATUS_IDLE;
+	    SD_CMD_SHMEM_ERR = args->cmd_stat;
+	    return args->cmd_stat;
+	} else {
+	    char *sp = kstr_sp(args->kstr);
+        kiwi_strncpy(shmem->status_str_large, sp, N_SHMEM_STATUS_STR_LARGE);
+	    SD_CMD_SHMEM_STATUS = SHMEM_STATUS_DONE;
+	    return 0;
+    }
+}
 
 static int sd_cmd(conn_t *conn, const char *cmd, const char *kill1, const char *kill2, const char *cleanup,
     bool from_admin, bool change_espeed)
@@ -67,26 +91,20 @@ static int sd_cmd(conn_t *conn, const char *cmd, const char *kill1, const char *
     send_msg(conn, false, "MSG user_cb=%s", kstr_sp(sb));
     kstr_free(sb);
     
-    #define NBUF 256
-    char *buf = (char *) kiwi_malloc("sd_cmd", NBUF);
     int i, n, err;
     
     sd_copy_in_progress = true;
-    if (kiwi_nonEmptyStr(cleanup)) system(cleanup);
 
-    non_blocking_cmd_t p;
-    p.cmd = cmd;
-    //real_printf("sd_cmd: non_blocking_cmd_popen..\n");
-    non_blocking_cmd_popen(&p);
-    //real_printf("sd_cmd: ..non_blocking_cmd_popen\n");
-    for (i = n = 0; n >= 0; i++) {
-        n = non_blocking_cmd_read(&p, buf, NBUF);
-        //real_printf("sd_cmd: n=%d\n", n);
-        if (n > 0) {
-            //real_printf("sd_cmd: mprintf %d %d <%s>\n", n, strlen(buf), buf);
-            mprintf("%s", buf);
+    non_blocking_cmd_func_foreach("kiwi.sd", cmd, _sd_cmd_func, 0, NO_WAIT);
+
+    SD_CMD_SHMEM_STATUS = SHMEM_STATUS_START;
+    
+    while (SD_CMD_SHMEM_STATUS != SHMEM_STATUS_IDLE) {
+        if (SD_CMD_SHMEM_STATUS == SHMEM_STATUS_DONE) {
+            mprintf("%s\n", shmem->status_str_large);
+            SD_CMD_SHMEM_STATUS = SHMEM_STATUS_START;
         }
-        TaskSleepMsec(250);
+    
         u4_t now = timer_sec();
         if ((now - conn->keepalive_time) > 5) {
             send_msg(conn, false, "MSG keepalive");
@@ -106,15 +124,16 @@ static int sd_cmd(conn_t *conn, const char *cmd, const char *kill1, const char *
             cprintf(conn, "sd_cmd: KICKED\n");
             break;
         }
+
+        TaskSleepMsec(SD_CMD_CONSUME_POLL_MSEC);
     }
-    err = non_blocking_cmd_pclose(&p);
-    //real_printf("sd_cmd: err=%d\n", err);
+
+    err = SD_CMD_SHMEM_ERR;
+    //printf("sd_cmd: err=%d\n", err);
     sd_copy_in_progress = false;
     
     err = (err < 0)? err : WEXITSTATUS(err);
     mprintf("sd_cmd: system returned %d\n", err);
-    kiwi_free("sd_cmd", buf);
-    #undef NBUF
 
     if (restore_espeed_10M) {
         mprintf("Ethernet: restored to 10 mbps\n");
@@ -171,9 +190,7 @@ void sd_backup(conn_t *conn, bool from_admin)
 
 void sd_upgrade(conn_t *conn)
 {
-    //#define UPG_TEST
-    #ifdef UPG_TEST
-    #else
+    if (!kiwi.dbgUs) {
         if (debian_maj >= 11) {
             send_msg(conn, SM_NO_DEBUG, "ADM sd_done=90");
             return;
@@ -183,7 +200,7 @@ void sd_upgrade(conn_t *conn)
             send_msg(conn, SM_NO_DEBUG, "ADM sd_done=91");
             return;
         }
-    #endif
+    }
     
     char *cmd;
     asprintf(&cmd, UPG_CMD);

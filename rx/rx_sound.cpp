@@ -19,8 +19,8 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2018-2024 Christoph Mayer, DL1CH
 
 #include "types.h"
-#include "options.h"
 #include "kiwi.h"
+#include "options.h"
 #include "mode.h"
 #include "printf.h"
 #include "rx.h"
@@ -462,7 +462,7 @@ void c2s_sound(void *param)
 		#define	SND_FLAG_LPF		    0x01
 		#define	SND_FLAG_ADC_OVFL	    0x02
 		#define	SND_FLAG_NEW_FREQ	    0x04
-		#define	SND_FLAG_MODE_IQ	    0x08
+		#define	SND_FLAG_STEREO	        0x08
 		#define SND_FLAG_COMPRESSED     0x10
 		#define SND_FLAG_RESTART        0x20
 		#define SND_FLAG_SQUELCH_UI     0x40
@@ -1304,7 +1304,7 @@ void c2s_sound(void *param)
     
             *flags = 0;
             if (dpump.rx_adc_ovfl) *flags |= SND_FLAG_ADC_OVFL;
-            if (IQ_or_DRM_or_stereo) *flags |= SND_FLAG_MODE_IQ;
+            if (IQ_or_DRM_or_stereo) *flags |= SND_FLAG_STEREO;
             if (s->compression && !IQ_or_DRM_or_stereo && !isWB) *flags |= SND_FLAG_COMPRESSED;
             if (s->squelched || squelched_overload) *flags |= SND_FLAG_SQUELCH_UI;
             if (s->little_endian) *flags |= SND_FLAG_LITTLE_ENDIAN;

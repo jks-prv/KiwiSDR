@@ -144,8 +144,6 @@ TYPEREAL DC_offset_I, DC_offset_Q;
 #define N_MTU 3
 static int mtu_v[N_MTU] = { 1500, 1440, 1400 };
 
-static int snr_interval[] = { 0, 1, 4, 6, 24 };
-
 void update_freqs(bool *update_cfg)
 {
     int srate_idx = cfg_default_int("max_freq", 0, update_cfg);
@@ -383,8 +381,16 @@ void update_vars_from_config(bool called_at_init)
     max_thr = (float) cfg_default_int("overload_mute", -15, &up_cfg);
     cfg_default_bool("agc_thresh_smeter", true, &up_cfg);
     n_camp = cfg_default_int("n_camp", N_CAMP, &up_cfg);
-    snr_meas_interval_hrs = snr_interval[cfg_default_int("snr_meas_interval_hrs", 1, &up_cfg)];
-    snr_local_time = cfg_default_bool("snr_local_time", true, &up_cfg);
+
+    cfg_default_int("snr_meas_interval_hrs", 1, &up_cfg);
+    cfg_default_bool("snr_local_time", true, &up_cfg);
+    cfg_default_bool("snr_meas_ham", false, &up_cfg);
+    cfg_default_bool("snr_meas_ant_sw", false, &up_cfg);
+    cfg_default_int("snr_meas_custom_min", 0, &up_cfg);
+    cfg_default_int("snr_meas_custom_lo", 0, &up_cfg);
+    cfg_default_int("snr_meas_custom_hi", 0, &up_cfg);
+    cfg_default_int("snr_meas_custom_zoom", 0, &up_cfg);
+
     any_preempt_autorun = cfg_default_bool("any_preempt_autorun", true, &up_cfg);
     cfg_default_int("ident_len", IDENT_LEN_NOM, &up_cfg);
     cfg_default_bool("show_geo", true, &up_cfg);

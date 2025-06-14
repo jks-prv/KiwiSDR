@@ -391,7 +391,7 @@ static void snd_service()
         
         last_run_us = timer_us();
         
-        if (!itask_run) {
+        if (!snd_itask_run) {
             spi_set(CmdSetRXNsamps, 0);
             ctrl_clr_set(CTRL_SND_INTR, 0);
         }
@@ -400,7 +400,7 @@ static void snd_service()
 
 }
 
-static void data_pump(void *param)
+static void snd_pump(void *param)
 {
 	evDP(EC_EVENT, EV_DPUMP, -1, "dpump_init", evprintf("INIT: SPI CTRL_SND_INTR %d",
 		GPIO_READ_BIT(SND_INTR)));
@@ -431,7 +431,7 @@ static void data_pump(void *param)
                 cps++;
             }
         #else
-		    TaskSleepReason("wait for interrupt");
+		    TaskSleepReason("snd: wait for intr");
         #endif
 
 		evDP(EC_EVENT, EV_DPUMP, -1, "data_pump", evprintf("WAKEUP: SPI CTRL_SND_INTR %d",
@@ -443,6 +443,7 @@ static void data_pump(void *param)
 		for (int ch=0; ch < rx_chans; ch++) {
 			rx_chan_t *rxc = &rx_channels[ch];
 			if (!rxc->chan_enabled) continue;
+			
 			if (rxc->wb_task) {
                 TaskWakeup(rxc->wb_task);
 			}
@@ -457,10 +458,11 @@ static void data_pump(void *param)
 	}
 }
 
-void data_pump_start_stop()
+void snd_pump_start_stop()
 {
 #ifdef USE_SDR
 	bool no_users = true;
+	
 	for (int i = 0; i < rx_chans; i++) {
         rx_chan_t *rx = &rx_channels[i];
 		if (rx->chan_enabled) {
@@ -470,8 +472,8 @@ void data_pump_start_stop()
 	}
 	
 	// stop the data pump when the last user leaves
-	if (itask_run && no_users) {
-		itask_run = false;
+	if (snd_itask_run && no_users) {
+		snd_itask_run = false;
 		spi_set(CmdSetRXNsamps, 0);
 		ctrl_clr_set(CTRL_SND_INTR, 0);
 		//real_printf("#### STOP dpump\n");
@@ -479,8 +481,8 @@ void data_pump_start_stop()
 	}
 
 	// start the data pump when the first user arrives
-	if (!itask_run && !no_users) {
-		itask_run = true;
+	if (!snd_itask_run && !no_users) {
+		snd_itask_run = true;
 		
 	    for (int i = 0; i < rx_chans; i++) {
             rx_dpump_t *rx = &rx_dpump[i];
@@ -497,7 +499,7 @@ void data_pump_start_stop()
 #endif
 }
 
-void data_pump_init()
+static void data_pump_init()
 {
     #ifdef SND_SEQ_CHECK
         rx_xfer_size = sizeof(rx_data_t::rx_header_t) + (sizeof(iq3_t) * nrx_samps * rx_wb_buf_chans);
@@ -518,7 +520,7 @@ void data_pump_init()
 	rescale = MPOW(2, -RXOUT_SCALE + CUTESDR_SCALE) * (VAL_USE_RX_CICF? MPOW(10, cicf_gain_dB[fw_sel]/20.0) : 1);
 	//printf("data pump: fw_sel=%d RXOUT_SCALE=%d CUTESDR_SCALE=%d cicf_gain_dB=%.1f rescale=%.6g VAL_USE_RX_CICF=%d DC_offset_I=%f DC_offset_Q=%f\n", fw_sel, RXOUT_SCALE, CUTESDR_SCALE, cicf_gain_dB[fw_sel], rescale, VAL_USE_RX_CICF, DC_offset_I, DC_offset_Q);
 
-	CreateTaskF(data_pump, 0, DATAPUMP_PRIORITY, CTF_POLL_INTR);
+	CreateTaskF(snd_pump, 0, DATAPUMP_PRIORITY, CTF_POLL_SND_INTR);
 }
 
 void data_pump_startup()
@@ -537,7 +539,7 @@ void data_pump_dump()
     int n_dpbuf = kiwi.isWB? N_WB_DPBUF : N_DPBUF;
     
     u4_t diff = (rx->wr_pos >= rx->rd_pos)? (rx->wr_pos - rx->rd_pos) : (n_dpbuf - rx->rd_pos + rx->wr_pos);
-    lprintf("data_pump RX_CHAN0 isWB=%d n_dpbuf=%d rd|wr_pos=%d|%d|%d \n",
+    lprintf("data_pump SND RX_CHAN0 isWB=%d n_dpbuf=%d rd|wr_pos=%d|%d|%d \n",
         kiwi.isWB, n_dpbuf, rx->rd_pos, rx->wr_pos, diff);
 }
 

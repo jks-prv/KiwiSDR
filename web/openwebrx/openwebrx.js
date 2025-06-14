@@ -257,7 +257,7 @@ var wf_compression = 1;
 var wf_interp = 13;  // WF_DROP + WF_CIC_COMP by default
 var wf_winf = 2;     // WIN_BLACKMAN_HARRIS
 var snd_winf = 0;    // WIN_BLACKMAN_NUTTALL
-var debug_v = 0, debug_v2 = 0;;  // a general value settable from the URI to be used during debugging
+var debug_v = 0, debug_v2 = 0;  // a general value settable from the URI to be used during debugging
 var debug_v_set = false, debug_v2_set = false;
 var sb_trace = 0;
 var kiwi_gc = 1;
@@ -3075,8 +3075,12 @@ function mouse_freq_add(evt)
       ctx.font = px(th) +' monospace';
       if (owrx.mouse_freq.vis)
          ctx.clearRect(owrx.mouse_freq.tx, owrx.mouse_freq.cy, owrx.mouse_freq.tw,th);
-      var f_kHz = (canvas_get_dspfreq(cx) + kiwi.freq_offset_Hz)/1000;
-      owrx.mouse_freq.text = format_frequency("{x}", f_kHz, 1, freq_field_prec(f_kHz));
+      if (evt.shiftKey && evt.ctrlKey) {
+         owrx.mouse_freq.text = Math.round(cx / waterfall_width * 1024);
+      } else {
+         var f_kHz = (canvas_get_dspfreq(cx) + kiwi.freq_offset_Hz)/1000;
+         owrx.mouse_freq.text = format_frequency("{x}", f_kHz, 1, freq_field_prec(f_kHz));
+      }
 
       //w3_innerHTML('id-mouse-freq', owrx.mouse_freq.text);
       tw = Math.ceil(ctx.measureText(owrx.mouse_freq.text).width);
@@ -6151,7 +6155,7 @@ function wf_audio_FFT(audio_data, samps)
    
    var i, j, k, ki;
    
-   //console.log('iq='+ audio_mode_iq +' comp='+ audio_compression +' samps='+ samps);
+   //console.log('stereo='+ audio_mode_stereo +' comp='+ audio_compression +' samps='+ samps);
 
    var iq = ext_is_IQ_or_stereo_curmode();
    var lsb = ext_mode(cur_mode).LSB_SAL;

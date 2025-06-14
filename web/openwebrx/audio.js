@@ -37,7 +37,7 @@ var audio = {
    SND_FLAG_LPF:           0x0001,
    SND_FLAG_ADC_OVFL:      0x0002,
    SND_FLAG_NEW_FREQ:      0x0004,
-   SND_FLAG_MODE_IQ:       0x0008,
+   SND_FLAG_STEREO:        0x0008,
    SND_FLAG_COMPRESSED:    0x0010,
    SND_FLAG_RESTART:       0x0020,
    SND_FLAG_SQUELCH_UI:    0x0040,
@@ -80,7 +80,7 @@ var audio_stat_last_time;
 var audio_running;
 var audio_started;
 var audio_last_output_offset;
-var audio_mode_iq;
+var audio_mode_stereo;
 var audio_compression;
 var audio_use_first_sent_comp_value = false;
 var audio_stat_input_epoch;
@@ -179,7 +179,7 @@ var audio_convolver;
       if (reconnect) disconnect(), buffering = true
       setup onprocess()
    recv:
-      if (->IQ || change comp) connect(reconnect=1)
+      if (->IQ/stereo || change comp) connect(reconnect=1)
       prepare()
       if (!started && prepared.len > min_nbuf) start()
    prepare:
@@ -207,7 +207,7 @@ audio_recv()      web socket data received
 audio_start()     audio_recv() when enough initially buffered
 audio_connect()   audio_start() initially
                   audio_watchdog_process() to recover
-                  audio_recv() IQ/comp change with new buf queues, resamp, comp etc.
+                  audio_recv() IQ/stereo comp change with new buf queues, resamp, comp etc.
 audio_prepare()   audio_recv()
 
 */
@@ -256,7 +256,7 @@ function audio_init(is_local, less_buffering, compression)
    // reset globals
    audio_started = false;
    audio_last_output_offset = 0;
-   audio_mode_iq = false;
+   audio_mode_stereo = false;
    audio_compression = compression? true:false;
    audio_stat_input_epoch = -1;
    audio_prepared_buffers = [];
@@ -565,7 +565,7 @@ function audio_connect(reconnect)
 	audio_stat_output_epoch = -1;
    audio_change_LPF_delayed = false;
 
-	if (audio.d) kiwi_log('audio_connect: reconnect='+ reconnect +' audio_mode_iq='+ audio_mode_iq +' audio_channels='+ audio_channels +' audio_compression='+ audio_compression);
+	if (audio.d) kiwi_log('audio_connect: reconnect='+ reconnect +' audio_mode_stereo='+ audio_mode_stereo +' audio_channels='+ audio_channels +' audio_compression='+ audio_compression);
 	audio_source = audio_context.createScriptProcessor(audio_buffer_size, 0, audio_channels);		// in_nch=0, out_nch=audio_channels
 	audio_source.onaudioprocess = audio_onprocess;
    audio_disconnected = false;
@@ -842,8 +842,8 @@ function audio_recv(data, ws, firstChars)
 	var sm8 = new Uint8Array(data, 8, 2);
 	var smeter = (sm8[0] << 8) | sm8[1];
 	
-	var isIQ = (flags & audio.SND_FLAG_MODE_IQ);
-	var offset = isIQ? 20 : 10;
+	var isStereo = (flags & audio.SND_FLAG_STEREO);
+	var offset = isStereo? 20 : 10;
 	var data_view = new DataView(data, offset);
 	var bytes = data_view.byteLength;
 		
@@ -859,9 +859,9 @@ function audio_recv(data, ws, firstChars)
       audio_prepared_flags = [];
       audio_prepared_smeter = [];
       
-      if (audio_mode_iq) {
+      if (audio_mode_stereo) {
          // because we haven't figured out how to make rational_resampler_cc() work yet
-         // punt and just use old resampler for IQ mode
+         // punt and just use old resampler for IQ/stereo mode
          resample_new = false; resample_old = !resample_new;
       } else {
          audio_adpcm.index = audio_adpcm.previousValue = 0;
@@ -870,10 +870,10 @@ function audio_recv(data, ws, firstChars)
 
       audio_connect(1);
 	} else
-	if (isIQ) {
+	if (isStereo) {
 	
-	   // current buffer flag is IQ mode
-	   if (!audio_mode_iq) {    // !IQ -> IQ transition
+	   // current buffer flag is IQ/stereo mode
+	   if (!audio_mode_stereo) {    // !IQ/stereo -> IQ/stereo transition
          audio_prepared_buffers = [];
          audio_prepared_buffers2 = [];
          audio_prepared_seq = [];
@@ -881,23 +881,23 @@ function audio_recv(data, ws, firstChars)
          audio_prepared_smeter = [];
          
          // because we haven't figured out how to make rational_resampler_cc() work yet
-         // punt and just use old resampler for IQ mode
+         // punt and just use old resampler for IQ/stereo mode
          resample_new = false; resample_old = !resample_new;
-         audio_mode_iq = true;
+         audio_mode_stereo = true;
 	      audio_channels = 2;
-         if (audio.d) console.log('AUDIO !IQ -> IQ transition');
+         if (audio.d) console.log('AUDIO !IQ/stereo -> IQ/stereo transition');
          audio_connect(1);
 	   }
 	   audio_last_compression = audio_compression = false;
-	   audio_mode_iq = true;
+	   audio_mode_stereo = true;
 	} else {
 	
-	   // current buffer flag is not IQ mode
+	   // current buffer flag is not IQ/stereo mode
 	   // need to restart audio in two cases:
-	   //    transition from IQ -> !IQ
-	   //    when in !IQ there is a change in compression flag
+	   //    transition from IQ/stereo -> !IQ/stereo
+	   //    when in !IQ/stereo there is a change in compression flag
 	   var compressed = (flags & audio.SND_FLAG_COMPRESSED)? true:false;
-	   if (audio_mode_iq || (audio_compression != compressed)) {
+	   if (audio_mode_stereo || (audio_compression != compressed)) {
          audio_prepared_buffers = [];
          audio_prepared_buffers2 = [];
          audio_prepared_seq = [];
@@ -907,22 +907,22 @@ function audio_recv(data, ws, firstChars)
          resample_new = kiwi_isMobile()? false : resample_new_default; resample_old = !resample_new;
 
          if (audio.d) {
-            if (audio_mode_iq)
-               console.log('AUDIO IQ -> !IQ transition, compressed='+ compressed);
+            if (audio_mode_stereo)
+               console.log('AUDIO IQ/stereo -> !IQ/stereo transition, compressed='+ compressed);
             else
-               console.log('AUDIO !IQ, compression change='+ (audio_compression != compressed) +' compressed='+ compressed);
+               console.log('AUDIO !IQ/stereo, compression change='+ (audio_compression != compressed) +' compressed='+ compressed);
          }
 
-         audio_mode_iq = false;
+         audio_mode_stereo = false;
 	      audio_channels = 1;
          audio_last_compression = audio_compression = compressed;
          audio_connect(1);
 	   }
 	   
       audio_last_compression = audio_compression = compressed;
-	   audio_mode_iq = false;
+	   audio_mode_stereo = false;
 	}
-   audio_channels = audio_mode_iq? 2 : 1;
+   audio_channels = audio_mode_stereo? 2 : 1;
 
    var now, msec;
 	if (audio_compression) {
@@ -940,14 +940,14 @@ function audio_recv(data, ws, firstChars)
 	      now = Date.now();
 	      msec = now - audio.last_msec;
 	      audio.last_msec = now;
-	      if (isIQ)
-	         console.log('ANC IQ Q'+ audio_prepared_buffers.length +'/'+ audio_prepared_buffers2.length +' '+ audio_channels +'ch '+ msec);
+	      if (isStereo)
+	         console.log('ANC Stereo Q'+ audio_prepared_buffers.length +'/'+ audio_prepared_buffers2.length +' '+ audio_channels +'ch '+ msec);
 	      else
 	         console.log('ANC Q'+ audio_prepared_buffers.length +' '+ audio_channels +'ch '+ msec);
 	   }
       //console.log('AUDIO NO_COMP bytes='+ bytes);
-		samps = bytes/2;		// i.e. non-IQ: 1024 8b bytes ->  512 16b real samps,                     1KB -> 1KB, 1:1 no compression
-		                     // i.e.     IQ: 2048 8b bytes -> 1024 16b  I,Q samps (512 IQ samp pairs), 2KB -> 2KB, 1:1 never compression
+		samps = bytes/2;		// i.e. non-IQ/stereo: 1024 8b bytes ->  512 16b real samps,                     1KB -> 1KB, 1:1 no compression
+		                     // i.e.     IQ/stereo: 2048 8b bytes -> 1024 16b  I,Q samps (512 IQ/stereo samp pairs), 2KB -> 2KB, 1:1 never compression
       for (i=0; i < samps; i++) {
          audio_data_unsquelched[i] = data_view.getInt16(i*2, (flags & audio.SND_FLAG_LITTLE_ENDIAN)? true:false);   // convert from network byte-order
          audio_data[i] = squelched? 1 : audio_data_unsquelched[i];
@@ -984,7 +984,7 @@ function audio_record(compressed)
    var i;
    
 	// Recording hooks
-   var samples = audio_mode_iq ? 1024 : (compressed ? 2048 : 512);
+   var samples = audio_mode_stereo ? 1024 : (compressed ? 2048 : 512);
 
    // maintain the pre-record / pre-squelch buffer
    var pre_record_buffer = function() {
@@ -1187,7 +1187,7 @@ function audio_prepare(data, data_len, seq, flags, smeter)
 		//		1) filter high-frequency artifacts from using decompression with new resampler
 		//			(built-in LPF of new resampler without compression is, by definition, sufficient)
 		//		2) filter high-frequency artifacts from using old resampler (interpolator), independent of decompression
-		//       (old resampler is currently used with IQ mode)
+		//       (old resampler is currently used with IQ/stereo mode)
 		// LPF must track passband in all cases via audio_recompute_LPF().
 		// Use the firdes_lowpass_f() routine of the new resampler code to construct the filter for the convolver.
 	

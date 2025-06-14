@@ -84,7 +84,6 @@ typedef struct {
 
 extern dpump_t dpump;
 
-void data_pump_start_stop();
-void data_pump_init();
+void snd_pump_start_stop();
 void data_pump_startup();
 void data_pump_dump();

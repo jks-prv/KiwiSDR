@@ -852,7 +852,6 @@ function drm_schedule_time_freq(sort_by_freq)
    var s = drm.using_default? w3_div('w3-yellow w3-padding w3-show-inline-block', 'can\'t contact kiwisdr.com<br>using default data') : '';
    var narrow = drm.narrow_listing;
    drm.stations_freq = [];
-   var now = kiwi_UTC_minutes()/60.0;
    
    for (i = j = 0; i < drm.stations.length; i++) {
       var o = drm.stations[i];
@@ -861,14 +860,13 @@ function drm_schedule_time_freq(sort_by_freq)
    }
 
    drm.stations_freq.sort(function(a,b) {
-      var a_cmp = sort_by_freq? a.f : a.b;
-      var b_cmp = sort_by_freq? b.f : b.b;
-      var a_India = a.s.startsWith('India,');
-      var b_India = b.s.startsWith('India,');
-      
-      // always put India MW at bottom of schedules
-      if ( a_India && !b_India) return  1;
-      if (!a_India &&  b_India) return -1;
+      var a_cmp = sort_by_freq? a.f : a.br;
+      var b_cmp = sort_by_freq? b.f : b.br;
+      if (!sort_by_freq && a_cmp == b_cmp) { a_cmp = a.h; b_cmp = b.h; }
+
+      // always put MW at bottom of schedules
+      if ( a.mw && !b.mw) return  1;
+      if (!a.mw &&  b.mw) return -1;
 
       //if (sort_by_freq)
          return ((a_cmp < b_cmp)? -1 : ((a_cmp > b_cmp)? 1:0));
@@ -995,7 +993,7 @@ function drm_get_stations_done_cb(stations)
    try {
       drm.stations = [];
       var idx = 0;
-      var region, station, freq, begin, end, wrap, prefix, verified, url;
+      var region, station, freq, begin, end, wrap, prefix, verified, url, mw, br, hrs;
       var is_India_MW = false;
       stations.forEach(function(obj, i) {    // each object of outer array
          prefix = '';
@@ -1017,6 +1015,7 @@ function drm_get_stations_done_cb(stations)
                   var ae = ar1[i1];
                   if (i1 == 0 && isString(ae)) { url = ae; continue; }
                   freq = ae;
+                  mw = (freq >= 530 && freq <= 1700);
                   i1++;
                
                   ae = ar1[i1];
@@ -1027,13 +1026,18 @@ function drm_get_stations_done_cb(stations)
                         verified = (begin < 0 || end < 0);
                         if (drm.database != 0) verified = !verified;
                         begin = Math.abs(begin); end = Math.abs(end);
+                        br = Math.round(begin);
                         wrap = (end < begin);
                         if (wrap) {
-                           drm.stations.push( { t:drm.MULTI, f:freq, s:station, r:region, b:begin, e:24, v:verified, u:url, i:idx } );
+                           hrs = Math.round(24 - begin);
+                           drm.stations.push( { t:drm.MULTI, f:freq, s:station, r:region, b:begin, e:24, br:br, h:hrs, v:verified, u:url, i:idx, mw:mw } );
                            idx++;
-                           drm.stations.push( { t:drm.MULTI, f:freq, s:station, r:region, b:0, e:end, v:verified, u:url, i:idx } );
-                        } else
-                           drm.stations.push( { t:drm.MULTI, f:freq, s:station, r:region, b:begin, e:end, v:verified, u:url, i:idx } );
+                           hrs = Math.round(end);
+                           drm.stations.push( { t:drm.MULTI, f:freq, s:station, r:region, b:0, e:end, br:br, h:hrs, v:verified, u:url, i:idx, mw:mw } );
+                        } else {
+                           hrs = Math.round(end - begin);
+                           drm.stations.push( { t:drm.MULTI, f:freq, s:station, r:region, b:begin, e:end, br:br, h:hrs, v:verified, u:url, i:idx, mw:mw } );
+                        }
                         idx++;
                      }
                   } else {
@@ -1042,13 +1046,18 @@ function drm_get_stations_done_cb(stations)
                      verified = (begin < 0 || end < 0);
                      if (drm.database != 0) verified = !verified;
                      begin = Math.abs(begin); end = Math.abs(end);
+                     br = Math.round(begin);
                      wrap = (end < begin);
                      if (wrap) {
-                        drm.stations.push( { t:drm.SINGLE, f:freq, s:station, r:region, b:begin, e:24, v:verified, u:url, i:idx } );
+                        hrs = Math.round(24 - begin);
+                        drm.stations.push( { t:drm.SINGLE, f:freq, s:station, r:region, b:begin, e:24, br:br, h:hrs, v:verified, u:url, i:idx, mw:mw } );
                         idx++;
-                        drm.stations.push( { t:drm.SINGLE, f:freq, s:station, r:region, b:0, e:end, v:verified, u:url, i:idx } );
-                     } else
-                        drm.stations.push( { t:drm.SINGLE, f:freq, s:station, r:region, b:begin, e:end, v:verified, u:url, i:idx } );
+                        hrs = Math.round(end);
+                        drm.stations.push( { t:drm.SINGLE, f:freq, s:station, r:region, b:0, e:end, br:br, h:hrs, v:verified, u:url, i:idx, mw:mw } );
+                     } else {
+                        hrs = Math.round(end - begin);
+                        drm.stations.push( { t:drm.SINGLE, f:freq, s:station, r:region, b:begin, e:end, br:br, h:hrs, v:verified, u:url, i:idx, mw:mw } );
+                     }
                      idx++;
                   }
                }

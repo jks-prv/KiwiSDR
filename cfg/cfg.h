@@ -72,6 +72,7 @@ extern cfg_t cfg_cfg, cfg_adm, cfg_dx, cfg_dxcfg, cfg_dxcomm, cfg_dxcomm_cfg;
 #define cfg_walk(id, cb, p1, p2)            _cfg_walk(&cfg_cfg, id, cb, p1, p2)
 
 #define cfg_int(name, err, flags)			_cfg_int(&cfg_cfg, name, err, flags)
+#define cfg_int_(name)			            _cfg_int(&cfg_cfg, name, NULL, CFG_REQUIRED)
 #define cfg_set_int(name, val)				_cfg_set_int(&cfg_cfg, name, val, CFG_SET, 0)
 #define cfg_set_int_save(name, val)			_cfg_set_int(&cfg_cfg, name, val, CFG_SET | CFG_SAVE, 0)
 #define cfg_rem_int(name)					_cfg_set_int(&cfg_cfg, name, 0, CFG_REMOVE, 0)

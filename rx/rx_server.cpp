@@ -122,7 +122,7 @@ void rx_enable(int chan, rx_chan_action_e action)
 	}
 	
 	#ifdef USE_SDR
-	    data_pump_start_stop();
+	    snd_pump_start_stop();
 	#endif
 }
 
@@ -291,7 +291,7 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 	// new connection needed
 	const char *uri_ts = mc->uri;
 	if (uri_ts[0] == '/') uri_ts++;
-	conn_printf("#### new connection: %s:%d %s\n", mc->remote_ip, mc->remote_port, uri_ts);
+	conn_printf("#### new connection: %s:%d %s %s\n", mc->remote_ip, mc->remote_port, uri_ts, mc->query);
 	
 	bool isKiwi_UI = false, isNo_WF = false, isWF_conn = false, isWB_conn = false, isWebSocket, isKrec = false;
 	u64_t tstamp;
@@ -348,6 +348,10 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
     // specifically asked for waterfall-containing channel (e.g. kiwirecorder WF-only mode)
     if (strstr(uri_m, "W/F"))
         isWF_conn = true;
+    
+    // kiwirecorder requested camping on websocket connection
+    if (mc->query && strstr(mc->query, "camp"))
+        force_camp = true;
 	
     //printf("URL <%s> <%s> <%s>\n", mc->uri, mc->query, uri_m);
 	for (i=0; rx_streams[i].uri; i++) {
@@ -602,7 +606,6 @@ retry:
                     //cprintf(c, "rx=%d force_camp=%d\n", rx_n, force_camp);
                     if (force_camp) {
                         rx_n = -1;
-                        force_camp = false;
                     } else {
                         // Attempt to kick a channel using autorun.
                         // Be careful not to let an autorun process kick another autorun.
@@ -629,7 +632,7 @@ retry:
                     }
                     
                     #ifdef USE_SDR
-                        if (isKiwi_UI && (mon_total < monitors_max)) {
+                        if ((isKiwi_UI || force_camp) && (mon_total < monitors_max)) {
                             // turn first connection when no channels (SND or WF) into MONITOR
                             c->type = STREAM_MONITOR;
                             st = &rx_streams[STREAM_MONITOR];
@@ -652,6 +655,8 @@ retry:
                         conn_init(c);
                         return NULL;
                     }
+
+                    force_camp = false;
                 } else {
                     if (st->type == STREAM_WATERFALL && rx_n >= _wf_chans) {
                 

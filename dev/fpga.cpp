@@ -41,7 +41,7 @@ Boston, MA  02110-1301, USA.
 
 u2_t ctrl_get()
 {
-	SPI_MISO *ctrl = get_misc_miso();
+	SPI_MISO *ctrl = get_misc_miso(MISO_CTRL);
 	
 	spi_get_noduplex(CmdCtrlGet, ctrl, sizeof(ctrl->word[0]));
 	u2_t rv = ctrl->word[0];
@@ -93,13 +93,16 @@ void ctrl_clr_ser_dev()
     ctrl_clr_set(CTRL_SER_MASK, CTRL_SER_NONE);
 }
 
-stat_reg_t stat_get()
+stat_reg_t stat_get(int which)
 {
-    SPI_MISO *status = get_misc_miso();
+    if (which == -1) which = 1;
+    //real_printf("G-%s ", TaskName()); fflush(stdout);
+    SPI_MISO *status = get_misc_miso(MISO_STAT, which);
     stat_reg_t stat;
     
     spi_get_noduplex(CmdGetStatus, status, sizeof(stat));
-	release_misc_miso();
+	release_misc_miso(which);
+    //real_printf("R-%s ", TaskName()); fflush(stdout);
     stat.word = status->word[0];
 
     return stat;
@@ -107,7 +110,7 @@ stat_reg_t stat_get()
 
 u2_t getmem(u2_t addr)
 {
-	SPI_MISO *mem = get_misc_miso();
+	SPI_MISO *mem = get_misc_miso(MISO_GETMEM);
 	
 	memset(mem->word, 0x55, sizeof(mem->word));
 	spi_get_noduplex(CmdGetMem, mem, 4, addr);

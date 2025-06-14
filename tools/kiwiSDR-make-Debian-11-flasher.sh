@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2025 John Seamons, ZL4VO/KF6VO
 
+DEBUG=
+#DEBUG=TRUE
 D11=KiwiSDR_BBG_BBB_Debian_11
 SHA=${D11}.sha
 IMG=${D11}.img.xz
@@ -13,11 +15,16 @@ yellow="printf \033[103m"
 cyan="printf \033[106m"
 norm="printf \033[m"
 
+if [ "x${DEBUG}" = "xTRUE" ] ; then
+    $red; echo "DEBUG"; $norm
+fi
 $yellow; echo "takes about 20 minutes depending on the speed of your Internet and SD card"; $norm
 echo " "
 
 error_exit () {
-    rm -f ${SHA} ${IMG}*
+    if [ "x${DEBUG}" != "xTRUE" ] ; then
+        rm -f ${SHA} ${IMG}*
+    fi
 	exit ${err}
 }
 
@@ -59,16 +66,21 @@ if [ ! -b "${destination}" ] ; then
 fi
 
 cd /root
-#rm -f ${SHA}
-rm -f ${SHA} ${IMG}*
+if [ "x${DEBUG}" = "xTRUE" ] ; then
+    rm -f ${SHA}
+else
+    rm -f ${SHA} ${IMG}*
+fi
 
 FREE=$((`df . | tail -1 | /usr/bin/tr -s ' ' | cut -d' ' -f 4`/1000))
 echo "disk free ${FREE} MB"
 NEED=800
-if [ ${FREE} -lt ${NEED} ] ; then
-	$red; echo "not enough free disk space! (need ${NEED} MB)"; $norm
-	err=92
-    error_exit
+if [ "x${DEBUG}" != "xTRUE" ] ; then
+    if [ ${FREE} -lt ${NEED} ] ; then
+        $red; echo "not enough free disk space! (need ${NEED} MB)"; $norm
+        err=92
+        error_exit
+    fi
 fi
 
 echo " "
@@ -98,12 +110,18 @@ if [ "x${SHASUM}" != "x${SHA_CHECK}" ] ; then
 fi
 $cyan; echo "checksums match"; $norm
 
+if [ "x${DEBUG}" = "xTRUE-OFF" ] ; then
+    err=222
+    error_exit
+fi
+
 echo " "
 echo "copying image to SD card ${destination}"
 xzcat ${FILE} | dd of=${destination} || write_failure
 flush_cache
 echo "reloading partition table of ${destination}"
-sfdisk -R ${destination}
+sfdisk -R ${destination} || true
+sfdisk -V ${destination} || true
 sleep 2
 
 echo " "
@@ -123,9 +141,12 @@ umount /media/sd
 #echo "flush_cache"
 flush_cache
 
-#$red; echo "CAUTION: not removing file ${IMG}"; $norm
-#rm -f ${SHA}
-rm -f ${SHA} ${IMG}*
+if [ "x${DEBUG}" = "xTRUE" ] ; then
+    $red; echo "CAUTION: not removing file ${IMG}"; $norm
+    rm -f ${SHA}
+else
+    rm -f ${SHA} ${IMG}*
+fi
 
 echo " "
 $green; echo "SD card copy complete"; $norm

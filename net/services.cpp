@@ -98,6 +98,7 @@ static void get_TZ(void *param)
 		// lowest priority since it will be least accurate
 		if (!haveLatLon && kiwi.ipinfo_ll_valid) {
 			lprintf("TIMEZONE: lat/lon from ipinfo: %s\n", kiwi.ipinfo_loc);
+			lat = kiwi.ipinfo_lat; lon = kiwi.ipinfo_lon;
 			haveLatLon = true;
 		}
 		

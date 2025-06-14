@@ -32,10 +32,12 @@ typedef struct {
 
 typedef struct {
 	const char *cmd;
+	int cmd_poll_msec;
 	funcPR_t func;
 	int func_param, func_rval;
 	int poll_msec;
 	char *kstr;
+	int cmd_stat;
 } nbcmd_args_t;
 
 #define NO_WAIT         0

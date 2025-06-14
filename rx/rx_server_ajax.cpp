@@ -465,19 +465,22 @@ fail:
     	char *sb = (char *) "[", *sb2;
 		for (i = 0; i < SNR_MEAS_MAX; i++) {
             SNR_meas_t *meas = &SNR_meas_data[i];
-            if (!meas->valid) continue;
-            asprintf(&sb2, "%s{\"ts\":\"%s\",\"seq\":%u,\"utc\":%d,\"ihr\":%d,\"snr\":[",
-				need_comma1? ",":"", meas->tstamp, meas->seq, meas->is_local_time? 0:1, snr_meas_interval_hrs);
+            if (!(meas->flags & SNR_F_VALID)) continue;
+            asprintf(&sb2, "%s{\"ts\":\"%s\",\"seq\":%u,\"utc\":%d,\"imin\":%d,\"ant\":%d,\"snr\":[",
+				need_comma1? ",\n\n":"", var_ctime_static(&meas->tstamp), meas->seq, (meas->flags & SNR_F_TLOCAL)? 0:1,
+				snr_meas_interval_min, meas->flags & SNR_F_ANT);
         	need_comma1 = true;
         	sb = kstr_cat(sb, kstr_wrap(sb2));
         	
+        	bool ham = cfg_true("snr_meas_ham");
         	bool need_comma2 = false;
-			for (j = 0; j < SNR_MEAS_NDATA; j++) {
+			for (j = 0; j < SNR_NBANDS; j++) {
+			    if (!ham && j == SNR_BAND_HAM_LF) break;
         		SNR_data_t *data = &meas->data[j];
-        		if (data->f_lo == 0 && data->f_hi == 0) continue;
-				asprintf(&sb2, "%s{\"lo\":%d,\"hi\":%d,\"min\":%d,\"max\":%d,\"p50\":%d,\"p95\":%d,\"snr\":%d}",
-					need_comma2? ",":"", data->f_lo, data->f_hi,
-					data->min, data->max, data->pct_50, data->pct_95, data->snr);
+        		if (data->fkHz_lo == 0 && data->fkHz_hi == 0) continue;
+				asprintf(&sb2, "%s\n{\"lo\":%.0f,\"hi\":%.0f,\"min\":%d,\"max\":%d,\"p50\":%d,\"p95\":%d,\"snr\":%d}",
+					need_comma2? ",":"", data->fkHz_lo, data->fkHz_hi,
+					-(data->min), -(data->max), -(data->pct_50), -(data->pct_95), data->snr);
         		need_comma2 = true;
 				sb = kstr_cat(sb, kstr_wrap(sb2));
 			}
@@ -506,7 +509,7 @@ fail:
 		}
 		//printf("/adc REQUESTED from %s\n", ip_unforwarded);
 		
-        SPI_MISO *adc_ctr = get_misc_miso();
+        SPI_MISO *adc_ctr = get_misc_miso(MISO_ADC_CTR);
             spi_get_noduplex(CmdGetADCCtr, adc_ctr, sizeof(u2_t[3]));
         release_misc_miso();
         c = (ctr_t*) &adc_ctr->word[0];
@@ -603,7 +606,7 @@ fail:
         for (nsamps = 0; nsamps < 4 && !early_exit;) {
             do {
                 if (nb) web_to_app_done(iconn.csnd, nb);
-                n = web_to_app(iconn.csnd, &nb, /* internal_connection */ true);
+                n = web_to_app(iconn.csnd, &nb, INTERNAL_CONNECTION);
                 if (n == 0) continue;
                 if (n == -1) {
                     early_exit = true;

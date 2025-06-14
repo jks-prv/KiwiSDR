@@ -123,7 +123,8 @@ typedef struct {
     
     #define N_SHMEM_ST_ANT_SW 0
     #define N_SHMEM_ST_WSPR 1
-    #define N_SHMEM_STATUS 2
+    #define N_SHMEM_ST_SD_CMD 2
+    #define N_SHMEM_STATUS 3
     
     #define SHMEM_STATUS_IDLE 0
     #define SHMEM_STATUS_START 1

@@ -979,6 +979,7 @@ int web_request(struct mg_connection *mc, int ev, void *ev_data)
         str_split_t qs[NQS+1];
         n = kiwi_split((char *) mc->query, &r_buf, "&", qs, NQS);
         for (i=0; i < n; i++) {
+            //printf("QUERY(%d) <%s>\n", i, qs[i].str);
             if (strcmp(qs[i].str, "nocache") == 0) {
                 web_nocache = true;
                 printf("WEB nocache\n");
