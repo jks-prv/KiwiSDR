@@ -4681,7 +4681,7 @@ function admin_show_help()
                'needs to intercept every key. Consider what happens when you run a screen-based text editor ' +
                'like "nano". It makes use of essentially all keys, including control characters and arrow keys. ' +
                'So if the console is open and you are on another tab and cycle into <x1>Console</x1> by using "c" ' +
-               'the cycling will "lock" as soon as the console tab is hiy. Because the open console now captures ' +
+               'the cycling will "lock" as soon as the console tab is hit. Because the open console now captures ' +
                'all the keystrokes. In this case simply use the mouse to move on to another tab.'
             ),
             
