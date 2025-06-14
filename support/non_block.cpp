@@ -196,7 +196,7 @@ static void _non_blocking_cmd_forall(void *param)
 	fcntl(pfd, F_SETFL, O_NONBLOCK);
 
 	do {
-		TaskSleepMsec(NON_BLOCKING_POLL_MSEC);
+		TaskSleepMsec(args->cmd_poll_msec);
 		n = read(pfd, chunk, NCHUNK);
 		if (n > 0) {
 		    chunk[n] = '\0';
@@ -226,6 +226,7 @@ int non_blocking_cmd_func_forall(const char *pname, const char *cmd, funcPR_t fu
 {
 	nbcmd_args_t *args = (nbcmd_args_t *) kiwi_imalloc("non_blocking_cmd_func_forall", sizeof(nbcmd_args_t));
 	args->cmd = cmd;
+	args->cmd_poll_msec = NON_BLOCKING_POLL_MSEC;
 	args->func = func;
 	args->func_param = param;
 	int status = child_task(pname, _non_blocking_cmd_forall, poll_msec, (void *) args);
@@ -238,7 +239,7 @@ int non_blocking_cmd_func_forall(const char *pname, const char *cmd, funcPR_t fu
 // child task that calls a function for every chunk of non-blocking command input read
 static void _non_blocking_cmd_foreach(void *param)
 {
-	int i, n, func_rv = 0;
+	int i, n;
 	nbcmd_args_t *args = (nbcmd_args_t *) param;
 
 	#define NCHUNK (1024 + 1)    // NB: must be odd
@@ -264,42 +265,46 @@ static void _non_blocking_cmd_foreach(void *param)
 			call = true;
 		} else {
 		    if (call) {
-		        char *t_kstr = args->kstr;
 		        char *sp = kstr_sp(args->kstr);
 		        
-		        // remove possible padding spaces sent to flush stream
-		        // e.g. from our common.php::realtime_msg() used by tdoa.php on server
-		        char *ep = sp + strlen(sp) - 1;
-		        while (*ep == ' ' && ep != sp) ep--;
-		        *(ep+1) = '\0';
+		        #if 0
+		            char *t_kstr = args->kstr;
+                    // remove possible padding spaces sent to flush stream
+                    // e.g. from our common.php::realtime_msg() used by tdoa.php on server
+                    char *ep = sp + strlen(sp) - 1;
+                    while (*ep == ' ' && ep != sp) ep--;
+                    *(ep+1) = '\0';
+                    
+                    // remove extra byte that seems to be added to each buffer sent
+                    // when padding mechanism is being used
+                    for (i = 0; i < offset; i++) {
+                        char c = sp[i];
+                        if (c != ' ')
+                            printf("_non_blocking_cmd_foreach WARN @%d %x<%c>\n", i, c, c);
+                    }
+                    args->kstr = kstr_cat(sp + offset, NULL);
+                    kstr_free(t_kstr);
+                    offset++;
+                    sp = kstr_sp(args->kstr);
+		        #endif
 		        
-		        // remove extra byte that seems to be added to each buffer sent
-		        // when padding mechanism is being used
-		        for (i = 0; i < offset; i++) {
-		            char c = sp[i];
-		            if (c != ' ')
-		                printf("_non_blocking_cmd_foreach WARN @%d %x<%c>\n", i, c, c);
-		        }
-		        args->kstr = kstr_cat(sp + offset, NULL);
-		        kstr_free(t_kstr);
-		        offset++;
-		        sp = kstr_sp(args->kstr);
 		        int sl = strlen(sp);
 		        //printf("_non_blocking_cmd_foreach FUNC sl=%d <%s>\n", sl, sp);
-		        if (sl) func_rv = args->func((void *) args);
+		        if (sl) args->func((void *) args);
 	            kstr_free(args->kstr);
 	            args->kstr = NULL;
 		        call = false;
 		    }
-		    TaskSleepMsec(NON_BLOCKING_POLL_MSEC);
+		    TaskSleepMsec(args->cmd_poll_msec);
 		}
 	} while (n > 0 || (n == -1 && errno == EAGAIN));
 	// end-of-input when n == 0 or error
     //printf("_non_blocking_cmd_foreach END\n");
 
-	pclose(pf);
-
-	child_exit(func_rv);
+    // give func() the option of returning cmd stat or something else
+	args->cmd_stat = pclose(pf);    // yes, pclose returns exit status of cmd
+    args->kstr = NULL;
+    child_exit(args->func((void *) args));
 	#undef NCHUNK
 }
 
@@ -313,6 +318,7 @@ int non_blocking_cmd_func_foreach(const char *pname, const char *cmd, funcPR_t f
 {
 	nbcmd_args_t *args = (nbcmd_args_t *) kiwi_imalloc("non_blocking_cmd_func_foreach", sizeof(nbcmd_args_t));
 	args->cmd = cmd;
+	args->cmd_poll_msec = NON_BLOCKING_POLL_MSEC;
 	args->func = func;
 	args->func_param = param;
 	int status = child_task(pname, _non_blocking_cmd_foreach, poll_msec, (void *) args);
