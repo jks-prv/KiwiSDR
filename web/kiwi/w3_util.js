@@ -825,7 +825,8 @@ function w3_iterate_parent(el_id, func)
 // excludes text and comment nodes
 function w3_iterate_children(el_id, func)
 {
-	var el = w3_el(w3_add_id(el_id));
+	var el = w3_el(el_id);
+	if (!el) return null;
 	
 	for (var i=0; i < el.children.length; i++) {    // el.children is a collection, can't use forEach()
 		var child_el = el.children[i];
@@ -837,6 +838,7 @@ function w3_iterate_children(el_id, func)
 function w3_iterateDeep_children(el_id, func, level)
 {
 	var el = w3_el(el_id);
+	if (!el) return null;
 	if (isUndefined(level)) level = 0;
 	
 	for (var i=0; i < el.children.length; i++) {    // el.children is a collection, can't use forEach()
