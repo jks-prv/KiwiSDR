@@ -57,8 +57,11 @@ Boston, MA  02110-1301, USA.
 #ifdef CONN_PRINTF
 	#define conn_printf(fmt, ...) \
 		printf(fmt, ## __VA_ARGS__)
+	#define conn_printf2(conn, fmt, ...) \
+		cprintf(conn, fmt, ## __VA_ARGS__)
 #else
 	#define conn_printf(fmt, ...)
+	#define conn_printf2(conn, fmt, ...)
 #endif
 
 conn_t conns[N_CONNS];
@@ -349,10 +352,6 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
     if (strstr(uri_m, "W/F"))
         isWF_conn = true;
     
-    // kiwirecorder requested camping on websocket connection
-    if (mc->query && strstr(mc->query, "camp"))
-        force_camp = true;
-	
     //printf("URL <%s> <%s> <%s>\n", mc->uri, mc->query, uri_m);
 	for (i=0; rx_streams[i].uri; i++) {
 		st = &rx_streams[i];
@@ -578,8 +577,8 @@ retry:
                 int preempt = 0;
                 int free = rx_chan_free_count(flags, &rx_n, &heavy, &preempt);
                 int inuse = rx_chans - free - preempt;
-                conn_printf("%s cother=%p isKiwi_UI=%d isWF_conn=%d isNo_WF=%d inuse=%d/%d preempt=%d use_rx=%d heavy=%d locked=%d %s\n",
-                    st->uri, cother, isKiwi_UI, isWF_conn, isNo_WF, inuse, rx_chans, preempt, rx_n, heavy, is_locked,
+                conn_printf("%s cother=%p isKiwi_UI=%d isWF_conn=%d isNo_WF=%d isKrec=%d inuse=%d/%d preempt=%d use_rx=%d heavy=%d locked=%d %s\n",
+                    st->uri, cother, isKiwi_UI, isWF_conn, isNo_WF, isKrec, inuse, rx_chans, preempt, rx_n, heavy, is_locked,
                     (flags == RX_COUNT_ALL)? "RX_COUNT_ALL" : ((flags == RX_COUNT_NO_WF_FIRST)? "RX_COUNT_NO_WF_FIRST" : "RX_COUNT_NO_WF_AT_ALL"));
             
                 // possibly deny new user connection if DRM has locked and drm_nreg_chans exceeded
@@ -601,11 +600,14 @@ retry:
                         }
                     }
                 }
-    
-                if (rx_n == -1 || force_camp) {
-                    //cprintf(c, "rx=%d force_camp=%d\n", rx_n, force_camp);
-                    if (force_camp) {
+
+                // isKrec needed here because for kiwirecorder force_camp won't have been
+                // set by any previous regular HTTP access as is the case for Kiwi connections
+                if (rx_n == -1 || force_camp || isKrec) {
+                    conn_printf2(c, "rx=%d force_camp=%d isKrec=%d\n", rx_n, force_camp, isKrec);
+                    if (force_camp || isKrec) {
                         rx_n = -1;
+                        force_camp = false;
                     } else {
                         // Attempt to kick a channel using autorun.
                         // Be careful not to let an autorun process kick another autorun.
@@ -632,7 +634,7 @@ retry:
                     }
                     
                     #ifdef USE_SDR
-                        if ((isKiwi_UI || force_camp) && (mon_total < monitors_max)) {
+                        if ((isKiwi_UI || isKrec) && (mon_total < monitors_max)) {
                             // turn first connection when no channels (SND or WF) into MONITOR
                             c->type = STREAM_MONITOR;
                             st = &rx_streams[STREAM_MONITOR];
@@ -655,8 +657,6 @@ retry:
                         conn_init(c);
                         return NULL;
                     }
-
-                    force_camp = false;
                 } else {
                     if (st->type == STREAM_WATERFALL && rx_n >= _wf_chans) {
                 
