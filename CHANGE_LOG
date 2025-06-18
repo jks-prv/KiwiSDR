@@ -3,6 +3,15 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.814  June 18, 2025
+    Fixed problem with URL camping caused by adding kiwirecorder camping. (thanks F5AFY)
+
+    SNR measurement:
+        When changing the interval menu to a value over one hour the correct time wasn't set on
+        32-bit architecture Beagles (e.g. BBG/BBB/BBAI, but not BBAI-64).
+    
+    HFDL extension: "Show flights" checkbox now works again.
+
 v1.813  June 14, 2025
     SNR measurement changes: (thanks VA3ROM et al)
         Additions to admin control tab, SNR section:

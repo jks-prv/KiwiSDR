@@ -494,7 +494,7 @@ function control_html()
          ), 30,
          
 			w3_divs('/w3-center w3-tspace-8',
-            w3_select('w3-width-auto', 'SNR measurement interval', '', 'cfg.snr_meas_interval_hrs', cfg.snr_meas_interval_hrs, snr_interval_u, 'admin_select_cb'),
+            w3_select('w3-width-auto', 'SNR measurement interval', '', 'cfg.snr_meas_interval_hrs', cfg.snr_meas_interval_hrs, snr_interval_u, 'control_snr_interval_cb'),
 				w3_text('w3-text-black w3-center',
 				   'Enables automatic sampling of <br>' +
 				   'signal-to-noise ratio (SNR) at the specified interval. <br>' +
@@ -510,7 +510,10 @@ function control_html()
                w3_checkbox_get_param('//w3-label-inline', 'Also measure ham bands and AM BCB', 'snr_meas_ham', 'admin_bool_cb', false),
                w3_checkbox_get_param('//w3-label-inline', 'Measure on antenna change (after 5 second delay)', 'snr_meas_ant_sw', 'admin_bool_cb', false),
                w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'admin_int_cb'),
-               w3_text('w3-margin-T-8 w3-text-teal w3-bold', 'Custom band:'),
+               w3_inline('w3-margin-T-8',
+                  w3_text('w3-text-teal w3-bold', 'Custom band:'),
+                  w3_link('w3-link-darker-color w3-margin-L-4', '//forum.kiwisdr.com/index.php?p=/discussion/comment/21044/#Comment_21044', 'more info')
+               ),
                w3_inline('w3-valign w3-gap-16 w3-halign-space-between/',
                   w3_input_get('', 'Freq lo (kHz)', 'snr_meas_custom_lo', 'admin_int_cb'),
                   w3_input_get('', 'Freq hi (kHz)', 'snr_meas_custom_hi', 'admin_int_cb'),
@@ -557,6 +560,18 @@ function control_snr_measure_cb(id, idx)
    kiwi.snr_measuring = true;
    w3_innerHTML('id-msg-snr-now', w3_icon('', 'fa-refresh fa-spin', 24) + ' &nbsp; measuring..');
 	ext_send('SET snr_meas');
+}
+
+function control_snr_interval_cb(path, idx, first)
+{
+   idx = +idx;
+   //console.log('control_snr_interval_cb path='+ path +' idx='+ idx +' first='+ first);
+   if (first) return;
+   admin_select_cb(path, idx, first);
+   var min = (idx == kiwi.SNR_CUSTOM)? cfg.snr_meas_custom_min : kiwi.snr_intervals_min[idx];
+   ext_send('SET snr_interval='+ (min * 60));
+   var s = idx? ('Next measurement in '+ min +' min') : 'Measurement disabled';
+   w3_innerHTML('id-snr-remain', s);
 }
 
 function reason_cb(path, val)

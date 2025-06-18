@@ -572,7 +572,7 @@ rdBit2_16z:
 				ret
 #endif
 
-// increment a u16 memory location and keep value on stack
+// increment a u16 memory location and keep updated value on stack
 incr16:										; addr
 				dup							; addr addr
 				fetch16						; addr data
@@ -582,7 +582,7 @@ incr16:										; addr
 				store16						; data+1 addr
 				drop.r						; data+1
 
-// decrement a u16 memory location and keep value on stack
+// decrement a u16 memory location and keep updated value on stack
 decr16:										; addr
 				dup							; addr addr
 				fetch16						; addr data
@@ -592,6 +592,11 @@ decr16:										; addr
 				store16						; data-1 addr
 				drop.r						; data-1
 
+clr16:                                      ; addr
+                push    0                   ; addr 0
+                swap                        ; 0 addr
+                store16                     ; addr
+                drop.r                      ;
 
 ; ============================================================================
 ; support

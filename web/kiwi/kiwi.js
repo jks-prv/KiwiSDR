@@ -72,6 +72,8 @@ var kiwi = {
    log2_seq: 0,
    iframe_n_menu: 16,
    snr_measuring: false,
+   SNR_CUSTOM: 8,
+   snr_intervals_min: [ 0, 60, 4*60, 6*60, 24*60, 1, 5, 10, 0 ],
    
    w3_text: 'w3-text-bottom w3-text-css-orange',
    inactivity_panel: false,
@@ -3072,9 +3074,13 @@ function kiwi_snr_stats(all, hf, remain)
       }
       
       if (remain > 0) {
-         remain = Math.floor(remain/60);
-         if (remain == 0) remain = 'less than 1';
-         w3_innerHTML('id-snr-remain', 'Next measurement in '+ remain +' min');
+         if (cfg.snr_meas_interval_hrs == 0) {
+            w3_innerHTML('id-snr-remain', 'Measurement disabled');
+         } else {
+            remain = Math.floor(remain/60);
+            if (remain == 0) remain = 'less than 1';
+            w3_innerHTML('id-snr-remain', 'Next measurement in '+ remain +' min');
+         }
       } else
       if (remain == -1) {
          w3_innerHTML('id-snr-remain', w3_icon('', 'fa-refresh fa-spin', 24) + ' &nbsp; measuring..');

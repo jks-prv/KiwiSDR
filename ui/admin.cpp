@@ -470,9 +470,19 @@ void c2s_admin(void *param)
                     if (0 && cfg_true("ant_switch.enable") && (antsw.using_ground || antsw.using_tstorm)) {
                         send_msg(conn, SM_NO_DEBUG, "MSG snr_stats=-1,-1");
                     } else {
-                        TaskWakeupF(SNR_meas_tid, TWF_CANCEL_DEADLINE);
+                        if (SNR_meas_tid)
+                            TaskWakeupF(SNR_meas_tid, TWF_CANCEL_DEADLINE);
                     }
                 }
+                continue;
+            }
+
+            u4_t secs;
+            i = sscanf(cmd, "SET snr_interval=%d", &secs);
+            if (i == 1) {
+                secs = CLAMP(secs, 0, 604800);
+                if (SNR_meas_tid)
+                    TaskWakeupFP(SNR_meas_tid, TWF_NEW_DEADLINE_SEC, TO_VOID_PARAM(secs));
                 continue;
             }
 
