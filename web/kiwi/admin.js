@@ -510,7 +510,10 @@ function control_html()
                w3_checkbox_get_param('//w3-label-inline', 'Also measure ham bands and AM BCB', 'snr_meas_ham', 'admin_bool_cb', false),
                w3_checkbox_get_param('//w3-label-inline', 'Measure on antenna change (after 5 second delay)', 'snr_meas_ant_sw', 'admin_bool_cb', false),
                w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'admin_int_cb'),
-               w3_text('w3-margin-T-8 w3-text-teal w3-bold', 'Custom band:'),
+               w3_inline('w3-margin-T-8',
+                  w3_text('w3-text-teal w3-bold', 'Custom band:'),
+                  w3_link('w3-link-darker-color w3-margin-L-4', '//forum.kiwisdr.com/index.php?p=/discussion/comment/21044/#Comment_21044', 'more info')
+               ),
                w3_inline('w3-valign w3-gap-16 w3-halign-space-between/',
                   w3_input_get('', 'Freq lo (kHz)', 'snr_meas_custom_lo', 'admin_int_cb'),
                   w3_input_get('', 'Freq hi (kHz)', 'snr_meas_custom_hi', 'admin_int_cb'),
