@@ -118,7 +118,7 @@ void TaskSleepID(int id, u64_t usec);
 #define TWF_NONE                0x0000
 #define TWF_CHECK_WAKING        0x0001
 #define TWF_CANCEL_DEADLINE     0x0002
-#define TWF_NEW_DEADLINE        0x0004
+#define TWF_NEW_DEADLINE_SEC    0x0004
 #define TWF_TIME_REMAINING      0x0008
 
 C_LINKAGE(u64_t _TaskWakeup(int id, u4_t flags, void *wake_param));

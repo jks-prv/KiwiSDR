@@ -1487,19 +1487,19 @@ u64_t _TaskWakeup(tid_t tid, u4_t flags, void *wake_param)
     
     if (!t->valid) return 0;
 
-    if (flags & (TWF_TIME_REMAINING | TWF_NEW_DEADLINE)) {
+    if (flags & (TWF_TIME_REMAINING | TWF_NEW_DEADLINE_SEC)) {
         u64_t remaining = 0, now_us = timer_us64();
 
         if (flags & TWF_TIME_REMAINING) {
             if (t->deadline > now_us)
                 remaining = t->deadline - now_us;
         }
-        if (flags & TWF_NEW_DEADLINE) {
+        if (flags & TWF_NEW_DEADLINE_SEC) {
             //TaskDump(TDUMP_LOG | PRINTF_REG);
-            t->deadline = now_us + (u64_t) FROM_VOID_PARAM(wake_param);
+            t->deadline = now_us + SEC_TO_USEC((u64_t) FROM_VOID_PARAM(wake_param));
             //TaskDump(TDUMP_LOG | PRINTF_REG);
         }
-        //printf("_TaskWakeup tid=%d flags=0x%x wake_param=%lld remaining=%lld\n", tid, flags, (u64_t) FROM_VOID_PARAM(wake_param), remaining);
+        //printf("_TaskWakeup tid=%d flags=0x%x wake_param=%lld remaining=%lld\n", tid, flags, SEC_TO_USEC((u64_t) FROM_VOID_PARAM(wake_param)), remaining);
         return remaining;
     }
     

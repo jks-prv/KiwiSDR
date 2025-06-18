@@ -136,7 +136,7 @@ void ant_switch_task_start(const char *cmd)
             }
         }
         if (report && SNR_meas_tid) {
-            TaskWakeupFP(SNR_meas_tid, TWF_NEW_DEADLINE, TO_VOID_PARAM(SEC_TO_USEC(5)));
+            TaskWakeupFP(SNR_meas_tid, TWF_NEW_DEADLINE_SEC, TO_VOID_PARAM(5));
         }
     }
 }
