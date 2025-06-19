@@ -352,6 +352,11 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
     if (strstr(uri_m, "W/F"))
         isWF_conn = true;
     
+    // kiwirecorder requested camping on websocket connection
+    bool krec_camp = false;
+    if (isKrec && mc->query && strstr(mc->query, "camp"))
+        krec_camp = true;
+    
     //printf("URL <%s> <%s> <%s>\n", mc->uri, mc->query, uri_m);
 	for (i=0; rx_streams[i].uri; i++) {
 		st = &rx_streams[i];
@@ -601,11 +606,11 @@ retry:
                     }
                 }
 
-                // isKrec needed here because for kiwirecorder force_camp won't have been
+                // krec_camp needed here because for kiwirecorder force_camp won't have been
                 // set by any previous regular HTTP access as is the case for Kiwi connections
-                if (rx_n == -1 || force_camp || isKrec) {
-                    conn_printf2(c, "rx=%d force_camp=%d isKrec=%d\n", rx_n, force_camp, isKrec);
-                    if (force_camp || isKrec) {
+                if (rx_n == -1 || force_camp || krec_camp) {
+                    conn_printf2(c, "rx=%d force_camp=%d krec_camp=%d\n", rx_n, force_camp, krec_camp);
+                    if (force_camp || krec_camp) {
                         rx_n = -1;
                         force_camp = false;
                     } else {
@@ -634,7 +639,7 @@ retry:
                     }
                     
                     #ifdef USE_SDR
-                        if ((isKiwi_UI || isKrec) && (mon_total < monitors_max)) {
+                        if ((isKiwi_UI || krec_camp) && (mon_total < monitors_max)) {
                             // turn first connection when no channels (SND or WF) into MONITOR
                             c->type = STREAM_MONITOR;
                             st = &rx_streams[STREAM_MONITOR];
