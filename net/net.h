@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -38,23 +38,26 @@ Boston, MA  02110-1301, USA.
 #define PORT_BASE_INTERNAL_SNR      1338
 #define PORT_BASE_INTERNAL_S_METER  1438
 
+#define net_printf(fmt, ...) \
+    lprintf("NET(%d): " fmt, retry, ## __VA_ARGS__)
+
 #define NET_DEBUG
 #ifdef NET_DEBUG
-	#define net_printf(fmt, ...) \
-	    if (debug_printfs) lprintf("NET(%d) DEBUG " fmt, retry, ## __VA_ARGS__)
-	#define net_printf2(fmt, ...) \
+	#define net_dprintf(fmt, ...) \
+	    if (debug_printfs) lprintf("NET(%d) DEBUG: " fmt, retry, ## __VA_ARGS__)
+	#define net_dprintf2(fmt, ...) \
 	    if (debug_printfs) lprintf(fmt, ## __VA_ARGS__)
 #else
-	#define net_printf(fmt, ...)
-	#define net_printf2(fmt, ...)
+	#define net_dprintf(fmt, ...)
+	#define net_dprintf2(fmt, ...)
 #endif
 
 #define NET_WAIT_COND(caller, from, cond) \
     if (!(cond)) { \
-        net_printf2("NET_WAIT_COND %s %s(%s): waiting...\n", #cond, caller, from); \
+        net_dprintf2("NET_WAIT_COND SLEEP task=%s from=%s(%s) cond=(%s)\n", TaskName(), caller, from, #cond); \
         while (!(cond)) \
             TaskSleepSec(5); \
-        net_printf2("NET_WAIT_COND %s %s(%s): ...wakeup\n", #cond, caller, from); \
+        net_dprintf2("NET_WAIT_COND WAKEUP task=%s from=%s(%s) cond=(%s)\n", TaskName(), caller, from, #cond); \
     }
 
 typedef enum { IPV_NONE = 0, IPV4 = 4, IPV6 = 6 } ipv46_e;
