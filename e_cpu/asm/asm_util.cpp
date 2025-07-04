@@ -231,6 +231,7 @@ char *token(tokens_t *tp)
 	case TT_LABEL:	asprintf(&s, "%s:", tp->str); break;
 	case TT_SYM:	asprintf(&s, "\"%s\"%s", tp->str, (tp->flags&TF_RET)? ".r": (tp->flags&TF_CIN)? ".cin":"");  break;
 	case TT_NUM:	if (tp->flags & TF_HEX) asprintf(&s, "0x%x", tp->num); else if (tp->flags & TF_FIELD) asprintf(&s, "%d'd%d", tp->width, tp->num); else asprintf(&s, "%d", tp->num);  break;
+    case TT_STR:    asprintf(&s, "\"%s\"", tp->str); break;
 	case TT_OPC:	asprintf(&s, "[%s%s]", tp->str, (tp->flags&TF_RET)? ".r": (tp->flags&TF_CIN)? ".cin":"");  break;
 	case TT_PRE:	asprintf(&s, "<%s>", tp->str);  break;
 	case TT_OPR:	asprintf(&s, "%s", tp->str); break;

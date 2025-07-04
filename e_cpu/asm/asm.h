@@ -49,8 +49,8 @@ int num_strings();
 // tokens
 
 typedef enum {
-	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT, TT_ITER,
-	TT_DEF, TT_FILE, TT_STATS, TT_ALIGN
+	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_STR, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT,
+	TT_ITER, TT_DEF, TT_FILE, TT_STATS, TT_ALIGN
 } token_type_e;
 
 const char * const ttype_s[] = {
@@ -114,7 +114,8 @@ void sym_undefined(tokens_t *tp);
 #define	PP_ELSE		12
 #define	PP_ENDIF	13
 #define	PP_ERROR	14
-#define	PP_DISPLAY	15
+#define	PP_WARNING	15
+#define	PP_DISPLAY	16
 
 // pre-processor operators
 #define	OPR_INC		0

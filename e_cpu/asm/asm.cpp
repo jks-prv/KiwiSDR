@@ -68,6 +68,7 @@ dict_t dict[] = {
 	{ "#else",		TT_PRE,		PP_ELSE },
 	{ "#endif",		TT_PRE,		PP_ENDIF },
 	{ "#error",		TT_PRE,		PP_ERROR },
+	{ "#warning",   TT_PRE,		PP_WARNING },
 	{ "#display",   TT_PRE,		PP_DISPLAY },
 
 	{ "push",		TT_OPC,		OC_PUSH,            0,              OCM_CONST },
@@ -160,7 +161,7 @@ dict_t dict[] = {
 	{ 0,			TT_EOL,     0 }
 };
 
-#define SBUF 64
+#define SBUF 1024
 char sym[SBUF];
 
 typedef struct {
@@ -358,10 +359,20 @@ int main(int argc, char *argv[])
 				}
 				cp = scp;
 				
+				// string
+				if (*cp=='"') {
+					*sp++ = *cp++;
+					while (*cp!='"') *sp++ = *cp++; *sp++ = '"'; *sp = 0; cp++;
+					tp->ttype = TT_STR; string_enter(sym, &(tp->str), 0);
+					tp++; continue;
+				}
+				
 				// non-symbol token
-				if (*cp=='(' || *cp==')') { *sp++ = *cp++; *sp = 0; }	// just take single char
-				else
+				if (*cp=='(' || *cp==')') {
+				    *sp++ = *cp++; *sp = 0;     // just take single char
+				} else {
 					while (!isspace(*cp) && *cp!=')') *sp++ = *cp++; *sp = 0;
+				}
 				for (dp=dict; dp->str; dp++) {		// check for reserved names
 					if (strcmp(dp->str, sym) == 0) {
 						tp->ttype = dp->ttype;
@@ -547,12 +558,20 @@ int main(int argc, char *argv[])
         if (debug) printf("KEEP %s\n", token(tp));
 
 		// copy or perform expansion
-		if (def(tp, &ep1)) ; else
+		def(tp, &ep1);
 
+        t = tp+1;
+        char *s = (t->ttype == TT_STR)? t->str : (char *) "";
+        int inc = (t->ttype == TT_STR)? 2:1;
 		if (tp->ttype == TT_PRE && tp->num == PP_ERROR) {
-		    errmsg(tp, "#error");
+		    errmsg(tp, "#error %s", s);
 		    global_error = true;
-		    tp++; continue;
+		    tp += inc; continue;
+	    }
+
+		if (tp->ttype == TT_PRE && tp->num == PP_WARNING) {
+		    note(YELLOW, tp, "#warning %s", s);
+		    tp += inc; continue;
 	    }
 
 		// process STRUCT/MEMBER
@@ -797,7 +816,7 @@ int main(int argc, char *argv[])
 		
 		// data decl
 		if (tp->ttype == TT_DATA && (tp+1)->ttype == TT_NUM) {
-			if (debug) printf("%04x u%d 0x%x\n", a, tp->num*8, (tp+1)->num);
+			if (debug) printf("%04x u%d 0x%x (%d)\n", a, tp->num*8, (tp+1)->num, (tp+1)->num);
 			a += tp->num;
 		} else
 		
@@ -1073,7 +1092,7 @@ int main(int argc, char *argv[])
 			if (tp->num==2) {
 				assert(val <= 0xffff);
 				val_2 = val & 0xffff;
-				if (debug || show_bin) printf("\t%04x", val_2);
+				if (debug || show_bin) printf("\t%04x (%d)", val_2, val_2);
 				write(bfd, &val_2, 2);
 				if (write_coe) {
 					fprintf(efp, "%c\n%04x", comma, val_2);
@@ -1081,7 +1100,7 @@ int main(int argc, char *argv[])
 				a += 2;
 			} else
 			if (tp->num==4) {
-				if (debug || show_bin) printf("\t%08x", val);
+				if (debug || show_bin) printf("\t%08x (%u)", val, val);
 				write(bfd, &val, 4);
 				if (write_coe) {
 					fprintf(efp, "%c\n%04x", comma, val >> 16);
@@ -1151,7 +1170,7 @@ int main(int argc, char *argv[])
 				case OC_WRREG2: {
 								syntax(oper >= 1 && oper <= 0x7ff, t, "i/o specifier outside range 1..0x7ff: 0x%04x", oper);
 								int ones = count_ones(oper);
-								// 3 currently because of kiwi.config: SET_WF_OP, REG_NO and FREQ_L definitions
+								// 3 currently because of kiwi.config: SET_REG_NO, GET_REG_NO and FREQ_L definitions
 								syntax(ones <= 3, t, "too many bits (%d) in i/o specifier 0x%04x", ones, oper);
 								break;
 				}
