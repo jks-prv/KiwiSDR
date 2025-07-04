@@ -439,11 +439,16 @@ void web_server_init(ws_init_t type)
 
         if (update_admcfg) admcfg_save();       // during init doesn't conflict with admin cfg
 
-        if (!background_mode) {
-            struct stat st;
-            scall("stat edata_always", stat(BUILD_DIR "/obj_keep/edata_always.o", &st));
+        // always check for these in case --bg used in development mode
+        struct stat st;
+        const char *fn = BUILD_DIR "/obj_keep/edata_always.o";
+        if (kiwi_file_exists(fn)) {
+            scall("stat edata_always", stat(fn, &st));
             mtime_obj_keep_edata_always_o = st.st_mtime;
-            scall("stat edata_always2", stat(BUILD_DIR "/obj_keep/edata_always2.o", &st));
+        }
+        fn = BUILD_DIR "/obj_keep/edata_always2.o";
+        if (kiwi_file_exists(fn)) {
+            scall("stat edata_always2", stat(fn, &st));
             mtime_obj_keep_edata_always2_o = st.st_mtime;
         }
 
