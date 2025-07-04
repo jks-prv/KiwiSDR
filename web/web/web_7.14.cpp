@@ -697,8 +697,12 @@ int websocket_request(struct mg_connection *mc, int ev, void *ev_data)
     
     conn_t *c = rx_server_websocket(WS_MODE_ALLOC, mc);
     if (c == NULL) {
-        s[sl] = 0;
-        //if (!down) lprintf("rx_server_websocket(alloc): msg was %d <%s>\n", sl, s);
+        #if 0
+            if (!down) {
+                s[sl] = 0;
+                lprintf("rx_server_websocket(alloc): msg was %d <%s>\n", sl, s);
+            }
+        #endif
         return MG_FALSE;
     }
     if (c->stop_data) return MG_FALSE;

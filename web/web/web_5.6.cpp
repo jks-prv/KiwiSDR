@@ -696,8 +696,12 @@ int websocket_request(struct mg_connection *mc, int ev)
     
     conn_t *c = rx_server_websocket(WS_MODE_ALLOC, mc);
     if (c == NULL) {
-        s[sl] = 0;
-        //if (!down) lprintf("rx_server_websocket(alloc): msg was %d <%s>\n", sl, s);
+        #if 0
+            if (!down) {
+                s[sl] = 0;
+                lprintf("rx_server_websocket(alloc): msg was %d <%s>\n", sl, s);
+            }
+        #endif
         return MG_FALSE;
     }
     if (c->stop_data) return MG_FALSE;
@@ -1150,7 +1154,10 @@ int web_request(struct mg_connection *mc, int ev)
     // The size in the etag is different due to the substitution, but the underlying file mtime hasn't changed.
 
     cache->st.st_size = edata_size + ver_size;
-    if (!isAJAX) assert(mtime != 0);
+    if (!isAJAX && mtime == 0) {
+        printf("%s\n", uri);
+        panic("mtime == 0");
+    }
     cache->st.st_mtime = mtime;
 
     if (!(isAJAX && ev == MG_EV_CACHE_INFO)) {		// don't print for isAJAX + MG_EV_CACHE_INFO nop case
