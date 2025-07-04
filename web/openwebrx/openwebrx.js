@@ -575,6 +575,7 @@ function kiwi_main_ready()
    );
    // REMINDER: w3_do_when_cond() returns immediately
 
+   if (!isArg(passbands_fallback[init_mode])) init_mode = 'am';
    var _lo = kiwi_passbands(init_mode).lo;
    if (!isNumber(_lo)) _lo = -4000;
    var _hi = kiwi_passbands(init_mode).hi;
@@ -1191,8 +1192,8 @@ function kiwi_passbands(mode)
       return pb;
    } else {
       console.log('kiwi_passbands('+ mode +') fallback:');
-      if (isUndefined(mode)) {
-         kiwi_trace();
+      if (isUndefined(mode) || isUndefined(passbands_fallback[mode])) {
+         //kiwi_trace();
          return passbands_fallback['am'];
       } else {
          console.log(passbands_fallback[mode]);
@@ -8217,13 +8218,15 @@ function cal_adc_confirm()
 
 function admin_pwd_query(isAdmin_true_cb)
 {
-	ext_hasCredential('admin', admin_pwd_cb, isAdmin_true_cb, ws_wf);
+   //console.log('admin_pwd_query: isAdmin_true_cb='+ isAdmin_true_cb);
+	ext_hasCredential('admin', admin_pwd_cb, isAdmin_true_cb);
 }
 
 function admin_pwd_cb(badp, isAdmin_true_cb)
 {
-	console.log('admin_pwd_cb badp='+ badp);
+	//console.log('admin_pwd_cb badp='+ badp +' isAdmin_true_cb='+ isAdmin_true_cb);
 	if (badp == kiwi.BADP_OK) {
+	   //console.log('admin_pwd_cb: CALL isAdmin_true_cb()');
 		isAdmin_true_cb();
 		return;
 	}
