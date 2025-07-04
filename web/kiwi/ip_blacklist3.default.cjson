@@ -5,9 +5,12 @@
 // Double-slash comment sequence MUST start in column one!
 //
 // CAUTION:     kiwisdr.com 50.116.2.xxx    forum 45.79.102.xxx     jks 103.156.230.xxx 103.26.16.xxx
+// www.ipaddressguide.com/cidr
 //
 // Updates:
 //
+// 29 jun 25 20.171.207.150/32 openai.com/gptbot (Microsoft cloud)
+// 29 jun 25 47.74.0.0/15 (74:75), 47.80.0.0/13 (80:87), 47.76.0.0/14 (47.76:47.49) Alibaba cloud attacking forum server
 // 14 may 25 159.226.19.19/32 repeated old API accesses, Computer Network Information Center of Chinese Academy of Sciences
 // 14 mar 25 23.123.206.34/32 AT&T proxy attack
 //  5 mar 25 66.245.192.0/21 (192.0:199.255) 66.245.196.27 constant/vultr/choopa repeating CMD_MARKER unknown variant
@@ -95,6 +98,7 @@
     "5.62.32.0/19",
     "5.253.115.0/25",
     "8.215.0.0/16",
+    "20.171.207.150/32",
     "23.123.206.34/32",
     "23.251.128.0/19",
     "27.154.20.0/24",
@@ -114,7 +118,9 @@
     "45.79.58.146",
     "46.165.245.0/24",
     "47.56.0.0/15",
-    "47.74.0.0/16",
+    "47.74.0.0/15",
+    "47.76.0.0/14",
+    "47.80.0.0/13",
     "47.88.0.0/14",
     "47.235.0.0/16",
     "47.236.0.0/14",
