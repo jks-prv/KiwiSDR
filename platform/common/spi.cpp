@@ -65,13 +65,13 @@ static spi_mosi_data_t _CmdFlush = { CmdFlush, 0, 0, 0, 0 };
 void spi_stats()
 {
     if (spi_show_stats) {
-        int xfers_sec = spi.xfers / STATS_INTERVAL_SECS;
-        int flush_sec = spi.flush / STATS_INTERVAL_SECS;
-        int total_sec = xfers_sec + flush_sec;
-        float MB_sec = (float) spi.bytes / 1e6 / STATS_INTERVAL_SECS;
-        int spin_ms_sec = spi_delay * total_sec / 1000;
+        int xfers_psec = spi.xfers / STATS_INTERVAL_SECS;
+        int flush_psec = spi.flush / STATS_INTERVAL_SECS;
+        int total_psec = xfers_psec + flush_psec;
+        float MB_psec = (float) spi.bytes / 1e6 / STATS_INTERVAL_SECS;
+        int spin_ms_psec = spi_delay * total_psec / 1000;
         printf("SPI: %5d + %5d = %5d xfers/s, %.3f MB/s, %3d msec/s spin(%d), retries: ",
-            xfers_sec, flush_sec, total_sec, MB_sec, spin_ms_sec, spi_delay);
+            xfers_psec, flush_psec, total_psec, MB_psec, spin_ms_psec, spi_delay);
         for (int i = 0; i < NRETRY_HIST; i++) {
             if (spi.retry_hist[i])
                 printf("%d:%d ", i, spi.retry_hist[i]);
@@ -213,9 +213,11 @@ static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk
         #endif
 		assert((prev->status & SPI_BUSY_MASK) == SPI_BUSY);
         //printf("spi_dev T%dx|R%dx\n", tx_xfers, prx_xfers);
+        //real_printf(RED "%s " NORM, (mosi->data.cmd == CmdFlush)? "F" : &cmds[mosi->data.cmd][3]); fflush(stdout);
+
         spi_dev(SPI_HOST,
-            mosi, tx_xfers,   // MOSI: new request
-            prev, prx_xfers);  // MISO: response to previous caller's request
+            mosi, tx_xfers,     // MOSI: new request
+            prev, prx_xfers);   // MISO: response to previous caller's request
 
 		// fixme: understand why is this needed (hangs w/o it) [still?]
         #ifdef EV_MEAS_SPI_CMD
@@ -476,9 +478,11 @@ void _spi_get(SPI_CMD cmd, SPI_MISO *rx, int bytes, uint16_t wparam, uint32_t lp
     	if (busy > 2) {
 			if (ev_dump) evSpi(EC_EVENT, EV_SPILOOP, ev_dump, "spi_get", evprintf("NT_BUSY_WAIT / BUSY_HELPER failed? %s(%d) %s miso %p ------------------------------------------------",
 				cmds[cmd], cmd, Task_s(tid), rx));
+			//real_printf("_spi_get SPI_BUSY cmd=%s busy=%d\n", cmds[cmd], busy);
     	}
     	
-    	// use NT_BUSY_WAIT to indicate NextTask needs to run the spi_pump() task to help us receive our reply
+    	// use NT_BUSY_WAIT to indicate NextTask needs to run the spi_pump() task,
+    	// via CTF_BUSY_HELPER, to help us receive our reply
     	NextTaskP("spi_get busy wait", NT_BUSY_WAIT); // wait for response
     }
 	evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_get", evprintf("BUSY WAIT is DONE %s(%d) %s miso %p",  cmds[cmd], cmd, Task_s(tid), rx));
