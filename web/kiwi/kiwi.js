@@ -3522,6 +3522,10 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 		   console.log('$$$ MSG freq_offset='+ foff_kHz +' cfg.freq_offset='+ cfg.freq_offset);
          kiwi_set_freq_offset(foff_kHz);
 			break;
+		
+		case "dbg_seq":
+		   console.log('(MSG) dseq='+ param[1]);
+			break;
 
 		default:
 		   if (param[0].startsWith('antsw_')) {
