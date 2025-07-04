@@ -60,7 +60,7 @@ end
 
 define ng
     bload
-    run -use_spidev 1 -gps -leds
+    run -use_spidev 1 -gps -leds -snrmeas
 end
 
 define dx
