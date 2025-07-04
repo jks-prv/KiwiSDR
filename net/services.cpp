@@ -65,7 +65,7 @@ static void get_TZ(void *param)
 	char *cmd_p, *reply, *lat_lon;
 	cfg_t cfg_tz;
 	
-    TaskSleepSec(5);    // under normal conditions ipinfo takes a few seconds to complete
+    TaskSleepSec(10);   // under normal conditions ipinfo takes a few seconds to complete
 
 	int report = 3;
 	while (1) {
@@ -287,50 +287,6 @@ static void misc_NET(void *param)
     int status;
     int err;
     
-    // DUC
-	system("killall -q noip2");
-	if (admcfg_true("duc_enable")) {
-		lprintf("starting noip.com DUC\n");
-		DUC_enable_start = true;
-		
-    	if (background_mode)
-			system("sleep 1; /usr/local/bin/noip2 -k -c " DIR_CFG "/noip2.conf");
-		else
-			system("sleep 1; " BUILD_DIR "/gen/noip2 -k -c " DIR_CFG "/noip2.conf");
-	}
-
-    // reverse proxy
-	system("killall -q frpc");
-	int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
-	bool proxy = (dom_sel == DOM_SEL_REV);
-    const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
-	lprintf("PROXY: %s dom_sel_menu=%d %s\n", proxy? "YES":"NO", dom_sel, proxy_server);
-	
-	if (proxy) {
-	    if (!kiwi_file_exists(DIR_CFG "/frpc.ini")) {
-            bool rev_auto = admcfg_true("rev_auto");
-            const char *user, *host;
-            if (rev_auto) {
-                user = admcfg_string("rev_auto_user", NULL, CFG_OPTIONAL);
-                host = admcfg_string("rev_auto_host", NULL, CFG_OPTIONAL);
-            } else {
-                user = admcfg_string("rev_user", NULL, CFG_OPTIONAL);
-                host = admcfg_string("rev_host", NULL, CFG_OPTIONAL);
-            }
-            lprintf("PROXY: no " DIR_CFG "/frpc.ini cfg file\n");
-            lprintf("PROXY: rev_auto=%d user=%s host=%s proxy_server=%s\n",
-                rev_auto, user, host, proxy_server);
-
-            proxy_frpc_setup(proxy_server, user, host, net.port_ext);
-            admcfg_string_free(user); admcfg_string_free(host);
-	    }
-	    
-		lprintf("PROXY: starting frpc\n");
-		rev_enable_start = true;
-		system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
-	}
-	admcfg_string_free(proxy_server);
-
     // find and remove known viruses, mostly as a result of Debian root/debian accounts
     // without passwords on networks with ssh open to the Internet
     kiwi.vr = 0, kiwi.vc = 0;
@@ -468,11 +424,58 @@ static void misc_NET(void *param)
         kiwi_asfree(cmd_p2);
     }
 
+    // need private/local IP for DUC & proxy to start properly
+    NET_WAIT_COND("DUC/proxy", "misc_NET", net.pvt_valid);
+    
+    // DUC
+	system("killall -q noip2");
+	if (admcfg_true("duc_enable")) {
+		lprintf("starting noip.com DUC\n");
+		DUC_enable_start = true;
+		
+    	if (background_mode)
+			system("sleep 1; /usr/local/bin/noip2 -k -c " DIR_CFG "/noip2.conf");
+		else
+			system("sleep 1; " BUILD_DIR "/gen/noip2 -k -c " DIR_CFG "/noip2.conf");
+	}
+
+    // reverse proxy
+	system("killall -q frpc");
+	int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
+	bool proxy = (dom_sel == DOM_SEL_REV);
+    const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
+	lprintf("PROXY: %s dom_sel_menu=%d %s\n", proxy? "YES":"NO", dom_sel, proxy_server);
+	
+	if (proxy) {
+	    if (!kiwi_file_exists(DIR_CFG "/frpc.ini")) {
+            bool rev_auto = admcfg_true("rev_auto");
+            const char *user, *host;
+            if (rev_auto) {
+                user = admcfg_string("rev_auto_user", NULL, CFG_OPTIONAL);
+                host = admcfg_string("rev_auto_host", NULL, CFG_OPTIONAL);
+            } else {
+                user = admcfg_string("rev_user", NULL, CFG_OPTIONAL);
+                host = admcfg_string("rev_host", NULL, CFG_OPTIONAL);
+            }
+            lprintf("PROXY: no " DIR_CFG "/frpc.ini cfg file\n");
+            lprintf("PROXY: rev_auto=%d user=%s host=%s proxy_server=%s\n",
+                rev_auto, user, host, proxy_server);
+
+            proxy_frpc_setup(proxy_server, user, host, net.port_ext);
+            admcfg_string_free(user); admcfg_string_free(host);
+	    }
+	    
+		lprintf("PROXY: starting frpc\n");
+		rev_enable_start = true;
+		system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
+	}
+	admcfg_string_free(proxy_server);
+
     // register for my.kiwisdr.com
     // this must be at the end of the routine since it waits an arbitrary amount of time
     
-    NET_WAIT_COND("my_kiwi", "misc_NET", net.pvt_valid && net.pub_valid);
-    
+    NET_WAIT_COND("my_kiwi", "misc_NET", net.pub_valid);
+
     if (admcfg_true("my_kiwi")) {
         my_kiwi_register(true, root_pwd_unset, debian_pwd_default);
     }
@@ -626,12 +629,12 @@ static void UPnP_port_open_task(void *param)
             (net.pvt_valid == IPV6)? "-6 " : "",
             net.ip_pvt, net.port, net.port_ext);
     }
-    net_printf2("UPnP: %s\n", cmd_p);
+    net_dprintf2("UPnP: %s\n", cmd_p);
 
     status = non_blocking_cmd_func_forall("kiwi.UPnP", cmd_p, _UPnP_port_open, 0, POLL_MSEC(1000));
     if (WIFEXITED(status) && (exit_status = WEXITSTATUS(status))) {
         net.auto_nat = exit_status;
-        net_printf2("UPnP_port_open_task: net.auto_nat=%d\n", net.auto_nat);
+        net_dprintf2("UPnP_port_open_task: net.auto_nat=%d\n", net.auto_nat);
     } else {
         net.auto_nat = 4;      // command failed
     }
