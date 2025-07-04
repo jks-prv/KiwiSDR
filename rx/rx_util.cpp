@@ -765,48 +765,53 @@ void show_conn(const char *prefix, u4_t printf_type, conn_t *cd)
         lprintf("        user=<%s> isUserIP=%d geo=<%s>\n", cd->ident_user, cd->isUserIP, cd->geo);
 }
 
+void dump_direct()
+{
+    int i;
+    lprintf("\n");
+    lprintf("dump --------\n");
+    lprintf("rf_attn_dB=%.1f\n", kiwi.rf_attn_dB);
+    lprintf("\n");
+    
+    for (i=0; i < rx_chans; i++) {
+        rx_chan_t *rx = &rx_channels[i];
+        lprintf("RX%d chan_en=%d data_en=%d busy=%d conn-%2s %2.0f %2.0f %p %d|w %d|r\n",
+            i, rx->chan_enabled, rx->data_enabled, rx->busy,
+            rx->conn? stprintf("%02d", rx->conn->self_idx) : "",
+            //toUnits(audio_bytes[i], 0), toUnits(waterfall_bytes[i], 1),   // %6s
+            audio_kbps[i], waterfall_kbps[i],
+            rx->conn? rx->conn : 0, rx->wr, rx->rd);
+    }
+
+    conn_t *cd;
+    int nconn = 0;
+    for (cd = conns, i=0; cd < &conns[N_CONNS]; cd++, i++) {
+        if (cd->valid) nconn++;
+    }
+    lprintf("\n");
+    lprintf("CONNS: used %d/%d is_locked=%d  ______ => *auth, Kiwi, Admin/X-already, Master, Internal/Preempt/ExtAPI, DetAPI, Local/ForceNotLocal, ProtAuth, Kicked/AwaitPwd\n",
+        nconn, N_CONNS, is_locked);
+
+    for (cd = conns, i=0; cd < &conns[N_CONNS]; cd++, i++) {
+        if (!cd->valid) continue;
+        show_conn("", PRINTF_LOG, cd);
+    }
+    
+    TaskDump(TDUMP_LOG | TDUMP_HIST | PRINTF_LOG);
+    lock_dump();
+    ip_blacklist_dump(false);
+    mt_dump();
+    data_pump_dump();
+    lprintf("done --------\n");
+}
+
 static void dump_task(void *param)
 {
 	int i;
 
     while (1) {
         bool doPanic = (bool) TaskSleep();
-    
-        lprintf("\n");
-        lprintf("dump --------\n");
-        lprintf("rf_attn_dB=%.1f\n", kiwi.rf_attn_dB);
-        lprintf("\n");
-        
-        for (i=0; i < rx_chans; i++) {
-            rx_chan_t *rx = &rx_channels[i];
-            lprintf("RX%d chan_en=%d data_en=%d busy=%d conn-%2s %2.0f %2.0f %p %d|w %d|r\n",
-                i, rx->chan_enabled, rx->data_enabled, rx->busy,
-                rx->conn? stprintf("%02d", rx->conn->self_idx) : "",
-                //toUnits(audio_bytes[i], 0), toUnits(waterfall_bytes[i], 1),   // %6s
-                audio_kbps[i], waterfall_kbps[i],
-                rx->conn? rx->conn : 0, rx->wr, rx->rd);
-        }
-    
-        conn_t *cd;
-        int nconn = 0;
-        for (cd = conns, i=0; cd < &conns[N_CONNS]; cd++, i++) {
-            if (cd->valid) nconn++;
-        }
-        lprintf("\n");
-        lprintf("CONNS: used %d/%d is_locked=%d  ______ => *auth, Kiwi, Admin/X-already, Master, Internal/Preempt/ExtAPI, DetAPI, Local/ForceNotLocal, ProtAuth, Kicked/AwaitPwd\n",
-            nconn, N_CONNS, is_locked);
-    
-        for (cd = conns, i=0; cd < &conns[N_CONNS]; cd++, i++) {
-            if (!cd->valid) continue;
-            show_conn("", PRINTF_LOG, cd);
-        }
-        
-        TaskDump(TDUMP_LOG | TDUMP_HIST | PRINTF_LOG);
-        lock_dump();
-        ip_blacklist_dump(false);
-        mt_dump();
-        data_pump_dump();
-        lprintf("done --------\n");
+        dump_direct();
         if (doPanic) panic("dump");
     }
 }

@@ -138,6 +138,7 @@ int rx_mode2enum(const char *mode);
 const char * rx_enum2mode(int e);
 void debug_init();
 void dump_init();
+void dump_direct();
 void rx_send_config(int rx_chan);
 void get_location_grid(char **loc, bool *free_loc, char **grid = NULL, bool *free_grid = NULL);
 void on_GPS_solution();
