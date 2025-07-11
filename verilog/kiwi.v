@@ -201,7 +201,7 @@ module KiwiSDR (
     // global control & status registers
     //////////////////////////////////////////////////////////////////////////
 
-    reg [13:0] ctrl;
+    reg [15:0] ctrl;
     
     always @ (posedge cpu_clk)
     begin
@@ -288,7 +288,7 @@ module KiwiSDR (
     //////////////////////////////////////////////////////////////////////////
     
     // level to single pulse
-    localparam RISE=2'b01;
+    localparam RISE = 2'b01;
     reg [1:0] _dna_rd, _dna_sf;
     wire dna_rd = (_dna_rd == RISE);
     wire dna_sf = (_dna_sf == RISE);
@@ -354,7 +354,7 @@ module KiwiSDR (
         .rx_avail_A     (rx_avail_A),
         .awb_debug      (awb_debug),
 `endif
-        
+
         .self_test_en_C (ctrl[CTRL_STEN]),
         .self_test      (self_test)
     	);

@@ -19,6 +19,8 @@ Boston, MA  02110-1301, USA.
 
 // tri-state buffer
 
+`timescale 1ns / 100ps
+
 module tristate_buf (
 	input  wire in,
 	output tri out,

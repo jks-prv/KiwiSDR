@@ -29,22 +29,24 @@ Boston, MA  02110-1301, USA.
 // Fixed differential delay (D) = 1
 //
 
-module cic (
-	input wire clock,
-	input wire reset,
-	input wire [MD-1:0] decimation,
-	input wire in_strobe,
-	output reg out_strobe,
-	input wire signed [IN_WIDTH-1:0] in_data,
-	output reg signed [OUT_WIDTH-1:0] out_data
+module cic
+    #(
+        // design parameters
+        parameter STAGES = "required",
+        parameter DECIM_TYPE = "required",
+        parameter IN_WIDTH = "required",
+        parameter GROWTH = "required",
+        parameter OUT_WIDTH = "required"
+	)
+    (
+        input wire clock,
+        input wire reset,
+        input wire [MD-1:0] decimation,
+        input wire in_strobe,
+        output reg out_strobe,
+        input wire signed [IN_WIDTH-1:0] in_data,
+        output reg signed [OUT_WIDTH-1:0] out_data
 	);
-
-// design parameters
-parameter STAGES = "required";
-parameter DECIM_TYPE = "required";  
-parameter IN_WIDTH = "required";
-parameter GROWTH = "required";
-parameter OUT_WIDTH = "required";
 
 localparam ACC_WIDTH = IN_WIDTH + GROWTH;
 

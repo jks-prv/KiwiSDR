@@ -19,16 +19,19 @@ Boston, MA  02110-1301, USA.
 
 // variable length left shift register
 
-module sreg (
-	input  wire clk,
-	input  wire [WIDTH-1:0] pin,
-	input  wire load,
-	input  wire sft,
-	input  wire sin,
-	output wire sout
+`timescale 1ns / 100ps
+
+module sreg
+    #(parameter WIDTH = 16)
+    (
+        input  wire clk,
+        input  wire [WIDTH-1:0] pin,
+        input  wire load,
+        input  wire sft,
+        input  wire sin,
+        output wire sout
 	);
 	
-	parameter WIDTH = 16;
 
 	reg [WIDTH-1:0] sr;
 	assign sout = sr[WIDTH-1];

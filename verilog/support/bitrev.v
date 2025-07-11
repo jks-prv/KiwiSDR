@@ -19,12 +19,14 @@ Boston, MA  02110-1301, USA.
 
 // bit reverse a signal
 
-module bitrev (
-	input  wire [WIDTH-1:0]	in,
-	output wire [WIDTH-1:0] out
-	);
+`timescale 1ns / 100ps
 
-	parameter WIDTH = "required";
+module bitrev
+    #(parameter WIDTH = "required")
+    (
+        input  wire [WIDTH-1:0]	in,
+        output wire [WIDTH-1:0] out
+    );
 
     genvar i;
     generate

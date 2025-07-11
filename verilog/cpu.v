@@ -254,7 +254,7 @@ module CPU (
         case (op4)
             op_branchZ[15:12], op_wrReg: next_tos = nos;    // branchNZ also
             default:
-                if (rdReg) next_tos = par;      // NB {16'b0, par}
+                if (rdReg) next_tos = par;      // NB: {16'b0, par}
                 else
                     case (op8)
                         op_swap, op_to_r,

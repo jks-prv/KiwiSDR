@@ -236,7 +236,8 @@ module HOST (
 `ifdef NOTDEF
 	// doesn't work: ping data shifted
 	ODDR2 #(.DDR_ALIGNMENT("C0"), .SRTYPE("ASYNC"), .INIT(1'b1)) ha_out3 (
-		.C0(ha_clk), .C1(~ha_clk), .CE(1'b1), .D0(ha_out2), .D1(ha_out), .S(ha_rst), .R(1'b0), .Q(spi_miso)
+		.C0(ha_clk), .C1(~ha_clk), .CE(1'b1), .D0(ha_out2), .D1(ha_out),
+		.S(ha_rst), .R(1'b0), .Q(spi_miso)
 	);
 `else
 	assign spi_miso = ha_out2;
@@ -329,7 +330,8 @@ module HOST (
         if (ext_rd)  hb_din = ext_dout; else
 					 hb_din = tos[15:0];	// default: host_wr (HOST_TX)
 
-	// 16'b0 assignment very important because some rdRegs want to push a zero on the stack as a side-effect
+	// 16'b0 assignment very important because some rdRegs
+	// want to push a zero on the stack as a side-effect
     assign host_dout = hb_rd? hb_dout : 16'b0;
 
 endmodule

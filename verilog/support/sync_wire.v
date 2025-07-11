@@ -22,10 +22,14 @@ Boston, MA  02110-1301, USA.
 // NSYNC specifies custom synchronizer lengths
 // NOUT specifies the output signal width
 
-module SYNC_WIRE #(parameter NOUT=1, parameter NSYNC=2) (
-	input  wire in,
-	input  wire out_clk,
-	output wire [NOUT-1:0] out
+`timescale 1ns / 100ps
+
+module SYNC_WIRE
+    #(parameter NOUT=1, parameter NSYNC=2)
+    (
+        input  wire in,
+        input  wire out_clk,
+        output wire [NOUT-1:0] out
 	);
 
 	// total number of sync stages is increased by the number of outputs caller uses
