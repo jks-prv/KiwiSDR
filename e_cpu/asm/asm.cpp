@@ -613,8 +613,10 @@ int main(int argc, char *argv[])
 			    pp->config_prefix[0] = '\0';
 			}
 			pp->val = val;
-			if (redef)
-			    note(YELLOW, tp, "redefined %s from %d to %d", t->str, prior_val, val);
+			if (redef) {
+			    redef->flags |= TF_SKIP;    // don't emit the redefined DEF
+			    //note(YELLOW, tp, "redefined %s from %d to %d", t->str, prior_val, val);
+			}
 			pp++; continue;
 		}
 		
@@ -915,13 +917,13 @@ int main(int argc, char *argv[])
         }
 
 		for (p = preproc; p->str; p++) {
-			if (p->ptype != PT_DEF) continue;
+			if (p->ptype != PT_DEF || (p->flags & TF_SKIP)) continue;
             if (debug) printf("PT_DEF %s def file %s\n", p->str, p->config_prefix);
             if (only_gen_other && strcmp(p->config_prefix, "other") != 0) continue;
 
             if ((p->flags & TF_CFG_H) && cfp) {
                 fprintf(cfp, "localparam RX_CFG = %d;\n", p->val);
-                if (p->val > 0 && p->val < 14)
+                if (p->val != 14)
                     fprintf(cfp, "`define USE_WF\n");
             }
             

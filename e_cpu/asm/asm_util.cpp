@@ -324,7 +324,7 @@ preproc_t *pre(char *str, preproc_type_e ptype)
 	preproc_t *p;
 	
 	for (p=preproc; p->str; p++) {
-		if (strcmp(p->str, str) == 0) {
+		if (!(p->flags & TF_SKIP) && strcmp(p->str, str) == 0) {
 			if (ptype == PT_NONE) return p;
 			if (p->ptype == ptype) return p;
 		}

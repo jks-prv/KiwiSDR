@@ -63,6 +63,8 @@ const char * const ttype_s[] = {
 #define	TF_CIN		0x0004
 #define	TF_LOOP		0x0008
 
+#define	TF_SKIP		0x0010
+
 #define	TF_CFG_H	0x0100
 #define	TF_DOT_H	0x0200
 #define	TF_DOT_VP	0x0400
@@ -151,7 +153,7 @@ typedef struct {
 	
 	// DEF
 	int val, width;
-	int flags;
+	int flags;      // TF_* flags
 	char config_prefix[16];
 	
 	// STRUCT
