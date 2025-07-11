@@ -58,23 +58,30 @@ int CHFDLResample::setup(double f_srate, int n_samps)
     return Resample_I->iOutputBlockSize;
 }
 
-void CHFDLResample::run(float *sample, int length, HFDL_resamp_t *resamp)
+bool CHFDLResample::run(float *sample, int length, HFDL_resamp_t *resamp)
 {
+    bool wakeup = false;
     int i;
 
-    if (Resample_I == NULL || Resample_Q == NULL) return;
+    if (Resample_I == NULL || Resample_Q == NULL) return false;
+    const int iMaxInputSize = Resample_I->GetMaxInputSize();
     
     for (i = 0; i < length; i++) {
-        vecTempResBufIn_I[i] = sample[i*2];
-        vecTempResBufIn_Q[i] = sample[i*2+1];
+        vecTempResBufIn_I[vec_i] = sample[i*2];
+        vecTempResBufIn_Q[vec_i] = sample[i*2+1];
+        vec_i++;
+        if (vec_i == iMaxInputSize) {
+            Resample_I->Resample(vecTempResBufIn_I, vecTempResBufOut_I);
+            Resample_Q->Resample(vecTempResBufIn_Q, vecTempResBufOut_Q);
+            //printf("."); fflush(stdout);
+            resamp->out_I = &vecTempResBufOut_I[0];
+            resamp->out_Q = &vecTempResBufOut_Q[0];
+            vec_i = 0;
+            //real_printf(GREEN "HFDL" NORM " "); fflush(stdout);
+            wakeup = true;
+        }
     }
-
-    Resample_I->Resample(vecTempResBufIn_I, vecTempResBufOut_I);
-    Resample_Q->Resample(vecTempResBufIn_Q, vecTempResBufOut_Q);
-    //printf("."); fflush(stdout);
-    
-    resamp->out_I = &vecTempResBufOut_I[0];
-    resamp->out_Q = &vecTempResBufOut_Q[0];
+    return wakeup;
 }
 
 #ifdef STANDALONE_TEST

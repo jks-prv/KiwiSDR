@@ -102,6 +102,7 @@ static int ale_2g_input(int rx_chan, s2_t **inp = NULL, int *freqHz = NULL)
                 }
                 e->seq = rx->real_seqnum[e->rd_pos];
             }
+            int nsamps = rx->real_nsamps[e->rd_pos];
             e->seq++;
         
             if (e->reset) {
@@ -112,7 +113,7 @@ static int ale_2g_input(int rx_chan, s2_t **inp = NULL, int *freqHz = NULL)
             if (freqHz) *freqHz = rx->freqHz[e->rd_pos];
             e->rd_pos = (e->rd_pos+1) & (N_DPBUF-1);
 
-            return FASTFIR_OUTBUF_SIZE;
+            return nsamps;
         } else {
             TaskSleepReason("wait for wakeup");
         }
@@ -130,7 +131,7 @@ static int ale_2g_slot(double freq)
 
 static void ale_2g_task(void *param)
 {
-    int i, n;
+    int i, nsamps;
     int rx_chan = (int) FROM_VOID_PARAM(param);
     ale_2g_chan_t *e = &ale_2g_chan[rx_chan];
     e->ni = 0;
@@ -146,7 +147,7 @@ static void ale_2g_task(void *param)
         #else
             if (e->use_new_resampler) {
                 int freqHz;
-                n = ale_2g_input(rx_chan, &e->inp, &freqHz);
+                nsamps = ale_2g_input(rx_chan, &e->inp, &freqHz);
                 double tuned_f1 = (double) freqHz / kHz + freq.offset_kHz;
                 
                 #if 0
@@ -167,7 +168,7 @@ static void ale_2g_task(void *param)
                 #endif
 
                 e->decode.set_freq(tuned_f1);
-                e->decode.do_modem_resampled(e->inp, n);
+                e->decode.do_modem_resampled(e->inp, nsamps);
             } else {
             
                 // 12k/8k = 1.5 = 375/250                                                                                                                                           

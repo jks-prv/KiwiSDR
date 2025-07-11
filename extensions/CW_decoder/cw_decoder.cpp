@@ -96,10 +96,12 @@ void cw_task(void *param)
                 }
                 e->seq = rx->real_seqnum[e->rd_pos];
             }
+            int nsamps = rx->real_nsamps[e->rd_pos];
             e->seq++;
 		    
 		    //real_printf("%d ", e->rd_pos); fflush(stdout);
-		    CwDecode_RxProcessor(rx_chan, 0, FASTFIR_OUTBUF_SIZE, &rx->real_samples_s2[e->rd_pos][0]);
+            //real_printf(GREY "CWdec#%d " NORM, nsamps);
+		    CwDecode_RxProcessor(rx_chan, 0, nsamps, &rx->real_samples_s2[e->rd_pos][0]);
 			e->rd_pos = (e->rd_pos+1) & (N_DPBUF-1);
 		}
     }

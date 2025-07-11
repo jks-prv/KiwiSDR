@@ -116,10 +116,22 @@ void rx_enable(int chan, rx_chan_action_e action)
 	
 	switch (action) {
 
-	case RX_CHAN_ENABLE: rx->chan_enabled = true; break;
-	case RX_CHAN_DISABLE: rx->chan_enabled = false; break;
-	case RX_DATA_ENABLE: rx->data_enabled = true; break;
-	case RX_CHAN_FREE: memset(rx, 0, sizeof(rx_chan_t)); break;
+	case RX_CHAN_ENABLE:
+	    rx->chan_enabled = true;
+	    break;
+
+	case RX_CHAN_DISABLE:
+	    rx->chan_enabled = false;
+	    break;
+
+	case RX_DATA_ENABLE:
+	    rx->data_enabled = true;
+	    break;
+
+	case RX_CHAN_FREE:
+	    memset(rx, 0, sizeof(rx_chan_t));
+	    break;
+
 	default: panic("rx_enable"); break;
 
 	}

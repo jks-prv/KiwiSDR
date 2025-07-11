@@ -29,16 +29,18 @@ static void pcm_copy(sstv_chan_t *e, int idx, int nsamps)
     #if 1
     
     while (nsamps) {
-        int cnt = MIN(nsamps, FASTFIR_OUTBUF_SIZE - e->rd_idx);
+        int rx_nsamps = rx->real_nsamps[e->rd_pos];
+        int cnt = MIN(nsamps, rx_nsamps - e->rd_idx);
         assert(cnt > 0 && (idx+cnt) <= PCM_BUFLEN);
         //printf("idx=%d cnt=%d nsamps=%d\n", idx, cnt, nsamps);
         memcpy(&e->pcm.Buffer[idx], &rx->real_samples_s2[e->rd_pos][e->rd_idx], cnt * sizeof(s2_t));
         nsamps -= cnt;
         idx += cnt;
         e->rd_idx += cnt;
-        if (e->rd_idx >= FASTFIR_OUTBUF_SIZE) {
+        if (e->rd_idx >= rx_nsamps) {
             e->rd_idx = 0;
             e->rd_pos = (e->rd_pos+1) & (N_DPBUF-1);
+            //real_printf(BLUE "SSTV#%d" NORM " ", rx_nsamps); fflush(stdout);
 
             if (0 && e->rd_pos != rx->real_wr_pos) {
                 int diff = (int) rx->real_wr_pos - (int) e->rd_pos;

@@ -95,6 +95,7 @@ CAudioFileIn::SetFileName(const string& strFileName, FileTyper::type type)
         assert(drm->init);
         drm->iq_rd_pos = N_DPBUF-1;
         drm->remainingIQ = drm->iq_bpos = 0;
+        drm->setup = false;
         break;
     default:
         iFileChannels = 1;
@@ -364,6 +365,8 @@ CAudioFileIn::Read(CVector<short>& psData)
                 if (drm->remainingIQ > 0) {
                     //real_printf("%d|%d|%d ", iRemainingFrame, drm->remainingIQ, drm->iq_rd_pos); fflush(stdout);
                     iqp = &iq->iq_samples[drm->iq_rd_pos][drm->iq_bpos];
+
+                    //real_printf(BLUE "rd%d pos%d remIQ%d remF%d" NORM " ", drm->iq_rd_pos, drm->iq_bpos, drm->remainingIQ, iRemainingFrame); fflush(stdout);
                     for (; drm->remainingIQ > 0 && iRemainingFrame > 0; ) {
                         s4 = (s4_t) iqp->re;
                         //if (s4 > 32767 || s4 < -32768) printf("re range %d\n", s4);
@@ -404,29 +407,37 @@ CAudioFileIn::Read(CVector<short>& psData)
                 } else {
                 
                     //real_printf("[wait%d] ", iq->iq_wr_pos); fflush(stdout);
-                    drm->iq_rd_pos = (drm->iq_rd_pos+1) & (N_DPBUF-1);
-                    int trig = 0;
-                    while (drm->iq_rd_pos == iq->iq_wr_pos) {
-                        if (trig == 0) drm->no_input++;
-                        trig = 1;
-                        #if 0
-                            if (drm->debug & 1) {
-                                NextTask("drm Y");
-                            } else
-                            if (drm->debug & 2) {
-                                TaskSleepReasonUsec("drm YLP", 1);
-                            } else
-                            if (drm->debug & 4) {
-                                TaskSleepReasonUsec("drm YLP", 100);
-                            } else
-                        #endif
-                        {
-                            DRM_yield_lower_prio();
+                    //real_printf(CYAN "rd%d pos%d nsamps%d" NORM " ", drm->iq_rd_pos, drm->iq_bpos, iq->iq_nsamps[drm->iq_rd_pos]); fflush(stdout);
+                    if (drm->iq_bpos >= iq->iq_nsamps[drm->iq_rd_pos] || !drm->setup) {
+                        drm->setup = true;
+                        drm->iq_rd_pos = (drm->iq_rd_pos+1) & (N_DPBUF-1);
+                        int trig = 0;
+                        while (drm->iq_rd_pos == iq->iq_wr_pos) {
+                            if (trig == 0) drm->no_input++;
+                            trig = 1;
+                            #if 0
+                                if (drm->debug & 1) {
+                                    NextTask("drm Y");
+                                } else
+                                if (drm->debug & 2) {
+                                    TaskSleepReasonUsec("drm YLP", 1);
+                                } else
+                                if (drm->debug & 4) {
+                                    TaskSleepReasonUsec("drm YLP", 100);
+                                } else
+                            #endif
+                            {
+                                //real_printf(YELLOW "Yield" NORM " "); fflush(stdout);
+                                DRM_yield_lower_prio();
+                            }
                         }
+                        //real_printf("[r%dw%d] ", drm->iq_rd_pos, iq->iq_wr_pos); fflush(stdout);
+                        //drm->remainingIQ = iq->iq_nsamps[drm->iq_rd_pos];
+                        drm->remainingIQ = iq->iq_nsamps[drm->iq_rd_pos];
+                        //real_printf(BLUE "[D%d-%d]" NORM " ", drm->iq_rd_pos, drm->remainingIQ); fflush(stdout);
+                        //real_printf(GREEN "NBUF" NORM " "); fflush(stdout);
+                        drm->iq_bpos = 0;
                     }
-                    //real_printf("[r%dw%d] ", drm->iq_rd_pos, iq->iq_wr_pos); fflush(stdout);
-                    drm->remainingIQ = FASTFIR_OUTBUF_SIZE;
-                    drm->iq_bpos = 0;
                 }
             #endif
         }

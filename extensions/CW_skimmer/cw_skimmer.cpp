@@ -73,11 +73,13 @@ static void cws_task(void *param) {
                 }
                 e->seq = rx->real_seqnum[e->rd_pos];
             }
+            int nsamps = rx->real_nsamps[e->rd_pos];
             e->seq++;
 
             // real_printf("%d ", e->rd_pos); fflush(stdout);
+            //real_printf(GREY "CWskm#%d " NORM, nsamps);
             int rd_pos = e->rd_pos;
-            e->skimmer->AddSamples(&rx->real_samples_s2[rd_pos][0], FASTFIR_OUTBUF_SIZE);
+            e->skimmer->AddSamples(&rx->real_samples_s2[rd_pos][0], nsamps);
             e->rd_pos = (rd_pos + 1) & (N_DPBUF - 1);
         }
     }

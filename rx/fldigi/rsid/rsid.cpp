@@ -396,7 +396,7 @@ void cRsId::search(void)
 void cRsId::receive(int len, TYPEMONO16 *samps)
 {
     int i;
-    if (len != FASTFIR_OUTBUF_SIZE) panic("len");
+    if (len != FASTFIR_OUTBUF_SIZE) panic("len");   //jksx FIXME no longer true!
     u4_t start = timer_ms();
 
 	if (rsid_secondary_time_out > 0) {

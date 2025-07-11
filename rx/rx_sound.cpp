@@ -511,12 +511,12 @@ void c2s_sound(void *param)
         do {
 		    u2_t bc = 0;
     
-            u1_t *bp_real_u1  = s->out_pkt_real.u1;
-            s2_t *bp_real_s2  = s->out_pkt_real.s2;
-            u1_t *bp_iq_u1    = s->out_pkt_iq.u1;
-            s2_t *bp_iq_s2    = s->out_pkt_iq.s2;
-            u1_t *bp_wb_u1    = out_pkt_wb.u1;
-            s2_t *bp_wb_s2    = out_pkt_wb.s2;
+            u1_t *bp_real_u1 = s->out_pkt_real.u1;
+            s2_t *bp_real_s2 = s->out_pkt_real.s2;
+            u1_t *bp_iq_u1   = s->out_pkt_iq.u1;
+            s2_t *bp_iq_s2   = s->out_pkt_iq.s2;
+            u1_t *bp_wb_u1   = out_pkt_wb.u1;
+            s2_t *bp_wb_s2   = out_pkt_wb.s2;
 
             evSnd(EC_EVENT, EV_SND, -1, "rx_snd", "do..");
             do {    // while (bc < LOOP_BC)
@@ -661,6 +661,8 @@ void c2s_sound(void *param)
                     evSnd(EC_EVENT, EV_SND, -1, "rx_snd", evprintf("PB_FIR=%d", ns_out));
                     if (ns_out == 0)
                         continue;
+                    iq->iq_nsamps[iq->iq_wr_pos] = ns_out;
+                    rx->real_nsamps[rx->real_wr_pos] = ns_out;
                     
                     // correct GPS timestamp for offset in the FIR filter
                     //  (1) delay in FIR filter
@@ -1225,7 +1227,8 @@ void c2s_sound(void *param)
                         iq->iq_wr_pos = (iq->iq_wr_pos+1) & (N_DPBUF-1);    // after AGC above
     
                         drm_buf_t *drm_buf = &DRM_SHMEM->drm_buf[rx_chan];
-                        int pkt_remain = FASTFIR_OUTBUF_SIZE;
+                        // to pace the output properly must follow the changes in ns_out size
+                        int pkt_remain = ns_out;
                         
                         int bufs = pos_wrap_diff(drm_buf->out_wr_pos, drm_buf->out_rd_pos, N_DRM_OBUF);
                         int remain = drm_buf->out_samps - drm_buf->out_pos;
@@ -1233,14 +1236,14 @@ void c2s_sound(void *param)
                         //{ real_printf("d%d as%d ", bufs, avail_samples); fflush(stdout); }
                         //{ real_printf("d%d ", bufs); fflush(stdout); }
                         
-                        if (avail_samples < FASTFIR_OUTBUF_SIZE) {
+                        if (avail_samples < pkt_remain) {
                             drm_t *drm = &DRM_SHMEM->drm[0];
                             drm->sent_silence++;
                             send_silence = true;
+                            //real_printf(RED "Z" NORM); fflush(stdout);
                         }
                         
                         if (send_silence) {     // so waterfall keeps going (stays synced)
-                            // non-zero to keep FF silence detector from being tripped
                             if (s->little_endian) {
                                 bc += pkt_remain * NIQ * sizeof(s2_t);
                                 for (j=0; j < pkt_remain; j++) {

@@ -43,6 +43,7 @@ typedef struct {
 	bool init;
 	int rx_chan;
 	int tid;
+	bool setup;
 	int iq_rd_pos, iq_bpos, remainingIQ;
 	bool monitor, reset;
 	int run;

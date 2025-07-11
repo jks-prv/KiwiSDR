@@ -399,6 +399,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("show_1Hz", false, &up_cfg);
     cfg_default_int("dx_default_db", 0, &up_cfg);
     cfg_default_int("spec_min_range", 50, &up_cfg);
+    cfg_default_bool("all_fonts_bold", false, &up_cfg);
 
     cfg_default_object("init", "{}", &up_cfg);
     cfg_default_int("init.cw_offset", 500, &up_cfg);
@@ -636,6 +637,7 @@ void update_vars_from_config(bool called_at_init)
     admcfg_default_string("ip_address.dns1", "1.1.1.1", &update_admcfg);
     admcfg_default_string("ip_address.dns2", "8.8.8.8", &update_admcfg);
     admcfg_default_string("url_redirect", "", &update_admcfg);
+    admcfg_default_bool("local_ip_retry", true, &update_admcfg);
 
     admcfg_default_bool("ip_blacklist_auto_download", true, &update_admcfg);
     admcfg_default_string("ip_blacklist", "47.88.219.24/24", &update_admcfg);
