@@ -1840,17 +1840,25 @@ function network_html()
 		w3_div('id-net-reboot w3-container',
 			w3_inline('w3-halign-space-between w3-margin-bottom w3-text-teal/',
 			   w3_divs('w3-valign w3-flex-col/w3-tspace-6',
-					w3_input_get('w3-restart', 'Internal port', 'adm.port', 'admin_int_cb'),
-					w3_input_get('w3-restart', 'External port', 'adm.port_ext', 'admin_int_cb'),
-					w3_input_get('', 'Debian hostname', 'adm.hostname', 'network_hostname_cb', 'kiwisdr')
+					w3_input_get('w3-restart|width:150px', 'Internal port', 'adm.port', 'admin_int_cb'),
+					w3_input_get('w3-restart|width:150px', 'External port', 'adm.port_ext', 'admin_int_cb'),
+					w3_input_get('|width:150px', 'Debian hostname', 'adm.hostname', 'network_hostname_cb', 'kiwisdr')
 				),
 				w3_divs('id-net-ssl-vis w3-hide/ w3-center w3-restart',
 					w3_switch_label_get_param('id-net-ssl w3-center', 'Enable HTTPS/SSL on<br>network connections?',
 					   'Yes', 'No', 'adm.use_ssl', true, false, 'network_use_ssl_cb')
 				),
-				w3_switch_label('w3-center', 'Auto add NAT rule<br>on firewall / router?', 'Yes', 'No', 'adm.auto_add_nat', adm.auto_add_nat, 'network_auto_nat_cb'),
-            w3_switch_label_get_param('w3-center', 'IP address<br>(only static IPv4 for now)',
-               'DHCP', 'Static', 'adm.ip_address.use_static', 0, false, 'network_use_static_cb'),
+				w3_divs('/w3-tspace-8',
+               w3_checkbox_get_param('//w3-label-inline', 'Auto add NAT rule on router', 'adm.auto_add_nat', 'network_auto_nat_cb', false),
+               w3_checkbox_get_param('/w3-label-inline/w3-ialign-start',
+                  'Acquire local IP indefinitely <br> (uncheck if using direct-to-computer <br> Ethernet connection)',
+                  'adm.local_ip_retry', 'admin_bool_cb', true)
+            ),
+            w3_divs('w3-center/',
+               w3_switch_label_get_param('w3-center', 'IP address',
+                  'DHCP', 'Static', 'adm.ip_address.use_static', 0, false, 'network_use_static_cb'),
+               w3_div('w3-text-black', 'Only IPv4 static <br> addresses supported.')
+            ),
             w3_divs('w3-center/',
                w3_select_conditional('w3-width-auto', 'Ethernet interface speed', '', 'ethernet_speed', cfg.ethernet_speed, network.ethernet_speed_s, 'network_ethernet_speed'),
                w3_div('w3-text-black', spd_s)
@@ -2435,13 +2443,12 @@ function network_auto_nat_status_poll()
 	ext_send('SET auto_nat_status_poll');
 }
 
-function network_auto_nat_cb(path, idx, first)
+function network_auto_nat_cb(path, checked, first)
 {
    if (first) return;
-   idx = +idx;
-	var auto_nat = (idx == w3_SWITCH_YES_IDX)? 1:0;
+	var auto_nat = checked? 1:0;
 	//console.log('network_auto_nat_cb: path='+ path +' auto_nat='+ auto_nat);
-   admin_radio_YN_cb(path, idx);
+   admin_bool_cb(path, checked, first);
    ext_send_after_cfg_save('SET auto_nat_set');    // server inspects adm.auto_add_nat to add or delete NAT
    if (auto_nat && network.nat_status_interval == null) {
       //console.log('auto_nat_status_poll START');
