@@ -509,10 +509,10 @@ static void data_pump_init()
 	rxd = (rx_data_t *) &SPI_SHMEM->dpump_miso.word[0];
 	rxt = (rx_trailer_t *) ((char *) rxd + rx_xfer_size);
 	rx_xfer_size += sizeof(rx_trailer_t);
-	printf("rx_trailer_t=%d iq3_t=%d rx_xfer_size=%d/%d\n", sizeof(rx_trailer_t), sizeof(iq3_t), rx_xfer_size, NRX_SAMPS_MAX);
+	printf("rx_trailer_t=%d iq3_t=%d rx_xfer_size=%d/%d\n", sizeof(rx_trailer_t), sizeof(iq3_t), rx_xfer_size, NRX_SAMPS_BYTES_MAX);
 
 	// does a single nrx_samps transfer fit in the SPI buf?
-	check(rx_xfer_size <= NRX_SAMPS_MAX);       // in bytes
+	check(rx_xfer_size <= NRX_SAMPS_BYTES_MAX);       // in bytes
 	
     check(nrx_samps < FASTFIR_OUTBUF_SIZE);     // see rx_dpump_t.in_samps[][]
     check(nrx_samps_wb < MAX_WB_SAMPS);         // see rx_dpump_t.wb_samps[][]

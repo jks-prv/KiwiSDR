@@ -31,7 +31,7 @@ nrx_samps:		u16		0
 #if SND_SEQ_CHECK
 rx_seq:			u16		0
 #endif
-				// this routing called from main loop at audio buffer flip rate (i.e. every NRX_SAMPS audio samples)
+				// this routine called from main loop at audio buffer flip rate (i.e. every NRX_SAMPS audio samples)
 				// when polling with rdReg GET_RX_SRQ finds rx_srq asserted
 RX_Buffer:
 				// if nrx_samps has not been set yet hardware will not interrupt at correct rate
