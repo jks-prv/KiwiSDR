@@ -188,7 +188,7 @@ module KiwiSDR (
     wire  [2:1] rst;
 
 	wire [15:0] op;
-    wire [31:0] nos, tos;
+    wire [31:0] tos;
     reg  [15:0] par;
     wire [2:0]  ser;
     wire        rdBit0, rdBit1, rdBit2, rdReg, wrReg, wrReg2, wrEvt, wrEvt2, wrEvtL;
@@ -334,7 +334,7 @@ module KiwiSDR (
         .adc_count_C    (adc_count),
         
 		.cpu_clk	    (cpu_clk),
-        .ser		    (ser[1]),        
+        .rx_ser		    (ser[1]),        
         .tos		    (tos),
         .op_11          (op[10:0]),        
         .rdReg          (rdReg),
@@ -387,22 +387,25 @@ module KiwiSDR (
     //////////////////////////////////////////////////////////////////////////
 	
 	wire [1:0] reg_no = op[7:6];
+	wire get_reg_misc = rdReg && op[GET_REG_MISC];
+	wire get_cpu_ctr  = rdReg && op[GET_CPU_CTR];
+	wire get_adc_ctr  = rdReg && op[GET_ADC_CTR];
 	
     always @*
     begin
 `ifdef USE_CPU_CTR
-		if (rdReg & op[GET_CPU_CTR] && reg_no == 0) par = { cpu_ctr[1][ 7 -:8], cpu_ctr[0][ 7 -:8] }; else
-		if (rdReg & op[GET_CPU_CTR] && reg_no == 1) par = { cpu_ctr[1][15 -:8], cpu_ctr[0][15 -:8] }; else
-		if (rdReg & op[GET_CPU_CTR] && reg_no == 2) par = { cpu_ctr[1][23 -:8], cpu_ctr[0][23 -:8] }; else
-		if (rdReg & op[GET_CPU_CTR] && reg_no == 3) par = { cpu_ctr[1][31 -:8], cpu_ctr[0][31 -:8] }; else
+		if (get_cpu_ctr && reg_no == 0) par = { cpu_ctr[1][ 7 -:8], cpu_ctr[0][ 7 -:8] }; else
+		if (get_cpu_ctr && reg_no == 1) par = { cpu_ctr[1][15 -:8], cpu_ctr[0][15 -:8] }; else
+		if (get_cpu_ctr && reg_no == 2) par = { cpu_ctr[1][23 -:8], cpu_ctr[0][23 -:8] }; else
+		if (get_cpu_ctr && reg_no == 3) par = { cpu_ctr[1][31 -:8], cpu_ctr[0][31 -:8] }; else
 `endif
 
 `ifdef USE_SDR
-		if (rdReg & op[GET_ADC_CTR] && reg_no == 0) par = { adc_count[15: 0] }; else
-		if (rdReg & op[GET_ADC_CTR] && reg_no == 1) par = { adc_count[31:16] }; else
+		if (get_adc_ctr  && reg_no == 0) par = { adc_count[15: 0] }; else
+		if (get_adc_ctr  && reg_no == 1) par = { adc_count[31:16] }; else
 `endif
 
-		if (rdReg & op[GET_STATUS]) par = status; else
+		if (get_reg_misc && reg_no == 0) par = status; else
 		par = host_dout;
 	end
 	

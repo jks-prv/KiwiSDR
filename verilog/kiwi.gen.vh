@@ -188,9 +188,8 @@
 	localparam GET_SNAPSHOT = 2;    // DEFb: bit number for value: 0x4
 	localparam HOST_RX = 3;    // DEFb: bit number for value: 0x8
 	localparam GET_RX_SRQ = 4;    // DEFb: bit number for value: 0x10
-	localparam GET_STATUS = 5;    // DEFb: bit number for value: 0x20
-	localparam REG_NO = 192;    // DEFp 0xc0
-`define DEF_REG_NO 1
+	localparam GET_REG_NO = 192;    // DEFp 0xc0
+`define DEF_GET_REG_NO 1
 	localparam REG_0 = 0;    // DEFp 0x0
 //`define DEF_REG_0
 	localparam REG_1 = 64;    // DEFp 0x40
@@ -199,21 +198,23 @@
 `define DEF_REG_2 1
 	localparam REG_3 = 192;    // DEFp 0xc0
 `define DEF_REG_3 1
-	localparam GET_CPU_CTR = 8;    // DEFb: bit number for value: 0x100
-	localparam GET_CPU_CTR0 = 256;    // DEFp 0x100
+	localparam GET_REG_MISC = 8;    // DEFb: bit number for value: 0x100
+	localparam GET_STATUS = 256;    // DEFp 0x100
+`define DEF_GET_STATUS 1
+	localparam GET_CPU_CTR = 9;    // DEFb: bit number for value: 0x200
+	localparam GET_CPU_CTR0 = 512;    // DEFp 0x200
 `define DEF_GET_CPU_CTR0 1
-	localparam GET_CPU_CTR1 = 320;    // DEFp 0x140
+	localparam GET_CPU_CTR1 = 576;    // DEFp 0x240
 `define DEF_GET_CPU_CTR1 1
-	localparam GET_CPU_CTR2 = 384;    // DEFp 0x180
+	localparam GET_CPU_CTR2 = 640;    // DEFp 0x280
 `define DEF_GET_CPU_CTR2 1
-	localparam GET_CPU_CTR3 = 448;    // DEFp 0x1c0
+	localparam GET_CPU_CTR3 = 704;    // DEFp 0x2c0
 `define DEF_GET_CPU_CTR3 1
-	localparam GET_ADC_CTR = 9;    // DEFb: bit number for value: 0x200
-	localparam GET_ADC_CTR0 = 512;    // DEFp 0x200
+	localparam GET_ADC_CTR = 10;    // DEFb: bit number for value: 0x400
+	localparam GET_ADC_CTR0 = 1024;    // DEFp 0x400
 `define DEF_GET_ADC_CTR0 1
-	localparam GET_ADC_CTR1 = 576;    // DEFp 0x240
+	localparam GET_ADC_CTR1 = 1088;    // DEFp 0x440
 `define DEF_GET_ADC_CTR1 1
-	localparam RDREG_400 = 10;    // DEFb: bit number for value: 0x400
 	localparam HOST_TX = 0;    // DEFb: bit number for value: 0x1
 	localparam SET_GPS_MASK = 1;    // DEFb: bit number for value: 0x2
 	localparam SET_GPS_CHAN = 2;    // DEFb: bit number for value: 0x4
@@ -225,17 +226,32 @@
 	localparam SET_ADC_LVL = 8;    // DEFb: bit number for value: 0x100
 	localparam SET_CNT_MASK = 9;    // DEFb: bit number for value: 0x200
 	localparam SET_CTRL = 10;    // DEFb: bit number for value: 0x400
-	localparam SET_RX_CHAN = 0;    // DEFb: bit number for value: 0x1
-	localparam SET_RX_FREQ = 1;    // DEFb: bit number for value: 0x2
-	localparam FREQ_L = 2;    // DEFb: bit number for value: 0x4
-	localparam SET_RX_NSAMPS = 3;    // DEFb: bit number for value: 0x8
-	localparam SET_GEN_FREQ = 4;    // DEFb: bit number for value: 0x10
-	localparam SET_GEN_ATTN = 5;    // DEFb: bit number for value: 0x20
-	localparam SET_WF_CHAN = 6;    // DEFb: bit number for value: 0x40
-	localparam SET_WF_FREQ = 7;    // DEFb: bit number for value: 0x80
-	localparam SET_WF_DECIM = 8;    // DEFb: bit number for value: 0x100
-	localparam SET_WF_OFFSET = 9;    // DEFb: bit number for value: 0x200
-	localparam WF_SAMPLER_RST = 10;    // DEFb: bit number for value: 0x400
+	localparam SET_REG = 3;    // DEFb: bit number for value: 0x8
+	localparam SET_REG_NO = 7;    // DEFp 0x7
+`define DEF_SET_REG_NO 1
+	localparam SET_WF_CHAN = 0;    // DEFp 0x0
+//`define DEF_SET_WF_CHAN
+	localparam SET_WF_FREQ = 1;    // DEFp 0x1
+`define DEF_SET_WF_FREQ 1
+	localparam SET_WF_DECIM = 2;    // DEFp 0x2
+`define DEF_SET_WF_DECIM 1
+	localparam SET_WF_OFFSET = 3;    // DEFp 0x3
+`define DEF_SET_WF_OFFSET 1
+	localparam SET_WF_RST = 4;    // DEFp 0x4
+`define DEF_SET_WF_RST 1
+	localparam SET_REG_5 = 5;    // DEFp 0x5
+`define DEF_SET_REG_5 1
+	localparam SET_REG_6 = 6;    // DEFp 0x6
+`define DEF_SET_REG_6 1
+	localparam SET_REG_7 = 7;    // DEFp 0x7
+`define DEF_SET_REG_7 1
+	localparam SET_RX_CHAN = 4;    // DEFb: bit number for value: 0x10
+	localparam SET_RX_FREQ = 5;    // DEFb: bit number for value: 0x20
+	localparam FREQ_L = 6;    // DEFb: bit number for value: 0x40
+	localparam SET_RX_NSAMPS = 7;    // DEFb: bit number for value: 0x80
+	localparam SET_RX_EN = 8;    // DEFb: bit number for value: 0x100
+	localparam SET_GEN_FREQ = 9;    // DEFb: bit number for value: 0x200
+	localparam SET_GEN_ATTN = 10;    // DEFb: bit number for value: 0x400
 	localparam HOST_RST = 0;    // DEFb: bit number for value: 0x1
 	localparam HOST_RDY = 1;    // DEFb: bit number for value: 0x2
 	localparam GET_MEMORY = 2;    // DEFb: bit number for value: 0x4
@@ -272,10 +288,10 @@
 	localparam WREVTL_100 = 8;    // DEFb: bit number for value: 0x100
 	localparam WREVTL_200 = 9;    // DEFb: bit number for value: 0x200
 	localparam WREVTL_400 = 10;    // DEFb: bit number for value: 0x400
-	localparam WF_SAMP_RD_RST = 0;    // DEFb: bit number for value: 0x1
-	localparam WF_SAMP_WR_RST = 1;    // DEFb: bit number for value: 0x2
-	localparam WF_SAMP_CONTIN = 2;    // DEFb: bit number for value: 0x4
-	localparam WF_SAMP_SYNC = 3;    // DEFb: bit number for value: 0x8
+	localparam WF_SAMP_RD_RST = 11;    // DEFb: bit number for value: 0x800
+	localparam WF_SAMP_WR_RST = 12;    // DEFb: bit number for value: 0x1000
+	localparam WF_SAMP_CONTIN = 13;    // DEFb: bit number for value: 0x2000
+	localparam WF_SAMP_SYNC = 14;    // DEFb: bit number for value: 0x4000
 	localparam STAT_STATUS = 1023;    // DEFp 0x3ff
 `define DEF_STAT_STATUS 1
 	localparam STAT_FPGA_ID = 7168;    // DEFp 0x1c00
@@ -305,8 +321,7 @@
 	localparam CTRL_USE_GEN = 10;    // DEFb: bit number for value: 0x400
 	localparam CTRL_CMD_READY = 11;    // DEFb: bit number for value: 0x800
 	localparam CTRL_SND_INTR = 12;    // DEFb: bit number for value: 0x1000
-	localparam CTRL_GPS_CLK_EN = 13;    // DEFb: bit number for value: 0x2000
-	localparam CTRL_4000 = 14;    // DEFb: bit number for value: 0x4000
+	localparam CTRL_GPS_CLK_EN = 14;    // DEFb: bit number for value: 0x4000
 	localparam CTRL_8000 = 15;    // DEFb: bit number for value: 0x8000
 	localparam CTRL_UNUSED_OUT = 9;    // DEFb: bit number for value: 0x200
 
