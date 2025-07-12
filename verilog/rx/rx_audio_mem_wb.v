@@ -23,7 +23,7 @@ Boston, MA  02110-1301, USA.
 // when the DDC samples are available, all the receiver outputs are interleaved into a common buffer
 //////////////////////////////////////////////////////////////////////////
 	
-`timescale 10ns / 10ns
+`timescale 1ns / 100ps
 
 module rx_audio_mem_wb (
 	input wire		   adc_clk,
@@ -220,7 +220,7 @@ debug_3 <= 1;
 	SYNC_PULSE sync_reset_bufs (.in_clk(cpu_clk), .in(reset_bufs_C), .out_clk(adc_clk), .out(reset_bufs_A));
 
 	always @ (posedge adc_clk)
-		if (reset_bufs_A)
+		if (reset)
 		begin
 			waddr <= 0;
 		end

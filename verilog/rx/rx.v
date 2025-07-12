@@ -19,24 +19,24 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2013 Phil Harman, VK6APH
 // Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
 
-module rx (
-	input  wire		   adc_clk,
-	input  wire signed [IN_WIDTH-1:0] adc_data,
-	input  wire		   rd_getI,
-	input  wire		   rd_getQ,
-	output wire		   rx_avail_A,
-	output wire [15:0] rx_dout_A,
-
-	input  wire		   cpu_clk,
-    input  wire [31:0] freeze_tos_A,
-	input  wire		   rx_sel_C,
-    input  wire        set_rx_freqH_C,
-    input  wire        set_rx_freqL_C
+module rx
+	#(parameter IN_WIDTH  = "required")
+    (
+        input  wire		   adc_clk,
+        input  wire signed [IN_WIDTH-1:0] adc_data,
+        input  wire		   rd_getI,
+        input  wire		   rd_getQ,
+        output wire		   rx_avail_A,
+        output wire [15:0] rx_dout_A,
+    
+        input  wire		   cpu_clk,
+        input  wire [31:0] freeze_tos_A,
+        input  wire		   rx_sel_C,
+        input  wire        set_rx_freqH_C,
+        input  wire        set_rx_freqL_C
 	);
 	
 `include "kiwi.gen.vh"
-
-	parameter IN_WIDTH  = "required";
 
 	reg signed [47:0] rx_phase_inc;
 	wire set_phaseH, set_phaseL;

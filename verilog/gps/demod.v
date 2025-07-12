@@ -20,31 +20,31 @@
 
 `default_nettype none
 
-module DEMOD (
-    input  wire        clk,
-    input  wire        rst,
-    input  wire        sample,
-    input  wire        cg_resume, 
-    input  wire        chan_wrReg,
-    input  wire        op_set_sat,
-    input  wire        op_set_pause,
-    input  wire        op_lo_nco,
-    input  wire        op_cg_nco,
-    input  wire [31:0] tos,
-    
-    output reg [E1B_CODEBITS-1:0] nchip,
-    output wire        e1b_full_chip,
-    input  wire        e1b_code,
-    
-    input  wire        shift,
-    output wire        sout,
-    output reg         ms0,
-    output wire [GPS_REPL_BITS-1:0] replica
-);
+module DEMOD
+    #(parameter E1B = "required")
+    (
+        input  wire        clk,
+        input  wire        rst,
+        input  wire        sample,
+        input  wire        cg_resume, 
+        input  wire        chan_wrReg,
+        input  wire        op_set_sat,
+        input  wire        op_set_pause,
+        input  wire        op_lo_nco,
+        input  wire        op_cg_nco,
+        input  wire [31:0] tos,
+        
+        output reg [E1B_CODEBITS-1:0] nchip,
+        output wire        e1b_full_chip,
+        input  wire        e1b_code,
+        
+        input  wire        shift,
+        output wire        sout,
+        output reg         ms0,
+        output wire [GPS_REPL_BITS-1:0] replica
+    );
 
 `include "kiwi.gen.vh"
-
-	parameter E1B = "required";
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Select sat
