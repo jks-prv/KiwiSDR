@@ -60,7 +60,7 @@ static int hfdl_input(int rx_chan, TYPECPX **samps_c = NULL)
                 e->seq = rx->iq_seqnum[e->rd_pos];
             }
             int nsamps = rx->iq_nsamps[e->rd_pos];
-            real_printf("R%d#%d ", e->rd_pos, nsamps); fflush(stdout);
+            //real_printf("R%d#%d ", e->rd_pos, nsamps); fflush(stdout);
             e->seq++;
     
             if (e->reset) {
