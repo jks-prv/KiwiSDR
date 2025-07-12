@@ -63,7 +63,8 @@ int wf_slowdown;
     wf_shmem_t *wf_shmem_p = &wf_shmem;
 #endif
 
-// FIXME: doesn't work yet because currently no way to use SPI from LINUX_CHILD_PROCESS()
+// Doesn't work because currently no way to use SPI from LINUX_CHILD_PROCESS()
+// So sample_wf() can't be run as an process, but compute_frame() can.
 //#define WF_IPC_SAMPLE_WF
 
 #if defined(WF_SHMEM_DISABLE) || !defined(WF_IPC_SAMPLE_WF)
