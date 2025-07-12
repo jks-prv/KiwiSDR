@@ -2,17 +2,16 @@
 
 // IQ mixer using multiplies as a slice-saving alternative to CORDIC
 
-module IQ_MIXER (
-	input wire clk,
-	input wire signed [47:0] phase_inc,
-	input wire signed [IN_WIDTH-1:0] in_data,
-	output wire signed [OUT_WIDTH-1:0] out_i,
-	output wire signed [OUT_WIDTH-1:0] out_q
+module IQ_MIXER
+    #(parameter IN_WIDTH = "required", parameter OUT_WIDTH = "required")
+    (
+        input wire clk,
+        input wire signed [47:0] phase_inc,
+        input wire signed [IN_WIDTH-1:0] in_data,
+        output wire signed [OUT_WIDTH-1:0] out_i,
+        output wire signed [OUT_WIDTH-1:0] out_q
     );
     
-	parameter IN_WIDTH  = "required";
-	parameter OUT_WIDTH  = "required";
-
 	localparam ZFILL		= 18 - IN_WIDTH;
 
 	localparam SIGN			= 35;

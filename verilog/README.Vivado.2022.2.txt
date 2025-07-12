@@ -85,6 +85,7 @@ KiwiSDR_SDR_GPS/verilog.Vivado.2022.2.ip/ there from your your build machine.
 
 7) Now the main Vivado user interface will appear. Look at the Project Manager > Sources window.
 After it settles down the "KiwiSDR (kiwi.v)" entry should be listed in bold as the top-level module.
+If it isn't in bold then click to select it, then right-click and select the "Set as top" menu entry.
 
 8) Copy the IP definition files. Under the left-side menu called "Project Manager":
     > Add Sources

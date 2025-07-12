@@ -15,22 +15,24 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
 
-module RX_BUFFER (
-	input  wire clka,
-	input  wire [ADDR_MSB:0] addra,
-	input  wire [15:0] dina,
-	input  wire wea,
-	
-	input  wire clkb,
-	input  wire [ADDR_MSB:0] addrb,
-	output wire [15:0] doutb
+`timescale 1ns / 100ps
+
+module RX_BUFFER
+	#(parameter ADDR_MSB = "required")
+    (
+        input  wire clka,
+        input  wire [ADDR_MSB:0] addra,
+        input  wire [15:0] dina,
+        input  wire wea,
+        
+        input  wire clkb,
+        input  wire [ADDR_MSB:0] addrb,
+        output wire [15:0] doutb
 	);
 
 `include "kiwi.gen.vh"
-
-	parameter ADDR_MSB = "required";
 
 // When building all configurations sequentially using the verilog/make_proj.tcl script
 // the following doesn't work because of problems with the Vivado source code scanner marking the unused

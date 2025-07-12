@@ -29,29 +29,30 @@ Boston, MA  02110-1301, USA.
 // Fixed differential delay (D) = 1
 //
 
-module cic_prune_var (
-	input wire clock,
-	input wire reset,
-	input wire [MD-1:0] decimation,
-	input wire in_strobe,
-	output reg out_strobe,
-	input wire signed [IN_WIDTH-1:0] in_data,
-	output reg signed [OUT_WIDTH-1:0] out_data
+module cic_prune_var
+    #(
+        // design parameters
+        parameter INC_FILE = "required",
+        parameter STAGES = "required",
+        parameter DECIM_TYPE = "required",  
+        parameter IN_WIDTH = "required",
+        parameter GROWTH = "required",
+        parameter OUT_WIDTH = "required",
+        parameter MD = 18       // assumes excess counter bits get optimized away
+    )
+    (
+        input wire clock,
+        input wire reset,
+        input wire [MD-1:0] decimation,
+        input wire in_strobe,
+        output reg out_strobe,
+        input wire signed [IN_WIDTH-1:0] in_data,
+        output reg signed [OUT_WIDTH-1:0] out_data
 	);
 
 `include "kiwi.gen.vh"
 
-    // design parameters
-    parameter INC_FILE = "required";
-    parameter STAGES = "required";
-    parameter DECIM_TYPE = "required";  
-    parameter IN_WIDTH = "required";
-    parameter GROWTH = "required";
-    parameter OUT_WIDTH = "required";
-    
     localparam ACC_WIDTH = IN_WIDTH + GROWTH;
-    
-    localparam MD = 18;		// assumes excess counter bits get optimized away
     
     reg [MD-1:0] sample_no;
     initial sample_no = {MD{1'b0}};

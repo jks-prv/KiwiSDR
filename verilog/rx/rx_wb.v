@@ -19,31 +19,31 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2013 Phil Harman, VK6APH
 // Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
 
-module rx_wb (
-	input  wire		   adc_clk,
-	input  wire signed [IN_WIDTH-1:0] adc_data,
-	input  wire		   rd_getI,
-	input  wire		   rd_getQ,
-	input  wire		   rd_getWB,
-	output wire		   rx_avail_A,
-	output reg		   rx_avail_wb_A,
-	output wire [15:0] rx_dout_A,
-
-    // debug
-	input  wire [ 2:0] didx_i,
-	input  wire [15:0] waddr_i,
-	input  wire [15:0] count_i,
-
-	input  wire		   cpu_clk,
-    input  wire [31:0] freeze_tos_A,
-	input  wire		   rx_sel_C,
-    input  wire        set_rx_freqH_C,
-    input  wire        set_rx_freqL_C
+module rx_wb
+	#(parameter IN_WIDTH  = "required")
+    (
+        input  wire		   adc_clk,
+        input  wire signed [IN_WIDTH-1:0] adc_data,
+        input  wire		   rd_getI,
+        input  wire		   rd_getQ,
+        input  wire		   rd_getWB,
+        output wire		   rx_avail_A,
+        output reg		   rx_avail_wb_A,
+        output wire [15:0] rx_dout_A,
+    
+        // debug
+        input  wire [ 2:0] didx_i,
+        input  wire [15:0] waddr_i,
+        input  wire [15:0] count_i,
+    
+        input  wire		   cpu_clk,
+        input  wire [31:0] freeze_tos_A,
+        input  wire		   rx_sel_C,
+        input  wire        set_rx_freqH_C,
+        input  wire        set_rx_freqL_C
 	);
 	
 `include "kiwi.gen.vh"
-
-	parameter IN_WIDTH  = "required";
 
 	reg signed [47:0] rx_phase_inc;
 	wire set_phaseH, set_phaseL;
@@ -133,7 +133,7 @@ cic_prune_var #(.INC_FILE("rx2"), .STAGES(RX2_STAGES), .DECIM_TYPE(RX2_DECIM), .
     wire rx_cicf_avail;
 	wire signed [RXO_BITS-1:0] rx_cicf_out_i, rx_cicf_out_q;
 
-fir_iq #(.WIDTH(RXO_BITS))
+fir_iq_snd #(.WIDTH(RXO_BITS))
     cicf(
 		.adc_clk        (adc_clk),
 		.reset			(1'b0),
