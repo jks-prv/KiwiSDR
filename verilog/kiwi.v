@@ -271,16 +271,14 @@ module KiwiSDR (
         ;
 
 `ifdef USE_OTHER
-    wire [2:0] other_flags;
+    wire [9:0] other_flags;
+    wire [9:0] stat_10 = other_flags;
 `else
-    wire [2:0] other_flags = 3'b0;
+    wire [9:0] stat_10 = 10'b0;
 `endif
-    wire [3:0] stat_user = { other_flags, dna_data };
 
-    // when the eCPU firmware returns status it replaces stat_replaced with FW_ID
-    wire [2:0] stat_replaced = { 2'b0, unused_inputs };
-    wire [3:0] fpga_id = { FPGA_ID };
-    wire [15:0] status = { rx_overflow_C, stat_replaced, FPGA_VER, stat_user, fpga_id };
+    wire [2:0] fpga_id_3 = { FPGA_ID };
+    wire [15:0] status = { rx_overflow_C, dna_data, unused_inputs, fpga_id_3, stat_10 };
 
 
     //////////////////////////////////////////////////////////////////////////
@@ -325,7 +323,6 @@ module KiwiSDR (
     	.adc_data	    (reg_adc_data),
     	.adc_ovfl       (ADC_OVFL),
 
-		// these are all on the cpu_clk
         .rx_rd_C	    (rx_rd),
         .rx_dout_C	    (rx_dout),
 

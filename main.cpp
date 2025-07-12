@@ -377,7 +377,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_4CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
-        nrx_bufs = RXBUF_SIZE_4CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_44 / NRX_SPI;
         lprintf("firmware: SDR_RX4_WF4\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX8_WF2) {
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_8CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
-        nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_82 / NRX_SPI;
         lprintf("firmware: SDR_RX8_WF2\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX3_WF3) {
@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_3CH;
         rx1_decim = RX1_WIDE_DECIM;
         rx2_decim = RX2_WIDE_DECIM;
-        nrx_bufs = RXBUF_SIZE_3CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_33 / NRX_SPI;
         lprintf("firmware: SDR_RX3_WF3\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX14_WF0) {
@@ -414,7 +414,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_14CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
-        nrx_bufs = RXBUF_SIZE_14CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_14 / NRX_SPI;
         lprintf("firmware: SDR_RX14_WF0\n");
     } else
     if (fw_sel == FW_SEL_SDR_WB) {

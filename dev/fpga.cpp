@@ -381,16 +381,5 @@ void fpga_init() {
 		fpga_panic(8, "mismatch");
 	}
 
-	if (stat.fw_id != (FW_ID >> 12)) {
-		lprintf("eCPU firmware ID %d, expecting %d\n", stat.fw_id, FW_ID >> 12);
-		fpga_panic(9, "mismatch");
-	}
-
-	lprintf("FPGA version %d\n", stat.fpga_ver);
-	if (stat.fpga_ver != FPGA_VER) {
-		lprintf("\tbut expecting %d\n", FPGA_VER);
-		fpga_panic(10, "mismatch");
-	}
-
     spi_dev_init2();
 }

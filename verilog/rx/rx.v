@@ -123,7 +123,7 @@ cic_prune_var #(.INC_FILE("rx2"), .STAGES(RX2_STAGES), .DECIM_TYPE(RX2_DECIM), .
     wire rx_cicf_avail;
 	wire signed [RXO_BITS-1:0] rx_cicf_out_i, rx_cicf_out_q;
 
-fir_iq #(.WIDTH(RXO_BITS))
+fir_iq_snd #(.WIDTH(RXO_BITS))
     cicf(
 		.adc_clk        (adc_clk),
 		.reset			(1'b0),

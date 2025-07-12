@@ -17,7 +17,7 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2023 Christoph Mayer, DL1CH
 
-module fir_iq #(
+module fir_iq_snd #(
     int WIDTH = 0
 ) (
 	input  wire     adc_clk,
@@ -42,7 +42,7 @@ module fir_iq #(
     reg signed  [WIDTH-1:0] bufI[NTAPS-1:0], bufQ[NTAPS-1:0];
     wire signed [COEFF-1:0] taps[(NTAPS-1)/2:0];
 
-    if (RX_CFG == 3) begin                      // N=5, R=2, M=1, NTAPS=65, 20.25 kHz, cutoff at 8 kHz (80%)
+    if (RX_CFG == 33) begin                     // N=5, R=2, M=1, NTAPS=65, 20.25 kHz, cutoff at 8 kHz (80%)
         assign taps[ 0]  = COEFF'('sh0005f);
         assign taps[ 1]  = COEFF'('sh3ffa4);
         assign taps[ 2]  = COEFF'('sh3ff6c);

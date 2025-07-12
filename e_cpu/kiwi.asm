@@ -210,10 +210,6 @@ CmdSetMem:		rdReg	HOST_RX						; data
 CmdGetStatus:
 				wrEvt	HOST_RST
                 rdReg	GET_STATUS
-                push	STAT_FW_ID ~
-                and
-                push	FW_ID
-                or
                 wrReg	HOST_TX
                 ret
 

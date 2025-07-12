@@ -173,7 +173,7 @@ set files [ list \
                 "[file normalize ${origin_dir}/rx/cic_rx3_20k.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_wf1.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_wf2.vh]" \
-                "[file normalize ${origin_dir}/rx/fir_iq.sv]" \
+                "[file normalize ${origin_dir}/rx/fir_iq_snd.sv]" \
                 "[file normalize ${origin_dir}/gps/gps.v]" \
                 "[file normalize ${origin_dir}/gps/sampler.v]" \
                 "[file normalize ${origin_dir}/gps/demod.v]" \
@@ -354,7 +354,7 @@ proc set_rx_cfg rx_cfg {
     #set_property generic {RX_CFG=4} [current_fileset]
     set fdw [open "kiwi.cfg.vh" "w"]
     puts $fdw "parameter RX_CFG = ${rx_cfg};"
-    if { ${rx_cfg} < 14 } {
+    if { ${rx_cfg} != 14 } {
         puts $fdw "`define USE_WF"
     }
     close $fdw
@@ -363,7 +363,7 @@ proc set_rx_cfg rx_cfg {
 set impl_dir "KiwiSDR/KiwiSDR.runs/impl_1"
 
 proc build_rx4_wf4 {s_dir d_dir} {
-    set_rx_cfg 4
+    set_rx_cfg 44
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
@@ -376,7 +376,7 @@ proc build_rx4_wf4 {s_dir d_dir} {
 }
 
 proc build_rx8_wf2 {s_dir d_dir} {
-    set_rx_cfg 8
+    set_rx_cfg 82
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
@@ -389,7 +389,7 @@ proc build_rx8_wf2 {s_dir d_dir} {
 }
 
 proc build_rx3_wf3 {s_dir d_dir} {
-    set_rx_cfg 3
+    set_rx_cfg 33
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
@@ -416,17 +416,17 @@ set last_run "no"
 
 if {[string equal $rx4_wf4 "yes"]} {
     build_rx4_wf4 $impl_dir $result_dir
-    set last_run "rx4"
+    set last_run "rx44"
 }
 
 if {[string equal $rx8_wf2 "yes"]} {
     build_rx8_wf2 $impl_dir $result_dir
-    set last_run "rx8"
+    set last_run "rx82"
 }
 
 if {[string equal $rx3_wf3 "yes"]} {
     build_rx3_wf3 $impl_dir $result_dir
-    set last_run "rx3"
+    set last_run "rx33"
 }
 
 if {[string equal $rx14_wf0 "yes"]} {
