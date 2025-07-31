@@ -20,6 +20,8 @@
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
+`timescale 1ns / 100ps
+
 module CPU (
     input  wire        clk,
     input  wire [2:1]  rst,

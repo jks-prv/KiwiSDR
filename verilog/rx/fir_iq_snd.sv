@@ -16,18 +16,19 @@ Boston, MA  02110-1301, USA.
 */
 
 // Copyright (c) 2023 Christoph Mayer, DL1CH
+// Copyright (c) 2023-2025 John Seamons, ZL4VO/KF6VO
 
-module fir_iq_snd #(
-    int WIDTH = 0
-) (
-	input  wire     adc_clk,
-	input  wire     reset,
-	input  wire     in_strobe,
-	output  reg     out_strobe,
-	input  wire signed [WIDTH-1:0] in_data_i,
-	input  wire signed [WIDTH-1:0] in_data_q,
-	output  reg signed [WIDTH-1:0] out_data_i,
-	output  reg signed [WIDTH-1:0] out_data_q
+module fir_iq_snd
+    #(parameter WIDTH = 0)
+    (
+        input  wire     adc_clk,
+        input  wire     reset,
+        input  wire     in_strobe,
+        output  reg     out_strobe,
+        input  wire signed [WIDTH-1:0] in_data_i,
+        input  wire signed [WIDTH-1:0] in_data_q,
+        output  reg signed [WIDTH-1:0] out_data_i,
+        output  reg signed [WIDTH-1:0] out_data_q
     );
 
 `include "kiwi.gen.vh"

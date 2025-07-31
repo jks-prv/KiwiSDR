@@ -2,7 +2,7 @@
 
 `timescale 1ns / 100ps
 
-// IQ sampler, 8K x 2 x 16-bit, 8 36kb BRAMs
+// IQ sampler, 8K x 2 x 16-bit
 // clock domains: fully isolated
 
 module IQ_SAMPLER_8K_32B

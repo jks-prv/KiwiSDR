@@ -1,3 +1,7 @@
+
+# Copyright (c) 2019-2025 Christoph Mayer, DL1CH
+# Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
+
 namespace eval kiwi {
 
     ## Generates txt files for each used ipcore in the directory "./ipcore_properties"

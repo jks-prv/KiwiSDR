@@ -477,6 +477,7 @@ int main (int argc, char *argv[])
         cic_gen("cic_wb_20k.vh",  EMPTY, 0, 0, 0, 0);
     #endif
 
+    #define USE_WF_1CIC
     #ifdef USE_WF_1CIC
         cic_gen("cic_wf1.vh", INTEG_COMB|MODE_REAL, WF1_STAGES, WF_1CIC_MAXD, WF1_BITS, WFO_BITS);
         cic_gen("cic_wf2.vh", EMPTY, 0, 0, 0, 0);

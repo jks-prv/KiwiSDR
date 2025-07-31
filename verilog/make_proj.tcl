@@ -7,7 +7,11 @@
 # IP Build 2085800 on Fri Dec 15 22:25:07 MST 2017
 #
 
-## NB: See verilog/Makefile for how this script is invoked using terminal-based Vivado batch mode.
+# Copyright (c) 2019-2025 Christoph Mayer, DL1CH
+# Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
+
+# NB: See verilog/Makefile for how this script is invoked using terminal-based Vivado batch mode.
+
 
 ## load KiwiSDR tcl definitions (kiwi::make_ipcores)
 source kiwi.tcl
@@ -103,9 +107,6 @@ if { $::argc > 0 } {
   }
 }
 puts "==================== NAME: ${project_name} ===================="
-
-# Set the directory path for the original project from where this script was exported
-set orig_proj_dir "[file normalize "$origin_dir/Kiwisdr"]"
 
 # Create project (if doesn't exist)
 if {[string equal [open_project -quiet "KiwiSDR/KiwiSDR.xpr"] ""]} {

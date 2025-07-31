@@ -34,14 +34,8 @@ module RX_BUFFER
 
 `include "kiwi.gen.vh"
 
-// When building all configurations sequentially using the verilog/make_proj.tcl script
-// the following doesn't work because of problems with the Vivado source code scanner marking the unused
-// bram ip block "AutoDisabled" in KiwiSDR.xpr and then not being able to find it subsequently.
-
-`ifdef NOT_DEF
 	generate
-		if (RXBUF_LARGE == 0)
-		begin
+		if (RXBUF_LARGE == 0) begin
 	        ipcore_bram_8k_16b rx_buf (
                 .clka	(clka),         .clkb	(clkb),
                 .addra	(addra),        .addrb	(addrb),
@@ -49,8 +43,15 @@ module RX_BUFFER
                 .wea	(wea)
             );
 		end else
-		begin
+		if (RXBUF_LARGE == 1) begin
 	        ipcore_bram_16k_16b rx_buf (
+                .clka	(clka),         .clkb	(clkb),
+                .addra	(addra),        .addrb	(addrb),
+                .dina	(dina),         .doutb	(doutb),
+                .wea	(wea)
+            );
+		end else begin
+            ipcore_bram_32k_16b rx_buf (
                 .clka	(clka),         .clkb	(clkb),
                 .addra	(addra),        .addrb	(addrb),
                 .dina	(dina),         .doutb	(doutb),
@@ -58,34 +59,5 @@ module RX_BUFFER
             );
 		end
 	endgenerate
-`else
-    wire [15:0] doutb_8k, doutb_16k, doutb_32k;
-    
-	assign doutb = (RXBUF_LARGE == 0)? doutb_8k : ((RXBUF_LARGE == 1)? doutb_16k : doutb_32k);
-
-    // All but one of these will be optimized away because RXBUF_LARGE is a constant parameter
-    // set in kiwi.gen.vh that depends on RX_CFG
-    
-    ipcore_bram_8k_16b rx_buf_8k (
-        .clka	(clka),         .clkb	(clkb),
-        .addra	(addra),        .addrb	(addrb),
-        .dina	(dina),         .doutb	(doutb_8k),
-        .wea	(wea)
-    );
-
-    ipcore_bram_16k_16b rx_buf_16k (
-        .clka	(clka),         .clkb	(clkb),
-        .addra	(addra),        .addrb	(addrb),
-        .dina	(dina),         .doutb	(doutb_16k),
-        .wea	(wea)
-    );
-
-    ipcore_bram_32k_16b rx_buf_32k (
-        .clka	(clka),         .clkb	(clkb),
-        .addra	(addra),        .addrb	(addrb),
-        .dina	(dina),         .doutb	(doutb_32k),
-        .wea	(wea)
-    );
-`endif
 
 endmodule

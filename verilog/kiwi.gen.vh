@@ -134,7 +134,6 @@
 `define DEF_RX1_STAGES 1
 	localparam RX2_STAGES = 5;    // DEFp 0x5
 `define DEF_RX2_STAGES 1
-`define USE_WF_1CIC 1    // DEFh 0x1
 `define USE_WF_CIC24 1    // DEFh 0x1
 //`define USE_WF_MEM24    // DEFh 0x0
 	localparam WF1_STAGES = 5;    // DEFp 0x5

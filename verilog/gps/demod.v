@@ -114,8 +114,8 @@ module DEMOD
     // code generators
 
     reg [E1B_CODEBITS-1:0] chips;
-    reg cg_p, cg2_p, ms1, cg_l = 0, cg2_l = 0;
-
+    reg cg_p, ms1, cg_l = 0;
+    
     always @ (posedge clk)
         ms1 <= ms0;
         
@@ -129,8 +129,6 @@ module DEMOD
     wire e1b_chip = e1b_latched_code ^ boc11;
 
     wire cg_e  = e1b_mode? e1b_chip  : ca_chip;
-    wire cg2_e = e1b_latched_code;  // for E1B tracking need additional EPL correlated without BOC(1,1) i.e. PRN only
-
     assign e1b_full_chip = full_chip;
 
     always @ (posedge clk) begin
@@ -160,21 +158,17 @@ module DEMOD
             if (full_chip) begin
                 e1b_latched_code <= e1b_code;
                 cg_l <= cg_p;
-                cg2_l <= cg2_p;
             end
 
             if (quarter_chip && !full_chip) begin
                 if (half_chip) begin
                     cg_l <= cg_p;
-                    cg2_l <= cg2_p;
                     chips <= nchip;         // for replica
                     ms0 <= (nchip == 0);    // Epoch
                 end
                 else begin
                     cg_p <= cg_e;
-                    cg2_p <= cg2_e;
                 end
-
             end
             else
                 ms0 <= 0;
@@ -237,6 +231,25 @@ module DEMOD
 
     generate
         if (E1B == 1) begin
+            reg cg2_p, cg2_l = 0;
+            wire cg2_e = e1b_latched_code;  // for E1B tracking need additional EPL correlated without BOC(1,1) i.e. PRN only
+
+            always @ (posedge clk) begin
+                if (!rst && e1b_mode) begin     // E1B
+                    if (full_chip) begin
+                        cg2_l <= cg2_p;
+                    end
+                    if (quarter_chip && !full_chip) begin
+                        if (half_chip) begin
+                            cg2_l <= cg2_p;
+                        end
+                        else begin
+                            cg2_p <= cg2_e;
+                        end
+                    end
+                end
+            end
+
             reg die2, dqe2, dip2, dqp2, dil2, dql2;
             reg [GPS_INTEG_BITS:1] ie2, qe2, ip2, qp2, il2, ql2;
             

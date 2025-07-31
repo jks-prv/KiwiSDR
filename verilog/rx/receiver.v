@@ -308,11 +308,7 @@ module receiver
 	wire samp_wf_rd_rst_C = tos[WF_SAMP_RD_RST];
 	wire samp_wf_sync_C   = tos[WF_SAMP_SYNC];
 
-`ifdef USE_WF_1CIC
 	WATERFALL_1CIC #(.IN_WIDTH(RX_IN_WIDTH)) waterfall_inst [V_WF_CHANS-1:0] (
-`else
-	WATERFALL #(.IN_WIDTH(RX_IN_WIDTH)) waterfall_inst [V_WF_CHANS-1:0] (
-`endif
 		.adc_clk			(adc_clk),
 		.adc_data			(wf_data),
 		

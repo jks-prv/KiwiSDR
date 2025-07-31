@@ -120,22 +120,27 @@ cic_prune_var #(.INC_FILE("rx2"), .STAGES(RX2_STAGES), .DECIM_TYPE(RX2_DECIM), .
 
 	wire signed [RXO_BITS-1:0] rx_cic_out_i, rx_cic_out_q;
 
+
 `ifdef USE_RX_CICF
+
+    //////////////////////////////////////////////////////////////////////////
+    // RX CIC FIR filter
+    //////////////////////////////////////////////////////////////////////////
 
     wire rx_cicf_avail;
 	wire signed [RXO_BITS-1:0] rx_cicf_out_i, rx_cicf_out_q;
 
-fir_iq_snd #(.WIDTH(RXO_BITS))
-    cicf(
-		.adc_clk        (adc_clk),
-		.reset			(1'b0),
-		.in_strobe		(rx_cic2_avail),
-		.out_strobe		(rx_cicf_avail),
-		.in_data_i		(rx_cic2_out_i),
-		.in_data_q		(rx_cic2_out_q),
-		.out_data_i		(rx_cicf_out_i),
-		.out_data_q		(rx_cicf_out_q)
-    );
+    fir_iq_snd #(.WIDTH(RXO_BITS))
+        cicf(
+            .adc_clk        (adc_clk),
+            .reset			(1'b0),
+            .in_strobe		(rx_cic2_avail),
+            .out_strobe		(rx_cicf_avail),
+            .in_data_i		(rx_cic2_out_i),
+            .in_data_q		(rx_cic2_out_q),
+            .out_data_i		(rx_cicf_out_i),
+            .out_data_q		(rx_cicf_out_q)
+        );
 
     assign rx_avail_A   = rx_cicf_avail;
     assign rx_cic_out_i = rx_cicf_out_i;

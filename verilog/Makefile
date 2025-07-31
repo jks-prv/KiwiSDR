@@ -9,6 +9,8 @@
 # V_SRC_DIR can be set as a global environment variable otherwise it will default to the value below.
 #
 
+# Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
 # include any rules from another FPGA project using the KiwiSDR framework (i.e. CFG = other)
 -include $(wildcard */Makefile.inc)
 

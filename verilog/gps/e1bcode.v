@@ -101,11 +101,14 @@ module E1BCODE
         else begin
             waddr <= waddr + wr;
         end
+    
+    wire [11:0] doutb;
+    assign code_t = doutb[V_GPS_CHANS-1:0];
 
 	ipcore_bram_gps_4k_12b e1b_code (
 		.clka	(clk),          .clkb	(clk),
 		.addra	(waddr),        .addrb	(raddr),
-		.dina	(tos[11:0]),    .doutb	(code_t),
+		.dina	(tos[11:0]),    .doutb	(doutb),
 		.wea	(wr)
 	);
 

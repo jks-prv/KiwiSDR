@@ -1,6 +1,8 @@
 Steps to creating and building the KiwiSDR project with Vivado 2024.2
     Updated 12 July 2025
 
+Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
 1) You will most likely be running Vivado on a Windows or Linux machine.
 We run Vivado successfully on an x86-based MacBook Pro using the VirtualBox application to emulate
 a PC and then running Ubuntu Linux on that and Vivado on that! (talk about punishment, lol).
