@@ -31,10 +31,10 @@ module t_latch (
 	);
 	
 	// mux
+    reg latch;
     always @*
         q = en? d : latch;
     
-    reg latch;
     always @ (posedge clk)
         if (en)
             latch <= d;

@@ -145,6 +145,7 @@ module CPU (
     wire [15:0] op5 = op & 16'hF001;
     wire [ 7:0] op8 = op[15: 8];
     wire        op0 = op[0];
+    reg [15:0] loop_ctr [0:1];
 
     wire nz      = |tos[15:0];
     wire loop_nz = |loop_ctr[op0][15:0];
@@ -182,6 +183,8 @@ module CPU (
 
     reg  [31:0] nos;
     wire [31:0] dstk_dout;
+    wire [39:0] prod40;
+    reg  [ 7:0] sp, rp;
 
     always @ (posedge clk)
         case (op8)
@@ -198,20 +201,19 @@ module CPU (
     // ALU
 
     wire [19:0] xa20, xb20;
-    wire [39:0] prod40;
     wire [31:0] sum;
-    wire        co;
-    wire        ci = (op8 == op_add && opt_cin && carry) || op8 == op_sub;
-    reg  [31:0] a, b, alu;
     reg         carry;
+    wire        cout;
+    wire        cin = (op8 == op_add && opt_cin && carry) || op8 == op_sub;
+    reg  [31:0] a, b, alu;
     wire        shl_lsb = opt_rot? tos[31] : 1'b0;
     wire        shr_msb = opt_rot? tos[31] : (opt_uns? 1'b0 : tos[31]);
 
 	// FIXME: use a c_out instead and reduce s width to 32 from 33?
 	// FIXME: combine adder & multipler(s) into a single DSP slice?
-    ip_add_u32b cpu_sum (.a(a), .b(b), .s({co, sum}), .c_in(ci));
+    ip_add_u32b cpu_sum (.a(a), .b(b), .s({cout, sum}), .c_in(cin));
 
-    always @ (posedge clk) if (op8 == op_add) carry <= co;
+    always @ (posedge clk) if (op8 == op_add) carry <= cout;
 
     always @*
         if (op8 == op_addi) a = op[6:0];
@@ -290,7 +292,7 @@ module CPU (
     // Program counter and stack pointers
 
     reg  [11:1] pc, next_pc;
-    reg  [ 7:0] sp, next_sp, rp, next_rp;
+    reg  [ 7:0] next_sp, next_rp;
 
     wire [11:0] pc_plus_2 = {pc + 1'b1, 1'b0};
 
@@ -312,8 +314,6 @@ module CPU (
 
     //////////////////////////////////////////////////////////////////////////
     // Loop counter
-
-    reg [15:0] loop_ctr [0:1];
 
     always @ (posedge clk)
         if (loop) loop_ctr[op0] <= loop_ctr[op0] - 1;   // so alu stays free for op.loop opcodes

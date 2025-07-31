@@ -17,7 +17,9 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2008 Alex Shovkoplyas, VE3NEA
 // Copyright (c) 2013 Phil Harman, VK6APH
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
+`timescale 1ns / 100ps
 
 module rx
 	#(parameter IN_WIDTH  = "required")

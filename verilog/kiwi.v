@@ -20,7 +20,7 @@
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-`default_nettype none
+`timescale 1ns / 100ps
 
 // for compatibility with antenna switch extension
 // i.e. let Beagle drive these, not FPGA
@@ -174,8 +174,6 @@ module KiwiSDR (
     //IBUF tcxo_ibuf(.I(GPS_TCXO), .O(gps_tcxo_buf));     // 16.368 MHz TCXO
 `endif
 
-	assign ADC_CLKEN = !ctrl[CTRL_OSC_DIS];
-
 `ifdef USE_SDR
 	reg signed [ADC_BITS-1:0] reg_adc_data, reg2_adc_data;
     always @ (posedge adc_clk)
@@ -198,16 +196,17 @@ module KiwiSDR (
     
     
     //////////////////////////////////////////////////////////////////////////
-    // global control & status registers
+    // global control register
     //////////////////////////////////////////////////////////////////////////
 
     reg [15:0] ctrl;
-    
+
     always @ (posedge cpu_clk)
     begin
         if (wrReg & op[SET_CTRL]) ctrl <= tos[15:0];
     end
 
+	assign ADC_CLKEN = !ctrl[CTRL_OSC_DIS];
 	assign ADC_STENL = !ctrl[CTRL_STEN];
     wire [1:0] ser_sel = ctrl[1:0];
 
@@ -255,6 +254,10 @@ module KiwiSDR (
 	assign P8[9] = ctrl[CTRL_UNUSED_OUT];
 `endif
     
+`ifdef USE_GPS
+    wire unused_inputs_gps;
+`endif
+
 	wire unused_inputs = P915
 `ifdef USE_OTHER
         | unused_inputs_other
@@ -270,16 +273,6 @@ module KiwiSDR (
 `endif
         ;
 
-`ifdef USE_OTHER
-    wire [9:0] other_flags;
-    wire [9:0] stat_10 = other_flags;
-`else
-    wire [9:0] stat_10 = 10'b0;
-`endif
-
-    wire [2:0] fpga_id_3 = { FPGA_ID };
-    wire [15:0] status = { rx_overflow_C, dna_data, unused_inputs, fpga_id_3, stat_10 };
-
 
     //////////////////////////////////////////////////////////////////////////
     // device DNA
@@ -290,13 +283,14 @@ module KiwiSDR (
     reg [1:0] _dna_rd, _dna_sf;
     wire dna_rd = (_dna_rd == RISE);
     wire dna_sf = (_dna_sf == RISE);
+    wire dna_data;
+
     always @ (posedge cpu_clk)
         begin
             _dna_rd <= {_dna_rd[0], dna_read && dna_clk};
             _dna_sf <= {_dna_sf[0], dna_shift && dna_clk};
         end
 
-    wire dna_data;
     DNA_PORT dna(.CLK(cpu_clk), .READ(dna_rd), .SHIFT(dna_sf), .DIN(1'b1), .DOUT(dna_data));
 
 
@@ -309,15 +303,18 @@ module KiwiSDR (
 	wire [47:0] ticks_A;
 	
 `ifdef USE_SDR
+	wire rx_ovfl_C;
+    wire [31:0] adc_count;
+    
 	wire use_gen_C = ctrl[CTRL_USE_GEN];
 	
 	wire self_test;
 	assign ADC_STSIG = self_test;
 
 `ifdef USE_WB
-    receiver_wb receiver_inst (
+    receiver_wb #(._ADC_BITS(ADC_BITS)) receiver_inst (
 `else
-    receiver receiver_inst (
+    receiver #(._ADC_BITS(ADC_BITS)) receiver_inst (
 `endif
     	.adc_clk	    (adc_clk),
     	.adc_data	    (reg_adc_data),
@@ -356,15 +353,14 @@ module KiwiSDR (
         .self_test      (self_test)
     	);
 
-	wire rx_ovfl_C, rx_orst;
+	wire rx_orst;
 	reg rx_overflow_C;
+	
     always @ (posedge cpu_clk)
     begin
     	if (rx_orst) rx_overflow_C <= rx_ovfl_C; else
     	rx_overflow_C <= rx_overflow_C | rx_ovfl_C;
     end
-    
-    wire [31:0] adc_count;
 
 `else
     assign rx_rd = 0;
@@ -383,6 +379,21 @@ module KiwiSDR (
 
 
     //////////////////////////////////////////////////////////////////////////
+    // global status register
+    //////////////////////////////////////////////////////////////////////////
+	
+`ifdef USE_OTHER
+    wire [9:0] other_flags;
+    wire [9:0] stat_10 = other_flags;
+`else
+    wire [9:0] stat_10 = 10'b0;
+`endif
+
+    wire [2:0] fpga_id_3 = { FPGA_ID };
+    wire [15:0]   status = { rx_overflow_C, dna_data, unused_inputs, fpga_id_3, stat_10 };
+
+
+    //////////////////////////////////////////////////////////////////////////
     // CPU parallel port input mux
     //////////////////////////////////////////////////////////////////////////
 	
@@ -391,6 +402,10 @@ module KiwiSDR (
 	wire get_cpu_ctr  = rdReg && op[GET_CPU_CTR];
 	wire get_adc_ctr  = rdReg && op[GET_ADC_CTR];
 	
+`ifdef USE_CPU_CTR
+    wire [31:0] cpu_ctr[1:0];
+`endif
+
     always @*
     begin
 `ifdef USE_CPU_CTR
@@ -459,7 +474,6 @@ module KiwiSDR (
 
 `ifdef USE_CPU_CTR
     reg cpu_ctr_ena;
-    wire [31:0] cpu_ctr[1:0];
     wire sclr = wrEvt2 & op[CPU_CTR_CLR];
     
 	ip_acc_u32b cpu_ctr0 (.clk(cpu_clk), .sclr(sclr), .b(1), .q(cpu_ctr[0]));
@@ -497,8 +511,6 @@ module KiwiSDR (
 
 
 `ifdef USE_GPS
-    wire unused_inputs_gps;
-
     GPS gps (
         .clk            (gps_clk),
         .adc_clk	    (adc_clk),

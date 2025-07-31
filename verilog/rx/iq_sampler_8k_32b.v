@@ -1,47 +1,51 @@
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-`default_nettype none
+`timescale 1ns / 100ps
 
 // IQ sampler, 8K x 2 x 16-bit, 8 36kb BRAMs
 // clock domains: fully isolated
 
-module IQ_SAMPLER_8K_32B (
-    input  wire wr_clk,
-    input  wire wr_rst,
-    input  wire wr_continuous,		// if true, the wr_clk side doesn't stop capturing when buffer full
-    input  wire wr,
-    input  wire [15:0] wr_i,
-    input  wire [15:0] wr_q,
-
-    input  wire rd_clk,
-    input  wire rd_rst,
-    input  wire rd_sync,			// set rd_addr to (wr_addr + rd_offset), crucial look-ahead to previous buffer contents
-    input  wire rd_i,
-    input  wire rd_q,
-    input  wire [12:0] rd_offset,
-    output wire [15:0] rd_iq
+module IQ_SAMPLER_8K_32B
+	#(parameter A_MSB = 12)
+    (
+        input  wire wr_clk,
+        input  wire wr_rst,
+        input  wire wr_continuous,		// if true, the wr_clk side doesn't stop capturing when buffer full
+        input  wire wr,
+        input  wire [15:0] wr_i,
+        input  wire [15:0] wr_q,
+    
+        input  wire rd_clk,
+        input  wire rd_rst,
+        input  wire rd_sync,			// set rd_addr to (wr_addr + rd_offset), crucial look-ahead to previous buffer contents
+        input  wire rd_i,
+        input  wire rd_q,
+        input  wire [11:0] rd_offset,
+        output wire [15:0] rd_iq
     );
         
 	// wr_clk side
-    reg [12:0] wr_addr;
-    reg        full;
-    wire	   wr_en = wr_continuous? wr : (wr && ~full);
+    reg [A_MSB:0] wr_addr;
+    reg           wr_full;
+    wire	      wr_en = wr_continuous? wr : (wr && ~wr_full);
     
     always @ (posedge wr_clk)
-        if (wr_rst) {wr_addr, full} <= 0;
+    begin
+        if (wr_rst) {wr_addr, wr_full} <= 0;
         else
-        if (wr_en) {full, wr_addr} <= wr_addr + 1;
+        if (wr_en) {wr_full, wr_addr} <= wr_addr + 1;
+    end
 	
     wire [31:0] wr_diq = { wr_i[15 -:16], wr_q[15 -:16] };
 
 	// rd_clk side
-    reg [12:0] rd_addr;
-	wire [12:0] rd_next = rd_addr + rd_q;
+    reg [A_MSB:0]  rd_addr;
+	wire [A_MSB:0] rd_next = rd_addr + rd_q;
 	
-	wire [12:0] sync_wr_addr;
+	wire [A_MSB:0] sync_wr_addr;
 
     // continuously sync wr_addr => sync_wr_addr
-	SYNC_REG #(.WIDTH(13)) sync_wr_addr_inst (
+	SYNC_REG #(.WIDTH(A_MSB+1)) sync_wr_addr_inst (
 	    .in_strobe(1),      .in_reg(wr_addr),           .in_clk(wr_clk),
 	    .out_strobe(),      .out_reg(sync_wr_addr),     .out_clk(rd_clk)
 	);
@@ -51,7 +55,6 @@ module IQ_SAMPLER_8K_32B (
             rd_addr <= 0;
         else
         if (rd_sync)
-        	//rd_addr <= { (sync_wr_addr[12:9] + 4'd1), sync_wr_addr[8:0] };
         	rd_addr <= sync_wr_addr + rd_offset;
         else begin
             rd_addr <= rd_next;

@@ -17,6 +17,8 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
+`timescale 1ns / 100ps
+
 module WATERFALL_1CIC
     #(parameter WHICH = "required", parameter IN_WIDTH = "required")
     (

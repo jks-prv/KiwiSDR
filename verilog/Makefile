@@ -10,7 +10,6 @@
 #
 
 # include any rules from another FPGA project using the KiwiSDR framework (i.e. CFG = other)
--include $(wildcard Makefile.inc)
 -include $(wildcard */Makefile.inc)
 
 V_PROJ ?= KiwiSDR

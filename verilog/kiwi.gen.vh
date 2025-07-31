@@ -249,7 +249,6 @@
 	localparam SET_RX_FREQ = 5;    // DEFb: bit number for value: 0x20
 	localparam FREQ_L = 6;    // DEFb: bit number for value: 0x40
 	localparam SET_RX_NSAMPS = 7;    // DEFb: bit number for value: 0x80
-	localparam SET_RX_EN = 8;    // DEFb: bit number for value: 0x100
 	localparam SET_GEN_FREQ = 9;    // DEFb: bit number for value: 0x200
 	localparam SET_GEN_ATTN = 10;    // DEFb: bit number for value: 0x400
 	localparam HOST_RST = 0;    // DEFb: bit number for value: 0x1

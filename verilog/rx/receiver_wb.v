@@ -17,40 +17,44 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-module receiver_wb (
-	input wire		   adc_clk,
-	input wire signed [ADC_BITS-1:0] adc_data,
-	input wire         adc_ovfl,
+`timescale 1ns / 100ps
 
-    output wire        rx_rd_C,
-    output wire [15:0] rx_dout_C,
-
-    output wire        wf_rd_C,
-    output wire [15:0] wf_dout_C,
-
-    input  wire [47:0] ticks_A,
-    output wire        adc_ovfl_C,
-    output wire [31:0] adc_count_C,
+module receiver_wb
+    #(parameter _ADC_BITS = "required")
+    (
+        input wire		   adc_clk,
+        input wire signed [_ADC_BITS-1:0] adc_data,
+        input wire         adc_ovfl,
     
-	input  wire		   cpu_clk,
-    output wire        rx_ser,
-    input  wire [31:0] tos,
-    input  wire [10:0] op_11,
-    input  wire        rdReg,
-    input  wire        wrReg,
-    input  wire        wrReg2,
-    input  wire        wrEvt2,
-    input  wire        wrEvtL,
+        output wire        rx_rd_C,
+        output wire [15:0] rx_dout_C,
     
-    input  wire        use_gen_C,
-
-    // debug
-	output wire        rx_avail_wb_A,
-	output wire        rx_avail_A,
-	output wire        awb_debug,
+        output wire        wf_rd_C,
+        output wire [15:0] wf_dout_C,
     
-    input  wire        self_test_en_C,
-    output wire        self_test
+        input  wire [47:0] ticks_A,
+        output wire        adc_ovfl_C,
+        output wire [31:0] adc_count_C,
+        
+        input  wire		   cpu_clk,
+        output wire        rx_ser,
+        input  wire [31:0] tos,
+        input  wire [10:0] op_11,
+        input  wire        rdReg,
+        input  wire        wrReg,
+        input  wire        wrReg2,
+        input  wire        wrEvt2,
+        input  wire        wrEvtL,
+        
+        input  wire        use_gen_C,
+    
+        // debug
+        output wire        rx_avail_wb_A,
+        output wire        rx_avail_A,
+        output wire        awb_debug,
+        
+        input  wire        self_test_en_C,
+        output wire        self_test
 	);
 	
 `include "kiwi.gen.vh"

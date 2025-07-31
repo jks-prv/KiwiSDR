@@ -20,7 +20,7 @@
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-`default_nettype none
+`timescale 1ns / 100ps
 
 module HOST (
     input  wire        hb_clk,
@@ -60,6 +60,27 @@ module HOST (
     );
     
 `include "kiwi.gen.vh"
+
+    //////////////////////////////////////////////////////////////////////////
+    // Configuration
+
+`ifdef SPI_8
+	localparam NST = 7;
+	localparam SFT = 0;
+`endif
+`ifdef SPI_16
+	localparam NST = 15;
+	localparam SFT = 8;
+`endif
+`ifdef SPI_32
+	localparam NST = 31;
+	localparam SFT = 24;
+`endif
+
+	// 3 stages of delay because ha_wr doesn't assert for 3 ha_clk periods (ha_ack sampled on ha_st[2])
+	localparam DLY = 3;
+	localparam IDL = DLY-1;
+	localparam ODL = SFT+DLY-1;
 
     //////////////////////////////////////////////////////////////////////////
     // Host instruction decoding
@@ -192,6 +213,7 @@ module HOST (
     reg [ODL:0] ha_dosr;
     wire        ha_dout;
     reg		    ha_out;
+	wire        ha_ovfl;
 
 	always @ (posedge ha_clk or posedge ha_rst)
 		if (ha_rst)	ha_out <= 1;	// busy flag
@@ -244,7 +266,6 @@ module HOST (
 `endif
 `endif
 
-	wire ha_ovfl;
 	SYNC_WIRE sync_ha_ovfl (.in(hb_ovfl), .out_clk(ha_clk), .out(ha_ovfl));
 
 	reg ha_orst;
@@ -262,30 +283,19 @@ module HOST (
     reg  [HA_MSB:0] ha_cnt;
     wire [HA_MSB:0] ha_addr;
 
-    always @ (posedge ha_clk or posedge ha_rst)
-        if (ha_rst) { full, ha_cnt } <= 0;
-        else        { full, ha_cnt } <= ha_cnt + ha_wr;
-
 `ifdef SPI_8
-	localparam NST = 7;
-	localparam SFT = 0;
     assign ha_addr = ha_cnt ^ 3'b111;	// SPI is MSB first
 `endif
 `ifdef SPI_16
-	localparam NST = 15;
-	localparam SFT = 8;
     assign ha_addr = ha_cnt ^ 4'b1111;	// SPI is MSB first
 `endif
 `ifdef SPI_32
-	localparam NST = 31;
-	localparam SFT = 24;
     assign ha_addr = ha_cnt ^ 5'b11111;	// SPI is MSB first
 `endif
 
-	// 3 stages of delay because ha_wr doesn't assert for 3 ha_clk periods (ha_ack sampled on ha_st[2])
-	localparam DLY = 3;
-	localparam IDL = DLY-1;
-	localparam ODL = SFT+DLY-1;
+    always @ (posedge ha_clk or posedge ha_rst)
+        if (ha_rst) { full, ha_cnt } <= 0;
+        else        { full, ha_cnt } <= ha_cnt + ha_wr;
 
     //////////////////////////////////////////////////////////////////////////
     // Host FIFO - port B

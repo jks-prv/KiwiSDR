@@ -7,6 +7,8 @@
 # IP Build 2085800 on Fri Dec 15 22:25:07 MST 2017
 #
 
+## NB: See verilog/Makefile for how this script is invoked using terminal-based Vivado batch mode.
+
 ## load KiwiSDR tcl definitions (kiwi::make_ipcores)
 source kiwi.tcl
 
@@ -147,44 +149,55 @@ remove_files -quiet -fileset [get_filesets sources_1] $rem_files
 
 # Set 'sources_1' fileset object
 set files [ list \
-                "[file normalize ${origin_dir}/kiwi.vh]" \
                 "[file normalize ${origin_dir}/kiwi.cfg.vh]" \
                 "[file normalize ${origin_dir}/kiwi.gen.vh]" \
+                "[file normalize ${origin_dir}/kiwi.vh]" \
                 "[file normalize ${origin_dir}/other.gen.vh]" \
-                "[file normalize ${origin_dir}/kiwi.v]" \
-                "[file normalize ${origin_dir}/host.v]" \
                 "[file normalize ${origin_dir}/cpu.v]" \
-                "[file normalize ${origin_dir}/rx/receiver.v]" \
-                "[file normalize ${origin_dir}/rx/rx.v]" \
-                "[file normalize ${origin_dir}/rx/rx_audio_mem.v]" \
-                "[file normalize ${origin_dir}/rx/rx_buffer.v]" \
-                "[file normalize ${origin_dir}/rx/waterfall_1cic.v]" \
-                "[file normalize ${origin_dir}/rx/gen.v]" \
-                "[file normalize ${origin_dir}/rx/iq_mixer.v]" \
-                "[file normalize ${origin_dir}/rx/iq_sampler_8k_32b.v]" \
-                "[file normalize ${origin_dir}/rx/cic_prune_var.v]" \
+                "[file normalize ${origin_dir}/host.v]" \
+                "[file normalize ${origin_dir}/kiwi.v]" \
                 "[file normalize ${origin_dir}/rx/cic_comb.v]" \
                 "[file normalize ${origin_dir}/rx/cic_integrator.v]" \
+                "[file normalize ${origin_dir}/rx/cic_prune_var.v]" \
                 "[file normalize ${origin_dir}/rx/cic_rx1_12k.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_rx1_20k.vh]" \
+                "[file normalize ${origin_dir}/rx/cic_rx1_wb.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_rx2_12k.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_rx2_20k.vh]" \
+                "[file normalize ${origin_dir}/rx/cic_rx2_wb.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_rx3_12k.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_rx3_20k.vh]" \
+                "[file normalize ${origin_dir}/rx/cic_wb_20k.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_wf1.vh]" \
                 "[file normalize ${origin_dir}/rx/cic_wf2.vh]" \
                 "[file normalize ${origin_dir}/rx/fir_iq_snd.sv]" \
+                "[file normalize ${origin_dir}/rx/fir_iq_wf.sv]" \
+                "[file normalize ${origin_dir}/rx/gen.v]" \
+                "[file normalize ${origin_dir}/rx/iq_mixer.v]" \
+                "[file normalize ${origin_dir}/rx/iq_sampler_4k_32b.v]" \
+                "[file normalize ${origin_dir}/rx/iq_sampler_8k_32b.v]" \
+                "[file normalize ${origin_dir}/rx/receiver_wb.v]" \
+                "[file normalize ${origin_dir}/rx/receiver.v]" \
+                "[file normalize ${origin_dir}/rx/rx_audio_mem_wb.v]" \
+                "[file normalize ${origin_dir}/rx/rx_audio_mem.v]" \
+                "[file normalize ${origin_dir}/rx/rx_buffer.v]" \
+                "[file normalize ${origin_dir}/rx/rx_wb.v]" \
+                "[file normalize ${origin_dir}/rx/rx.v]" \
+                "[file normalize ${origin_dir}/rx/waterfall_1cic.v]" \
                 "[file normalize ${origin_dir}/gps/gps.v]" \
                 "[file normalize ${origin_dir}/gps/sampler.v]" \
                 "[file normalize ${origin_dir}/gps/demod.v]" \
                 "[file normalize ${origin_dir}/gps/cacode.v]" \
                 "[file normalize ${origin_dir}/gps/e1bcode.v]" \
                 "[file normalize ${origin_dir}/gps/logger.v]" \
+                "[file normalize ${origin_dir}/support/bitrev.v]" \
                 "[file normalize ${origin_dir}/support/mux.v]" \
+                "[file normalize ${origin_dir}/support/sreg.v]" \
                 "[file normalize ${origin_dir}/support/sync_pulse.v]" \
-                "[file normalize ${origin_dir}/support/sync_wire.v]" \
                 "[file normalize ${origin_dir}/support/sync_reg.v]" \
+                "[file normalize ${origin_dir}/support/sync_wire.v]" \
                 "[file normalize ${origin_dir}/support/t_latch.v]" \
+                "[file normalize ${origin_dir}/support/tristate_buf.v]" \
                 "[file normalize ${origin_dir}/ip/ip_add_u32b.v]" \
                 "[file normalize ${origin_dir}/ip/ip_add_u30b.v]" \
                 "[file normalize ${origin_dir}/ip/ip_acc_u32b.v]" \

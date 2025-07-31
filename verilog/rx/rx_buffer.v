@@ -48,15 +48,14 @@ module RX_BUFFER
                 .dina	(dina),         .doutb	(doutb),
                 .wea	(wea)
             );
-		end
-		else
+		end else
+		begin
 	        ipcore_bram_16k_16b rx_buf (
                 .clka	(clka),         .clkb	(clkb),
                 .addra	(addra),        .addrb	(addrb),
                 .dina	(dina),         .doutb	(doutb),
                 .wea	(wea)
             );
-		begin
 		end
 	endgenerate
 `else

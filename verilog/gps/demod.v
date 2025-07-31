@@ -18,10 +18,12 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-`default_nettype none
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
+`timescale 1ns / 100ps
 
 module DEMOD
-    #(parameter E1B = "required")
+    #(parameter E1B = "required", parameter _GPS_REPL_BITS = "required", _E1B_CODEBITS = "required")
     (
         input  wire        clk,
         input  wire        rst,
@@ -34,14 +36,14 @@ module DEMOD
         input  wire        op_cg_nco,
         input  wire [31:0] tos,
         
-        output reg [E1B_CODEBITS-1:0] nchip,
+        output reg [_E1B_CODEBITS-1:0] nchip,
         output wire        e1b_full_chip,
         input  wire        e1b_code,
         
         input  wire        shift,
         output wire        sout,
         output reg         ms0,
-        output wire [GPS_REPL_BITS-1:0] replica
+        output wire [_GPS_REPL_BITS-1:0] replica
     );
 
 `include "kiwi.gen.vh"

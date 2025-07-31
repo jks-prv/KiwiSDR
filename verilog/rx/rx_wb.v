@@ -19,6 +19,8 @@ Boston, MA  02110-1301, USA.
 // Copyright (c) 2013 Phil Harman, VK6APH
 // Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
 
+`timescale 1ns / 100ps
+
 module rx_wb
 	#(parameter IN_WIDTH  = "required")
     (

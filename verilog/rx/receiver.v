@@ -17,35 +17,39 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-module receiver (
-	input wire		   adc_clk,
-	input wire signed [ADC_BITS-1:0] adc_data,
-	input wire         adc_ovfl,
+`timescale 1ns / 100ps
 
-    output wire        rx_rd_C,
-    output wire [15:0] rx_dout_C,
-
-    output wire        wf_rd_C,
-    output wire [15:0] wf_dout_C,
-
-    input  wire [47:0] ticks_A,
-    output wire        adc_ovfl_C,
-    output wire [31:0] adc_count_C,
+module receiver
+    #(parameter _ADC_BITS = "required")
+    (
+        input wire		   adc_clk,
+        input wire signed [_ADC_BITS-1:0] adc_data,
+        input wire         adc_ovfl,
     
-	input  wire		   cpu_clk,
-    output wire        rx_ser,
-    input  wire [31:0] tos,
-    input  wire [10:0] op_11,
-    input  wire        rdReg,
-    input  wire        wrReg,
-    input  wire        wrReg2,
-    input  wire        wrEvt2,
-    input  wire        wrEvtL,
+        output wire        rx_rd_C,
+        output wire [15:0] rx_dout_C,
     
-    input  wire        use_gen_C,
+        output wire        wf_rd_C,
+        output wire [15:0] wf_dout_C,
     
-    input  wire        self_test_en_C,
-    output wire        self_test
+        input  wire [47:0] ticks_A,
+        output wire        adc_ovfl_C,
+        output wire [31:0] adc_count_C,
+        
+        input  wire		   cpu_clk,
+        output wire        rx_ser,
+        input  wire [31:0] tos,
+        input  wire [10:0] op_11,
+        input  wire        rdReg,
+        input  wire        wrReg,
+        input  wire        wrReg2,
+        input  wire        wrEvt2,
+        input  wire        wrEvtL,
+        
+        input  wire        use_gen_C,
+        
+        input  wire        self_test_en_C,
+        output wire        self_test
 	);
 	
 `include "kiwi.gen.vh"
@@ -255,7 +259,7 @@ module receiver (
 		if (rxn_avail_A[0])
 		    ticks_latched_A <= ticks_A;
 
-	rx_audio_mem rx_audio_mem_inst (
+	rx_audio_mem #(._V_RX_CHANS(V_RX_CHANS)) rx_audio_mem_inst (
 		.adc_clk		(adc_clk),
 		.nrx_samps      (nrx_samps_A),
 		.rx_avail_A     (rxn_avail_A[0]),   // all DDCs should signal available at the same time since decimation is the same

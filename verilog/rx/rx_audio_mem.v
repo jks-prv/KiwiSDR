@@ -24,23 +24,25 @@ Boston, MA  02110-1301, USA.
 	
 `timescale 1ns / 100ps
 
-module rx_audio_mem (
-	input  wire		   adc_clk,
-    input  wire [ 7:0] nrx_samps,
-	input  wire		   rx_avail_A,
-    input  wire [V_RX_CHANS*16-1:0] rxn_din_A,
-    input  wire [47:0] ticks_A,
-    output wire        ser,
-    output reg         rd_getI,
-    output reg         rd_getQ,
-
-	input  wire		   cpu_clk,
-	input  wire		   get_rx_srq_C,
-	input  wire		   get_rx_samp_C,
-	input  wire		   reset_bufs_C,
-	input  wire		   get_buf_ctr_C,
-    output wire        rx_rd_C,
-    output wire [15:0] rx_dout_C
+module rx_audio_mem
+    #(parameter _V_RX_CHANS = "required")
+    (
+        input  wire		   adc_clk,
+        input  wire [ 7:0] nrx_samps,
+        input  wire		   rx_avail_A,
+        input  wire [_V_RX_CHANS*16-1:0] rxn_din_A,
+        input  wire [47:0] ticks_A,
+        output wire        ser,
+        output reg         rd_getI,
+        output reg         rd_getQ,
+    
+        input  wire		   cpu_clk,
+        input  wire		   get_rx_srq_C,
+        input  wire		   get_rx_samp_C,
+        input  wire		   reset_bufs_C,
+        input  wire		   get_buf_ctr_C,
+        output wire        rx_rd_C,
+        output wire [15:0] rx_dout_C
 	);
 	
 `include "kiwi.gen.vh"
@@ -54,12 +56,19 @@ module rx_audio_mem (
 	reg transfer;
 	reg [1:0] move;
 	reg [1:0] tsel;
+	wire reset_bufs_A;
+	
+`ifdef SYNTHESIS
+	wire reset_A = reset_bufs_A;
+`else
+	wire reset_A = reset_bufs_C;    // simulator doesn't simulate our "SYNC_PULSE sync_reset_bufs"
+`endif
 	
 	always @(posedge adc_clk)
 	begin
 		rxn_d <= rxn[L2RX:0];	// mux selector needs to be delayed 1 clock
 		
-		if (reset_bufs_A)       // reset state machine
+		if (reset_A)    // reset state machine
 		begin
 			transfer <= 0;
 			count <= 0;
@@ -135,6 +144,7 @@ module rx_audio_mem (
 			end
 		end
 		else
+		
 		begin
 		    // idle when no transfer
 			rd_getI <= 0;
@@ -170,12 +180,12 @@ module rx_audio_mem (
 
     // continuously sync buf_ctr_A => buf_ctr_C
 	SYNC_REG #(.WIDTH(16)) sync_buf_ctr (
-	    .in_strobe(1),      .in_reg(buf_ctr_A),     .in_clk(adc_clk),
+	    .in_strobe(1'b1),   .in_reg(buf_ctr_A),     .in_clk(adc_clk),
 	    .out_strobe(),      .out_reg(buf_ctr_C),    .out_clk(cpu_clk)
 	);
 
 	always @ (posedge adc_clk)
-		if (reset_bufs_A)
+		if (reset_A)
 		begin
 			buf_ctr_A <= 0;
 		end
@@ -185,16 +195,17 @@ module rx_audio_mem (
     localparam RXBUF_MSB = clog2(RXBUF_SIZE) - 1;
 	reg [RXBUF_MSB:0] waddr, raddr;
 	
-	wire reset_bufs_A;
 	SYNC_PULSE sync_reset_bufs (.in_clk(cpu_clk), .in(reset_bufs_C), .out_clk(adc_clk), .out(reset_bufs_A));
 
 	always @ (posedge adc_clk)
-		if (reset_bufs_A)
+		if (reset_A)
 		begin
 			waddr <= 0;
 		end
 		else
 		waddr <= waddr + wr;
+	
+	wire rd = get_rx_samp_C;
 	
 	always @ (posedge cpu_clk)
 		if (reset_bufs_C)
@@ -204,8 +215,6 @@ module rx_audio_mem (
 		else
 			raddr <= raddr + rd;
 
-	wire rd = get_rx_samp_C;
-	
 	wire [15:0] din =
 	    use_ts?
 	        ( (tsel == 0)? ticks_A[15 -:16] : ( (tsel == 1)? ticks_A[31 -:16] : ticks_A[47 -:16]) ) :

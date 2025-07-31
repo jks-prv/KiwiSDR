@@ -20,7 +20,6 @@ module rx_audio_mem_test ();
         cpu_clk = ~cpu_clk;
 
     reg [9:0] nrx_samps_A = N_SAMPS;
-    reg [15:0] rx_en_A = 16'h0013;
     reg rx_avail_A;
     reg [47:0] ticks_latched_A = 48'h012345678ABCD;
     
@@ -46,7 +45,7 @@ module rx_audio_mem_test ();
     localparam CYCLES = (672/ALL_CYCLES+3); // 672/16 + ceil/slop
 `endif
 
-    localparam RX_EN = 1 * 3;
+    localparam RX_EN = 4;
     localparam RX_IDLE = 7 * 1;
     localparam GAP = 8;
 
@@ -71,7 +70,6 @@ module rx_audio_mem_test ();
     rx_audio_mem rx_audio_mem_inst (
 		.adc_clk		(adc_clk),
 		.nrx_samps      (nrx_samps_A),
-		.rx_en_A        (rx_en_A),
 		.rx_avail_A     (rx_avail_A),
 		.rxn_din_A      (rxn_din_A),
 		.ticks_A        (ticks_latched_A),
