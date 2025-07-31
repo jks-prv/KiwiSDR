@@ -754,7 +754,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             } else
             
             if (allow) {
-                if (log_auth_attempt || pwd_debug)
+                if ((log_auth_attempt || pwd_debug) && !conn->internal_connection)
                     pwd_lprintf("PWD %s %s RESULT ALLOWED: from %s\n", type_m, uri, conn->remote_ip);
                 badp = BADP_OK;
             } else
