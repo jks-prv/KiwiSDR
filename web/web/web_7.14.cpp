@@ -747,6 +747,7 @@ int web_request(struct mg_connection *mc, int ev, void *ev_data)
 	// check_ip_blacklist() is always called (not just for proxied connections as done previously)
 	// since the internal blacklist is now used by the 24hr auto ban mechanism.
 
+    if (ev == MG_EV_CACHE_INFO) web_printf_all("----\n");
 	char ip_forwarded[NET_ADDRSTRLEN];
     check_if_forwarded("WEB", mc, ip_forwarded);
     //printf("WEB mc=%p mc->remote_ip=%s ip_unforwarded=%s ip_forwarded=%s %s\n", mc, mc->remote_ip, ip_unforwarded, ip_forwarded, mc->uri);
@@ -827,7 +828,6 @@ int web_request(struct mg_connection *mc, int ev, void *ev_data)
     bool free_uri = FALSE, has_prefix = FALSE, is_extension = FALSE;
     time_t mtime = 0;
 
-    if (ev == MG_EV_CACHE_INFO) web_printf_all("----\n");
     web_printf_all("%-16s %s %s\n", "URL", o_uri, mc->query);
     evWS(EC_EVENT, EV_WS, 0, "WEB_SERVER", evprintf("URL <%s> <%s> %s", o_uri, mc->query,
         (ev == MG_EV_CACHE_INFO)? "MG_EV_CACHE_INFO" : "MG_EV_HTTP_MSG"));

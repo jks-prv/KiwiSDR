@@ -1,3 +1,6 @@
+
+% Used to compute the Kiwi NBFM deemphasis FIR filters
+
 % -20 dB over 400 - 4000 Hz (i.e. 20 dB / decade)
 %
 % from: csdr/predefined.h

@@ -71,6 +71,26 @@ Boston, MA  02110-1301, USA.
 
 #include <algorithm>
 
+// if entries here are ordered by wf_cmd_key_e then the reverse lookup (str_hash_t *)->hashes[key].name
+// will work as a debugging aid
+str_hashes_t wf_cmd_hashes[] = {
+    { "~~~~~~~~~", STR_HASH_MISS },
+    { "SET zoom=", CMD_SET_ZOOM },
+    { "SET maxdb", CMD_SET_MAX_MIN_DB },
+    { "SET cmap=", CMD_SET_CMAP },
+    { "SET aper=", CMD_SET_APER },
+    { "SET band=", CMD_SET_BAND },
+    { "SET scale", CMD_SET_SCALE },
+    { "SET wf_sp", CMD_SET_WF_SPEED },
+    { "SET send_", CMD_SEND_DB },
+    { "SET ext_b", CMD_EXT_BLUR },
+    { "SET inter", CMD_INTERPOLATE },
+    { "SET windo", CMD_WF_WINDOW_FUNC },
+    { 0 }
+};
+
+str_hash_t wf_cmd_hash;
+
 void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
 {
     int i, j, k;
@@ -158,43 +178,19 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
             // NB: because we only use half of the FFT with CIC can zoom one level less
             int zm1 = (WF_USING_HALF_CIC == 2)? (wf->zoom? (wf->zoom-1) : 0) : wf->zoom;
 
-            #ifdef USE_WF_1CIC
+            // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
+            if (zm1 == 0) {
+                // z0-1: R = 1,1
+                r1 = 0;
+            } else {
+                // z2-14: R = 2,4,8,16,32,64,128,256,512,1k,2k,4k,8k for MAX_ZOOM = 14
+                r1 = zm1;
+            }
     
-                // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
-                if (zm1 == 0) {
-                    // z0-1: R = 1,1
-                    r1 = 0;
-                } else {
-                    // z2-14: R = 2,4,8,16,32,64,128,256,512,1k,2k,4k,8k for MAX_ZOOM = 14
-                    r1 = zm1;
-                }
-        
-                // hardware limitation
-                assert(r1 >= 0 && r1 <= 15);
-                assert(WF_1CIC_MAXD <= 16384);
-                decim = CIC1_DECIM << r1;
-            #else
-                // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
-                if (zm1 == 0) {
-                    // z0-1: R = 1 (R1 = R2 = 1)
-                    r1 = r2 = 0;
-                } else
-                if (zm1 <= WF_2CIC_POW2) {
-                    // z2-8: R = 2,4,8,16,32,64,128 (R1 = 1; R2 = 2,4,8,16,32,64,128)
-                    r1 = 0;
-                    r2 = zm1;
-                } else {
-                    // z9-14: R = 128,256,512,1k,2k,4k (R1 = 2,4,8,16,32,64; R2 = 128)
-                    r1 = zm1 - WF_2CIC_POW2;
-                    r2 = WF_2CIC_POW2;
-                }
-        
-                // hardware limitation
-                assert(r1 >= 0 && r1 <= 7);
-                assert(r2 >= 0 && r2 <= 7);
-                assert(WF_2CIC_MAXD <= 127);
-                decim = (CIC2_DECIM << r2) | (CIC1_DECIM << r1);
-            #endif
+            // hardware limitation
+            assert(r1 >= 0 && r1 <= 15);
+            assert(WF_1CIC_MAXD <= 16384);
+            decim = CIC1_DECIM << r1;
             
             #define WF_CHUNK_WAIT_ADJ           3       // i.e. make the adjustment proportional to the samp_wait_us used
             #define WF_CHUNK_WAIT_ADJ_Z         7       // only applies at higher zoom levels

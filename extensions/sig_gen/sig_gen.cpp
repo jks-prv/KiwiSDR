@@ -29,14 +29,9 @@ typedef struct {
 	#define GEN_SELF_TEST   0x04
 	int run;
 	int attn;
-
-    #define CICH_NTAPS 17
-    s4_t cich_buf[CICH_NTAPS][NIQ];     // 24-bits
 } gen_t;
 
 static gen_t gen[MAX_RX_CHANS];
-
-extern CFastFIR m_PassbandFIR[MAX_RX_CHANS];
 
 void gen_inject(int rx_chan, int instance, int ns_out, TYPECPX *samps)
 {
