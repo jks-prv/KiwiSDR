@@ -2705,7 +2705,8 @@ var _gps = {
    map_locate: 0,
    map_mkr: [],
    legend_sep: w3_inline('', pin.green, 'Navstar/QZSS only', pin.yellow, 'Galileo only', pin.red, 'all sats'),
-   legend_all: w3_inline('', pin.green, 'all sats (Navstar/QZSS/Galileo)')
+   legend_all: w3_inline('', pin.green, 'all sats (Navstar/QZSS/Galileo)'),
+   info_needs_margin: true
 };
 
 //var E1B_offset_i = [ '-1', '-3/4', '-1/2', '-1/4', '0', '+1/4', '+1/2', '+3/4', '+1' ];
@@ -2787,7 +2788,7 @@ function gps_html()
          )
 		) +
 
-		w3_div('w3-container w3-section w3-card-8 w3-round-xlarge w3-pale-blue',
+		w3_div('id-gps-info-container w3-container w3-section w3-card-8 w3-round-xlarge w3-pale-blue',
 			w3_table('id-gps-info w3-table-6-8')
 		)
 	);
@@ -3118,6 +3119,12 @@ function gps_update_admin_cb()
 			)
 		);
 	w3_el("id-gps-info").innerHTML = s;
+	
+	// because AZ/EL, pos & IQ are taller than e.g. height of 8-ch id-gps-ch table
+	if (gps.ch.length < 12 && _gps.info_needs_margin) {
+	   w3_add('id-gps-info-container', 'w3-margin-T-128');
+	   _gps.info_needs_margin = false;
+	}
 
    gps_canvas = w3_el('id-gps-canvas');
    if (gps_canvas == null) return;
