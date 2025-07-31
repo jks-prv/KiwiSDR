@@ -277,7 +277,6 @@ var override_pbw = '';
 var override_pbc = '';
 var nb_click = false;
 var no_geoloc = false;
-var mobile_laptop_test = false;
 var show_activeElement = false;
 var force_need_autoscale = false;
 var user_url = null;
@@ -470,7 +469,7 @@ function kiwi_main_ready()
 	s = 'gc_recv'; if (q[s]) kiwi_gc_recv = parseInt(q[s]);
 	s = 'gc_wspr'; if (q[s]) kiwi_gc_wspr = parseInt(q[s]);
 	s = 'ctrace'; if (q[s]) { param_ctrace = true; ctrace = parseInt(q[s]); }
-	s = 'tmobile'; if (q[s]) mobile_laptop_test = true;
+	s = 'tmobile'; if (q[s]) kiwi_util.mobile_laptop_test = true;
 	s = 'ae'; if (q[s]) show_activeElement = true;
 	s = 'fnas'; if (q[s]) force_need_autoscale = true;
 	s = 'v'; if (q[s]) { debug_v = q[s]; debug_v_set = true; console.log('URL: debug_v = '+ debug_v); }
@@ -4262,7 +4261,7 @@ function mobile_init()
       //   '<br>r='+ owrx.rescale_cnt  +','+ owrx.rescale_cnt2 +' #'+ owrx.dseq);
       //owrx.dseq++;
 
-	   if (0 && mobile_laptop_test) {
+	   if (0 && kiwi_util.mobile_laptop_test) {
          canvas_log('whu='+ mobile.width +','+ mobile.height +','+ el.uiWidth +
             ' psn='+ mobile.isPortrait +','+ mobile.small +','+ mobile.narrow +' #'+ owrx.dseq);
          owrx.dseq++;

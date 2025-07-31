@@ -3796,10 +3796,10 @@ function w3_menu_items(id, arr, max_vis)
    // But NOT if the menu is long enough to be scrollable since there is no
    // gesture to distinguish mousing from scrolling, as with desktop.
    if (kiwi_isMobile()) {
-      if (mobile_laptop_test) console.log('w3_menu_items MOBILE '+ id);
+      if (kiwi_util.mobile_laptop_test) console.log('w3_menu_items MOBILE '+ id);
       w3_iterate_children(id, function(el, i) {
          el.addEventListener('touchmove', w3int_menu_touch_move, w3.BUBBLING);
-         if (mobile_laptop_test)
+         if (kiwi_util.mobile_laptop_test)
             el.addEventListener('mousemove', w3int_menu_mouse_move, w3.BUBBLING);
       });
    }

@@ -740,7 +740,7 @@ function ext_mobile_info(last)
 {
    var w = window.innerWidth;
    var h = window.innerHeight;      // reduced if popup keyboard active
-   if (mobile_laptop_test) { w = 375; h = 812; }   // simulate iPhone X
+   if (kiwi_util.mobile_laptop_test) { w = 375; h = 812; }     // simulate iPhone X
    var rv = { width:w, height:h };
    var isPortrait;
 
@@ -748,7 +748,7 @@ function ext_mobile_info(last)
       isPortrait = last? last.isPortrait : 1;
    } else {
       // if popup keyboard active h could be <= w making test invalid
-      isPortrait = (w < h || mobile_laptop_test)? 1:0;
+      isPortrait = (w < h || kiwi_util.mobile_laptop_test)? 1:0;
    }
    rv.orient_unchanged = (last && last.isPortrait == isPortrait)? 1:0;
 
