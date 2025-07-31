@@ -84,7 +84,7 @@ extern kiwi_t kiwi;
 extern int version_maj, version_min;
 
 extern bool background_mode, need_hardware, is_multi_core, any_preempt_autorun, spi_show_stats,
-	DUC_enable_start, rev_enable_start, web_nocache, kiwi_reg_debug, cmd_debug,
+	DUC_enable_start, rev_enable_start, web_nocache, kiwi_reg_debug, cmd_debug, gen_debug,
 	gps_e1b_only, disable_led_task, debug_printfs, force_camp, ecpu_stack_check,
 	log_local_ip, DRM_enable, have_snd_users, admin_keepalive;
 
