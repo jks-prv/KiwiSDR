@@ -397,13 +397,23 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 	// iptables will stop regular connection attempts from a blacklisted ip.
 	// But when proxied we need to check the forwarded ip address.
 	// Note that this code always sets ip_forwarded[] as a side-effect for later use (the real client ip).
+	// And that ip_forwarded[] is eventually copied into conn->remote_ip
 	//
 	// check_ip_blacklist() is always called (not just for proxied connections as done previously)
 	// since the internal blacklist is now used by the 24hr auto ban mechanism.
+	//
+	// There is a check against using a spoofed local/loopback forwarded address.
 
 	char ip_forwarded[NET_ADDRSTRLEN];
-    check_if_forwarded("CONN", mc, ip_forwarded);
+	bool is_loopback;
+    check_if_forwarded("CONN", mc, ip_forwarded, &is_loopback);
 	char *ip_unforwarded = ip_remote(mc);
+    if (is_loopback) {
+        lprintf("WARNING: CONN connection attempt using forwarded local/loopback address!\n");
+        lprintf("WARNING: check_if_forwarded: mc=%p mc->remote_ip=%s ip_unforwarded=%s ip_forwarded=%s %s\n",
+            mc, mc->remote_ip, ip_unforwarded, ip_forwarded, mc->uri);
+        return NULL;
+    }
     
     if (check_ip_blacklist(ip_forwarded) || check_ip_blacklist(ip_unforwarded)) return NULL;
     
@@ -767,9 +777,9 @@ retry:
 	}
   
 	c->mc = mc;
+    //conn_printf("SVR check_if_forwarded: COPY ip_forwarded %s => conn->remote_ip\n", ip_forwarded);
     kiwi_strncpy(c->remote_ip, ip_forwarded, NET_ADDRSTRLEN);
 	c->remote_port = mc->remote_port;
-	bool is_loopback;
 	c->isLocal_ip = isLocal_ip(c->remote_ip, &is_loopback);
 	if (is_loopback) c->isLocal_ip = true;
 	c->tstamp = tstamp;

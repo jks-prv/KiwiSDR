@@ -746,11 +746,22 @@ int web_request(struct mg_connection *mc, int ev, void *ev_data)
 	//
 	// check_ip_blacklist() is always called (not just for proxied connections as done previously)
 	// since the internal blacklist is now used by the 24hr auto ban mechanism.
+	//
+	// There is a check against using a spoofed local/loopback forwarded address.
 
     if (ev == MG_EV_CACHE_INFO) web_printf_all("----\n");
 	char ip_forwarded[NET_ADDRSTRLEN];
-    check_if_forwarded("WEB", mc, ip_forwarded);
-    //printf("WEB mc=%p mc->remote_ip=%s ip_unforwarded=%s ip_forwarded=%s %s\n", mc, mc->remote_ip, ip_unforwarded, ip_forwarded, mc->uri);
+	bool is_loopback;
+    check_if_forwarded("WEB", mc, ip_forwarded, &is_loopback);
+    if (is_loopback) {
+        lprintf("WARNING: WEB connection attempt using forwarded local/loopback address!\n");
+        lprintf("WARNING: check_if_forwarded: mc=%p ip_unforwarded=%s ip_forwarded=%s url=<%s> qs=<%s>\n",
+            mc, ip_unforwarded, ip_forwarded, mc->uri, mc->query);
+        mg_http_reply(mc, 403, NULL, "");   // 403 = "forbidden"
+        mg_connection_close(mc);
+        return MG_TRUE;
+    }
+    //printf("WEB check_if_forwarded: mc=%p mc->remote_ip=%s ip_unforwarded=%s ip_forwarded=%s %s\n", mc, mc->remote_ip, ip_unforwarded, ip_forwarded, mc->uri);
     bool bl_ufw = check_ip_blacklist(ip_unforwarded);
     bool bl_fwd = check_ip_blacklist(ip_forwarded);
     
