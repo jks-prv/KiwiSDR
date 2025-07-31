@@ -1007,7 +1007,7 @@ char *rx_users(bool isAdmin)
             // rx->conn is always STREAM_SOUND for regular SND+WF connections and
             // always STREAM_WATERFALL for WF-only connections
             conn_t *c = rx->conn;
-            if (c && c->valid && c->arrived) {
+            if (c && c->valid) {
                 assert(c->type == STREAM_SOUND || c->type == STREAM_WATERFALL);
 
                 // connected time
@@ -1061,6 +1061,9 @@ char *rx_users(bool isAdmin)
 
                 //printf("rx%d ext_api=%d ident_user=<%s>\n", i, c->ext_api, c->ident_user);
                 char *user;
+                if (!c->arrived)
+                    user = strdup("(connecting)");
+                else
                 if (c->isUserIP || !c->ident_user)
                     user = NULL;
                 else
