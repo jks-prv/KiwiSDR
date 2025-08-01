@@ -706,8 +706,9 @@ char *ip_remote(struct mg_connection *mc)
 }
 
 // CAUTION: returned remote_ip could be fake if X-Real-IP or X-Forwarded-For are spoofed
-bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_ip)
+bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_ip, bool *is_loopback)
 {
+    if (is_loopback) *is_loopback = false;
     kiwi_strncpy(remote_ip, ip_remote(mc), NET_ADDRSTRLEN);     // unforwarded
     
     const char *x_real_ip = mg_get_header(mc, "X-Real-IP");
@@ -717,28 +718,35 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
 
     int n = 0;
     char *ip_r = NULL;
+    bool is_loop;
     
     if (x_real_ip != NULL) {
-        //if (id != NULL) printf("%s: %s X-Real-IP %s\n", id, remote_ip, x_real_ip);
+        //printf("check_if_forwarded %s: %s X-Real-IP %s\n", id, remote_ip, x_real_ip);
         n = sscanf(x_real_ip, "%" NET_ADDRSTRLEN_S "ms", &ip_r);
+        if (isLocal_ip(ip_r, &is_loop)) {
+            lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Real-IP %s is_loopback=%d\n", id, ip_r, is_loop);
+            if (is_loop && is_loopback) *is_loopback = true;
+            n = 0;
+        }
     }
     
     if (x_forwarded_for != NULL) {
-        //if (id != NULL) printf("%s: %s X-Forwarded-For %s\n", id, remote_ip, x_forwarded_for);
+        //printf("check_if_forwarded %s: %s X-Forwarded-For %s\n", id, remote_ip, x_forwarded_for);
         if (x_real_ip == NULL || n != 1) {
             // take only client ip in case "X-Forwarded-For: client, proxy1, proxy2 ..."
             n = sscanf(x_forwarded_for, "%" NET_ADDRSTRLEN_S "m[^, ]", &ip_r);
+            if (isLocal_ip(ip_r, &is_loop)) {
+                lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Forwarded-For %s is_loopback=%d\n", id, ip_r, is_loop);
+                if (is_loop && is_loopback) *is_loopback = true;
+                n = 0;
+            }
         }
     }
 
     bool forwarded = false;
     if (n == 1) {
-        if (strcmp(ip_r, "127.0.0.1") != 0) {
-            kiwi_strncpy(remote_ip, ip_r, NET_ADDRSTRLEN);
-            forwarded = true;
-        } else {
-            //printf("check_if_forwarded: BOTH loopback? x_real_ip=<%s> x_forwarded_for=<%s>\n", x_real_ip, x_forwarded_for);
-        }
+        kiwi_strncpy(remote_ip, ip_r, NET_ADDRSTRLEN);
+        forwarded = true;
     }
     
     mg_free_header(x_real_ip);
