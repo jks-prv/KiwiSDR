@@ -506,9 +506,11 @@ function control_html()
 			
 			w3_divs('/w3-tspace-8',
 			   w3_div('',
+               w3_text('w3-margin-B-8 w3-text-teal w3-bold', 'SNR measurement options:'),
                w3_checkbox_get_param('//w3-label-inline', 'Timestamp SNR with local time', 'snr_local_time', 'admin_bool_cb', true),
                w3_checkbox_get_param('//w3-label-inline', 'Also measure ham bands and AM BCB', 'snr_meas_ham', 'admin_bool_cb', false),
                w3_checkbox_get_param('//w3-label-inline', 'Measure on antenna change (after 5 second delay)', 'snr_meas_ant_sw', 'admin_bool_cb', false),
+               w3_checkbox_get_param('//w3-label-inline', 'Filter strong signals like VDSL (0-30, 1.8-30 MHz meas only)', 'snr_meas_filter', 'admin_bool_cb', true),
                w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'admin_int_cb'),
                w3_inline('w3-margin-T-8',
                   w3_text('w3-text-teal w3-bold', 'Custom band:'),
@@ -1659,7 +1661,10 @@ function update_html()
          w3_divs('w3-tspace-8',
             w3_switch_label('w3-label-left', 'Disable recent changes?',
                'Yes', 'No', 'disable_recent_changes', cfg.disable_recent_changes, 'admin_radio_YN_cb'),
-            w3_text('w3-text-black', 'Currently:<br><ul><li>The Firefox audio hang workaround.</li></ul>')
+            w3_text('w3-text-black', 'Currently:<br><ul>' +
+               '<li>The Firefox audio hang workaround.</li>' +
+               '<li>The HTTP X-Real-IP &amp; X-Forwarded-For header check rejecting local/loopback IP addresses.</li>' +
+            '</ul>')
          ),
          ''
       ) +
