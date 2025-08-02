@@ -89,12 +89,12 @@ function waterfall_controls_setup()
          
          //w3_hr('w3-margin-10'),
          w3_div('w3-margin-T-8 w3-margin-B-8',
-            w3_text('w3-text-css-orange', '<b>Waterfall FFT</b>'),
+            w3_text('w3-margin-B-8 w3-text-css-orange', '<b>Waterfall FFT</b>'),
             w3_inline('w3-margin-LR-16/w3-hspace-16',
                w3_select(wfext.sfmt, '', 'window function', 'wfext.winf_i', wfext.winf_i, wfext.winf_s, 'wfext_winf_cb'),
                w3_select(wfext.sfmt, '', 'interp', 'wfext.interp_i', wfext.interp_i, wfext.interp_s, 'wfext_interp_cb'),
-               w3_checkbox('w3-label-inline w3-label-not-bold', 'CIC<br>comp', 'wfext.cic_comp', wfext.cic_comp, 'wfext_cic_comp_cb')
-            )
+            ),
+            w3_checkbox('w3-margin-L-16 w3-margin-T-10/w3-label-inline w3-label-not-bold/', 'CIC comp', 'wfext.cic_comp', wfext.cic_comp, 'wfext_cic_comp_cb')
          )
 		);
 

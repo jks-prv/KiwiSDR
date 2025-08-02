@@ -386,7 +386,7 @@ function sig_gen_help(show)
             )
          );
 
-      confirmation_show_content(s, 610, 400);
+      confirmation_show_content(s, 610, 425);
       w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
    }
    return true;

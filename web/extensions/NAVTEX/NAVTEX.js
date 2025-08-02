@@ -278,11 +278,11 @@ function navtex_controls_setup()
 	var controls_html =
 		w3_div('id-navtex-controls w3-text-white',
 			w3_divs('/w3-tspace-8',
-            w3_col_percent('',
+            w3_inline('w3-halign-space-between|width:85%/',
 				   w3_div('w3-medium w3-text-aqua', '<b><a href="https://en.wikipedia.org/wiki/Navtex" target="_blank">NAVTEX</a> / ' +
 				      '<a href="https://en.wikipedia.org/wiki/Digital_selective_calling" target="_blank">DSC</a> / ' +
-				      '<a href="http://hflink.com/selcall" target="_blank">Selcall</a></b>'), 45,
-					w3_div('', 'FSK from <b><a href="https://arachnoid.com/JNX/index.html" target="_blank">JNX</a></b>, P. Lutus &copy; 2011'), 55
+				      '<a href="http://hflink.com/selcall" target="_blank">Selcall</a></b>'),
+					w3_div('', 'FSK from <b><a href="https://arachnoid.com/JNX/index.html" target="_blank">JNX</a></b>, P. Lutus &copy; 2011')
 				),
 				
             w3_col_percent('',

@@ -341,7 +341,7 @@ function hfdl_controls_setup()
 		w3_div('id-hfdl-controls w3-text-white',
          w3_col_percent('w3-tspace-8 w3-valign/',
             w3_div('w3-medium w3-text-aqua', '<b>HFDL decoder</b>'), 25,
-            w3_div('', 'From <b><a href="https://github.com/szpajder/dumphfdl" target="_blank">dumphfdl</a></b> by Tomasz Lemiech &copy;2021 GPL-3.0</b>')
+            w3_div('', 'From <b><a href="https://github.com/szpajder/dumphfdl" target="_blank">dumphfdl</a></b> by Tomasz Lemiech &copy;2021</b>')
          ),
 
          w3_inline('w3-tspace-4 w3-halign-space-between/',

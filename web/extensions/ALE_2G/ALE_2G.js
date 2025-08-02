@@ -5,7 +5,7 @@ var ale = {
    ext_name: 'ALE_2G',     // NB: must match ALE_2G.cpp:ale_2g_ext.name
    first_time: true,
    dataH: 300,
-   ctrlW: 600,
+   ctrlW: 615,
    //ctrlH: 215,
    ctrlH: 185,
    freq: 0,

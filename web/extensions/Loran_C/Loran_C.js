@@ -585,8 +585,8 @@ function Loran_C_help(show)
    if (show) {
       var s = 
          w3_text('w3-medium w3-bold w3-text-aqua', 'Loran-C viewer help') + '<br><br>' +
-         'You can manually align the master station (the one with the 9th pulse) <br>' +
-         'to the left "M" slot by shift-clicking (touch on mobile devices) <br>' +
+         'You can manually align the master station (the one with the 9th pulse) ' +
+         'to the left "M" slot by shift-clicking (touch on mobile devices) ' +
          'at the location in the display you want moved to the left edge. <br><br>' +
 
          'URL parameters: <br>' +

@@ -7407,7 +7407,7 @@ function freq_memory_recall(idx)
 
 function freq_memory_help()
 {
-   confirmation_show_content(kiwi.fmem_help, 550, 380);
+   confirmation_show_content(kiwi.fmem_help, 575, 400);
 }
 
 
@@ -10406,39 +10406,41 @@ function keyboard_shortcut_init()
    if (kiwi_isFirefox() < 47 || kiwi_isChrome() <= 49 || kiwi_isOpera() <= 36) return;
    
    shortcut.help =
-      w3_div('',
-         w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', 'Shortcut keys', 25, 'Function' + w3_link('w3-margin-L-64', 'kiwisdr.com/info', 'KiwiSDR Operating Information')),
-         w3_inline_percent('w3-padding-tiny', 'g =', 25, 'select frequency entry field'),
-         w3_inline_percent('w3-padding-tiny', 'j i LR-arrow-keys', 25, 'frequency step down/up, add shift or alt for faster,<br>shift plus alt to step to next/prev DX label'),
-         w3_inline_percent('w3-padding-tiny', 'm n N', 25, 'toggle frequency memory menu, VFO A/B, VFO A=B'),
-         w3_inline_percent('w3-padding-tiny', 'b B', 25, 'scroll band menu'),
-         w3_inline_percent('w3-padding-tiny', 'e E', 25, 'scroll extension menu'),
-         w3_inline_percent('w3-padding-tiny', 'a A d l u c f q', 25, 'toggle modes: AM SAM DRM LSB USB CW NBFM IQ,<br>add alt to toggle backwards (e.g. SAM modes)'),
-         w3_inline_percent('w3-padding-tiny', 'p P /', 25, 'passband narrow/widen, restore default'),
-         w3_inline_percent('w3-padding-tiny', 'UD-arrow-keys', 25, 'passband adjust both, right(shift), left(alt) edges'),
-         w3_inline_percent('w3-padding-tiny', 'r', 25, 'toggle audio recording'),
-         w3_inline_percent('w3-padding-tiny', 'R', 25, 'switch to the RF tab'),
-         w3_inline_percent('w3-padding-tiny', 'z Z', 25, 'zoom in/out, add alt for max in/out'),
-         w3_inline_percent('w3-padding-tiny', '< >', 25, 'waterfall page down/up'),
-         w3_inline_percent('w3-padding-tiny', 'w W', 25, 'waterfall min dB slider -/+ 1 dB, add alt for -/+ 10 dB'),
-         w3_inline_percent('w3-padding-tiny', 'S D', 25, 'waterfall auto-scale, spectrum slow device mode'),
-         w3_inline_percent('w3-padding-tiny', 's alt-s', 25, 'spectrum RF/AF/off toggle, add alt to toggle backwards'),
-         w3_inline_percent('w3-padding-tiny', 'v V space', 25, 'volume less/more, mute'),
-         w3_inline_percent('w3-padding-tiny', 'o', 25, 'toggle between option bar <x1>off</x1> <x1>user</x1> and <x1>stats</x1> mode,<br>others selected by related shortcut key'),
-         w3_inline_percent('w3-padding-tiny', '!', 25, 'toggle aperture manual/auto menu'),
-         w3_inline_percent('w3-padding-tiny', '$', 25, 'toggle 1 Hz frequency readout'),
-         w3_inline_percent('w3-padding-tiny', '%', 25, 'toggle tuning lock'),
-         w3_inline_percent('w3-padding-tiny', '^', 25, 'toggle mouse wheel tune/zoom'),
-         w3_inline_percent('w3-padding-tiny', '&', 25, 'toggle snap to nearest'),
-         w3_inline_percent('w3-padding-tiny', '@ alt-@', 25, 'open DX label filter, quick clear'),
-         w3_inline_percent('w3-padding-tiny', '\\ |', 25, 'toggle (& open) DX stored/EiBi/community database,<br>alt to toggle <x1>filter by time/day-of-week</x1> checkbox'),
-         w3_inline_percent('w3-padding-tiny', 'x y', 25, 'toggle visibility of control panels, top bar'),
-         w3_inline_percent('w3-padding-tiny', '~', 25, 'open admin page in new tab'),
-         w3_inline_percent('w3-padding-tiny', 'esc', 25, 'close/cancel action'),
-         w3_inline_percent('w3-padding-tiny', '? h', 25, 'toggle this help list'),
-         w3_inline_percent('w3-padding-tiny', 'H', 25, 'toggle additional help information (extension etc)'),
-         w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', '', 25, 'Windows, Linux: use alt key, not control key'),
-         w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', '', 25, 'Mac: use alt/option or control key')
+      w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', 'Shortcut keys', 25, 'Function' + w3_link('w3-margin-L-64', 'kiwisdr.com/info', 'KiwiSDR Operating Information')) +
+      w3_div('w3-margin-T-8 w3-scroll-y|height:96%',
+         w3_div('',
+            w3_inline_percent('w3-padding-tiny', 'g =', 25, 'select frequency entry field'),
+            w3_inline_percent('w3-padding-tiny', 'j i LR-arrow-keys', 25, 'frequency step down/up, add shift or alt for faster,<br>shift plus alt to step to next/prev DX label'),
+            w3_inline_percent('w3-padding-tiny', 'm n N', 25, 'toggle frequency memory menu, VFO A/B, VFO A=B'),
+            w3_inline_percent('w3-padding-tiny', 'b B', 25, 'scroll band menu'),
+            w3_inline_percent('w3-padding-tiny', 'e E', 25, 'scroll extension menu'),
+            w3_inline_percent('w3-padding-tiny', 'a A d l u c f q', 25, 'toggle modes: AM SAM DRM LSB USB CW NBFM IQ,<br>add alt to toggle backwards (e.g. SAM modes)'),
+            w3_inline_percent('w3-padding-tiny', 'p P /', 25, 'passband narrow/widen, restore default'),
+            w3_inline_percent('w3-padding-tiny', 'UD-arrow-keys', 25, 'passband adjust both, right(shift), left(alt) edges'),
+            w3_inline_percent('w3-padding-tiny', 'r', 25, 'toggle audio recording'),
+            w3_inline_percent('w3-padding-tiny', 'R', 25, 'switch to the RF tab'),
+            w3_inline_percent('w3-padding-tiny', 'z Z', 25, 'zoom in/out, add alt for max in/out'),
+            w3_inline_percent('w3-padding-tiny', '< >', 25, 'waterfall page down/up'),
+            w3_inline_percent('w3-padding-tiny', 'w W', 25, 'waterfall min dB slider -/+ 1 dB, add alt for -/+ 10 dB'),
+            w3_inline_percent('w3-padding-tiny', 'S D', 25, 'waterfall auto-scale, spectrum slow device mode'),
+            w3_inline_percent('w3-padding-tiny', 's alt-s', 25, 'spectrum RF/AF/off toggle, add alt to toggle backwards'),
+            w3_inline_percent('w3-padding-tiny', 'v V space', 25, 'volume less/more, mute'),
+            w3_inline_percent('w3-padding-tiny', 'o', 25, 'toggle between option bar <x1>off</x1> <x1>user</x1> and <x1>stats</x1> mode,<br>others selected by related shortcut key'),
+            w3_inline_percent('w3-padding-tiny', '!', 25, 'toggle aperture manual/auto menu'),
+            w3_inline_percent('w3-padding-tiny', '$', 25, 'toggle 1 Hz frequency readout'),
+            w3_inline_percent('w3-padding-tiny', '%', 25, 'toggle tuning lock'),
+            w3_inline_percent('w3-padding-tiny', '^', 25, 'toggle mouse wheel tune/zoom'),
+            w3_inline_percent('w3-padding-tiny', '&', 25, 'toggle snap to nearest'),
+            w3_inline_percent('w3-padding-tiny', '@ alt-@', 25, 'open DX label filter, quick clear'),
+            w3_inline_percent('w3-padding-tiny', '\\ |', 25, 'toggle (& open) DX stored/EiBi/community database,<br>alt to toggle <x1>filter by time/day-of-week</x1> checkbox'),
+            w3_inline_percent('w3-padding-tiny', 'x y', 25, 'toggle visibility of control panels, top bar'),
+            w3_inline_percent('w3-padding-tiny', '~', 25, 'open admin page in new tab'),
+            w3_inline_percent('w3-padding-tiny', 'esc', 25, 'close/cancel action'),
+            w3_inline_percent('w3-padding-tiny', '? h', 25, 'toggle this help list'),
+            w3_inline_percent('w3-padding-tiny', 'H', 25, 'toggle additional help information (extension etc)'),
+            w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', '', 25, 'Windows, Linux: use alt key, not control key'),
+            w3_inline_percent('w3-padding-tiny w3-bold w3-text-aqua', '', 25, 'Mac: use alt/option or control key')
+         )
       );
    
    shortcut.freq_help =
@@ -10476,12 +10478,13 @@ function keyboard_shortcut_init()
 
 function keyboard_shortcut_help()
 {
-   confirmation_show_content(shortcut.help, 550, 745);   // height +15 or 20 per added line
+   confirmation_show_content(shortcut.help, 550, 760);   // height +15 or 20 per added line
+   w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
 }
 
 function freq_input_help()
 {
-   confirmation_show_content(shortcut.freq_help, 550, 475);
+   confirmation_show_content(shortcut.freq_help, 585, 475);
 }
 
 // FIXME: animate (light up) control panel icons?

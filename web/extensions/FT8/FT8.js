@@ -230,11 +230,9 @@ function ft8_controls_setup()
 	var controls_html =
 		w3_div('id-ft8-controls w3-text-white',
 			w3_divs('',
-            w3_col_percent('w3-valign/',
-               w3_div('',
-				      w3_div('w3-medium w3-text-aqua', '<b>FT8/FT4 decoder</b>')
-				   ), 40,
-					w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b> Karlis Goba &copy; 2018'), 45
+            w3_inline('w3-halign-space-between|width:84%/',
+				   w3_div('w3-medium w3-text-aqua', '<b>FT8/FT4 decoder</b>'),
+					w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b> Karlis Goba &copy; 2018')
 				),
 				w3_div('id-ft8-err w3-margin-T-10 w3-padding-small w3-css-yellow w3-width-fit w3-hide'),
 				w3_inline('id-ft8-container w3-margin-T-6/w3-margin-between-8',
@@ -261,7 +259,7 @@ function ft8_controls_setup()
 	time_display_setup('ft8');
 
    ext_set_data_height(300);
-	ext_set_controls_width_height(525, 90);
+	ext_set_controls_width_height(525, 100);
    ft8_clear_button_cb();
 
 	if (ext_nom_sample_rate() != 12000) {
@@ -639,7 +637,7 @@ function FT8_help(show)
    if (show) {
       var s =
          w3_text('w3-medium w3-bold w3-text-aqua', 'FT8/FT4 decoder help') +
-         '<br>Spots are uploaded to pskreporter.info if the <i>reporter call</i> and <i>reporter grid</i> ' +
+         '<br>Spots are uploaded to pskreporter.info if the <x1>reporter call</x1> and <x1>reporter grid</x1> ' +
          'fields on the admin page, extensions tab, FT8 subtab have valid entries. ' +
          'Leave the callsign field blank if you do not want any uploads to pskreporter.info ' +
          'But consider leaving the grid field set so the km distance from the Kiwi to the ' +
@@ -647,7 +645,7 @@ function FT8_help(show)
          
          'Uploaded spots are highlighted in green. Spots are only uploaded once every 60 minutes. ' +
          'The <i>age</i> column shows, in minutes, how long it has been since the last upload. ' +
-         '<br>SNR information is currently not uploaded as it is not accurate.<br><br>' +
+         'SNR information is currently not uploaded as it is not accurate.<br><br>' +
          
          'Clicking the <i>pskreporter.info</i> link will take you directly to the map with the ' +
          'reporter callsign of the Kiwi preset.<br><br>' +
@@ -656,7 +654,7 @@ function FT8_help(show)
          'The first parameters can select one of the entries in the <i>freq</i> menu<br>' +
          'e.g. <i>my_kiwi:8073/?ext=ft8,10136</i>' +
          '';
-      confirmation_show_content(s, 610, 300);
+      confirmation_show_content(s, 610, 325);
    }
    return true;
 }
