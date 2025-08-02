@@ -1854,10 +1854,12 @@ function network_html()
 					   'Yes', 'No', 'adm.use_ssl', true, false, 'network_use_ssl_cb')
 				),
 				w3_divs('/w3-tspace-8',
-               w3_checkbox_get_param('//w3-label-inline', 'Auto add NAT rule on router', 'adm.auto_add_nat', 'network_auto_nat_cb', false),
+               w3_checkbox_get_param('//w3-label-inline', 'Auto add NAT rule on router', 'adm.auto_add_nat', 'network_auto_nat_cb', false)
+               /*,
                w3_checkbox_get_param('/w3-label-inline/w3-ialign-start',
                   'Acquire local IP indefinitely <br> (uncheck if using direct-to-computer <br> Ethernet connection)',
                   'adm.local_ip_retry', 'admin_bool_cb', true)
+               */
             ),
             w3_divs('w3-center/',
                w3_switch_label_get_param('w3-center', 'IP address',
