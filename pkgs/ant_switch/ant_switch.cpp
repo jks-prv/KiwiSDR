@@ -35,6 +35,7 @@
 #include "shmem.h"
 #include "ant_switch.h"
 #include "peri.h"
+#include "rx_snr.h"
 
 #include <stdio.h>
 #include <unistd.h>

@@ -47,6 +47,7 @@ Boston, MA  02110-1301, USA.
 #include "mode.h"
 #include "ant_switch.h"
 #include "utf8.h"
+#include "rx_snr.h"
 
 #ifdef USE_SDR
  #include "data_pump.h"

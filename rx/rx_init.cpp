@@ -375,7 +375,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("no_wf", false, &up_cfg);
     cfg_default_bool("test_webserver_prio", false, &up_cfg);
     cfg_default_bool("test_deadline_update", false, &up_cfg);
-    cfg_default_bool("disable_recent_changes", false, &up_cfg);
+    kiwi.disable_recent_changes = cfg_default_bool("disable_recent_changes", false, &up_cfg);
     cfg_default_int("S_meter_OV_counts", 10, &up_cfg);
     cfg_default_bool("webserver_caching", true, &up_cfg);
     max_thr = (float) cfg_default_int("overload_mute", -15, &up_cfg);
@@ -386,6 +386,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("snr_local_time", true, &up_cfg);
     cfg_default_bool("snr_meas_ham", false, &up_cfg);
     cfg_default_bool("snr_meas_ant_sw", false, &up_cfg);
+    cfg_default_bool("snr_meas_filter", true, &up_cfg);
     cfg_default_int("snr_meas_custom_min", 0, &up_cfg);
     cfg_default_int("snr_meas_custom_lo", 0, &up_cfg);
     cfg_default_int("snr_meas_custom_hi", 0, &up_cfg);

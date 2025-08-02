@@ -39,6 +39,7 @@ Boston, MA  02110-1301, USA.
 #include "eeprom.h"
 #include "rx_util.h"
 #include "rx_waterfall.h"
+#include "rx_snr.h"
 #include "security.h"
 #include "sha256.h"
 

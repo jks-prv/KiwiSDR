@@ -45,6 +45,7 @@ Boston, MA  02110-1301, USA.
 #include "kiwi_ui.h"
 #include "ip_blacklist.h"
 #include "ant_switch.h"
+#include "rx_snr.h"
 
 #ifdef USE_SDR
  #include "data_pump.h"

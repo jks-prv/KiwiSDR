@@ -41,6 +41,7 @@ Boston, MA  02110-1301, USA.
 #include "rx_util.h"
 #include "security.h"
 #include "ant_switch.h"
+#include "rx_snr.h"
 
 #include <string.h>
 #include <stdio.h>
