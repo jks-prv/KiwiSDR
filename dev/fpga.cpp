@@ -181,7 +181,7 @@ static SPI_MISO readback;
 static u1_t bbuf[2048];
 static u2_t code2[4096];
 
-void fpga_init() {
+void fpga_init(int check) {
 
     FILE *fp;
     int n, i, j;
@@ -376,7 +376,7 @@ void fpga_init() {
 	//printf("stat.word=0x%04x fw_id=0x%x fpga_ver=0x%x stat_user=0x%x fpga_id=0x%x\n",
 	//    stat.word, stat.fw_id, stat.fpga_ver, stat.stat_user, stat.fpga_id);
 
-	if (stat.fpga_id != fpga_id) {
+	if (check && stat.fpga_id != fpga_id) {
 		lprintf("FPGA ID %d, expecting %d\n", stat.fpga_id, fpga_id);
 		fpga_panic(8, "mismatch");
 	}

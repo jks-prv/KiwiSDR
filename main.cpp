@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
 
 	int fw_sel_override = FW_CONFIGURED;
 	int fw_test = 0;
+	int fpga_id_check = 1;
 	int wb_sel, wb_sel_override = -1;
 	
 	version_maj = VERSION_MAJ;
@@ -184,6 +185,7 @@ int main(int argc, char *argv[])
 	
 		if (ARG("-fw")) { ARGL(fw_sel_override); printf("firmware select override: %d\n", fw_sel_override); } else
 		if (ARG("-fw_test")) { ARGL(fw_test); printf("firmware test: %d\n", fw_test); } else
+		if (ARG("-fpga_id")) fpga_id_check = 0; else
 		if (ARG("-wb")) { ARGL(wb_sel_override); printf("wideband rate override: %d\n", wb_sel_override); } else
 		if (ARG("-rdoff")) { ARGL(wf_rd_offset); printf("WF rd_offset: %d\n", wf_rd_offset); } else
 		if (ARG("-wfsd")) { ARGL(wf_slowdown); printf("WF slowdown: %d\n", wf_slowdown); } else
@@ -527,7 +529,7 @@ int main(int argc, char *argv[])
 	if (need_hardware) {
 		peri_init();
 		if (gpio_test_pin) gpio_test(gpio_test_pin);
-		fpga_init();
+		fpga_init(fpga_id_check);
 		//pru_start();
 		eeprom_update(eeprom_action);
 		
