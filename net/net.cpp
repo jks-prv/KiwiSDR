@@ -723,7 +723,7 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
     if (x_real_ip != NULL) {
         //printf("check_if_forwarded %s: %s X-Real-IP %s\n", id, remote_ip, x_real_ip);
         n = sscanf(x_real_ip, "%" NET_ADDRSTRLEN_S "ms", &ip_r);
-        if (isLocal_ip(ip_r, &is_loop)) {
+        if (!kiwi.disable_recent_changes && isLocal_ip(ip_r, &is_loop)) {
             lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Real-IP %s is_loopback=%d\n", id, ip_r, is_loop);
             if (is_loop && is_loopback) *is_loopback = true;
             n = 0;
@@ -735,7 +735,7 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
         if (x_real_ip == NULL || n != 1) {
             // take only client ip in case "X-Forwarded-For: client, proxy1, proxy2 ..."
             n = sscanf(x_forwarded_for, "%" NET_ADDRSTRLEN_S "m[^, ]", &ip_r);
-            if (isLocal_ip(ip_r, &is_loop)) {
+            if (!kiwi.disable_recent_changes && isLocal_ip(ip_r, &is_loop)) {
                 lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Forwarded-For %s is_loopback=%d\n", id, ip_r, is_loop);
                 if (is_loop && is_loopback) *is_loopback = true;
                 n = 0;
