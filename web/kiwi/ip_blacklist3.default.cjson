@@ -16,7 +16,6 @@
 // 31 jul 25 8.220.199.0/24 (8.220.199.115) Alibaba via Paul
 // 31 jul 25 8.220.179.0/24 (8.220.179.17) Alibaba via Paul
 // 31 jul 25 58.60.0.0/14 (60.0.0:63.255.255)(58.62.100.134) Chinanet via Paul
-// 31 jul 25 133.9.0.0/16 Waseda University via whois -h whois.nic.ad.jp, connects to default freq then does nothing, via forum
 // 29 jun 25 20.171.207.150/32 openai.com/gptbot (Microsoft cloud)
 // 29 jun 25 47.74.0.0/15 (74:75), 47.80.0.0/13 (80:87), 47.76.0.0/14 (47.76:47.49) Alibaba cloud attacking forum server
 // 14 may 25 159.226.19.19/32 repeated old API accesses, Computer Network Information Center of Chinese Academy of Sciences
@@ -193,7 +192,6 @@
     "128.1.0.0/16",
     "128.14.0.0/16",
     "130.211.0.0/16",
-    "133.9.0.0/16",
     "136.244.64.0/18",
     "137.220.32.0/19",
     "138.19.0.0/16",
