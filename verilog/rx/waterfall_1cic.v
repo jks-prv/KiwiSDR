@@ -138,7 +138,7 @@ module WATERFALL_1CIC
     assign wf_samps_in_i = wf_cic_out_i;
     assign wf_samps_in_q = wf_cic_out_q;
 
-	IQ_SAMPLER_8K_32B wf_samp(
+	WF_SAMPLER_8K_32B wf_samp(
 		.wr_clk			(adc_clk),
 		.wr_rst			(rst_wf_samp_wr_A),
 		.wr_continuous	(wf_continuous_A),

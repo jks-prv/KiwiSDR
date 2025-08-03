@@ -166,7 +166,7 @@ cic #(.STAGES(WF2_STAGES), .DECIM_TYPE(-WF_2CIC_MAXD), .GROWTH(WF2_GROWTH), .IN_
     .out_data		(wf_cic2_out_q)
     );
 
-	IQ_SAMPLER_8K_16B wf_samp(
+	WF_SAMPLER_8K_16B wf_samp(
 		.wr_clk			(adc_clk),
 		.wr_rst			(rst_wf_samp_wr_A),
 		.wr_continuous	(wf_continuous_A),

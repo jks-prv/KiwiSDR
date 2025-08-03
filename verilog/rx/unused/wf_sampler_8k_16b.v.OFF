@@ -3,7 +3,7 @@
 // IQ sampler, 8K x 2 x 16-bit, 8 36kb BRAMs
 // clock domains: fully isolated
 
-module IQ_SAMPLER_8K_16B (
+module WF_SAMPLER_8K_16B (
     input  wire wr_clk,
     input  wire wr_rst,
     input  wire wr_continuous,		// if true, the wr_clk side doesn't stop capturing when buffer full
@@ -54,14 +54,14 @@ module IQ_SAMPLER_8K_16B (
 	wire [15:0] rd_di, rd_dq;
 	assign rd_iq = rd_i? rd_di : rd_dq;
 	
-	ipcore_bram_8k_16b iq_samp_i (
+	ipcore_bram_8k_16b wf_samp_i (
 		.clka	(wr_clk),			.clkb	(rd_clk),
 		.wea	(wr_en),
 		.addra	(wr_addr),			.addrb	(rd_next),
 		.dina	(wr_i),				.doutb	(rd_di)
 	);
          
-	ipcore_bram_8k_16b iq_samp_q (
+	ipcore_bram_8k_16b wf_samp_q (
 		.clka	(wr_clk),			.clkb	(rd_clk),
 		.wea	(wr_en),
 		.addra	(wr_addr),			.addrb	(rd_next),

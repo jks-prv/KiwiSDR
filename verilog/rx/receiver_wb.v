@@ -278,7 +278,7 @@ module receiver_wb
 		.rx_din_A       (rx_data_A),
 		.ticks_A        (ticks_latched_A),
 		// o
-		.ser            (ser),
+		.ser            (rx_ser),
 		.rd_getI        (rd_getI),
 		.rd_getQ        (rd_getQ),
 		.rd_getWB       (rd_getWB),

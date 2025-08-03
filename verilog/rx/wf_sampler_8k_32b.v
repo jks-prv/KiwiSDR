@@ -5,7 +5,7 @@
 // IQ sampler, 8K x 2 x 16-bit
 // clock domains: fully isolated
 
-module IQ_SAMPLER_8K_32B
+module WF_SAMPLER_8K_32B
 	#(parameter A_MSB = 12)
     (
         input  wire wr_clk,

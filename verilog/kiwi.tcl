@@ -69,7 +69,8 @@ namespace eval kiwi {
             return $ps
         }
 
-        foreach f [glob ipcore_properties/ipcore_*.txt] {
+        set dir_srcs "KiwiSDR/import_srcs"
+        foreach f [glob ${dir_srcs}/ipcore_properties/ipcore_*.txt] {
             generate_ipcore [ipcore_property_file_to_dict $f]
         }
     }

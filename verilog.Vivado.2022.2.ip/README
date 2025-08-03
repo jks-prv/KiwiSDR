@@ -114,7 +114,7 @@ large rx buffer used by rx/rx_buffer.v:
 	Summary (if anything here is different you configured something incorrectly)
 		#18k:0 #36k:15 B-latency:1 addr-A-width:15 addr-B-width:15
 
-used by rx/iq_sampler_8k_32b.v:
+used by rx/wf_sampler_8k_32b.v:
     Component Name
         ipcore_bram_8k_32b
 	Basic

@@ -26,66 +26,67 @@
 // i.e. let Beagle drive these, not FPGA
 `define P8_ARE_INPUTS
 
-module KiwiSDR (
+module KiwiSDR
+    #(parameter _ADC_BITS = 14)
+    (
+        input  wire	signed [_ADC_BITS-1:0] ADC_DATA,
+        input  wire	ADC_OVFL,
+        input  wire	ADC_CLKIN,
+        output wire	ADC_CLKEN,
+        output wire	ADC_STENL,
+        output wire	ADC_STSIG,
+    
+        output wire	DA_DALE,
+        output wire	DA_DACLK,
+        output wire	DA_DADAT,
+    
+        input  wire GPS_TCXO,
+        input  wire GPS_ISGN,
+        input  wire GPS_IMAG,
+        input  wire GPS_QSGN,
+        input  wire GPS_QMAG,
+        output wire GPS_GSCS,
+        output wire GPS_GSCLK,
+        output wire GPS_GSDAT,
+    
+        input  wire	BBB_SCLK,       // P922
+        input  wire [1:0] BBB_CS_N, // 1=P916 0=P917
+        input  wire BBB_MOSI,       // P918
+        output wire BBB_MISO,       // P921
+    
+        output wire P911,       // P911, GPIO 0_30, unused debug out
+        output wire P913,       // P913, GPIO 0_31, unused debug out
+    
+        input  wire P915,       // P915, GPIO 1_0-2_0, unused debug in
+        output wire CMD_READY,  // P923, GPIO 1_17, ctrl[CTRL_CMD_READY]
+        output wire SND_INTR,   // P924, GPIO 0_15, ctrl[CTRL_SND_INTR]
+        output wire P926,		// P926, GPIO 0_14, unused debug out
 
-    input  wire	signed [ADC_BITS-1:0] ADC_DATA,
-    input  wire	ADC_OVFL,
-    input  wire	ADC_CLKIN,
-    output wire	ADC_CLKEN,
-    output wire	ADC_STENL,
-    output wire	ADC_STSIG,
+    `ifdef P8_ARE_INPUTS
+        input  wire P826,		// outside pin row
+        input  wire P819,
+        input  wire P817,
+        input  wire P818,		// outside pin row
+        input  wire P815,
+        input  wire P816,		// outside pin row
+        input  wire P813,
+        input  wire P814,		// outside pin row
+        input  wire P811,
+        input  wire P812,		// outside pin row
+    `else
+        output wire P826,		// outside pin row
+        output wire P819,
+        output wire P817,
+        output wire P818,		// outside pin row
+        output wire P815,
+        output wire P816,		// outside pin row
+        output wire P813,
+        output wire P814,		// outside pin row
+        output wire P811,
+        output wire P812,		// outside pin row
+    `endif
 
-    output wire	DA_DALE,
-    output wire	DA_DACLK,
-    output wire	DA_DADAT,
-
-    input  wire GPS_TCXO,
-    input  wire GPS_ISGN,
-    input  wire GPS_IMAG,
-    input  wire GPS_QSGN,
-    input  wire GPS_QMAG,
-    output wire GPS_GSCS,
-    output wire GPS_GSCLK,
-    output wire GPS_GSDAT,
-
-    input  wire	BBB_SCLK,       // P922
-    input  wire [1:0] BBB_CS_N, // 1=P916 0=P917
-    input  wire BBB_MOSI,       // P918
-    output wire BBB_MISO,       // P921
-
-    output wire P911,       // P911, GPIO 0_30, unused debug out
-    output wire P913,       // P913, GPIO 0_31, unused debug out
-
-    input  wire P915,       // P915, GPIO 1_0-2_0, unused debug in
-    output wire CMD_READY,  // P923, GPIO 1_17, ctrl[CTRL_CMD_READY]
-    output wire SND_INTR,   // P924, GPIO 0_15, ctrl[CTRL_SND_INTR]
-    output wire P926,		// P926, GPIO 0_14, unused debug out
-
-`ifdef P8_ARE_INPUTS
-    input  wire P826,		// outside pin row
-    input  wire P819,
-    input  wire P817,
-    input  wire P818,		// outside pin row
-    input  wire P815,
-    input  wire P816,		// outside pin row
-    input  wire P813,
-    input  wire P814,		// outside pin row
-    input  wire P811,
-    input  wire P812,		// outside pin row
-`else
-    output wire P826,		// outside pin row
-    output wire P819,
-    output wire P817,
-    output wire P818,		// outside pin row
-    output wire P815,
-    output wire P816,		// outside pin row
-    output wire P813,
-    output wire P814,		// outside pin row
-    output wire P811,
-    output wire P812,		// outside pin row
-`endif
-
-    output wire EWP
+        output wire EWP
     );
     
 `include "kiwi.gen.vh"
@@ -390,7 +391,7 @@ module KiwiSDR (
 `endif
 
     wire [2:0] fpga_id_3 = { FPGA_ID };
-    wire [15:0]   status = { rx_overflow_C, dna_data, unused_inputs, fpga_id_3, stat_10 };
+    wire [15:0] status   = { rx_overflow_C, dna_data, unused_inputs, fpga_id_3, stat_10 };
 
 
     //////////////////////////////////////////////////////////////////////////
@@ -409,18 +410,18 @@ module KiwiSDR (
     always @*
     begin
 `ifdef USE_CPU_CTR
-		if (get_cpu_ctr && reg_no == 0) par = { cpu_ctr[1][ 7 -:8], cpu_ctr[0][ 7 -:8] }; else
-		if (get_cpu_ctr && reg_no == 1) par = { cpu_ctr[1][15 -:8], cpu_ctr[0][15 -:8] }; else
-		if (get_cpu_ctr && reg_no == 2) par = { cpu_ctr[1][23 -:8], cpu_ctr[0][23 -:8] }; else
-		if (get_cpu_ctr && reg_no == 3) par = { cpu_ctr[1][31 -:8], cpu_ctr[0][31 -:8] }; else
+		if (get_cpu_ctr && reg_no == 0 /* GET_CPU_CTR0 */) par = { cpu_ctr[1][ 7 -:8], cpu_ctr[0][ 7 -:8] }; else
+		if (get_cpu_ctr && reg_no == 1 /* GET_CPU_CTR1 */) par = { cpu_ctr[1][15 -:8], cpu_ctr[0][15 -:8] }; else
+		if (get_cpu_ctr && reg_no == 2 /* GET_CPU_CTR2 */) par = { cpu_ctr[1][23 -:8], cpu_ctr[0][23 -:8] }; else
+		if (get_cpu_ctr && reg_no == 3 /* GET_CPU_CTR3 */) par = { cpu_ctr[1][31 -:8], cpu_ctr[0][31 -:8] }; else
 `endif
 
 `ifdef USE_SDR
-		if (get_adc_ctr  && reg_no == 0) par = { adc_count[15: 0] }; else
-		if (get_adc_ctr  && reg_no == 1) par = { adc_count[31:16] }; else
+		if (get_adc_ctr  && reg_no == 0 /* GET_ADC_CTR0 */) par = { adc_count[15: 0] }; else
+		if (get_adc_ctr  && reg_no == 1 /* GET_ADC_CTR1 */) par = { adc_count[31:16] }; else
 `endif
 
-		if (get_reg_misc && reg_no == 0) par = status; else
+		if (get_reg_misc && reg_no == 0 /* GET_STATUS   */) par = status; else
 		par = host_dout;
 	end
 	
