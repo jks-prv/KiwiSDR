@@ -137,7 +137,7 @@ void printmem(const char *str, u2_t addr)
 void fpga_panic(int code, const char *s)
 {
     lprintf("FPGA panic: code=%d %s\n", code, s);
-    led_display_fpga_code(code);
+    if (bg) led_display_fpga_code(code);
     panic("FPGA panic");
 }
 
