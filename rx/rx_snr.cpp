@@ -55,10 +55,7 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
     stop = CLAMP(stop, 0, WF_WIDTH);
 
     for (i = (int) start; i < stop; i++) {
-        if (dB_raw[i] <= -190) {
-            masked++;
-            continue;   // disregard masked areas
-        }
+        if (dB_raw[i] <= -190) masked++;
         dB[bins] = dB_raw[i];
         bins++;
     }
@@ -67,76 +64,72 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
 
     // dB[bins = start:stop]
     
-    if (bins >= 32) {
-    
-        // apply VDSL filter
-        if (filter && (band == SNR_BAND_ALL || band == SNR_BAND_HF)) {
-            int run = 0, prev_dBm = -190, have_run = 0, last_idx;
-            bool notched = false;
-            double kpp = span_kHz / WF_WIDTH, last_start;
-            int threshold = cfg_int_("snr_filter_thresh");
-            int delta = cfg_int_("snr_filter_delta");
-            int runlen_kHz = cfg_int_("snr_filter_runlen");
-            int runlen = ceil((double) runlen_kHz / span_kHz * WF_WIDTH);
-            printf("SNR_calc-%d filtering: thresh=%d delta=%d runlen=%d(kHz)|%.0f(bins)\n",
-                band, threshold, delta, runlen_kHz, runlen);
-            
-            for (i = 0; i < bins; i++) {
-                double f = lo_kHz + i*kpp;
-                //#define TEST_VDSL
-                #ifdef TEST_VDSL
-                    if (f >= 2000 && f <= (2000+5*30)) dB[i] = -70;
-                    if (f >= 4000 && f <= 6500) dB[i] = -70;
-                #endif
+    // apply VDSL filter
+    if (filter && (band == SNR_BAND_ALL || band == SNR_BAND_HF)) {
+        int run = 0, prev_dBm = -190, have_run = 0, last_idx;
+        double kpp = span_kHz / WF_WIDTH, last_start;
+        int threshold = cfg_int_("snr_filter_thresh");
+        int delta = cfg_int_("snr_filter_delta");
+        int runlen_kHz = cfg_int_("snr_filter_runlen");
+        int runlen = ceil((double) runlen_kHz / span_kHz * WF_WIDTH);
+        printf("SNR_calc-%d filtering: thresh=%d delta=%d runlen=%d(kHz)|%.0f(bins)\n",
+            band, threshold, delta, runlen_kHz, runlen);
+        
+        for (i = (int) start; i < stop; i++) {
+            double f = lo_kHz + i*kpp;
+            //#define TEST_VDSL
+            #ifdef TEST_VDSL
+                if (f >= 2000 && f <= 3000) dB[i] = -70;
+                if (f >= 4000 && f <= 6500) dB[i] = -70;
+            #endif
 
-                int dBm = dB[i];
-                int diff = abs(dBm - prev_dBm);
-                //printf("f:%.0f dBm:%d|%d(%d)\n", f, dBm, prev_dBm, diff);
-                //real_printf("%.0f:%d|%d(%d) ", f, dBm, prev_dBm, diff); fflush(stdout);
-                if (dBm >= threshold && prev_dBm >= threshold) {
-                    if (diff <= delta) {
-                        if (run == 0) {
-                            last_start = f;
-                            last_idx = i;
-                        }
-                        run++;
-                        //printf("  #%d\n", run);
-                        //real_printf(GREEN "#%d" NORM " ", run); fflush(stdout);
-                    } else {
-                        if (run > runlen) have_run = run;
-                        run = 0;
-                        //printf("  RESET delta\n");
-                        //real_printf(BLUE "DELTA" NORM " "); fflush(stdout);
+            int dBm = dB[i];
+            int diff = abs(dBm - prev_dBm);
+            //printf("f:%.0f dBm:%d|%d(%d)\n", f, dBm, prev_dBm, diff);
+            //real_printf("%.0f:%d|%d(%d) ", f, dBm, prev_dBm, diff); fflush(stdout);
+            if (dBm >= threshold && prev_dBm >= threshold) {
+                if (diff <= delta) {
+                    if (run == 0) {
+                        last_start = f;
+                        last_idx = i;
                     }
+                    run++;
+                    //printf("  #%d\n", run);
+                    //real_printf(GREEN "#%d" NORM " ", run); fflush(stdout);
                 } else {
-                    if (run) //printf("  RESET level\n");
-                    //if (run) { real_printf(RED "LEVEL" NORM " "); fflush(stdout); }
                     if (run > runlen) have_run = run;
                     run = 0;
+                    //printf("  RESET delta\n");
+                    //real_printf(BLUE "DELTA" NORM " "); fflush(stdout);
                 }
-                if (have_run) {
-                    //real_printf("\n");
-                    printf("SNR_calc-%d FILTERED OUT: %.0f-%.0f(%.0f)\n",
-                        band, last_start, f, have_run * kpp);
-                    for (j = last_idx; j < i+1; j++) {
-                        dB[j] = -190;       // notch the run
-                    }
-                    have_run = 0;
-                    notched = true;
-                }
-                prev_dBm = dBm;
+            } else {
+                if (run) //printf("  RESET level\n");
+                //if (run) { real_printf(RED "LEVEL" NORM " "); fflush(stdout); }
+                if (run > runlen) have_run = run;
+                run = 0;
             }
-     
-            if (notched) {
-                for (i = j = 0; i < bins; i++) {
-                    if (dB[i] <= -190) continue;
-                    dB[j] = dB[i];
-                    j++;
+            if (have_run) {
+                //real_printf("\n");
+                printf("SNR_calc-%d FILTERED OUT: %.0f-%.0f(%.0f)\n",
+                    band, last_start, f, have_run * kpp);
+                for (j = last_idx; j < i+1; j++) {
+                    dB[j] = -190;       // notch the run
                 }
-                bins = j;
+                have_run = 0;
             }
+            prev_dBm = dBm;
         }
+    }
     
+    // disregard masked and notched areas
+    bins = 0;
+    for (i = (int) start; i < stop; i++) {
+        if (dB[i] <= -190) continue;
+        dB[bins] = dB[i];
+        bins++;
+    }
+
+    if (bins >= 32) {
         data->fkHz_lo = f_lo; data->fkHz_hi = f_hi;
         int pct_95 = 95;
         int pct_50 = median_i(dB, bins, &pct_95);    // does int qsort on dB array
