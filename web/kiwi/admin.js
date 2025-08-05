@@ -519,7 +519,7 @@ function control_html()
             )
          ), 36,
 
-         w3_divs('w3-restart/w3-tspace-8',
+         w3_divs('/w3-tspace-8',
             w3_text('w3-margin-B-8 w3-text-teal w3-bold', 'SNR filter (0-30, 1.8-30 MHz measurements only)'),
             w3_checkbox_get_param('//w3-label-inline', 'Filter strong signals like VDSL',
                'snr_meas_filter', 'admin_bool_cb', true),

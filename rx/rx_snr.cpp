@@ -71,8 +71,8 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
         int threshold = cfg_int_("snr_filter_thresh");
         int delta = cfg_int_("snr_filter_delta");
         int runlen_kHz = cfg_int_("snr_filter_runlen");
-        int runlen = ceil((double) runlen_kHz / span_kHz * WF_WIDTH);
-        printf("SNR_calc-%d filtering: thresh=%d delta=%d runlen=%d(kHz)|%.0f(bins)\n",
+        int runlen = ceilf((float) runlen_kHz / span_kHz * WF_WIDTH);
+        printf("SNR_calc-%d filtering: thresh=%d delta=%d runlen=%d(kHz)|%d(bins)\n",
             band, threshold, delta, runlen_kHz, runlen);
         
         for (i = (int) start; i < stop; i++) {
