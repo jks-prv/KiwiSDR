@@ -391,6 +391,9 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("snr_meas_custom_lo", 0, &up_cfg);
     cfg_default_int("snr_meas_custom_hi", 0, &up_cfg);
     cfg_default_int("snr_meas_custom_zoom", 0, &up_cfg);
+    cfg_default_int("snr_filter_thresh", -82, &up_cfg);
+    cfg_default_int("snr_filter_delta", 25, &up_cfg);
+    cfg_default_int("snr_filter_runlen", 300, &up_cfg);
 
     any_preempt_autorun = cfg_default_bool("any_preempt_autorun", true, &up_cfg);
     cfg_default_int("ident_len", IDENT_LEN_NOM, &up_cfg);

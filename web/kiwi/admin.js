@@ -485,14 +485,6 @@ function control_html()
 
 		'<hr>' +
 		w3_col_percent('w3-margin-bottom w3-text-teal/w3-container',
-         w3_divs('w3-restart/w3-center w3-tspace-8',
-            w3_select('w3-width-auto', 'Number of audio campers per channel', '', 'n_camp', n_camp, n_camp_u, 'admin_select_cb'),
-            w3_div('w3-text-black',
-               'Reduce this value if your Kiwi is experiencing <br>' +
-               'performance problems from too many audio campers.'
-            )
-         ), 30,
-         
 			w3_divs('/w3-center w3-tspace-8',
             w3_select('w3-width-auto', 'SNR measurement interval', '', 'cfg.snr_meas_interval_hrs', cfg.snr_meas_interval_hrs, snr_interval_u, 'control_snr_interval_cb'),
 				w3_text('w3-text-black w3-center',
@@ -510,8 +502,7 @@ function control_html()
                w3_checkbox_get_param('//w3-label-inline', 'Timestamp SNR with local time', 'snr_local_time', 'admin_bool_cb', true),
                w3_checkbox_get_param('//w3-label-inline', 'Also measure ham bands and AM BCB', 'snr_meas_ham', 'admin_bool_cb', false),
                w3_checkbox_get_param('//w3-label-inline', 'Measure on antenna change (after 5 second delay)', 'snr_meas_ant_sw', 'admin_bool_cb', false),
-               w3_checkbox_get_param('//w3-label-inline', 'Filter strong signals like VDSL (0-30, 1.8-30 MHz meas only)', 'snr_meas_filter', 'admin_bool_cb', true),
-               w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'admin_int_cb'),
+               w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'control_snr_measure_custom_cb'),
                w3_inline('w3-margin-T-8',
                   w3_text('w3-text-teal w3-bold', 'Custom band:'),
                   w3_link('w3-link-darker-color w3-margin-L-4', '//forum.kiwisdr.com/index.php?p=/discussion/comment/21044/#Comment_21044', 'more info')
@@ -523,14 +514,36 @@ function control_html()
                )
             ),
             w3_inline('w3-margin-top w3-valign/',
-               w3_button('w3-aqua', 'Measure SNR now', 'control_snr_measure_cb'),
+               w3_button('w3-aqua', 'Measure now', 'control_snr_measure_cb'),
                w3_div('id-msg-snr-now w3-margin-left w3-text-black')
             )
+         ), 35,
+
+         w3_divs('w3-restart/w3-tspace-8',
+            w3_text('w3-margin-B-8 w3-text-teal w3-bold', 'SNR filter (0-30, 1.8-30 MHz measurements only)'),
+            w3_checkbox_get_param('//w3-label-inline', 'Filter strong signals like VDSL',
+               'snr_meas_filter', 'admin_bool_cb', true),
+            w3_input_get('w3-margin-top//', 'Threshold (dBm)', 'snr_filter_thresh', 'admin_int_cb'),
+            w3_input_get('', 'Delta (dBm)', 'snr_filter_delta', 'admin_int_cb'),
+            w3_input_get('', 'Run length (kHz)', 'snr_filter_runlen', 'admin_int_cb')
          )
-		) +
+		);
+
+	var s4 =
+		'<hr>' +
+		w3_col_percent('w3-margin-bottom w3-text-teal/w3-container',
+         w3_divs('w3-restart/w3-center w3-tspace-8',
+            w3_select('w3-width-auto', 'Number of audio campers per channel', '', 'n_camp', n_camp, n_camp_u, 'admin_select_cb'),
+            w3_div('w3-text-black',
+               'Reduce this value if your Kiwi is experiencing <br>' +
+               'performance problems from too many audio campers.'
+            )
+         ), 30,
+         '', 30
+      ) +
 		'<hr>';
 
-   return w3_div('id-control w3-text-teal w3-hide', s1 + (admin_sdr_mode? (s2 + s3) : ''));
+   return w3_div('id-control w3-text-teal w3-hide', s1 + (admin_sdr_mode? (s2 + s3 + s4) : ''));
 }
 
 function control_focus()
@@ -555,6 +568,18 @@ function server_enabled_cb(path, idx, first)
 function control_user_kick_cb(id, idx)
 {
 	ext_send('SET user_kick=-1');
+}
+
+function control_snr_measure_custom_cb(id, idx, first)
+{
+   //console.log('control_snr_measure_custom_cb id='+ id +' idx='+ idx +' first='+ first);
+   if (first) return;
+   admin_int_cb(id, idx, first);
+   if (cfg.snr_meas_interval_hrs == kiwi.SNR_CUSTOM) {
+      var min = cfg.snr_meas_custom_min;
+      ext_send('SET snr_interval='+ (min * 60));
+      w3_innerHTML('id-snr-remain', 'Next measurement in '+ min +' min');
+   }
 }
 
 function control_snr_measure_cb(id, idx)

@@ -124,22 +124,6 @@ void ant_switch_task_start(const char *cmd)
         (q_wr == q_rd)? "PROMPT" : "QUEUED", q_wr, q_rd, cmd);
     q_wr = (q_wr+1) & (N_CMD_Q-1);
     TaskWakeupF(antsw.task_tid, TWF_CANCEL_DEADLINE);
-    
-    char c = cmd[0];
-    if ((c == 'g' || isdigit(c)) && cfg_true("snr_meas_ant_sw")) {
-        bool report = false;
-        if (c == 'g') {
-            antsw.snr_ant = 0;
-            report = true;
-        } else {
-            if (sscanf(cmd, "%d", &antsw.snr_ant) == 1) {
-                report = true;                
-            }
-        }
-        if (report && SNR_meas_tid) {
-            TaskWakeupFP(SNR_meas_tid, TWF_NEW_DEADLINE_SEC, TO_VOID_PARAM(5));
-        }
-    }
 }
 
 void ant_switch_curl_cmd(char *antenna, int rx_chan);
@@ -590,6 +574,13 @@ bool ant_switch_msgs(char *msg, int rx_chan)
         
     if (strcmp(msg, "SET antsw_check_set_default") == 0) {
         ant_switch_check_set_default();
+        return true;
+    }
+        
+    if (strcmp(msg, "SET antsw_snr") == 0) {
+        if (cfg_true("snr_meas_ant_sw") && SNR_meas_tid) {
+            TaskWakeupFP(SNR_meas_tid, TWF_NEW_DEADLINE_SEC, TO_VOID_PARAM(/* secs */ 5));
+        }
         return true;
     }
         

@@ -32,7 +32,7 @@ Boston, MA  02110-1301, USA.
 int snr_meas_interval_min, snr_all, snr_HF;
 int ant_connected = 1;
 SNR_meas_t SNR_meas_data[SNR_MEAS_MAX];
-static int dB_raw[WF_WIDTH];
+static s2_t dB_raw[WF_WIDTH];
 
 int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, bool filter = false)
 {
@@ -72,8 +72,14 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
         // apply VDSL filter
         if (filter && (band == SNR_BAND_ALL || band == SNR_BAND_HF)) {
             int run = 0, prev_dBm = -190, have_run = 0, last_idx;
+            bool notched = false;
             double kpp = span_kHz / WF_WIDTH, last_start;
-            int threshold = -82, range = 25, runlen = 10;
+            int threshold = cfg_int_("snr_filter_thresh");
+            int delta = cfg_int_("snr_filter_delta");
+            int runlen_kHz = cfg_int_("snr_filter_runlen");
+            int runlen = ceil((double) runlen_kHz / span_kHz * WF_WIDTH);
+            printf("SNR_calc-%d filtering: thresh=%d delta=%d runlen=%d(kHz)|%.0f(bins)\n",
+                band, threshold, delta, runlen_kHz, runlen);
             
             for (i = 0; i < bins; i++) {
                 double f = lo_kHz + i*kpp;
@@ -86,33 +92,48 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
                 int dBm = dB[i];
                 int diff = abs(dBm - prev_dBm);
                 //printf("f:%.0f dBm:%d|%d(%d)\n", f, dBm, prev_dBm, diff);
+                //real_printf("%.0f:%d|%d(%d) ", f, dBm, prev_dBm, diff); fflush(stdout);
                 if (dBm >= threshold && prev_dBm >= threshold) {
-                    if (diff <= range) {
+                    if (diff <= delta) {
                         if (run == 0) {
                             last_start = f;
                             last_idx = i;
                         }
                         run++;
                         //printf("  #%d\n", run);
+                        //real_printf(GREEN "#%d" NORM " ", run); fflush(stdout);
                     } else {
                         if (run > runlen) have_run = run;
                         run = 0;
                         //printf("  RESET delta\n");
+                        //real_printf(BLUE "DELTA" NORM " "); fflush(stdout);
                     }
                 } else {
                     if (run) //printf("  RESET level\n");
+                    //if (run) { real_printf(RED "LEVEL" NORM " "); fflush(stdout); }
                     if (run > runlen) have_run = run;
                     run = 0;
                 }
                 if (have_run) {
+                    //real_printf("\n");
                     printf("SNR_calc-%d FILTERED OUT: %.0f-%.0f(%.0f)\n",
                         band, last_start, f, have_run * kpp);
                     for (j = last_idx; j < i+1; j++) {
                         dB[j] = -190;       // notch the run
                     }
                     have_run = 0;
+                    notched = true;
                 }
                 prev_dBm = dBm;
+            }
+     
+            if (notched) {
+                for (i = j = 0; i < bins; i++) {
+                    if (dB[i] <= -190) continue;
+                    dB[j] = dB[i];
+                    j++;
+                }
+                bins = j;
             }
         }
     
@@ -198,18 +219,19 @@ void SNR_meas(void *param)
         kiwi.snr_meas_active = true;
         bool filter = cfg_true("snr_meas_filter");
 	
-        for (int loop = 0; loop == 0 && (snr_meas_interval_min || on_demand); loop++) {     // so break can be used below
+        // "snr_meas_interval_hrs" is really the menu index
+        int custom_min = cfg_int_("snr_meas_custom_min");
+        custom_min = CLAMP(custom_min, 0, 10080);   // 7-days max
+        int idx = cfg_int_("snr_meas_interval_hrs");
+        idx = CLAMP(idx, 0, SNR_INTERVAL_CUSTOM);
+        if (idx == SNR_INTERVAL_CUSTOM && custom_min != 0) {
+            snr_meas_interval_min = custom_min;
+        } else {
+            snr_meas_interval_min = snr_interval_min[idx];
+        }
+        printf("SNR_meas: snr_meas_interval_min=%d\n", snr_meas_interval_min);
 
-            // "snr_meas_interval_hrs" is really the menu index
-            int custom_min = cfg_int_("snr_meas_custom_min");
-            custom_min = CLAMP(custom_min, 0, 10080);   // 7-days max
-            int idx = cfg_int_("snr_meas_interval_hrs");
-            idx = CLAMP(idx, 0, SNR_INTERVAL_CUSTOM);
-            if (idx == SNR_INTERVAL_CUSTOM && custom_min != 0) {
-                snr_meas_interval_min = custom_min;
-            } else {
-                snr_meas_interval_min = snr_interval_min[idx];
-            }
+        for (int loop = 0; loop == 0 && (snr_meas_interval_min || on_demand); loop++) {     // so break can be used below
 
             int f_lo = freq.offset_kHz, f_hi = freq.offmax_kHz;
             int itu = cfg_int_("init.ITU_region") + 1;
@@ -281,7 +303,22 @@ void SNR_meas(void *param)
             for (int band = 0; band < SNR_NBANDS; band++) {
                 SNR_bands_t *bp = &SNR_bands[band];
                 float cf_kHz = bp->fkHz_lo + (bp->fkHz_hi - bp->fkHz_lo) / 2;
+                //printf("SNR_meas-%d CONSIDER\n", band);
                 
+                if (band == SNR_BAND_CUSTOM) {
+                    if ((custom_lo == 0 && custom_hi == 0) || custom_lo < f_lo || custom_hi > f_hi) {
+                        printf("SNR_meas CUSTOM band: not enabled\n");
+                        continue;
+                    }
+                } else
+                if (band > SNR_BAND_CUSTOM) {
+                    if (!cfg_true("snr_meas_ham")) {
+                        printf("SNR_meas HAM & AM BCB bands: not enabled\n");
+                        break;
+                    }
+                }
+                
+                //printf("SNR_meas-%d SET zoom=%d cf=%.3f\n", band, bp->zoom, cf_kHz);
                 if (bp->zoom != 0) {
                     input_msg_internal(iconn.cwf, (char *) "SET zoom=%d cf=%.3f", bp->zoom, cf_kHz);
                     TaskSleepMsec(500);
@@ -335,10 +372,9 @@ void SNR_meas(void *param)
                 } else
                 
                 if (band == SNR_BAND_CUSTOM) {
-                    if (custom_lo >= f_lo && custom_hi <= f_hi)
+                    printf("SNR_meas: CUSTOM %.0f-%.0f z%d\n", bp->fkHz_lo, bp->fkHz_hi, bp->zoom);
                     SNR_calc(meas, band, bp->fkHz_lo, bp->fkHz_hi, bp->zoom);
                 } else {
-                    if (!cfg_true("snr_meas_ham")) break;
                     SNR_calc(meas, band, bp->fkHz_lo, bp->fkHz_hi, bp->zoom);
                 }
             }
@@ -352,18 +388,18 @@ void SNR_meas(void *param)
             #endif
 
             if (on_demand) {
-                printf("SNR_meas: admin measure now %d:%d\n", snr_all, freq.offset_kHz? -1 : snr_HF);
+                printf("SNR_meas: admin MEASURE NOW %d:%d\n", snr_all, freq.offset_kHz? -1 : snr_HF);
                 snd_send_msg(SM_SND_ADM_ALL, SM_NO_DEBUG,
                     "MSG snr_stats=%d,%d", snr_all, freq.offset_kHz? -1 : snr_HF);
             }
         }
         
         // if disabled check again in an hour to see if re-enabled
-        int min = snr_meas_interval_min? snr_meas_interval_min : 60;
+        u64_t min = snr_meas_interval_min? snr_meas_interval_min : 60;
         
         // an on_demand occurs where there is an on-demand request, such as the admin control tab
         // "measure SNR now" button or the /snr?meas control URL
-        printf("SNR_meas: SLEEP min=%d\n", min);
+        printf("SNR_meas: SLEEP min=%lld snr_meas_interval_min=%d %lld\n", min, snr_meas_interval_min, SEC_TO_USEC(min*60));
         kiwi.snr_meas_active = false;
         // rv > 0: deadline expired
         // rv == 0: on-demand measurement or antenna switched
