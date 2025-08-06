@@ -525,7 +525,12 @@ function control_html()
                'snr_meas_filter', 'admin_bool_cb', true),
             w3_input_get('w3-margin-top//', 'Threshold (dBm)', 'snr_filter_thresh', 'admin_int_cb'),
             w3_input_get('', 'Delta (dBm)', 'snr_filter_delta', 'admin_int_cb'),
-            w3_input_get('', 'Run length (kHz)', 'snr_filter_runlen', 'admin_int_cb')
+            w3_input_get('', 'Run length (kHz)', 'snr_filter_runlen', 'admin_int_cb'),
+            w3_div('w3-margin-T-8 w3-text-black',
+               'See the' +
+               w3_link('w3-link-darker-color w3-margin-L-4', '//forum.kiwisdr.com', 'KiwiSDR forum') +
+               ' for details.'
+            )
          )
 		);
 

@@ -41,7 +41,7 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
     if ((f_lo == 0 && f_hi == 0) || f_lo < 0 || f_hi < 0 || f_hi < f_lo) return 0;
 
     static int dB[WF_WIDTH];
-    int i, j, rv = 0, bins = 0, masked = 0;
+    int i, j, rv = 0, masked = 0;
     double lo_kHz = f_lo - freq.offset_kHz, hi_kHz = f_hi - freq.offset_kHz;
 
     zoom = CLAMP(zoom, 0, MAX_ZOOM);
@@ -55,12 +55,21 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
     stop = CLAMP(stop, 0, WF_WIDTH);
 
     for (i = (int) start; i < stop; i++) {
+        //#define TEST_VDSL
+        #ifdef TEST_VDSL
+            if (band == SNR_BAND_ALL || band == SNR_BAND_HF) {
+                double kpp = span_kHz / WF_WIDTH;
+                double f = i*kpp;
+                if (f >= 2000 && f <= 3000) dB_raw[i] = -70;
+                if (f >= 4000 && f <= 6500) dB_raw[i] = -70;
+            }
+        #endif
+
         if (dB_raw[i] <= -190) masked++;
-        dB[bins] = dB_raw[i];
-        bins++;
+        dB[i] = dB_raw[i];
     }
-    printf("SNR_calc-%d f=%.0f-%.0f z=%d bb=%.0f-%.0f fo=%.0f cf=%.0f span=%.3f left=%.3f start|stop=%d|%d bins=%d masked_bins=%d\n",
-        band, f_lo, f_hi, zoom, lo_kHz, hi_kHz, freq.offset_kHz, cf_kHz, span_kHz, left_kHz, start, stop, bins, masked);
+    printf("SNR_calc-%d f=%.0f-%.0f z=%d bb=%.0f-%.0f fo=%.0f cf=%.0f span=%.3f left=%.3f start|stop=%d|%d masked_bins=%d\n",
+        band, f_lo, f_hi, zoom, lo_kHz, hi_kHz, freq.offset_kHz, cf_kHz, span_kHz, left_kHz, start, stop, masked);
 
     // dB[bins = start:stop]
     
@@ -76,17 +85,11 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
             band, threshold, delta, runlen_kHz, runlen);
         
         for (i = (int) start; i < stop; i++) {
-            double f = lo_kHz + i*kpp;
-            //#define TEST_VDSL
-            #ifdef TEST_VDSL
-                if (f >= 2000 && f <= 3000) dB[i] = -70;
-                if (f >= 4000 && f <= 6500) dB[i] = -70;
-            #endif
-
+            double f = i*kpp;
             int dBm = dB[i];
             int diff = abs(dBm - prev_dBm);
             //printf("f:%.0f dBm:%d|%d(%d)\n", f, dBm, prev_dBm, diff);
-            //real_printf("%.0f:%d|%d(%d) ", f, dBm, prev_dBm, diff); fflush(stdout);
+            //real_printf("%.0f:%d:%d|%d(%d) ", f, i, dBm, prev_dBm, diff); fflush(stdout);
             if (dBm >= threshold && prev_dBm >= threshold) {
                 if (diff <= delta) {
                     if (run == 0) {
@@ -122,7 +125,7 @@ int SNR_calc(SNR_meas_t *meas, int band, double f_lo, double f_hi, int zoom, boo
     }
     
     // disregard masked and notched areas
-    bins = 0;
+    int bins = 0;
     for (i = (int) start; i < stop; i++) {
         if (dB[i] <= -190) continue;
         dB[bins] = dB[i];
