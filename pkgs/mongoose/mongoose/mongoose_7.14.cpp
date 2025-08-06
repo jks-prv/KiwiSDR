@@ -3226,9 +3226,14 @@ static void http_cb(struct mg_connection *c, int ev, void *ev_data) {
       if (n < 0) {
         // We don't use mg_error() here, to avoid closing pipelined requests
         // prematurely, see #2592
-        MG_ERROR(("HTTP parse, %lu bytes", c->recv.len));
-        c->is_draining = 1;
-        mg_hexdump(buf, c->recv.len - ofs > 16 ? 16 : c->recv.len - ofs);
+        #ifdef KIWISDR
+            // don't log random connections e.g. from port scanners
+            c->is_draining = 1;
+        #else
+            MG_ERROR(("HTTP parse, %lu bytes", c->recv.len));
+            c->is_draining = 1;
+            mg_hexdump(buf, c->recv.len - ofs > 16 ? 16 : c->recv.len - ofs);
+        #endif
         c->recv.len = 0;
         return;
       }
@@ -3828,7 +3833,7 @@ void mg_log_prefix(int level, const char *file, int line, const char *fname) {
   logs(buf, n - 1);
 }
 
-#ifdef KIWISDR
+#if defined(KIWISDR) && defined(DEBUG)
 void mg_gdb()
 {
   logs("\r\n", 2);
@@ -3840,7 +3845,7 @@ void mg_log(const char *fmt, ...) {
   va_start(ap, fmt);
   mg_vxprintf(s_log_func, s_log_func_param, fmt, &ap);
   va_end(ap);
-  #ifdef KIWISDR
+    #if defined(KIWISDR) && defined(DEBUG)
     mg_gdb();
   #else
     logs("\r\n", 2);
