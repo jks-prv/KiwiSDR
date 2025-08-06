@@ -3,6 +3,53 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.816  August 7, 2025
+    Added SNR strong, wide-band signal filter, e.g. VDSL RFI. (thanks ZL2P)
+        New setting admin control tab: "Filter strong signals like VDSL (0-30, 1.8-30 MHz meas only)"
+        It is enabled by default. The new algorithm identifies any signal stronger than a threshold
+        and then occupying a certain number of consecutive waterfall bins. Those bins are removed
+        from the SNR calculation, in the same way masked frequency segments are removed.
+
+    Better indication of when a channel is initially occupied. (thanks AC8FL)
+        The list of connections displayed on the control panel "User" tab and admin "Status" tab
+        is updated every 3 seconds. But a "bot" connection that isn't following the Kiwi API rules
+        takes about 10 seconds to be correctly identified and kicked. This has the side-effect of
+        making a channel look available when in fact it is occupied for those 10 seconds
+        (because the connection list entry is still blank). If this happens to the last channel
+        available you might incorrectly get the impression the channel isn't being “released"
+        because it looks unoccupied, but you can't connect to it (all channels are seen as full).
+        
+        To make this situation more clear a user name of "(connecting)" will be shown immediately
+        when a channel is first allocated and updated when the connection is fully established.
+        This will also make it somewhat easier to spot when there are lots of bot connection
+        attempts rather than having to spot them by reviewing the log.
+
+    Fixed problem where connections incorrectly originate from the local 127.0.0.1 loopback address.
+        If you think the fix described here is causing you problems it can be disabled by going to
+        the admin "update" tab, bottom of the page, and setting "Disable recent changes?" to "Yes".
+        Then complain to support@kiwisdr.com
+        
+        Discussion:
+        When the local proxy service client (frpc) running on the Kiwi forwards packets to the
+        Kiwi server they will always have the IP source address 127.0.0.1. This occurs because frpc
+        and the server are running on the same computer. To not lose the actual IP address of the
+        person connecting frpc puts that IP in a special HTTP header. Well, for some reason, the
+        version of the Mongoose web server we use occasionally drops those special headers.
+        The root cause could not be found. But some time ago we ported a much more recent version
+        of Mongoose to the Kiwi and it doesn't have this problem. So the fix is to simply start
+        using this newer version.
+        
+        Also, code was added to specifically reject forwarded connections with the special header
+        containing a local or loopback addresses. This might possibly affect private proxy setups,
+        like those using Tailscale or Nginx etc, if they incorrectly use a local or loopback in the
+        HTTP header. See above for how to disable this change.
+
+    Admin webpage tab:
+        New button "Display all fonts in bold" which some of us need, lol. (thanks Jerry and KFS)
+            Does not apply to the admin page currently. This change required minor adjustments to
+            the user interface nearly everywhere to account for the larger size of the bold fonts.
+            If you see a spot where things look wrong please let us know.
+
 v1.814,815  June 18, 2025
     Fixed problem with URL camping caused by adding kiwirecorder camping. (thanks F5AFY)
 
