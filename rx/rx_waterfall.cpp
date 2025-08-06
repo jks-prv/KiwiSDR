@@ -619,7 +619,7 @@ void sample_wf(int rx_chan)
 
             spi_get_noduplex(first_cmd, miso, nwf_samps * sizeof(iq_t), rx_chan);
         } else
-        if (chunk < n_chunks-1) {
+        if (chunk < n_chunks) {
             spi_get_noduplex(CmdGetWFSamples, miso, nwf_samps * sizeof(iq_t), rx_chan);
         }
 
