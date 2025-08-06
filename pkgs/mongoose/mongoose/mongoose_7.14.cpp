@@ -3226,9 +3226,14 @@ static void http_cb(struct mg_connection *c, int ev, void *ev_data) {
       if (n < 0) {
         // We don't use mg_error() here, to avoid closing pipelined requests
         // prematurely, see #2592
-        MG_ERROR(("HTTP parse, %lu bytes", c->recv.len));
-        c->is_draining = 1;
-        mg_hexdump(buf, c->recv.len - ofs > 16 ? 16 : c->recv.len - ofs);
+        #ifdef KIWISDR
+            // don't log random connections e.g. from port scanners
+            c->is_draining = 1;
+        #else
+            MG_ERROR(("HTTP parse, %lu bytes", c->recv.len));
+            c->is_draining = 1;
+            mg_hexdump(buf, c->recv.len - ofs > 16 ? 16 : c->recv.len - ofs);
+        #endif
         c->recv.len = 0;
         return;
       }
@@ -3828,12 +3833,23 @@ void mg_log_prefix(int level, const char *file, int line, const char *fname) {
   logs(buf, n - 1);
 }
 
+#if defined(KIWISDR) && defined(DEBUG)
+void mg_gdb()
+{
+  logs("\r\n", 2);
+}
+#endif
+
 void mg_log(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   mg_vxprintf(s_log_func, s_log_func_param, fmt, &ap);
   va_end(ap);
-  logs("\r\n", 2);
+    #if defined(KIWISDR) && defined(DEBUG)
+    mg_gdb();
+  #else
+    logs("\r\n", 2);
+  #endif
 }
 #endif
 
@@ -7533,7 +7549,7 @@ static void connect_conn(struct mg_connection *c) {
     MG_EPOLL_MOD(c, 0);
     if (c->is_tls_hs) mg_tls_handshake(c);
   } else {
-    mg_error(c, "socket error");
+    mg_error(c, "socket error 1");
   }
 }
 
@@ -7692,7 +7708,7 @@ static void mg_iotest(struct mg_mgr *mgr, int ms) {
   for (int i = 0; i < n; i++) {
     struct mg_connection *c = (struct mg_connection *) evs[i].data.ptr;
     if (evs[i].events & EPOLLERR) {
-      mg_error(c, "socket error");
+      mg_error(c, "socket error 2");
     } else if (c->is_readable == 0) {
       bool rd = evs[i].events & (EPOLLIN | EPOLLHUP);
       bool wr = evs[i].events & EPOLLOUT;
@@ -7738,7 +7754,7 @@ static void mg_iotest(struct mg_mgr *mgr, int ms) {
       c->is_readable = 1;
     } else {
       if (fds[n].revents & POLLERR) {
-        mg_error(c, "socket error");
+        mg_error(c, "socket error 3");
       } else {
         c->is_readable =
             (unsigned) (fds[n].revents & (POLLIN | POLLHUP) ? 1 : 0);
@@ -7783,7 +7799,7 @@ static void mg_iotest(struct mg_mgr *mgr, int ms) {
 
   for (c = mgr->conns; c != NULL; c = c->next) {
     if (FD(c) != MG_INVALID_SOCKET && FD_ISSET(FD(c), &eset)) {
-      mg_error(c, "socket error");
+      mg_error(c, "socket error 4");
     } else {
       c->is_readable = FD(c) != MG_INVALID_SOCKET && FD_ISSET(FD(c), &rset);
       c->is_writable = FD(c) != MG_INVALID_SOCKET && FD_ISSET(FD(c), &wset);

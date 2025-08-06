@@ -20,15 +20,15 @@ ASM = $(TOOLS_DIR)/asm
 all: $(ASM) no_gen
 
 gen_includes debug2: $(ASM)
-	$(ASM) -o $(GEN_DIR) $(OTHER_DIR)
+	-$(ASM) -o $(GEN_DIR) $(OTHER_DIR)
 	sum $(GEN_DIR)/kiwi.aout
 
 info: $(ASM)
-	$(ASM) -i -o $(GEN_DIR) $(OTHER_DIR)
+	-$(ASM) -i -o $(GEN_DIR) $(OTHER_DIR)
 	sum $(GEN_DIR)/kiwi.aout
 
 gen_other: $(ASM)
-	$(ASM) -o $(GEN_DIR) -g $(OTHER_DIR)
+	-$(ASM) -o $(GEN_DIR) -g $(OTHER_DIR)
 	sum $(GEN_DIR)/kiwi.aout
 
 $(TOOLS_DIR):
@@ -45,19 +45,19 @@ $(ASM): $(TOOLS_DIR) $(GEN_DIR) $(ASM_INCLUDES) $(ASM_SOURCE) Makefile
 
 # don't regenerate the .h/.vh files
 no_gen: $(ASM)
-	$(ASM) -n -o $(GEN_DIR) $(OTHER_DIR)
+	-$(ASM) -n -o $(GEN_DIR) $(OTHER_DIR)
 	sum $(GEN_DIR)/kiwi.aout
 
 debug: $(ASM)
-	$(ASM) -n -d -o $(GEN_DIR) $(OTHER_DIR)
+	-$(ASM) -n -d -o $(GEN_DIR) $(OTHER_DIR)
 	sum $(GEN_DIR)/kiwi.aout
 
 binary: $(ASM)
-	$(ASM) -n -b -o $(GEN_DIR) $(OTHER_DIR)
+	-$(ASM) -n -b -o $(GEN_DIR) $(OTHER_DIR)
 	sum $(GEN_DIR)/kiwi.aout
 
 stat stats: $(ASM)
-	$(ASM) -n -s -o $(GEN_DIR) $(OTHER_DIR)
+	-$(ASM) -n -s -o $(GEN_DIR) $(OTHER_DIR)
 
 gdb: $(ASM)
 	@echo "gdb: r -o ../../build/gen"

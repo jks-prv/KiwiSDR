@@ -57,6 +57,7 @@ typedef struct {
         // real mode input buf for cw, sstv, fax decoders etc.
 		u4_t real_wr_pos, real_rd_pos;
 		u4_t real_seq, real_seqnum[N_DPBUF];
+        u2_t real_nsamps[N_DPBUF];
 		TYPEMONO16 real_samples_s2[N_DPBUF][FASTFIR_OUTBUF_SIZE];
 		
 		int freqHz[N_DPBUF];    // approx freq in effect when buffer captured
@@ -69,6 +70,7 @@ typedef struct {
     // IQ mode input buf for DRM etc.
     u4_t iq_wr_pos;     // readers maintain their own private iq_rd_pos
     u4_t iq_seq, iq_seqnum[N_DPBUF];
+    u2_t iq_nsamps[N_DPBUF];
     TYPECPX iq_samples[N_DPBUF][FASTFIR_OUTBUF_SIZE];
 } iq_buf_t;
 

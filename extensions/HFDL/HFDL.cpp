@@ -24,6 +24,7 @@ static void hfdl_pushback_file_data(int rx_chan, int instance, int nsamps, TYPEC
     
     // Pushback 12 kHz sample file so it sounds right.
     // Have hfdl_task() do 12k => 36k resampling before calling decoder (which requires 36 kHz sampling)
+    real_printf("#%d ", nsamps); fflush(stdout);
     for (int i = 0; i < nsamps; i++) {
         if (e->s2p < hfdl.s2p_end) {
             samps->re = (TYPEREAL) (s4_t) *e->s2p;
@@ -58,6 +59,8 @@ static int hfdl_input(int rx_chan, TYPECPX **samps_c = NULL)
                 }
                 e->seq = rx->iq_seqnum[e->rd_pos];
             }
+            int nsamps = rx->iq_nsamps[e->rd_pos];
+            //real_printf("R%d#%d ", e->rd_pos, nsamps); fflush(stdout);
             e->seq++;
     
             if (e->reset) {
@@ -67,7 +70,7 @@ static int hfdl_input(int rx_chan, TYPECPX **samps_c = NULL)
             if (samps_c) *samps_c = &rx->iq_samples[e->rd_pos][0];
             e->rd_pos = (e->rd_pos+1) & (N_DPBUF-1);
 
-            return HFDL_OUTBUF_SIZE;
+            return nsamps;
         } else {
             TaskSleepReason("wait for wakeup");
         }
@@ -76,43 +79,44 @@ static int hfdl_input(int rx_chan, TYPECPX **samps_c = NULL)
 
 static void hfdl_task(void *param)
 {
-    int i, n;
+    int i, nsamps;
     int rx_chan = (int) FROM_VOID_PARAM(param);
     hfdl_chan_t *e = &hfdl_chan[rx_chan];
 
     while (1) {
-        n = hfdl_input(rx_chan, &e->samps_c);
+        nsamps = hfdl_input(rx_chan, &e->samps_c);
 
         //if (e->test && e->input_tid) {
         if (e->input_tid) {
-            e->HFDLResample.run((float *) e->samps_c, n, &e->resamp);
-
-            #define SAMPLES_CF32
-            #ifdef SAMPLES_CF32
-                // needed so hfdl_channel_create() "c->noise_floor = 1.0f" works
-                // i.e. float samples need to be restricted to (+1,-1)
-                const float f_scale = 32768.0f;      
-                static float out[HFDL_N_SAMPS];
-                for (int i=0; i < e->outputBlockSize; i++) {
-                    out[i*2]   = e->resamp.out_I[i] / f_scale;
-                    out[i*2+1] = e->resamp.out_Q[i] / f_scale;
-                }
-            #endif
-
-            // FIXME: doesn't seem to work?
-            //#define SAMPLES_CS16
-            #ifdef SAMPLES_CS16
-                const s2_t s2_scale = 2;
-                static s2_t out[HFDL_N_SAMPS];
-                for (int i=0; i < e->outputBlockSize; i++) {
-                    out[i*2]   = (s2_t) (e->resamp.out_I[i] / s2_scale);
-                    out[i*2+1] = (s2_t) (e->resamp.out_Q[i] / s2_scale);
-                }
-            #endif
-            
-            //static int wakes;
-            //real_printf("%d-", wakes++); fflush(stdout);
-            TaskWakeupP(e->input_tid, TO_VOID_PARAM(out));
+            if (e->HFDLResample.run((float *) e->samps_c, nsamps, &e->resamp)) {
+    
+                #define SAMPLES_CF32
+                #ifdef SAMPLES_CF32
+                    // needed so hfdl_channel_create() "c->noise_floor = 1.0f" works
+                    // i.e. float samples need to be restricted to (+1,-1)
+                    const float f_scale = 32768.0f;      
+                    static float out[HFDL_N_SAMPS];
+                    for (int i=0; i < e->outputBlockSize; i++) {
+                        out[i*2]   = e->resamp.out_I[i] / f_scale;
+                        out[i*2+1] = e->resamp.out_Q[i] / f_scale;
+                    }
+                #endif
+    
+                // FIXME: doesn't seem to work?
+                //#define SAMPLES_CS16
+                #ifdef SAMPLES_CS16
+                    const s2_t s2_scale = 2;
+                    static s2_t out[HFDL_N_SAMPS];
+                    for (int i=0; i < e->outputBlockSize; i++) {
+                        out[i*2]   = (s2_t) (e->resamp.out_I[i] / s2_scale);
+                        out[i*2+1] = (s2_t) (e->resamp.out_Q[i] / s2_scale);
+                    }
+                #endif
+                
+                //static int wakes;
+                //real_printf("%d-", wakes++); fflush(stdout);
+                TaskWakeupP(e->input_tid, TO_VOID_PARAM(out));
+            }
         }
     }
 }

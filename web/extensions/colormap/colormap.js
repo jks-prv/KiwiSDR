@@ -128,7 +128,6 @@ function colormap_controls_setup()
 		      w3_col_percent('w3-margin-T-16 w3-margin-B-16 w3-valign/',
                w3_div('w3-text-css-orange', '<b>Colormap<br>designer</b>'), 20,
                w3_select('w3-text-red', '', 'colormap', 'wf.cmap', wf.cmap, kiwi.cmap_s, 'wf_cmap_cb'), 27,
-               w3_div('w3-text-white', 'select custom colormap<br>then draw in box below'), 40,
                w3_button('w3-btn w3-round-xlarge w3-padding-small w3-aqua', 'clear', 'colormap_clear_button_cb')
             ),
 
@@ -660,22 +659,17 @@ function colormap_gain_cb(path, val)
 	colormap_plot();
 }
 
-/*
 function colormap_help(show)
 {
    if (show) {
       var s = 
          w3_text('w3-medium w3-bold w3-text-aqua', 'Colormap Help') +
-         '<br><br>' +
-         w3_div('w3-text-css-orange', '<b>Aperture auto mode</b>') +
-         'xxx' +
-
-         '<br><br>' +
-         w3_div('w3-text-css-orange', '<b>Colormap designer</b>') +
-         'xxx' +
-         '';
-      confirmation_show_content(s, 610, 350);
+         w3_div('w3-text-white',
+            '<br>Select a custom colormap from the <x1>colormap</x1> menu (e.g. "cust1") ' +
+            'then draw by mousing-down in large box. Try the other controls to see their effect. ' +
+            'Colormap changes are shown immediately in the waterfall.'
+         )
+      confirmation_show_content(s, 610, 150);
    }
    return true;
 }
-*/

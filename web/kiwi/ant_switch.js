@@ -297,6 +297,7 @@ function ant_switch_select_antenna(ant) {
 function ant_switch_select_antenna_cb(path, val, first) {
    ant_switch_log('ant_switch_select_antenna_cb: path='+ path +'first='+ first);
    ant_switch_select_antenna(val);
+   ext_send('SET antsw_snr');
 }
 
 function ant_switch_prompt_query() {

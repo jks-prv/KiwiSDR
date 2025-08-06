@@ -27,7 +27,7 @@
 #define	MINUTES_TO_SEC(min)	((min) * 60)
 #define	SEC_TO_MINUTES(sec)	((sec) / 60)
 #define	SEC_TO_MSEC(sec)	((sec) * 1000)
-#define	SEC_TO_USEC(sec)	((sec) * 1000000LL)
+#define	SEC_TO_USEC(sec)	(((u64_t)(sec)) * 1000000LL)
 #define	MSEC_TO_USEC(msec)	((msec) * 1000)
 
 #define TIME_DIFF_MS(now, start) ((float) ((now) - (start)) / 1e3)

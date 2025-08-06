@@ -199,7 +199,7 @@ function cw_decoder_controls_setup()
                w3_div('',
 				      w3_div('w3-medium w3-text-aqua', '<b>CW decoder</b>')
 				   ), 32,
-					w3_div('', 'Loftur Jonasson, TF3LJ, <br> <b><a href="https://github.com/df8oe/UHSDR" target="_blank">UHSDR project</a></b> &copy; 2016'
+					w3_div('', 'Loftur Jonasson, TF3LJ <br> <b><a href="https://github.com/df8oe/UHSDR" target="_blank">UHSDR project</a></b> &copy; 2016'
 					), 50
 				),
 				

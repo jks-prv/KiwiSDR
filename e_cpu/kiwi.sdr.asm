@@ -31,7 +31,7 @@ nrx_samps:		u16		0
 #if SND_SEQ_CHECK
 rx_seq:			u16		0
 #endif
-				// this routing called from main loop at audio buffer flip rate (i.e. every NRX_SAMPS audio samples)
+				// this routine called from main loop at audio buffer flip rate (i.e. every NRX_SAMPS audio samples)
 				// when polling with rdReg GET_RX_SRQ finds rx_srq asserted
 RX_Buffer:
 				// if nrx_samps has not been set yet hardware will not interrupt at correct rate
@@ -82,19 +82,20 @@ rx_loop:
 				wrEvt2  RX_GET_BUF_CTR      ; move current buffer counter
 				ret
 
-CmdSetRXNsamps:	rdReg	HOST_RX				; nsamps
+CmdSetRXNsamps:
+                rdReg	HOST_RX				; nsamps
 				dup
 				push	nrx_samps
 				store16
 				pop							; nsamps
-				
 				FreezeTOS
                 wrReg2	SET_RX_NSAMPS		;
                 
                 wrEvt2  RX_BUFFER_RST       ; reset read/write pointers, buffer counter
                 ret
 
-CmdSetRXFreq:	rdReg	HOST_RX				; rx#
+CmdSetRXFreq:
+                rdReg	HOST_RX				; rx#
 				wrReg2	SET_RX_CHAN			;
                 RdReg32	HOST_RX				; freqH
 				FreezeTOS
@@ -161,21 +162,22 @@ CmdSetADCLvl:
 ; waterfall
 ; ============================================================================
 
-CmdWFReset:	
+CmdWFReset:
 				rdReg	HOST_RX				; wf_chan
-				wrReg2	SET_WF_CHAN			;
+				wrReg2	SET_REG | SET_WF_CHAN
 				rdReg	HOST_RX             ; WF_SAMP_*
 				FreezeTOS
-				wrReg2	WF_SAMPLER_RST
+				wrReg2	SET_REG | SET_WF_RST
             	ret
 
 CmdGetWFSamples:
 				rdReg	HOST_RX				; wf_chan
-				wrReg2	SET_WF_CHAN			;
+				wrReg2	SET_REG | SET_WF_CHAN
 getWFSamples2:
 				wrEvt	HOST_RST
                 push    nwf_samps_m1        ; &nwf_samps_m1
                 fetch16                     ; nwf_samps_m1
+            
                 to_loop                     ;
                 ALIGN
 wf_loop:
@@ -186,39 +188,39 @@ wf_loop:
 
 CmdGetWFContSamps:
 				rdReg	HOST_RX				; wf_chan
-				wrReg2	SET_WF_CHAN			;
+				wrReg2	SET_REG | SET_WF_CHAN
 				push	WF_SAMP_SYNC | WF_SAMP_CONTIN
 				FreezeTOS
-				wrReg2	WF_SAMPLER_RST
+				wrReg2	SET_REG | SET_WF_RST
 				br		getWFSamples2
 
 nwf_samps_m1:   u16		0
 
 CmdSetWFOffset:	
 				rdReg	HOST_RX				; wf_chan
-				wrReg2	SET_WF_CHAN         ;
+				wrReg2	SET_REG | SET_WF_CHAN
                 rdReg	HOST_RX				; offset
-				wrReg2	SET_WF_OFFSET		;
+				wrReg2	SET_REG | SET_WF_OFFSET
 				rdReg	HOST_RX				; nwf_samps_m1
 				push	nwf_samps_m1        ; nwf_samps_m1 &nwf_samps_m1
 				store16                     ; &nwf_samps_m1
 				pop.r                       ;
 
 CmdSetWFFreq:	rdReg	HOST_RX				; wf_chan
-				wrReg2	SET_WF_CHAN			;
+				wrReg2	SET_REG | SET_WF_CHAN
                 RdReg32	HOST_RX				; freqH
 				FreezeTOS
-                wrReg2	SET_WF_FREQ			;
+                wrReg2	SET_REG | SET_WF_FREQ
                 B2B_FreezeTOS               ; delay so back-to-back FreezeTOS works
                 rdReg	HOST_RX				; freqL
 				FreezeTOS
-                wrReg2	SET_WF_FREQ | FREQ_L
+                wrReg2	SET_REG | SET_WF_FREQ | FREQ_L
 				ret
 
 CmdSetWFDecim:	
 				rdReg	HOST_RX				; wf_chan
-				wrReg2	SET_WF_CHAN			;
+				wrReg2	SET_REG | SET_WF_CHAN
                 RdReg32	HOST_RX				; lparam
 				FreezeTOS
-				wrReg2	SET_WF_DECIM		;
+				wrReg2	SET_REG | SET_WF_DECIM
 				ret

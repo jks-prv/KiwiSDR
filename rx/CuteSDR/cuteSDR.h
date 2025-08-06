@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////////////////
 // cuteSDR.h: Common data type declarations
 //////////////////////////////////////////////////////////////////////
-#ifndef CUTESDR_H
-#define CUTESDR_H
+
+#pragma once
 
 // This is here instead of fastfir.h because of problems with recursive definitions.
 
@@ -11,6 +11,6 @@
 
 #define CONV_FFT_SIZE				1024		// must be power of 2
 #define CONV_FFT_TO_OUTBUF_RATIO	2
-#define FASTFIR_OUTBUF_SIZE (CONV_FFT_SIZE / CONV_FFT_TO_OUTBUF_RATIO)
+#define MAX_NRX_SAMPS               NRX_SAMPS_CHANS(3)      // i.e. 226 with rx3wf3
 
-#endif // CUTESDR_H
+#define FASTFIR_OUTBUF_SIZE (CONV_FFT_SIZE / CONV_FFT_TO_OUTBUF_RATIO)

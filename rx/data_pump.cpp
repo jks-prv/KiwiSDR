@@ -59,7 +59,7 @@ struct rx_data_t {
             u2_t snd_seq;
         } hdr;
     #endif
-	iq3_t iq_t[MAX_NRX_SAMPS * MAX_RX_CHANS];
+	iq3_t iq_t[MAX_NRX_SAMPS];
 } __attribute__((packed));
 static rx_data_t *rxd;
 
@@ -76,9 +76,14 @@ struct rx_trailer_t {
 } __attribute__((packed));
 static rx_trailer_t *rxt;
 
-// rescale factor from hardware samples to what CuteSDR code is expecting
-const TYPEREAL cicf_gain_dB[N_FW_SEL] = {
-    4.5, 4.5, 4.5 + 8.6, 4.5, 4.5    // empirical measurement using sig gen
+// Rescale factor from hardware samples to what CuteSDR code is expecting.
+// All empirically measurement using sig gen.
+const TYPEREAL rx_cicf_gain_dB[N_FW_SEL] = {
+    4.5,        // FW_SEL_SDR_RX4_WF4
+    4.5,        // FW_SEL_SDR_RX8_WF2
+    4.5 + 8.6,  // FW_SEL_SDR_RX3_WF3   different because rx3 RX_CICF coeffs are different than others
+    4.5,        // FW_SEL_SDR_RX14_WF0
+    4.5         // FW_SEL_SDR_WB
 };
 static TYPEREAL rescale;
 
@@ -93,7 +98,7 @@ static u4_t last_run_us;
 static void snd_service()
 {
 	int j;
-	SPI_MISO *miso = &SPI_SHMEM->dpump_miso;
+	SPI_MISO *miso = &SPI_SHMEM->dpump_snd_miso;
 	u4_t diff, moved=0;
 	
     evLatency(EC_EVENT, EV_DPUMP, 0, "DATAPUMP", "snd_service() BEGIN");
@@ -165,7 +170,7 @@ static void snd_service()
             i_wb_samps = rx->wb_samps[rx->wr_pos];
             //real_printf("[%d=%p] ", rx->wr_pos, i_wb_samps); fflush(stdout);
         }
-            
+
         iq3_t *iqp = (iq3_t *) &rxd->iq_t;
     
         #if 0
@@ -313,7 +318,7 @@ static void snd_service()
                 }
             }
         }
-    
+
         int n_dpbuf = kiwi.isWB? N_WB_DPBUF : N_DPBUF;
         
         for (int ch=0; ch < rx_chans; ch++) {
@@ -506,19 +511,19 @@ static void data_pump_init()
     #else
         rx_xfer_size = sizeof(iq3_t) * nrx_samps * rx_wb_buf_chans;
     #endif
-	rxd = (rx_data_t *) &SPI_SHMEM->dpump_miso.word[0];
+	rxd = (rx_data_t *) &SPI_SHMEM->dpump_snd_miso.word[0];
 	rxt = (rx_trailer_t *) ((char *) rxd + rx_xfer_size);
 	rx_xfer_size += sizeof(rx_trailer_t);
-	printf("rx_trailer_t=%d iq3_t=%d rx_xfer_size=%d/%d\n", sizeof(rx_trailer_t), sizeof(iq3_t), rx_xfer_size, NRX_SAMPS_MAX);
+	//printf("rx_trailer_t=%d iq3_t=%d rx_xfer_size=%d/%d\n", sizeof(rx_trailer_t), sizeof(iq3_t), rx_xfer_size, NRX_SAMPS_BYTES_MAX);
 
 	// does a single nrx_samps transfer fit in the SPI buf?
-	check(rx_xfer_size <= NRX_SAMPS_MAX);       // in bytes
+	check(rx_xfer_size <= NRX_SAMPS_BYTES_MAX);       // in bytes
 	
     check(nrx_samps < FASTFIR_OUTBUF_SIZE);     // see rx_dpump_t.in_samps[][]
     check(nrx_samps_wb < MAX_WB_SAMPS);         // see rx_dpump_t.wb_samps[][]
 	
-	rescale = MPOW(2, -RXOUT_SCALE + CUTESDR_SCALE) * (VAL_USE_RX_CICF? MPOW(10, cicf_gain_dB[fw_sel]/20.0) : 1);
-	//printf("data pump: fw_sel=%d RXOUT_SCALE=%d CUTESDR_SCALE=%d cicf_gain_dB=%.1f rescale=%.6g VAL_USE_RX_CICF=%d DC_offset_I=%f DC_offset_Q=%f\n", fw_sel, RXOUT_SCALE, CUTESDR_SCALE, cicf_gain_dB[fw_sel], rescale, VAL_USE_RX_CICF, DC_offset_I, DC_offset_Q);
+	rescale = MPOW(2, -RXOUT_SCALE + CUTESDR_SCALE) * (VAL_USE_RX_CICF? MPOW(10, rx_cicf_gain_dB[fw_sel]/20.0) : 1);
+	//printf("data pump: fw_sel=%d RXOUT_SCALE=%d CUTESDR_SCALE=%d rx_cicf_gain_dB=%.1f rescale=%.6g VAL_USE_RX_CICF=%d DC_offset_I=%f DC_offset_Q=%f\n", fw_sel, RXOUT_SCALE, CUTESDR_SCALE, rx_cicf_gain_dB[fw_sel], rescale, VAL_USE_RX_CICF, DC_offset_I, DC_offset_Q);
 
 	CreateTaskF(snd_pump, 0, DATAPUMP_PRIORITY, CTF_POLL_SND_INTR);
 }

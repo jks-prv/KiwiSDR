@@ -17,37 +17,39 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-module WATERFALL_1CIC (
-	input  wire		   adc_clk,
-	input  wire signed [IN_WIDTH-1:0] adc_data,
+`timescale 1ns / 100ps
 
-	input  wire		   wf_sel_C,
-	output wire [15:0] wf_dout_C,
+module WATERFALL_1CIC
+    #(parameter WHICH = "required", parameter IN_WIDTH = "required")
+    (
+        input  wire		   adc_clk,
+        input  wire signed [IN_WIDTH-1:0] adc_data,
+        
+        input  wire		   wf_sel_C,
+        output wire [15:0] wf_dout_C,
 
-    input  wire        cpu_clk,
-    input  wire [12:0] tos_C,
-    input  wire [31:0] freeze_tos_A,
-
-    input  wire        samp_wf_rd_rst_C,    // qual
-    input  wire        samp_wf_sync_C,      // qual
-    input  wire        set_wf_freqH_C,      // qual
-    input  wire        set_wf_freqL_C,      // qual
-    input  wire        set_wf_decim_C,      // qual
-    input  wire        set_wf_offset_C,     // qual
-    input  wire        rst_wf_sampler_C,    // qual
-    input  wire        get_wf_samp_i_C,     // qual
-    input  wire        get_wf_samp_q_C      // qual
-	);
+        input  wire        cpu_clk,
+        input  wire [11:0] tos_C,
+        input  wire [31:0] freeze_tos_A,
+    
+        input  wire        samp_wf_rd_rst_C,    // qualified with wf_sel_C below
+        input  wire        samp_wf_sync_C,      // qualified with wf_sel_C below
+        input  wire        set_wf_freqH_C,      // qualified with wf_sel_C below
+        input  wire        set_wf_freqL_C,      // qualified with wf_sel_C below
+        input  wire        set_wf_decim_C,      // qualified with wf_sel_C below
+        input  wire        set_wf_offset_C,     // qualified with wf_sel_C below
+        input  wire        rst_wf_sampler_C,    // qualified with wf_sel_C below
+        input  wire        get_wf_samp_i_C,     // qualified with wf_sel_C below
+        input  wire        get_wf_samp_q_C      // qualified with wf_sel_C below
+    );
 
 `include "kiwi.gen.vh"
-
-	parameter IN_WIDTH  = "required";
 
 	wire rst_wf_sampler_A;
 	SYNC_PULSE reset_inst (.in_clk(cpu_clk), .in(wf_sel_C && rst_wf_sampler_C), .out_clk(adc_clk), .out(rst_wf_sampler_A));
 	
-	wire rst_wf_samp_wr_A = rst_wf_sampler_A && freeze_tos_A[WF_SAMP_WR_RST];
-	wire rst_wf_samp_rd_C = rst_wf_sampler_C && samp_wf_rd_rst_C; // qualified with wf_sel_C below
+	wire rst_wf_samp_wr_A = rst_wf_sampler_A && freeze_tos_A[WF_SAMP_WR_RST];   // qualified with wf_sel_C above
+	wire rst_wf_samp_rd_C = rst_wf_sampler_C && samp_wf_rd_rst_C;   // qualified with wf_sel_C below
 
 	reg wf_continuous_A;
     always @ (posedge adc_clk)
@@ -95,7 +97,7 @@ module WATERFALL_1CIC (
         if (set_wf_decim_A)
         	decim <= freeze_tos_A[0 +:MD];
 
-	reg [12:0] rd_offset;
+	reg [11:0] rd_offset;
     always @ (posedge cpu_clk)
         if (wf_sel_C && set_wf_offset_C)
         	rd_offset <= tos_C;
@@ -130,14 +132,19 @@ module WATERFALL_1CIC (
         .in_data		(wf_mix_q),
         .out_data		(wf_cic_out_q)
     );
+    
+    wire [WFO_BITS-1:0] wf_samps_in_i, wf_samps_in_q;
 
-	IQ_SAMPLER_8K_32B wf_samp(
+    assign wf_samps_in_i = wf_cic_out_i;
+    assign wf_samps_in_q = wf_cic_out_q;
+
+	WF_SAMPLER_8K_32B wf_samp(
 		.wr_clk			(adc_clk),
 		.wr_rst			(rst_wf_samp_wr_A),
 		.wr_continuous	(wf_continuous_A),
 		.wr				(wf_cic_avail),
-		.wr_i			(wf_cic_out_i),
-		.wr_q			(wf_cic_out_q),
+		.wr_i			(wf_samps_in_i),
+		.wr_q			(wf_samps_in_q),
 		
 		.rd_clk			(cpu_clk),
 		.rd_rst			(wf_sel_C && rst_wf_samp_rd_C),
@@ -145,6 +152,7 @@ module WATERFALL_1CIC (
 		.rd_i			(wf_sel_C && get_wf_samp_i_C),
 		.rd_q			(wf_sel_C && get_wf_samp_q_C),
 		.rd_offset      (rd_offset),
+		// o
 		.rd_iq			(wf_dout_C)
 	);
 

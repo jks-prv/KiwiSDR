@@ -17,6 +17,8 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2017 John Seamons, ZL4VO/KF6VO
 
+`timescale 1ns / 100ps
+
 module how_big (input wire p);
 
 endmodule

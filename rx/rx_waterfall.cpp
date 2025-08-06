@@ -63,7 +63,8 @@ int wf_slowdown;
     wf_shmem_t *wf_shmem_p = &wf_shmem;
 #endif
 
-// FIXME: doesn't work yet because currently no way to use SPI from LINUX_CHILD_PROCESS()
+// Doesn't work because currently no way to use SPI from LINUX_CHILD_PROCESS()
+// So sample_wf() can't be run as an process, but compute_frame() can.
 //#define WF_IPC_SAMPLE_WF
 
 #if defined(WF_SHMEM_DISABLE) || !defined(WF_IPC_SAMPLE_WF)
@@ -80,26 +81,6 @@ int wf_slowdown;
 #define	WF_OUT_HDR	((int) (sizeof(wf_pkt_t) - sizeof(out->un)))
 #define	WF_OUT_NOM	((int) (WF_OUT_HDR + sizeof(out->un.buf)))
 		
-// if entries here are ordered by wf_cmd_key_e then the reverse lookup (str_hash_t *)->hashes[key].name
-// will work as a debugging aid
-static str_hashes_t wf_cmd_hashes[] = {
-    { "~~~~~~~~~", STR_HASH_MISS },
-    { "SET zoom=", CMD_SET_ZOOM },
-    { "SET maxdb", CMD_SET_MAX_MIN_DB },
-    { "SET cmap=", CMD_SET_CMAP },
-    { "SET aper=", CMD_SET_APER },
-    { "SET band=", CMD_SET_BAND },
-    { "SET scale", CMD_SET_SCALE },
-    { "SET wf_sp", CMD_SET_WF_SPEED },
-    { "SET send_", CMD_SEND_DB },
-    { "SET ext_b", CMD_EXT_BLUR },
-    { "SET inter", CMD_INTERPOLATE },
-    { "SET windo", CMD_WF_WINDOW_FUNC },
-    { 0 }
-};
-
-str_hash_t wf_cmd_hash;
-
 void c2s_waterfall_once()
 {
 	// Do this here, rather than the c2s_waterfall_init or the beginning of c2s_waterfall(),
@@ -638,7 +619,7 @@ void sample_wf(int rx_chan)
 
             spi_get_noduplex(first_cmd, miso, nwf_samps * sizeof(iq_t), rx_chan);
         } else
-        if (chunk < n_chunks-1) {
+        if (chunk < n_chunks) {
             spi_get_noduplex(CmdGetWFSamples, miso, nwf_samps * sizeof(iq_t), rx_chan);
         }
 

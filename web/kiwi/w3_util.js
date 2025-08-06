@@ -1204,7 +1204,7 @@ function w3_hide2(el_id, cond)
 	return el;
 }
 
-function w3_show_hide(el_id, show, display, n_parents_up)
+function w3_show_hide(el_id, show, display, n_parents_up, props, cond)
 {
    var rv;
    var el = w3_el(el_id);
@@ -1218,13 +1218,14 @@ function w3_show_hide(el_id, show, display, n_parents_up)
    } else {
       rv = w3_hide(el);
    }
+   if (isString(props)) w3_set_props(el, props, cond);
    //w3_console.log(el, 'w3_show_hide END');
    return rv;
 }
 
-function w3_show_hide_inline(el, show)
+function w3_show_hide_inline(el, show, n_parents_up, props, cond)
 {
-   w3_show_hide(el, show, 'w3-show-inline-new');
+   w3_show_hide(el, show, 'w3-show-inline-new', n_parents_up, props, cond);
 }
 
 function w3_disable(el_id, disable, prop)
@@ -3796,10 +3797,10 @@ function w3_menu_items(id, arr, max_vis)
    // But NOT if the menu is long enough to be scrollable since there is no
    // gesture to distinguish mousing from scrolling, as with desktop.
    if (kiwi_isMobile()) {
-      if (mobile_laptop_test) console.log('w3_menu_items MOBILE '+ id);
+      if (kiwi_util.mobile_laptop_test) console.log('w3_menu_items MOBILE '+ id);
       w3_iterate_children(id, function(el, i) {
          el.addEventListener('touchmove', w3int_menu_touch_move, w3.BUBBLING);
-         if (mobile_laptop_test)
+         if (kiwi_util.mobile_laptop_test)
             el.addEventListener('mousemove', w3int_menu_mouse_move, w3.BUBBLING);
       });
    }

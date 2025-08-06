@@ -16,18 +16,19 @@ Boston, MA  02110-1301, USA.
 */
 
 // Copyright (c) 2023 Christoph Mayer, DL1CH
+// Copyright (c) 2023-2025 John Seamons, ZL4VO/KF6VO
 
-module fir_iq #(
-    int WIDTH = 0
-) (
-	input  wire     adc_clk,
-	input  wire     reset,
-	input  wire     in_strobe,
-	output  reg     out_strobe,
-	input  wire signed [WIDTH-1:0] in_data_i,
-	input  wire signed [WIDTH-1:0] in_data_q,
-	output  reg signed [WIDTH-1:0] out_data_i,
-	output  reg signed [WIDTH-1:0] out_data_q
+module fir_iq_snd
+    #(parameter WIDTH = 0)
+    (
+        input  wire     adc_clk,
+        input  wire     reset,
+        input  wire     in_strobe,
+        output  reg     out_strobe,
+        input  wire signed [WIDTH-1:0] in_data_i,
+        input  wire signed [WIDTH-1:0] in_data_q,
+        output  reg signed [WIDTH-1:0] out_data_i,
+        output  reg signed [WIDTH-1:0] out_data_q
     );
 
 `include "kiwi.gen.vh"
@@ -42,7 +43,7 @@ module fir_iq #(
     reg signed  [WIDTH-1:0] bufI[NTAPS-1:0], bufQ[NTAPS-1:0];
     wire signed [COEFF-1:0] taps[(NTAPS-1)/2:0];
 
-    if (RX_CFG == 3) begin                      // N=5, R=2, M=1, NTAPS=65, 20.25 kHz, cutoff at 8 kHz (80%)
+    if (RX_CFG == 33) begin                     // N=5, R=2, M=1, NTAPS=65, 20.25 kHz, cutoff at 8 kHz (80%)
         assign taps[ 0]  = COEFF'('sh0005f);
         assign taps[ 1]  = COEFF'('sh3ffa4);
         assign taps[ 2]  = COEFF'('sh3ff6c);

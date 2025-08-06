@@ -22,18 +22,20 @@ Boston, MA  02110-1301, USA.
 //
 // See: zipcpu.com/blog/2017/10/20/cdc.html
 
-module SYNC_REG (
-	input  wire in_strobe,
-	input  wire [WIDTH-1:0] in_reg,
-	input  wire in_clk,
+`timescale 1ns / 100ps
 
-	output reg  out_strobe,
-	output reg  [WIDTH-1:0] out_reg,
-	input  wire out_clk
+module SYNC_REG
+	#(parameter WIDTH = 1)
+	(
+        input  wire in_strobe,
+        input  wire [WIDTH-1:0] in_reg,
+        input  wire in_clk,
+    
+        output reg  out_strobe,
+        output reg  [WIDTH-1:0] out_reg,
+        input  wire out_clk
 	);
-	
-	parameter WIDTH = 1;
-	
+
 	// forums.xilinx.com/t5/Timing-Analysis/Understanding-ASYNC-REG-attribute/m-p/774027#M11817
 	(* ASYNC_REG = "TRUE" *) reg [WIDTH-1:0] shared_reg;
 	reg valid_data;

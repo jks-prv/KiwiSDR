@@ -9,6 +9,8 @@
 # V_SRC_DIR can be set as a global environment variable otherwise it will default to the value below.
 #
 
+# Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
 # include any rules from another FPGA project using the KiwiSDR framework (i.e. CFG = other)
 -include $(wildcard */Makefile.inc)
 
@@ -19,6 +21,7 @@ ifeq ($(DEBIAN_DEVSYS),)
 endif
 
 VIVADO_VER = 2022.2
+#VIVADO_VER = 2024.2
 
 ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 
@@ -64,44 +67,46 @@ ifeq ($(DEBIAN_DEVSYS),verilog_host)
 ################################
 
 V_SRC_DIR ?= /media/sf_shared
+RUN_DIR = ../..
 
 all:
 	@reset
 	@echo "build project with Vivado via tcl"
-	time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR)
-	
-rx4:
+	(cd $(RUN_DIR); time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR))
+
+rx44:
 	@reset
 	@echo "build rx4_wf4 project with Vivado via tcl"
-	time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx4_wf4
-	
-rx8:
+	(cd $(RUN_DIR); time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx4_wf4)
+
+rx82:
 	@reset
 	@echo "build rx8_wf2 project with Vivado via tcl"
-	time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx8_wf2
-	
-rx3:
+	(cd $(RUN_DIR); time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx8_wf2)
+
+rx33:
 	@reset
 	@echo "build rx3_wf3 project with Vivado via tcl"
-	time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx3_wf3
-	
+	(cd $(RUN_DIR); time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx3_wf3)
+
 rx14:
 	@reset
 	@echo "build rx14_wf0 project with Vivado via tcl"
-	time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx14_wf0
-	
+	(cd $(RUN_DIR); time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx14_wf0)
+
 rx1:
 	@reset
-	@echo "build rx1_wf1 project with Vivado via tcl"
-	time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx1_wf1
-	
-rebuild:
+	@echo "build rx1_wf0 project with Vivado via tcl"
+	(cd $(RUN_DIR); time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --rx1_wf0)
+
+rebuild_ip:
 	@reset
 	@echo "rebuild project ip with Vivado via tcl"
-	rm -rf KiwiSDR generated/*
-	mkdir -p generated
-	time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --regen_ip
-	
+	@echo "7/2025 NB: With Vivado 2024.2 this doesn't seem to be working currently."
+	rm -rf $(V_PROJ) $(RUN_DIR)/generated
+	mkdir -p $(RUN_DIR)/generated
+	(cd $(RUN_DIR); time vivado -mode batch -source make_proj.tcl -tclargs --result_dir $(V_SRC_DIR) --regen_ip)
+
 # command to "copy verilog" from KiwiSDR distribution into our build directory
 # designed to complement the "make cv" command run in the KiwiSDR server build directory
 EXCLUDE_RSYNC = ".DS_Store" "KiwiSDR/" "generated" ".Xil/" "vivado.*"
@@ -114,14 +119,15 @@ cv:
 	@echo V_SRC_DIR = $(V_SRC_DIR)
 	rsync -av --delete $(addprefix --exclude , $(EXCLUDE_RSYNC)) $(V_SRC_DIR)/$(V_PROJ)/ .
 	rsync -av --delete --exclude .DS_Store $(V_SRC_DIR)/$(V_PROJ).Vivado.$(VIVADO_VER).ip/ ../import_ip
+	cp kiwi.tcl make_proj.tcl $(RUN_DIR)
 	make cv2_host V_SRC_DIR=$(V_SRC_DIR)
 
 RX_CFG := $(shell grep RX_CFG kiwi.cfg.vh | cut -d\  -f 4 | tr -d ';')
-ifeq ($(RX_CFG),4)
+ifeq ($(RX_CFG),44)
     CFG = rx4.wf4
-else ifeq ($(RX_CFG),8)
+else ifeq ($(RX_CFG),82)
     CFG = rx8.wf2
-else ifeq ($(RX_CFG),3)
+else ifeq ($(RX_CFG),33)
     CFG = rx3.wf3
 else ifeq ($(RX_CFG),14)
     CFG = rx14.wf0
@@ -133,40 +139,47 @@ endif
 
 cb:
 	@echo "CFG =" $(CFG)
-	cp ../*.runs/impl_1/KiwiSDR.bit $(V_SRC_DIR)/KiwiSDR.$(CFG).bit
-	sum $(V_SRC_DIR)/*.bit
+	cp ../*.runs/impl_1/$(V_PROJ).bit $(V_SRC_DIR)/$(V_PROJ).$(CFG).bit
+	sum $(V_SRC_DIR)/$(V_PROJ).*.bit
 
 sum:
-	sum $(V_SRC_DIR)/*.bit
+	sum $(V_SRC_DIR)/$(V_PROJ).*.bit
 
 ts:
-	-tail -f KiwiSDR/KiwiSDR.runs/synth_1/runme.log
+	-tail -f $(V_PROJ)/$(V_PROJ).runs/synth_1/runme.log
 
 cs:
-	cat KiwiSDR/KiwiSDR.runs/synth_1/runme.log
+	cat $(V_PROJ)/$(V_PROJ).runs/synth_1/runme.log
 
 ti:
-	-tail -f KiwiSDR/KiwiSDR.runs/impl_1/runme.log
+	-tail -f $(V_PROJ)/$(V_PROJ).runs/impl_1/runme.log
 
 ci:
-	cat KiwiSDR/KiwiSDR.runs/impl_1/runme.log
+	cat $(V_PROJ)/$(V_PROJ).runs/impl_1/runme.log
 
 RSYNC_REV_INC = $(addprefix --include=, "*.veo" "*.xci" "*.xml")
 cip_rev:
-	rsync -av --delete-excluded --prune-empty-dirs --include "*/"  $(RSYNC_REV_INC) --exclude="*" ../KiwiSDR.srcs/sources_1/ip/ ../import_ip/
-	rsync -av --delete --exclude .DS_Store ../import_ip/ $(V_SRC_DIR)/KiwiSDR.ip
+	rsync -av --delete-excluded --prune-empty-dirs --include "*/"  $(RSYNC_REV_INC) --exclude="*" ../$(V_PROJ).srcs/sources_1/ip/ ../import_ip/
+	rsync -av --delete --exclude .DS_Store ../import_ip/ $(V_SRC_DIR)/$(V_PROJ).Vivado.$(VIVADO_VER).ip
+
+cip_cp:
+	rsync -av --delete --exclude .DS_Store ipcore_properties $(V_SRC_DIR)/$(V_PROJ).Vivado.$(VIVADO_VER).ipcore_properties
 
 cm:
 	cp kiwi_map.mrp kiwi_map_mrp.html $(V_SRC_DIR)
-	cp KiwiSDR.syr kiwi_syr.html $(V_SRC_DIR)
-	cp KiwiSDR.twr kiwi_twr.html $(V_SRC_DIR)
-	cp KiwiSDR.twx $(V_SRC_DIR)
+	cp $(V_PROJ).syr kiwi_syr.html $(V_SRC_DIR)
+	cp $(V_PROJ).twr kiwi_twr.html $(V_SRC_DIR)
+	cp $(V_PROJ).twx $(V_SRC_DIR)
 
 cp:
-	cp KiwiSDR.pwr $(V_SRC_DIR)
+	cp $(V_PROJ).pwr $(V_SRC_DIR)
 
 clean:
 	rm -f kiwi.coe
+
+cbash:
+	cp $(V_SRC_DIR)/bash_aliases /home/jks/.bash_aliases
+	cp $(V_SRC_DIR)/bashrc.local /home/jks/.bashrc.local
 
 endif
 

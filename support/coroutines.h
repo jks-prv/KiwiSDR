@@ -163,9 +163,9 @@ C_LINKAGE(void TaskSetUserParam(void *param));
 void TaskDump(u4_t flags);
 
 const char *_TaskName(const char *name, bool free_name);
-#define TaskName()          _TaskName(NULL, false)
-#define TaskNameS(name)     _TaskName(name, false)
-#define TaskNameSFree(name) _TaskName(name, true)
+#define TaskName()            _TaskName(NULL, false)
+#define TaskNameSet(name)     _TaskName(name, false)
+#define TaskNameSetFree(name) _TaskName(name, true)
 
 C_LINKAGE(char *Task_s(int id));
 C_LINKAGE(char *Task_ls(int id));

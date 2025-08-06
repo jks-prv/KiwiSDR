@@ -524,7 +524,7 @@ function noise_filter_decay_cb(path, val, complete, first)
 function noise_filter_help()
 {
    var s = 
-      w3_text('w3-medium w3-bold w3-text-aqua', 'Noise blanker help') +
+      w3_text('w3-medium w3-bold w3-text-aqua', 'Noise filter help') +
       w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
          w3_div('w3-margin-R-8 w3-margin-bottom',
             'To be supplied...'

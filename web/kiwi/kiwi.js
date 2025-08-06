@@ -2872,7 +2872,7 @@ function user_cb(obj)
                   'Frequency scale offset changed. Page will be reloaded.'
                   //w3_inline('w3-halign-space-around/', w3_button('w3-margin-T-16 w3-aqua', 'OK', 'freq_offset_page_reload'))
                );
-            confirmation_show_content(s, 425, 50, null, 'red');
+            confirmation_show_content(s, 450, 50, null, 'red');
             //console.log("kiwi_open_or_reload_page({ url:'reload', delay:2000 })");
             kiwi_open_or_reload_page({ url:'reload', delay:2000 });
          }
@@ -3521,6 +3521,10 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 		   var foff_kHz = +param[1];
 		   console.log('$$$ MSG freq_offset='+ foff_kHz +' cfg.freq_offset='+ cfg.freq_offset);
          kiwi_set_freq_offset(foff_kHz);
+			break;
+		
+		case "dbg_seq":
+		   console.log('(MSG) dseq='+ param[1]);
 			break;
 
 		default:

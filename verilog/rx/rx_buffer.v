@@ -15,76 +15,49 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
 
-module RX_BUFFER (
-	input  wire clka,
-	input  wire [ADDR_MSB:0] addra,
-	input  wire [15:0] dina,
-	input  wire wea,
-	
-	input  wire clkb,
-	input  wire [ADDR_MSB:0] addrb,
-	output wire [15:0] doutb
+`timescale 1ns / 100ps
+
+module RX_BUFFER
+	#(parameter ADDR_MSB = "required")
+    (
+        input  wire clka,
+        input  wire [ADDR_MSB:0] addra,
+        input  wire [15:0] dina,
+        input  wire wea,
+        
+        input  wire clkb,
+        input  wire [ADDR_MSB:0] addrb,
+        output wire [15:0] doutb
 	);
 
 `include "kiwi.gen.vh"
 
-	parameter ADDR_MSB = "required";
-
-// When building all configurations sequentially using the verilog/make_proj.tcl script
-// the following doesn't work because of problems with the Vivado source code scanner marking the unused
-// bram ip block "AutoDisabled" in KiwiSDR.xpr and then not being able to find it subsequently.
-
-`ifdef NOT_DEF
 	generate
-		if (RXBUF_LARGE == 0)
-		begin
+		if (RXBUF_LARGE == 0) begin
 	        ipcore_bram_8k_16b rx_buf (
                 .clka	(clka),         .clkb	(clkb),
                 .addra	(addra),        .addrb	(addrb),
                 .dina	(dina),         .doutb	(doutb),
                 .wea	(wea)
             );
-		end
-		else
+		end else
+		if (RXBUF_LARGE == 1) begin
 	        ipcore_bram_16k_16b rx_buf (
                 .clka	(clka),         .clkb	(clkb),
                 .addra	(addra),        .addrb	(addrb),
                 .dina	(dina),         .doutb	(doutb),
                 .wea	(wea)
             );
-		begin
+		end else begin
+            ipcore_bram_32k_16b rx_buf (
+                .clka	(clka),         .clkb	(clkb),
+                .addra	(addra),        .addrb	(addrb),
+                .dina	(dina),         .doutb	(doutb),
+                .wea	(wea)
+            );
 		end
 	endgenerate
-`else
-    wire [15:0] doutb_8k, doutb_16k, doutb_32k;
-    
-	assign doutb = (RXBUF_LARGE == 0)? doutb_8k : ((RXBUF_LARGE == 1)? doutb_16k : doutb_32k);
-
-    // All but one of these will be optimized away because RXBUF_LARGE is a constant parameter
-    // set in kiwi.gen.vh that depends on RX_CFG
-    
-    ipcore_bram_8k_16b rx_buf_8k (
-        .clka	(clka),         .clkb	(clkb),
-        .addra	(addra),        .addrb	(addrb),
-        .dina	(dina),         .doutb	(doutb_8k),
-        .wea	(wea)
-    );
-
-    ipcore_bram_16k_16b rx_buf_16k (
-        .clka	(clka),         .clkb	(clkb),
-        .addra	(addra),        .addrb	(addrb),
-        .dina	(dina),         .doutb	(doutb_16k),
-        .wea	(wea)
-    );
-
-    ipcore_bram_32k_16b rx_buf_32k (
-        .clka	(clka),         .clkb	(clkb),
-        .addra	(addra),        .addrb	(addrb),
-        .dina	(dina),         .doutb	(doutb_32k),
-        .wea	(wea)
-    );
-`endif
 
 endmodule

@@ -1100,9 +1100,9 @@ function drm_panel_show(controls_inner, data_html)
 function drm_mobile_controls_setup(mobile)
 {
 	drm.mobile = drm.mobile || 1;
-	console.log('$ mobile drm mobile_laptop_test='+ mobile_laptop_test);
+	console.log('$ mobile drm mobile_laptop_test='+ kiwi_util.mobile_laptop_test);
 	drm.w_nom = drm.w_sched = 300;
-   drm.h_sched = mobile_laptop_test? 100:230;
+   drm.h_sched = kiwi_util.mobile_laptop_test? 100:230;
    drm.cpanel_margin = 20;
 
 	var controls_html =

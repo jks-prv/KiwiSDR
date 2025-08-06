@@ -956,7 +956,7 @@ function webpage_html()
 		
 		w3_half('w3-margin-bottom w3-valign', 'w3-container',
 			w3_input('', 'Admin email', 'admin_email', '', 'w3_string_set_cfg_cb'),
-         w3_checkbox_get_param('w3-margin-T-20//w3-label-inline', 'Display owner/admin email link on KiwiSDR main page?', 'contact_admin', 'admin_bool_cb', true)
+         w3_checkbox_get_param('w3-margin-T-20//w3-label-inline', 'Display owner/admin email link on KiwiSDR main page', 'contact_admin', 'admin_bool_cb', true)
 		) +
 
 		'<hr>' +
@@ -969,8 +969,8 @@ function webpage_html()
                w3_div('id-photo-error', '')
             ),
             w3_div('',
-               w3_checkbox_get_param('w3-label-inline', 'Photo left margin', 'index_html_params.RX_PHOTO_LEFT_MARGIN', 'admin_bool_cb', true),
-               w3_checkbox_get_param('w3-margin-T-8//w3-label-inline', 'Photo centered', 'index_html_params.RX_PHOTO_CENTERED', 'admin_bool_cb', false)
+               w3_checkbox_get_param('/w3-label-inline', 'Photo left margin', 'index_html_params.RX_PHOTO_LEFT_MARGIN', 'admin_bool_cb', true),
+               w3_checkbox_get_param('w3-margin-T-8/w3-label-inline', 'Photo centered', 'index_html_params.RX_PHOTO_CENTERED', 'admin_bool_cb', false)
             )
          ),
 			w3_input('', 'Photo maximum height (pixels)', 'index_html_params.RX_PHOTO_HEIGHT', '', 'webpage_photo_height_cb')
@@ -990,6 +990,10 @@ function webpage_html()
                'Set "No" when there are caching problems in your <br>' +
                'network path, e.g. user interface icons don\'t load.'
             )
+         ),
+         
+			w3_divs('',
+            w3_checkbox_get_param('w3-margin-T-8/w3-label-inline/', 'Display all fonts in bold', 'all_fonts_bold', 'admin_bool_cb', true)
          )
 		) +
 		

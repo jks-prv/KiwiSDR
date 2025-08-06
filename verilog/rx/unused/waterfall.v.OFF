@@ -17,27 +17,27 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2014 John Seamons, ZL4VO/KF6VO
 
-module WATERFALL (
-	input  wire		   adc_clk,
-	input  wire signed [IN_WIDTH-1:0] adc_data,
-
-	input  wire		   wf_sel_C,
-	output wire [15:0] wf_dout_C,
-
-    input  wire        cpu_clk,
-    input  wire [31:0] tos,
-    input  wire [31:0] freeze_tos,
-
-    input  wire        set_wf_freq_C,
-    input  wire        set_wf_decim_C,
-    input  wire        rst_wf_sampler_C,
-    input  wire        get_wf_samp_i_C,
-    input  wire        get_wf_samp_q_C
+module WATERFALL
+	#(parameter IN_WIDTH  = "required")
+	(
+        input  wire		   adc_clk,
+        input  wire signed [IN_WIDTH-1:0] adc_data,
+    
+        input  wire		   wf_sel_C,
+        output wire [15:0] wf_dout_C,
+    
+        input  wire        cpu_clk,
+        input  wire [31:0] tos,
+        input  wire [31:0] freeze_tos,
+    
+        input  wire        set_wf_freq_C,
+        input  wire        set_wf_decim_C,
+        input  wire        rst_wf_sampler_C,
+        input  wire        get_wf_samp_i_C,
+        input  wire        get_wf_samp_q_C
 	);
 
 `include "kiwi.gen.vh"
-
-	parameter IN_WIDTH  = "required";
 
 	wire rst_wf_sampler_A;
 	SYNC_PULSE reset_inst (.in_clk(cpu_clk), .in(wf_sel_C && rst_wf_sampler_C), .out_clk(adc_clk), .out(rst_wf_sampler_A));
@@ -166,7 +166,7 @@ cic #(.STAGES(WF2_STAGES), .DECIM_TYPE(-WF_2CIC_MAXD), .GROWTH(WF2_GROWTH), .IN_
     .out_data		(wf_cic2_out_q)
     );
 
-	IQ_SAMPLER_8K_16B wf_samp(
+	WF_SAMPLER_8K_16B wf_samp(
 		.wr_clk			(adc_clk),
 		.wr_rst			(rst_wf_samp_wr_A),
 		.wr_continuous	(wf_continuous_A),

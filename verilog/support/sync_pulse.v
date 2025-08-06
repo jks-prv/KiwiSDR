@@ -20,6 +20,8 @@ Boston, MA  02110-1301, USA.
 // Synchronize a single pulse (flag) across a clock domain.
 // from: fpga4fun.com/CrossClockDomain2.html
 
+`timescale 1ns / 100ps
+
 module SYNC_PULSE (
 	input  wire in_clk,
 	input  wire in,

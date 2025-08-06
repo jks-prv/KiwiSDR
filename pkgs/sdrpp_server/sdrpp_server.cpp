@@ -31,7 +31,7 @@ Boston, MA  02110-1301, USA.
 #include <fcntl.h>
 #include <sys/mman.h>
 
-#ifdef MG_API_NEW
+#if defined(SDRPP_SERVER) && defined(MG_API_NEW)
 
 //hf+ sdr://143.178.161.182:5555
 //rtl sdr://94.208.173.143:5555
@@ -627,7 +627,7 @@ static void sdrpp_handler(struct mg_connection *mc, int ev, void *ev_data)
 
 void sdrpp_server_init(struct mg_mgr *server)
 {
-    //if (!kiwi.isWB) return;
+    if (!kiwi.isWB) return;
     if (mg_listen(server, "tcp://0.0.0.0:5555", sdrpp_handler, NULL) == NULL) {
         lprintf("network port 5555 in use?\n");
     }

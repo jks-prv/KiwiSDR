@@ -15,31 +15,34 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
-
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 //////////////////////////////////////////////////////////////////////////
 // rx audio shared sample memory
 // when the DDC samples are available, all the receiver outputs are interleaved into a common buffer
 //////////////////////////////////////////////////////////////////////////
 	
-module rx_audio_mem (
-	input wire		   adc_clk,
-    input  wire [ 7:0] nrx_samps,
-	input  wire		   rx_avail_A,
-    input  wire [V_RX_CHANS*16-1:0] rxn_din_A,
-    input  wire [47:0] ticks_A,
-    output wire        ser,
-    output reg         rd_getI,
-    output reg         rd_getQ,
+`timescale 1ns / 100ps
 
-	input  wire		   cpu_clk,
-	input  wire		   get_rx_srq_C,
-	input  wire		   get_rx_samp_C,
-	input  wire		   reset_bufs_C,
-	input  wire		   get_buf_ctr_C,
-    output wire        rx_rd_C,
-    output wire [15:0] rx_dout_C
+module rx_audio_mem
+    #(parameter _V_RX_CHANS = "required")
+    (
+        input  wire		   adc_clk,
+        input  wire [ 7:0] nrx_samps,
+        input  wire		   rx_avail_A,
+        input  wire [_V_RX_CHANS*16-1:0] rxn_din_A,
+        input  wire [47:0] ticks_A,
+        output wire        ser,
+        output reg         rd_getI,
+        output reg         rd_getQ,
+    
+        input  wire		   cpu_clk,
+        input  wire		   get_rx_srq_C,
+        input  wire		   get_rx_samp_C,
+        input  wire		   reset_bufs_C,
+        input  wire		   get_buf_ctr_C,
+        output wire        rx_rd_C,
+        output wire [15:0] rx_dout_C
 	);
 	
 `include "kiwi.gen.vh"
@@ -53,110 +56,19 @@ module rx_audio_mem (
 	reg transfer;
 	reg [1:0] move;
 	reg [1:0] tsel;
+	wire reset_bufs_A;
 	
-    /*
-    
-    // C version of Verilog state machine below
-    
-    while (adc_clk) {
-    	if (reset_bufs_A) {	// reset state machine
-    		transfer = count = rd_getI = rd_getQ = move = wr = rxn = inc_A = use_ts = use_ctr = tsel = 0;
-    	} else
-    	
-		if (rx_avail_A) transfer = 1;	// happens at audio rate (e.g. 12 kHz, 83.3 us, => 5555 ADC clk ticks available)
-		
-		// state machine timing:
-		// for the case of nrx_samps = 170, RX_CHANS = 4
-    	// count iq3 rxn
-    	// ----- --- ---
-    	// cnt00 i   rx0
-    	// cnt00 q   rx0
-    	// cnt00 iq3 rx0	3w moved
-    	// cnt00 i   rx1
-    	// cnt00 q   rx1
-    	// cnt00 iq3 rx1
-    	// cnt00 i   rx2
-    	// cnt00 q   rx2
-    	// cnt00 iq3 rx2
-    	// cnt00 i   rx3
-    	// cnt00 q   rx3
-    	// cnt00 iq3 rx3	1*4*3 = 12w moved
-    	// -stop transfer-
-    	// cnt01 ...
-    	// -stop transfer-
-    	// ...
-    	// cnt169 iq3 rx3	170*4*3 = 2040w moved
-    	// (don't stop transfer)
-    	// cnt170 ticks     +3w = 2043w moved
-    	// (don't stop transfer)
-    	// cnt170 w_ctr     +1w = 2044w moved
-    	// -stop transfer-
-    	// -inc buffer count-
-    	// -srq e_cpu-
-    	
-		//  another way of looking at the state machine timing:
-		//  for the case of nrx_samps = 170, RX_CHANS = 4
-		//  count:  0                   1           168(nrx-2)          169(nrx-1)            170     0
-		//  rxn:    rx0 rx1 rx2 rx3 rx4 rx0 ... rx4 rx0 rx1 rx2 rx3 rx4 rx0 rx1 rx2 rx3 rx4|3 rx3 rx4 rx0
-		//  iq3:    iq3 iq3 iq3 iq3     iq3 ...     iq3 iq3 iq3 iq3     iq3 iq3 iq3 iq3 XYZ   xxC
-		//  evts:  AT               S  AT       S  AT               S  AT               -         S  AT
-		//                                                              L
-		//  A: rx_avail_A
-		//  T: transfer=1
-		//  S(stop): transfer=0
-		//  -: note no stop
-		//  L: ticks latch, the last rx_avail_A latching ticks_A before it's copied to buffer.
-		//  XYZ: ticks_A
-		//  C: buf_ctr
-		//  NB: "rx4" is a pseudo channel number that encodes "rxn == V_RX_CHANS" to signal all channel data moved.
-		
-		if (transfer) {
-            if (rxn == V_RX_CHANS) {      // after moving all channel data
-                if (count == (nrx_samps-1) && !use_ts) {       // keep going after last count and move ticks
-					move = 1;           // this state starts first move, case below moves second and third
-					wr = 1;
-                    rxn = V_RX_CHANS-1;	// ticks is only 1 channels worth of data (3w)
-                    use_ts = 1;
-                    tsel = 0;
-                } else
-                if (count == (nrx_samps-1) && use_ts) {     // keep going after last count and move buffer count
-					wr = 1;
-                    count++;            // ensures only single word moved
-                    use_ts = 0;
-                    use_ctr = 1;        // move single counter word
-                } else
-                if (count == nrx_samps) {       // all done, increment buffer count and reset
-                    move = wr = rxn = count = use_ts = use_ctr = 0;
-                    transfer = 0;   // stop until next transfer available
-                    inc_A = 1;
-                } else {        // count = 0 .. (nrx_samps-2), stop string of channel data writes until next transfer
-                    move = wr = rxn = transfer = 0;
-                    inc_A = 0;
-                    count++;
-                }
-                rd_getI = rd_getQ = 0;
-            } else {
-                // step through all channels: rxn = 0..V_RX_CHANS-1
-                switch (move) {		// move i, q, iq3 on each channel
-                    case 0: rd_getI = 1; rd_getQ = 0; move = 1; tsel = 0; break;
-                    case 1: rd_getI = 0; rd_getQ = 1; move = 2; tsel = 1; break;
-                    case 2: rd_getI = 0; rd_getQ = 0; move = 0; tsel = 2; rxn++; break;
-                    case 3: rd_getI = 0; rd_getQ = 0; move = 0; tsel = 0; break;	// unused
-                }
-                wr = 1;     // start a sequential string of iq3 * rxn channel data writes
-                inc_A = 0;
-            }
-        } else {
-            rd_getI = rd_getQ = move = wr = rxn = inc_A = use_ts = use_ctr = tsel = 0;       // idle when no transfer
-        }
-    
-    */
-    
+`ifdef SYNTHESIS
+	wire reset_A = reset_bufs_A;
+`else
+	wire reset_A = reset_bufs_C;    // simulator doesn't simulate our "SYNC_PULSE sync_reset_bufs"
+`endif
+	
 	always @(posedge adc_clk)
 	begin
 		rxn_d <= rxn[L2RX:0];	// mux selector needs to be delayed 1 clock
 		
-		if (reset_bufs_A)       // reset state machine
+		if (reset_A)    // reset state machine
 		begin
 			transfer <= 0;
 			count <= 0;
@@ -232,6 +144,7 @@ module rx_audio_mem (
 			end
 		end
 		else
+		
 		begin
 		    // idle when no transfer
 			rd_getI <= 0;
@@ -267,12 +180,12 @@ module rx_audio_mem (
 
     // continuously sync buf_ctr_A => buf_ctr_C
 	SYNC_REG #(.WIDTH(16)) sync_buf_ctr (
-	    .in_strobe(1),      .in_reg(buf_ctr_A),     .in_clk(adc_clk),
+	    .in_strobe(1'b1),   .in_reg(buf_ctr_A),     .in_clk(adc_clk),
 	    .out_strobe(),      .out_reg(buf_ctr_C),    .out_clk(cpu_clk)
 	);
 
 	always @ (posedge adc_clk)
-		if (reset_bufs_A)
+		if (reset_A)
 		begin
 			buf_ctr_A <= 0;
 		end
@@ -282,16 +195,17 @@ module rx_audio_mem (
     localparam RXBUF_MSB = clog2(RXBUF_SIZE) - 1;
 	reg [RXBUF_MSB:0] waddr, raddr;
 	
-	wire reset_bufs_A;
 	SYNC_PULSE sync_reset_bufs (.in_clk(cpu_clk), .in(reset_bufs_C), .out_clk(adc_clk), .out(reset_bufs_A));
 
 	always @ (posedge adc_clk)
-		if (reset_bufs_A)
+		if (reset_A)
 		begin
 			waddr <= 0;
 		end
 		else
 		waddr <= waddr + wr;
+	
+	wire rd = get_rx_samp_C;
 	
 	always @ (posedge cpu_clk)
 		if (reset_bufs_C)
@@ -301,8 +215,6 @@ module rx_audio_mem (
 		else
 			raddr <= raddr + rd;
 
-	wire rd = get_rx_samp_C;
-	
 	wire [15:0] din =
 	    use_ts?
 	        ( (tsel == 0)? ticks_A[15 -:16] : ( (tsel == 1)? ticks_A[31 -:16] : ticks_A[47 -:16]) ) :

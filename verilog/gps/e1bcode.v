@@ -18,9 +18,9 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-// Copyright (c) 2018-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2018-2025 John Seamons, ZL4VO/KF6VO
 
-`default_nettype none
+`timescale 1ns / 100ps
 
 // E1B code memory gadget
 // uses 1-BRAM36, 1-BRAM18
@@ -28,17 +28,19 @@
 // The following is extremely subtle.
 // Note to future self: see notebook #6 for timing diagrams.
 
-module E1BCODE (
-    input  wire rst,
-    input  wire clk,
-
-    input  wire wr,
-    input  wire [11:0] tos,
-
-    input  wire [(V_GPS_CHANS * E1B_CODEBITS)-1:0] nchip_n,
-    input  wire [V_GPS_CHANS-1:0] full_chip,
-    output wire [V_GPS_CHANS-1:0] code_o
-);
+module E1BCODE
+    #(parameter E1B = "required", parameter _V_GPS_CHANS = "required", _E1B_CODEBITS = "required")
+    (
+        input  wire rst,
+        input  wire clk,
+    
+        input  wire wr,
+        input  wire [11:0] tos,
+    
+        input  wire [(_V_GPS_CHANS * _E1B_CODEBITS)-1:0] nchip_n,
+        input  wire [_V_GPS_CHANS-1:0] full_chip,
+        output wire [_V_GPS_CHANS-1:0] code_o
+    );
 
 `include "kiwi.gen.vh"
 
@@ -66,6 +68,8 @@ module E1BCODE (
         end
     endgenerate
 
+	reg [E1B_CODEBITS-1:0] raddr;
+
     always @ (posedge clk)
     begin
         raddr <= raddr_m[ch_p];
@@ -87,7 +91,7 @@ module E1BCODE (
     endgenerate
 
 
-	reg [E1B_CODEBITS-1:0] waddr, raddr;
+	reg [E1B_CODEBITS-1:0] waddr;
 
     always @ (posedge clk)
         if (rst)
@@ -97,11 +101,14 @@ module E1BCODE (
         else begin
             waddr <= waddr + wr;
         end
+    
+    wire [11:0] doutb;
+    assign code_t = doutb[V_GPS_CHANS-1:0];
 
 	ipcore_bram_gps_4k_12b e1b_code (
 		.clka	(clk),          .clkb	(clk),
 		.addra	(waddr),        .addrb	(raddr),
-		.dina	(tos[11:0]),    .doutb	(code_t),
+		.dina	(tos[11:0]),    .doutb	(doutb),
 		.wea	(wr)
 	);
 

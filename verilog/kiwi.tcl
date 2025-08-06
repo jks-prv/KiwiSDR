@@ -1,3 +1,7 @@
+
+# Copyright (c) 2019-2025 Christoph Mayer, DL1CH
+# Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
+
 namespace eval kiwi {
 
     ## Generates txt files for each used ipcore in the directory "./ipcore_properties"
@@ -65,7 +69,8 @@ namespace eval kiwi {
             return $ps
         }
 
-        foreach f [glob ipcore_properties/ipcore_*.txt] {
+        set dir_srcs "KiwiSDR/import_srcs"
+        foreach f [glob ${dir_srcs}/ipcore_properties/ipcore_*.txt] {
             generate_ipcore [ipcore_property_file_to_dict $f]
         }
     }

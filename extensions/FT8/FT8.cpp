@@ -146,11 +146,13 @@ static void ft8_task(void *param)
                 }
                 e->seq = rx->real_seqnum[e->rd_pos];
             }
+            int nsamps = rx->real_nsamps[e->rd_pos];
+            //real_printf(CYAN "FT8#%d " NORM, nsamps);
             e->seq++;
 		    
 		    //real_printf("%d ", e->rd_pos); fflush(stdout);
 		    ft8_conf.test = e->test;
-		    decode_ft8_samples(rx_chan, &rx->real_samples_s2[e->rd_pos][0], FASTFIR_OUTBUF_SIZE, conn->freqHz, &e->start_test);
+		    decode_ft8_samples(rx_chan, &rx->real_samples_s2[e->rd_pos][0], nsamps, conn->freqHz, &e->start_test);
 			e->rd_pos = (e->rd_pos+1) & (N_DPBUF-1);
 		}
     }

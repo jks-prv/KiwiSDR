@@ -485,14 +485,6 @@ function control_html()
 
 		'<hr>' +
 		w3_col_percent('w3-margin-bottom w3-text-teal/w3-container',
-         w3_divs('w3-restart/w3-center w3-tspace-8',
-            w3_select('w3-width-auto', 'Number of audio campers per channel', '', 'n_camp', n_camp, n_camp_u, 'admin_select_cb'),
-            w3_div('w3-text-black',
-               'Reduce this value if your Kiwi is experiencing <br>' +
-               'performance problems from too many audio campers.'
-            )
-         ), 30,
-         
 			w3_divs('/w3-center w3-tspace-8',
             w3_select('w3-width-auto', 'SNR measurement interval', '', 'cfg.snr_meas_interval_hrs', cfg.snr_meas_interval_hrs, snr_interval_u, 'control_snr_interval_cb'),
 				w3_text('w3-text-black w3-center',
@@ -506,10 +498,11 @@ function control_html()
 			
 			w3_divs('/w3-tspace-8',
 			   w3_div('',
+               w3_text('w3-margin-B-8 w3-text-teal w3-bold', 'SNR measurement options:'),
                w3_checkbox_get_param('//w3-label-inline', 'Timestamp SNR with local time', 'snr_local_time', 'admin_bool_cb', true),
                w3_checkbox_get_param('//w3-label-inline', 'Also measure ham bands and AM BCB', 'snr_meas_ham', 'admin_bool_cb', false),
                w3_checkbox_get_param('//w3-label-inline', 'Measure on antenna change (after 5 second delay)', 'snr_meas_ant_sw', 'admin_bool_cb', false),
-               w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'admin_int_cb'),
+               w3_input_get('w3-margin-top//', 'Custom interval (min)', 'snr_meas_custom_min', 'control_snr_measure_custom_cb'),
                w3_inline('w3-margin-T-8',
                   w3_text('w3-text-teal w3-bold', 'Custom band:'),
                   w3_link('w3-link-darker-color w3-margin-L-4', '//forum.kiwisdr.com/index.php?p=/discussion/comment/21044/#Comment_21044', 'more info')
@@ -521,14 +514,41 @@ function control_html()
                )
             ),
             w3_inline('w3-margin-top w3-valign/',
-               w3_button('w3-aqua', 'Measure SNR now', 'control_snr_measure_cb'),
+               w3_button('w3-aqua', 'Measure now', 'control_snr_measure_cb'),
                w3_div('id-msg-snr-now w3-margin-left w3-text-black')
             )
+         ), 36,
+
+         w3_divs('/w3-tspace-8',
+            w3_text('w3-margin-B-8 w3-text-teal w3-bold', 'SNR filter (0-30, 1.8-30 MHz measurements only)'),
+            w3_checkbox_get_param('//w3-label-inline', 'Filter strong signals like VDSL',
+               'snr_meas_filter', 'admin_bool_cb', true),
+            w3_input_get('w3-margin-top//', 'Threshold (dBm)', 'snr_filter_thresh', 'admin_int_cb'),
+            w3_input_get('', 'Delta (dBm)', 'snr_filter_delta', 'admin_int_cb'),
+            w3_input_get('', 'Run length (kHz)', 'snr_filter_runlen', 'admin_int_cb'),
+            w3_div('w3-margin-T-8 w3-text-black',
+               'See the' +
+               w3_link('w3-link-darker-color w3-margin-L-4', '//forum.kiwisdr.com', 'KiwiSDR forum') +
+               ' for details.'
+            )
          )
-		) +
+		);
+
+	var s4 =
+		'<hr>' +
+		w3_col_percent('w3-margin-bottom w3-text-teal/w3-container',
+         w3_divs('w3-restart/w3-center w3-tspace-8',
+            w3_select('w3-width-auto', 'Number of audio campers per channel', '', 'n_camp', n_camp, n_camp_u, 'admin_select_cb'),
+            w3_div('w3-text-black',
+               'Reduce this value if your Kiwi is experiencing <br>' +
+               'performance problems from too many audio campers.'
+            )
+         ), 30,
+         '', 30
+      ) +
 		'<hr>';
 
-   return w3_div('id-control w3-text-teal w3-hide', s1 + (admin_sdr_mode? (s2 + s3) : ''));
+   return w3_div('id-control w3-text-teal w3-hide', s1 + (admin_sdr_mode? (s2 + s3 + s4) : ''));
 }
 
 function control_focus()
@@ -553,6 +573,18 @@ function server_enabled_cb(path, idx, first)
 function control_user_kick_cb(id, idx)
 {
 	ext_send('SET user_kick=-1');
+}
+
+function control_snr_measure_custom_cb(id, idx, first)
+{
+   //console.log('control_snr_measure_custom_cb id='+ id +' idx='+ idx +' first='+ first);
+   if (first) return;
+   admin_int_cb(id, idx, first);
+   if (cfg.snr_meas_interval_hrs == kiwi.SNR_CUSTOM) {
+      var min = cfg.snr_meas_custom_min;
+      ext_send('SET snr_interval='+ (min * 60));
+      w3_innerHTML('id-snr-remain', 'Next measurement in '+ min +' min');
+   }
 }
 
 function control_snr_measure_cb(id, idx)
@@ -1659,7 +1691,10 @@ function update_html()
          w3_divs('w3-tspace-8',
             w3_switch_label('w3-label-left', 'Disable recent changes?',
                'Yes', 'No', 'disable_recent_changes', cfg.disable_recent_changes, 'admin_radio_YN_cb'),
-            w3_text('w3-text-black', 'Currently:<br><ul><li>The Firefox audio hang workaround.</li></ul>')
+            w3_text('w3-text-black', 'Currently:<br><ul>' +
+               '<li>The Firefox audio hang workaround.</li>' +
+               '<li>The HTTP X-Real-IP &amp; X-Forwarded-For header check rejecting local/loopback IP addresses.</li>' +
+            '</ul>')
          ),
          ''
       ) +
@@ -1840,17 +1875,27 @@ function network_html()
 		w3_div('id-net-reboot w3-container',
 			w3_inline('w3-halign-space-between w3-margin-bottom w3-text-teal/',
 			   w3_divs('w3-valign w3-flex-col/w3-tspace-6',
-					w3_input_get('w3-restart', 'Internal port', 'adm.port', 'admin_int_cb'),
-					w3_input_get('w3-restart', 'External port', 'adm.port_ext', 'admin_int_cb'),
-					w3_input_get('', 'Debian hostname', 'adm.hostname', 'network_hostname_cb', 'kiwisdr')
+					w3_input_get('w3-restart|width:150px', 'Internal port', 'adm.port', 'admin_int_cb'),
+					w3_input_get('w3-restart|width:150px', 'External port', 'adm.port_ext', 'admin_int_cb'),
+					w3_input_get('|width:150px', 'Debian hostname', 'adm.hostname', 'network_hostname_cb', 'kiwisdr')
 				),
 				w3_divs('id-net-ssl-vis w3-hide/ w3-center w3-restart',
 					w3_switch_label_get_param('id-net-ssl w3-center', 'Enable HTTPS/SSL on<br>network connections?',
 					   'Yes', 'No', 'adm.use_ssl', true, false, 'network_use_ssl_cb')
 				),
-				w3_switch_label('w3-center', 'Auto add NAT rule<br>on firewall / router?', 'Yes', 'No', 'adm.auto_add_nat', adm.auto_add_nat, 'network_auto_nat_cb'),
-            w3_switch_label_get_param('w3-center', 'IP address<br>(only static IPv4 for now)',
-               'DHCP', 'Static', 'adm.ip_address.use_static', 0, false, 'network_use_static_cb'),
+				w3_divs('/w3-tspace-8',
+               w3_checkbox_get_param('//w3-label-inline', 'Auto add NAT rule on router', 'adm.auto_add_nat', 'network_auto_nat_cb', false)
+               /*,
+               w3_checkbox_get_param('/w3-label-inline/w3-ialign-start',
+                  'Acquire local IP indefinitely <br> (uncheck if using direct-to-computer <br> Ethernet connection)',
+                  'adm.local_ip_retry', 'admin_bool_cb', true)
+               */
+            ),
+            w3_divs('w3-center/',
+               w3_switch_label_get_param('w3-center', 'IP address',
+                  'DHCP', 'Static', 'adm.ip_address.use_static', 0, false, 'network_use_static_cb'),
+               w3_div('w3-text-black', 'Only IPv4 static <br> addresses supported.')
+            ),
             w3_divs('w3-center/',
                w3_select_conditional('w3-width-auto', 'Ethernet interface speed', '', 'ethernet_speed', cfg.ethernet_speed, network.ethernet_speed_s, 'network_ethernet_speed'),
                w3_div('w3-text-black', spd_s)
@@ -2435,13 +2480,12 @@ function network_auto_nat_status_poll()
 	ext_send('SET auto_nat_status_poll');
 }
 
-function network_auto_nat_cb(path, idx, first)
+function network_auto_nat_cb(path, checked, first)
 {
    if (first) return;
-   idx = +idx;
-	var auto_nat = (idx == w3_SWITCH_YES_IDX)? 1:0;
+	var auto_nat = checked? 1:0;
 	//console.log('network_auto_nat_cb: path='+ path +' auto_nat='+ auto_nat);
-   admin_radio_YN_cb(path, idx);
+   admin_bool_cb(path, checked, first);
    ext_send_after_cfg_save('SET auto_nat_set');    // server inspects adm.auto_add_nat to add or delete NAT
    if (auto_nat && network.nat_status_interval == null) {
       //console.log('auto_nat_status_poll START');
@@ -2698,7 +2742,8 @@ var _gps = {
    map_locate: 0,
    map_mkr: [],
    legend_sep: w3_inline('', pin.green, 'Navstar/QZSS only', pin.yellow, 'Galileo only', pin.red, 'all sats'),
-   legend_all: w3_inline('', pin.green, 'all sats (Navstar/QZSS/Galileo)')
+   legend_all: w3_inline('', pin.green, 'all sats (Navstar/QZSS/Galileo)'),
+   info_needs_margin: true
 };
 
 //var E1B_offset_i = [ '-1', '-3/4', '-1/2', '-1/4', '0', '+1/4', '+1/2', '+3/4', '+1' ];
@@ -2780,7 +2825,7 @@ function gps_html()
          )
 		) +
 
-		w3_div('w3-container w3-section w3-card-8 w3-round-xlarge w3-pale-blue',
+		w3_div('id-gps-info-container w3-container w3-section w3-card-8 w3-round-xlarge w3-pale-blue',
 			w3_table('id-gps-info w3-table-6-8')
 		)
 	);
@@ -3111,6 +3156,12 @@ function gps_update_admin_cb()
 			)
 		);
 	w3_el("id-gps-info").innerHTML = s;
+	
+	// because AZ/EL, pos & IQ are taller than e.g. height of 8-ch id-gps-ch table
+	if (gps.ch.length < 12 && _gps.info_needs_margin) {
+	   w3_add('id-gps-info-container', 'w3-margin-T-128');
+	   _gps.info_needs_margin = false;
+	}
 
    gps_canvas = w3_el('id-gps-canvas');
    if (gps_canvas == null) return;

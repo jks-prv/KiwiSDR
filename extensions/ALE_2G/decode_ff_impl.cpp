@@ -1190,15 +1190,19 @@ namespace ale {
         #ifdef STANDALONE_TEST
         #else
             if (ResampleObj == nullptr) return;
+            const int iMaxInputSize = ResampleObj->GetMaxInputSize();
             const int iOutputBlockSize = ResampleObj->iOutputBlockSize;
 
             for (i = 0; i < length; i++) {
-                vecTempResBufIn[i] = sample[i];
+                vecTempResBufIn[vec_i++] = sample[i];
+                if (vec_i == iMaxInputSize) {
+                    ResampleObj->Resample(vecTempResBufIn, vecTempResBufOut);
+                    //printf("."); fflush(stdout);
+                    ale::decode_ff_impl::do_modem(&vecTempResBufOut[0], iOutputBlockSize);
+                    vec_i = 0;
+                    //real_printf(CYAN "ALE" NORM " "); fflush(stdout);
+                }
             }
-        
-            ResampleObj->Resample(vecTempResBufIn, vecTempResBufOut);
-            //printf("."); fflush(stdout);
-            ale::decode_ff_impl::do_modem(&vecTempResBufOut[0], iOutputBlockSize);
         #endif
     }
     
@@ -1273,6 +1277,7 @@ namespace ale {
 	void decode_ff_impl::modem_reset()
 	{
         inbuf_i = 0;
+        vec_i = 0;
 	    activity_cnt = active = 0;
 	    in_cmd = binary = 0;
 	    cmd_cnt = 0;
@@ -1321,6 +1326,7 @@ namespace ale {
             
                 const int fixedInputSize = n_samps;
                 ResampleObj->Init(fixedInputSize, ratio);
+
                 const int iMaxInputSize = ResampleObj->GetMaxInputSize();
                 vecTempResBufIn.Init(iMaxInputSize, (_REAL) 0.0);
 
@@ -1328,8 +1334,8 @@ namespace ale {
                 vecTempResBufOut.Init(iMaxOutputSize, (_REAL) 0.0);
 
                 ResampleObj->Reset();
-                //printf("### using NEW resampler: ratio=%f srate=%f n_samps=%d iOutputBlockSize=%d\n",
-                //    ratio, f_srate, n_samps, ResampleObj->iOutputBlockSize);
+                //printf("### using NEW resampler: ratio=%f srate=%f n_samps=%d iMaxInputSize=%d iMaxOutputSize=%d\n",
+                //    ratio, f_srate, n_samps, iMaxInputSize, iMaxOutputSize);
             } else {
                 printf("### using OLD resampler\n");
             }

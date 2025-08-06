@@ -80,9 +80,10 @@ void fax_task(void *param)
                 }
                 e->seq = rx->real_seqnum[e->rd_pos];
             }
+            int nsamps = rx->real_nsamps[e->rd_pos];
             e->seq++;
 		    
-		    m_FaxDecoder[rx_chan].ProcessSamples(&rx->real_samples_s2[e->rd_pos][0], FASTFIR_OUTBUF_SIZE, e->shift);
+		    m_FaxDecoder[rx_chan].ProcessSamples(&rx->real_samples_s2[e->rd_pos][0], nsamps, e->shift);
             evFAX(EC_EVENT, EV_EXT, ev_dump, "FAX", evprintf("ProcessSamples "));
             NextTaskFast("fax_task");
 		    e->shift = 0;

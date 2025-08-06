@@ -160,6 +160,14 @@ CSoundOutKiwi::Write(CVector<short>& psData)
     drm_buf_t *drm_buf = DRM_buf_p();
 
     size_t mono_samps = psData.Size();
+    
+    #if 0
+        static u4_t last_ms;
+        u4_t now = timer_ms();
+        real_printf(MAGENTA "%d-%d" NORM " ", mono_samps, now - last_ms); fflush(stdout);
+        last_ms = now;
+    #endif
+    
     size_t stereo_samps = mono_samps/2;
     if (stereo_samps != drm_buf->out_samps) {
         printf("CSoundOutKiwi::Write mono=%zu stereo=%zu out_samps=%d N_DRM_OSAMPS=%d\n", mono_samps, stereo_samps, drm_buf->out_samps, N_DRM_OSAMPS);
@@ -179,14 +187,14 @@ CSoundOutKiwi::Write(CVector<short>& psData)
     #if 0
         static u4_t kstart, ksamps, kmeas, klimit;
         if (ksamps == 0) {
-            kstart = timer_ms();
-            kmeas = 3;
+            kstart = now;
+            kmeas = 10;
             klimit = kmeas * 1000;
         }
         ksamps += stereo_samps;
-        u4_t diff = timer_ms() - kstart;
+        u4_t diff = now - kstart;
         if (diff > klimit) {
-            real_printf("KSO %d sps, %d sec\n", ksamps/kmeas, kmeas); fflush(stdout);
+            real_printf("KSO %d sps, %d sec, %d msec\n", ksamps/kmeas, kmeas, diff); fflush(stdout);
             ksamps = 0;
             /*
             static int pdump;

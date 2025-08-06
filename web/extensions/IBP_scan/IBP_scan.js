@@ -379,7 +379,7 @@ function IBP_scan_help(show)
             w3_div('w3-margin-R-8',
                '<br>URL parameters: <br>' +
                'First parameter can be an entry from the IBP menu: One of the station callsigns. <br>' +
-               'Or a band or frequency (MHz) entry, e.g. "20m", "28". Or "all" or "cycle" to scan all bands. <br>' +
+               'Or a band or frequency (MHz) entry, e.g. "20m", "28". Or "all" or "cycle" to scan all bands. ' +
                'The two checkbox values can also be set. Use a num value of "1" to set the checkbox. <br>' +
                w3_text('|color:orange', 'annotate:<i>num</i> &nbsp; autosave:<i>num</i>') +
                '<br>Keywords are case-insensitive and can be abbreviated (except for callsigns). <br>' +
@@ -387,7 +387,7 @@ function IBP_scan_help(show)
                ''
             )
          );
-      confirmation_show_content(s, 630, 200);
+      confirmation_show_content(s, 630, 225);
       w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
    }
    return true;

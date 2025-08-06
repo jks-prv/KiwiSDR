@@ -1871,7 +1871,7 @@ static void parse_http_headers(char **buf, struct mg_connection *ri) {
     ri->http_headers[i].value = skip(buf, "\r\n");
     if (ri->http_headers[i].name[0] == '\0')
       break;
-    //printf("HDR %d %s = %s\n", i, ri->http_headers[i].name, ri->http_headers[i].value);
+    //printf("HDR: %d %s = %s\n", i, ri->http_headers[i].name, ri->http_headers[i].value);
     ri->num_headers = i + 1;
   }
 }
@@ -2652,10 +2652,17 @@ static int mg_strncasecmp(const char *s1, const char *s2, size_t len) {
 const char *mg_get_header(const struct mg_connection *ri, const char *s) {
   int i;
 
-  for (i = 0; i < ri->num_headers; i++)
-    if (!mg_strcasecmp(s, ri->http_headers[i].name))
+  //bool dbug = (strcmp(s, "X-Real-IP") == 0);
+  //if (dbug) printf("HDRS: #%d\n", ri->num_headers);
+  for (i = 0; i < ri->num_headers; i++) {
+    //if (dbug) printf("HDRS: %d:%s\n", i, ri->http_headers[i].name);
+    if (!mg_strcasecmp(s, ri->http_headers[i].name)) {
+      //if (dbug) printf("HDRS: RTN %d:%s=%s\n", i, ri->http_headers[i].name, ri->http_headers[i].value);
       return ri->http_headers[i].value;
+    }
+  }
 
+  //if (dbug) printf("HDRS: RTN NULL\n");
   return NULL;
 }
 

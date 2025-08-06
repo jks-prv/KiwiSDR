@@ -21,6 +21,8 @@ Boston, MA  02110-1301, USA.
 //
 // Needed to avoid the Vivado "inferring latch" warning.
 
+`timescale 1ns / 100ps
+
 module t_latch (
 	input  wire clk,
 	input  wire en,
@@ -29,10 +31,10 @@ module t_latch (
 	);
 	
 	// mux
+    reg latch;
     always @*
         q = en? d : latch;
     
-    reg latch;
     always @ (posedge clk)
         if (en)
             latch <= d;

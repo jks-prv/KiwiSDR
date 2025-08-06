@@ -394,7 +394,7 @@ void extint_c2s(void *param)
                             eusr->ext = ext;
                             eusr->conn_ext = conn_ext;
                             conn_ext->ext = ext;
-                            TaskNameS(ext->name);
+                            TaskNameSet(ext->name);
                             u4_t flags = TaskFlags();
                             TaskSetFlags(flags | CTF_RX_CHANNEL | (conn_ext->rx_channel & CTF_CHANNEL));
 

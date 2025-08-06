@@ -375,7 +375,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("no_wf", false, &up_cfg);
     cfg_default_bool("test_webserver_prio", false, &up_cfg);
     cfg_default_bool("test_deadline_update", false, &up_cfg);
-    cfg_default_bool("disable_recent_changes", false, &up_cfg);
+    kiwi.disable_recent_changes = cfg_default_bool("disable_recent_changes", false, &up_cfg);
     cfg_default_int("S_meter_OV_counts", 10, &up_cfg);
     cfg_default_bool("webserver_caching", true, &up_cfg);
     max_thr = (float) cfg_default_int("overload_mute", -15, &up_cfg);
@@ -386,10 +386,14 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("snr_local_time", true, &up_cfg);
     cfg_default_bool("snr_meas_ham", false, &up_cfg);
     cfg_default_bool("snr_meas_ant_sw", false, &up_cfg);
+    cfg_default_bool("snr_meas_filter", true, &up_cfg);
     cfg_default_int("snr_meas_custom_min", 0, &up_cfg);
     cfg_default_int("snr_meas_custom_lo", 0, &up_cfg);
     cfg_default_int("snr_meas_custom_hi", 0, &up_cfg);
     cfg_default_int("snr_meas_custom_zoom", 0, &up_cfg);
+    cfg_default_int("snr_filter_thresh", -82, &up_cfg);
+    cfg_default_int("snr_filter_delta", 25, &up_cfg);
+    cfg_default_int("snr_filter_runlen", 300, &up_cfg);
 
     any_preempt_autorun = cfg_default_bool("any_preempt_autorun", true, &up_cfg);
     cfg_default_int("ident_len", IDENT_LEN_NOM, &up_cfg);
@@ -399,6 +403,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("show_1Hz", false, &up_cfg);
     cfg_default_int("dx_default_db", 0, &up_cfg);
     cfg_default_int("spec_min_range", 50, &up_cfg);
+    cfg_default_bool("all_fonts_bold", false, &up_cfg);
 
     cfg_default_object("init", "{}", &up_cfg);
     cfg_default_int("init.cw_offset", 500, &up_cfg);
@@ -636,6 +641,7 @@ void update_vars_from_config(bool called_at_init)
     admcfg_default_string("ip_address.dns1", "1.1.1.1", &update_admcfg);
     admcfg_default_string("ip_address.dns2", "8.8.8.8", &update_admcfg);
     admcfg_default_string("url_redirect", "", &update_admcfg);
+    admcfg_default_bool("local_ip_retry", true, &update_admcfg);
 
     admcfg_default_bool("ip_blacklist_auto_download", true, &update_admcfg);
     admcfg_default_string("ip_blacklist", "47.88.219.24/24", &update_admcfg);

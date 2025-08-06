@@ -5,9 +5,11 @@ var fsk = {
    first_time: true,
    
    dataH: 300,
-   ctrlW: 575,
+   ctrlW: 560,
+   ctrlW_bold: 595,
    ctrlW_wide: 675,
-   ctrlH: 200,
+   ctrlH: 190,
+   ctrlH_custom: 225,
 
    lhs: 150,
    tw: 1024,
@@ -31,10 +33,12 @@ var fsk = {
    shift_i: 2,
    shift_cval: 0,
    shift_custom: false,
+   show_shift: false,
    baud: 50,
    baud_i: 2,
    baud_cval: 0,
    baud_custom: false,
+   show_baud: false,
    baud_mult: 1,
    framing: '5N1.5',
    inverted: 1,
@@ -523,11 +527,11 @@ function fsk_controls_setup()
 	var controls_html =
 		w3_div('id-fsk-controls w3-text-white',
 			w3_divs('/w3-tspace-8',
-            w3_col_percent('',
+					w3_inline('w3-halign-space-between|width:85%/',
                w3_div('',
 				      w3_div('w3-show-inline-block w3-medium w3-text-aqua', '<b><a href="https://en.wikipedia.org/wiki/Frequency-shift_keying" target="_blank">FSK</a> decoder</b>')
-				   ), 50,
-					w3_div('', 'From <b><a href="https://arachnoid.com/JNX/index.html" target="_blank">JNX</a></b> by P. Lutus &copy; 2011'), 50
+				   ),
+					w3_div('', 'From <b><a href="https://arachnoid.com/JNX/index.html" target="_blank">JNX</a></b> by P. Lutus &copy; 2011')
 				),
 				
             w3_col_percent('',
@@ -540,15 +544,9 @@ function fsk_controls_setup()
             w3_inline('/w3-margin-between-16',
                w3_select(fsk.sfmt, '', 'preset', 'fsk.preset_i', W3_SELECT_SHOW_TITLE, fsk.preset_s, 'fsk_preset_cb'),
 
-               w3_inline('',
-                  w3_select(fsk.sfmt, '', 'shift', 'fsk.shift_i', W3_SELECT_SHOW_TITLE, fsk.shift_s, 'fsk_shift_cb'),
-                  w3_input('id-fsk-shift-custom w3-margin-left w3-hide|padding:0;width:auto|size=4', '', 'fsk.shift_cval', fsk.shift_cval, 'fsk_shift_custom_cb')
-               ),
+               w3_select(fsk.sfmt, '', 'shift', 'fsk.shift_i', W3_SELECT_SHOW_TITLE, fsk.shift_s, 'fsk_shift_cb'),
 
-               w3_inline('',
-                  w3_select(fsk.sfmt, '', 'baud', 'fsk.baud_i', W3_SELECT_SHOW_TITLE, fsk.baud_s, 'fsk_baud_cb'),
-                  w3_input('id-fsk-baud-custom w3-margin-left w3-hide|padding:0;width:auto|size=4', '', 'fsk.baud_cval', fsk.baud_cval, 'fsk_baud_custom_cb')
-               ),
+               w3_select(fsk.sfmt, '', 'baud', 'fsk.baud_i', W3_SELECT_SHOW_TITLE, fsk.baud_s, 'fsk_baud_cb'),
 
                w3_select(fsk.sfmt, '', 'framing', 'fsk.framing', fsk.framing, fsk.framing_s, 'fsk_framing_cb'),
 
@@ -557,6 +555,13 @@ function fsk_controls_setup()
                w3_checkbox('w3-label-inline w3-label-not-bold/', 'inverted', 'fsk.inverted', fsk.inverted, 'fsk_inverted_cb')
             ),
 
+            w3_inline('id-fsk-custom-container w3-hide/',
+                  w3_input('id-fsk-shift-custom/w3-label-inline w3-label-not-bold/|padding:0;width:auto|size=4',
+                     'shift:', 'fsk.shift_cval', fsk.shift_cval, 'fsk_shift_custom_cb'),
+                  w3_input('id-fsk-baud-custom/w3-label-inline w3-label-not-bold/|padding:0;width:auto|size=4',
+                     'baud:', 'fsk.baud_cval', fsk.baud_cval, 'fsk_baud_custom_cb')
+            ),
+            
             w3_inline('/w3-margin-between-16',
 					w3_button('w3-padding-smaller', 'Next', 'w3_select_next_prev_cb', { dir:w3_MENU_NEXT, id:'fsk.menu', func:'fsk_pre_select_cb' }),
 					w3_button('w3-padding-smaller', 'Prev', 'w3_select_next_prev_cb', { dir:w3_MENU_PREV, id:'fsk.menu', func:'fsk_pre_select_cb' }),
@@ -628,7 +633,6 @@ function fsk_controls_setup()
 	fsk_baud_error_init();
 
    ext_set_data_height(fsk.dataH);
-	ext_set_controls_width_height(fsk.ctrlW, fsk.ctrlH);
 	
 	// our sample file is 12k only
 	if (ext_nom_sample_rate() != 12000)
@@ -732,7 +736,10 @@ function fsk_setup()
    w3_checkbox_set('fsk.inverted', fsk.inverted);
    
    var wide = (fsk.shift_custom || fsk.baud_custom);
-	ext_set_controls_width_height(wide? fsk.ctrlW_wide : fsk.ctrlW, fsk.ctrlH);
+   var ctrlW = cfg.all_fonts_bold? fsk.ctrlW_bold : fsk.ctrlW;
+   var ctrlH = fsk.custom? fsk.ctrlH_custom : fsk.ctrlH;
+   console.log('$'+ cfg.all_fonts_bold +' '+ ctrlW +' '+ ctrlH);
+	ext_set_controls_width_height(ctrlW, ctrlH);
    
    fsk_crosshairs(1);
 }
@@ -783,9 +790,7 @@ function fsk_preset_cb(path, idx, first)
    if (first) return;
    fsk_preset(fsk.preset_s[+idx]);
    fsk_setup();
-   w3_show_hide('id-fsk-shift-custom', false);
-   w3_show_hide('id-fsk-baud-custom', false);
-
+   fsk_show_custom({shift:false, baud:false});
 }
 
 function fsk_crosshairs(vis)
@@ -901,13 +906,25 @@ function FSK_environment_changed(changed)
    }
 }
 
+function fsk_show_custom(opt)
+{
+   fsk.show_shift = w3_opt(opt, 'shift', fsk.show_shift);
+   fsk.show_baud  = w3_opt(opt, 'baud',  fsk.show_baud);
+   if (fsk.show_shift != null) w3_show_hide_inline('id-fsk-shift-custom', fsk.show_shift);
+   var spacing = (fsk.show_shift === true && fsk.show_baud === true);
+   //console.log('show_shift='+ fsk.show_shift +' show_baud='+ fsk.show_shift +' spacing='+ spacing);
+   if (fsk.show_baud  != null) w3_show_hide_inline('id-fsk-baud-custom',  fsk.show_baud, 0, 'w3-margin-left', spacing);
+   fsk.custom = (fsk.show_shift === true || fsk.show_baud === true);
+   w3_show_hide_inline('id-fsk-custom-container', fsk.custom);
+}
+
 function fsk_shift_cb(path, idx, first)
 {
    //if (first) return;
    var shift_s = fsk.shift_s[+idx];
    var custom = (idx == fsk.SHIFT_CUSTOM_IDX);
    //console.log('fsk_shift_cb idx='+ idx +' shift_s='+ shift_s +' custom='+ custom);
-   w3_show_hide('id-fsk-shift-custom', custom);
+   fsk_show_custom({shift:custom});
    if (custom) {
       fsk.shift = w3_get_value('id-fsk-shift-custom');
 	   fsk.shift_custom = true;
@@ -926,7 +943,7 @@ function fsk_shift_custom_cb(path, val)
 	w3_set_value(path, shift);
 	fsk.shift_cval = fsk.shift = shift;
 	fsk.shift_custom = true;
-	w3_show_hide('id-fsk-shift-custom', true);
+   fsk_show_custom({shift:true});
    fsk_setup();
 }
 
@@ -936,7 +953,7 @@ function fsk_baud_cb(path, idx, first)
    var baud_s = fsk.baud_s[+idx];
    var custom = (idx == fsk.BAUD_CUSTOM_IDX);
    //console.log('fsk_baud_cb idx='+ idx +' baud_s='+ baud_s +' custom='+ custom);
-   w3_show_hide('id-fsk-baud-custom', custom);
+   fsk_show_custom({baud:custom});
    if (custom) {
       fsk.baud = w3_get_value('id-fsk-baud-custom');
 	   fsk.baud_custom = true;
@@ -955,7 +972,7 @@ function fsk_baud_custom_cb(path, val)
 	w3_set_value(path, baud);
 	fsk.baud_cval = fsk.baud = baud;
 	fsk.baud_custom = true;
-	w3_show_hide('id-fsk-baud-custom', true);
+   fsk_show_custom({baud:true});
    fsk_setup();
 }
 
@@ -1172,7 +1189,7 @@ function FSK_help(show)
          
                'URL parameters: <br>' +
                'First parameter can be a frequency matching an entry in station menus. <br>' +
-               w3_text('|color:orange', 'shift:<i>num</i> &nbsp; baud:<i>num</i> &nbsp; framing:<i>value</i> &nbsp; encoding:<i>value</i> &nbsp; inverted<i>[:0|1]</i> &nbsp; log_time:<i>mins</i>') +
+               w3_text('|color:orange', 'shift:<i>num</i> &nbsp; baud:<i>num</i> &nbsp; framing:<i>value</i> &nbsp; encoding:<i>value</i> &nbsp; inverted<i>[:0|1]</i> <br> log_time:<i>mins</i>') +
                '<br> Values are those appearing in their respective menus. <br>' +
                'Any number for shift and baud can be used. Not just the preset values in the menus. <br>' +
                'Keywords are case-insensitive and can be abbreviated. <br>' +
@@ -1186,7 +1203,7 @@ function FSK_help(show)
                ''
             )
          );
-      confirmation_show_content(s, 610, 375);
+      confirmation_show_content(s, 620, 450);
       w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
    }
    return true;

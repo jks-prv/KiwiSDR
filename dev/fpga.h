@@ -30,11 +30,14 @@ void ctrl_clr_ser_dev();
 typedef union {
     u2_t word;
     struct {
-        u2_t fpga_id:4, stat_user:4, fpga_ver:4, fw_id:3, ovfl:1;
+        u2_t stat:10, fpga_id:3, unused_inputs:1, dna:1, ovfl:1;
     };
 } stat_reg_t;
 stat_reg_t stat_get(int which = -1);
 
+extern char *fpga_file;
+
+void fpga_init(int check);
 u64_t fpga_dna();
 u2_t getmem(u2_t addr);
 void setmem(u2_t addr, u2_t data);

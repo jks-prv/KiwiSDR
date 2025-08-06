@@ -31,6 +31,7 @@
 #include "debug.h"
 #include "peri.h"
 #include "spi.h"
+#include "rx_util.h"
 #include "shmem.h"      // SIG_SETUP_TRAMP
 
 #include <stdio.h>
@@ -1290,7 +1291,7 @@ void _NextTask(const char *where, u4_t param, u_int64_t pc)
 
         #ifdef LOCK_CHECK_HANG
             if (lock_panic) {
-                dump();
+                dump_direct();
                 evLock(EC_DUMP, EV_NEXTTASK, -1, "lock panic", "DUMP lock_panic");
                 panic("lock_check");
             }
@@ -1388,7 +1389,7 @@ int _CreateTask(funcP_t funcP, const char *name, void *param, int priority, u4_t
             soft_fail++;
             return -1;
         } else {
-            dump();
+            dump_direct();
             lprintf("create_task: stack_size=%s\n",
                 (stack_size == CTF_STACK_REG)? "REG" : ((stack_size == CTF_STACK_MED)? "MED" : "LARGE"));
             panic("create_task: no tasks available");

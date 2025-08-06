@@ -51,13 +51,14 @@ typedef struct {
     bool spectral_inversion, spectral_inversion_lockout;
     bool require_id;
     bool test_marine_mobile;
+    bool disable_recent_changes;
     u4_t vr, vc;        // virus detection info
     
     int current_espeed;
     
     float rf_attn_dB;
 
-    bool snr_initial_meas_done, snr_meas_active;
+    bool snr_initial_meas_done, snr_meas_active, snr_disable_filter;
     
     bool RsId;
     
@@ -84,7 +85,7 @@ extern kiwi_t kiwi;
 extern int version_maj, version_min;
 
 extern bool background_mode, need_hardware, is_multi_core, any_preempt_autorun, spi_show_stats,
-	DUC_enable_start, rev_enable_start, web_nocache, kiwi_reg_debug, cmd_debug,
+	DUC_enable_start, rev_enable_start, web_nocache, kiwi_reg_debug, cmd_debug, gen_debug,
 	gps_e1b_only, disable_led_task, debug_printfs, force_camp, ecpu_stack_check,
 	log_local_ip, DRM_enable, have_snd_users, admin_keepalive;
 
@@ -107,7 +108,6 @@ extern TYPEREAL DC_offset_I, DC_offset_Q;
 extern kstr_t *cpu_stats_buf;
 extern char *tzone_id, *tzone_name;
 extern cfg_t cfg_ipl;
-extern char *fpga_file;
 extern lock_t spi_lock;
 
 extern int p0, p1, p2;
@@ -131,7 +131,6 @@ typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3 } firmware_e;
 #define IDENT_LEN_NOM   16
 
 void kiwi_restart();
-void fpga_init();
 
 void update_freqs(bool *update_cfg = NULL);
 void update_vars_from_config(bool called_at_init = false);

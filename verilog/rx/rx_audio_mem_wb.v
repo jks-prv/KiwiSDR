@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@ Boston, MA  02110-1301, USA.
 // when the DDC samples are available, all the receiver outputs are interleaved into a common buffer
 //////////////////////////////////////////////////////////////////////////
 	
-`timescale 10ns / 10ns
+`timescale 1ns / 100ps
 
 module rx_audio_mem_wb (
 	input wire		   adc_clk,
@@ -52,8 +52,6 @@ module rx_audio_mem_wb (
 	
 `include "kiwi.gen.vh"
 
-    assign debug = use_ts;
-
     reg [2:0] didx;
     reg [1:0] done;
     reg [15:0] count;
@@ -61,6 +59,9 @@ module rx_audio_mem_wb (
 	reg transfer;
 	reg [1:0] move;
 	reg [1:0] tsel;
+	wire reset_bufs_A;
+
+    assign debug = use_ts;
 
 `ifdef SYNTHESIS
 	wire reset = reset_bufs_A;
@@ -216,16 +217,17 @@ debug_3 <= 1;
     localparam RXBUF_MSB = clog2(RXBUF_SIZE) - 1;
 	reg [RXBUF_MSB:0] waddr, raddr;
 	
-	wire reset_bufs_A;
 	SYNC_PULSE sync_reset_bufs (.in_clk(cpu_clk), .in(reset_bufs_C), .out_clk(adc_clk), .out(reset_bufs_A));
 
 	always @ (posedge adc_clk)
-		if (reset_bufs_A)
+		if (reset)
 		begin
 			waddr <= 0;
 		end
 		else
 		waddr <= waddr + wr;
+	
+	wire rd = get_rx_samp_C;
 	
 	always @ (posedge cpu_clk)
 		if (reset_bufs_C)
@@ -235,8 +237,6 @@ debug_3 <= 1;
 		else
 			raddr <= raddr + rd;
 
-	wire rd = get_rx_samp_C;
-	
     assign didx_o = didx;
     //assign count_o = count;
     //assign waddr_o = waddr;

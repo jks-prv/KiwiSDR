@@ -17,26 +17,28 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2008 Alex Shovkoplyas, VE3NEA
 // Copyright (c) 2013 Phil Harman, VK6APH
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-module rx (
-	input  wire		   adc_clk,
-	input  wire signed [IN_WIDTH-1:0] adc_data,
-	input  wire		   rd_getI,
-	input  wire		   rd_getQ,
-	output wire		   rx_avail_A,
-	output wire [15:0] rx_dout_A,
+`timescale 1ns / 100ps
 
-	input  wire		   cpu_clk,
-    input  wire [31:0] freeze_tos_A,
-	input  wire		   rx_sel_C,
-    input  wire        set_rx_freqH_C,
-    input  wire        set_rx_freqL_C
+module rx
+	#(parameter IN_WIDTH  = "required")
+    (
+        input  wire		   adc_clk,
+        input  wire signed [IN_WIDTH-1:0] adc_data,
+        input  wire		   rd_getI,
+        input  wire		   rd_getQ,
+        output wire		   rx_avail_A,
+        output wire [15:0] rx_dout_A,
+    
+        input  wire		   cpu_clk,
+        input  wire [31:0] freeze_tos_A,
+        input  wire		   rx_sel_C,
+        input  wire        set_rx_freqH_C,
+        input  wire        set_rx_freqL_C
 	);
 	
 `include "kiwi.gen.vh"
-
-	parameter IN_WIDTH  = "required";
 
 	reg signed [47:0] rx_phase_inc;
 	wire set_phaseH, set_phaseL;
@@ -118,22 +120,27 @@ cic_prune_var #(.INC_FILE("rx2"), .STAGES(RX2_STAGES), .DECIM_TYPE(RX2_DECIM), .
 
 	wire signed [RXO_BITS-1:0] rx_cic_out_i, rx_cic_out_q;
 
+
 `ifdef USE_RX_CICF
+
+    //////////////////////////////////////////////////////////////////////////
+    // RX CIC FIR filter
+    //////////////////////////////////////////////////////////////////////////
 
     wire rx_cicf_avail;
 	wire signed [RXO_BITS-1:0] rx_cicf_out_i, rx_cicf_out_q;
 
-fir_iq #(.WIDTH(RXO_BITS))
-    cicf(
-		.adc_clk        (adc_clk),
-		.reset			(1'b0),
-		.in_strobe		(rx_cic2_avail),
-		.out_strobe		(rx_cicf_avail),
-		.in_data_i		(rx_cic2_out_i),
-		.in_data_q		(rx_cic2_out_q),
-		.out_data_i		(rx_cicf_out_i),
-		.out_data_q		(rx_cicf_out_q)
-    );
+    fir_iq_snd #(.WIDTH(RXO_BITS))
+        cicf(
+            .adc_clk        (adc_clk),
+            .reset			(1'b0),
+            .in_strobe		(rx_cic2_avail),
+            .out_strobe		(rx_cicf_avail),
+            .in_data_i		(rx_cic2_out_i),
+            .in_data_q		(rx_cic2_out_q),
+            .out_data_i		(rx_cicf_out_i),
+            .out_data_q		(rx_cicf_out_q)
+        );
 
     assign rx_avail_A   = rx_cicf_avail;
     assign rx_cic_out_i = rx_cicf_out_i;

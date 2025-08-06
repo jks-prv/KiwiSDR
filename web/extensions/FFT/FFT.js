@@ -623,12 +623,12 @@ function FFT_help(show)
    if (show) {
       var s = 
          w3_text('w3-medium w3-bold w3-text-aqua', 'Audio FFT help') +
-         '<br>Remember that on KiwiSDR the audio and waterfall channels are completely separate. <br>' +
-         'For example you can pan the waterfall frequency without effecting the audio. <br>' +
-         'By contrast this extension allows visualization of the <i>audio</i> channel itself by using<br>' +
-         'an FFT, waterfall and integrator (summing waterfall) for weak signals. <br>' +
+         '<br>Remember that on KiwiSDR the audio and waterfall channels are completely separate. ' +
+         'For example you can pan the waterfall frequency without effecting the audio. ' +
+         'By contrast this extension allows visualization of the <i>audio</i> channel itself by using ' +
+         'an FFT, waterfall and integrator (summing waterfall) for weak signals.' +
          
-         '<br>URL parameters: <br>' +
+         '<br><br>URL parameters: <br>' +
          w3_text('|color:orange', 'itime:<i>num</i> &nbsp; maxdb:<i>num</i> &nbsp; mindb:<i>num</i>') +
          '<br> Non-numeric values are those appearing in their respective menus. <br>' +
          'Keywords are case-insensitive and can be abbreviated. <br>' +
@@ -636,7 +636,7 @@ function FFT_help(show)
          '<i>ext=fft,integ,itime:5</i> &nbsp;&nbsp; ' +
          '<i>ext=fft,water,min:-130,max:-40</i> &nbsp;&nbsp; <i>ext=fft,alpha</i> <br>' +
          '<br>' +
-         'Clicking on integrate display will restart it such that the click-point is <br>' +
+         'Clicking on integrate display will restart it such that the click-point is ' +
          'moved to top of the display (i.e. vertical timing can be realigned).' +
          '';
       confirmation_show_content(s, 610, 300);

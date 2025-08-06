@@ -18,7 +18,9 @@
 // http://www.holmea.demon.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-`default_nettype none
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+
+`timescale 1ns / 100ps
 
 module GPS (
     input  wire		   clk,
@@ -225,7 +227,7 @@ module GPS (
     
     wire e1b_wr = wrReg & op_8[SET_E1B_CODE];
 
-    E1BCODE e1b (
+    E1BCODE #(._V_GPS_CHANS(V_GPS_CHANS), ._E1B_CODEBITS(E1B_CODEBITS)) e1b (
         .rst            (sampler_rst),
         .clk            (clk),
         .wr             (e1b_wr),
@@ -241,7 +243,7 @@ module GPS (
     wire op_cg_nco    = op_8[SET_CG_NCO];
 
     //DEMOD #(.E1B(1)) demod [V_GPS_CHANS-1:0] (      // not used currently
-    DEMOD #(.E1B(0)) demod [V_GPS_CHANS-1:0] (
+    DEMOD #(.E1B(0), ._GPS_REPL_BITS(GPS_REPL_BITS), ._E1B_CODEBITS(E1B_CODEBITS)) demod [V_GPS_CHANS-1:0] (
         .clk            (clk),
         .rst            (chan_rst),
         .sample         (sample),

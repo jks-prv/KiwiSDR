@@ -52,6 +52,7 @@ Boston, MA  02110-1301, USA.
 #define	CMD_WF_ALL  (CMD_ZOOM | CMD_START | CMD_DB | CMD_SPEED)
 
 extern str_hash_t wf_cmd_hash;
+extern str_hashes_t wf_cmd_hashes[];
 
 #define WF_RD_OFFSET 512
 extern int wf_rd_offset, wf_slowdown;

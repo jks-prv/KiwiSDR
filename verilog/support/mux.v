@@ -19,19 +19,18 @@ Boston, MA  02110-1301, USA.
 
 // useful for WIDTH > 1 cases when Verilog mux notation (wire[sel]) doesn't work
 
-module MUX (
-	input  wire [SEL*WIDTH-1:0]	in,
-	input  wire [NSEL-1:0]		sel,
-	output wire [WIDTH-1:0]		out
+`timescale 1ns / 100ps
+
+module MUX
+	#(parameter WIDTH  = "required", parameter SEL  = "required")
+	(
+        input  wire [SEL*WIDTH-1:0]	    in,
+        input  wire [clog2(SEL)-1:0]    sel,
+        output wire [WIDTH-1:0]		    out
 	);
 
 `include "kiwi.gen.vh"
 
-	parameter WIDTH  = "required";
-	parameter SEL  = "required";
-	
-	localparam NSEL = clog2(SEL);
-	
 	wire [SEL*WIDTH-1:0] out_s = (in >> (sel * WIDTH));
 	assign out = out_s[WIDTH-1:0];
 

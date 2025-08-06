@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "kiwi.h"
 #include "types.h"
@@ -48,7 +48,7 @@ Boston, MA  02110-1301, USA.
 #include <ifaddrs.h>
 
 //#define TEST_DELAYED_IPV4
-static int test_delayed_ipv4 = 4;
+static int test_delayed_ipv4 = 3;
 
 //#define IPV6_TEST
 
@@ -65,12 +65,12 @@ bool find_local_IPs(int retry)
         
         int family = ifa->ifa_addr->sa_family;
         int flags = ifa->ifa_flags;
-        net_printf("getifaddrs: IF %s fam=%d(%s) flags=0x%x%s%s | ", ifa->ifa_name,
+        net_dprintf("getifaddrs: IF %s fam=%d(%s) flags=0x%x%s%s | ", ifa->ifa_name,
             family, (family == AF_INET)? "ipv4" : ((family == AF_INET6)? "ipv6" : "other"),
             flags, (flags & IFF_UP)? " UP":"", (flags & IFF_RUNNING)? " RUNNING":"");
 
         if (family != AF_INET && family != AF_INET6) {
-            net_printf2("BAD: family\n");
+            net_dprintf2("BAD: family\n");
             continue;
         }
         
@@ -81,21 +81,21 @@ bool find_local_IPs(int retry)
         // Instead, add an option to admin security tab that disables local network check.
         //if ((is_eth0 && (!(flags & IFF_UP) || !(flags & IFF_RUNNING))) ||
         //    (!is_eth0 && !(flags & IFF_UP))) {
-        //    net_printf2("BAD: not UP (eth0: and RUNNING)\n");
+        //    net_dprintf2("BAD: not UP (eth0: and RUNNING)\n");
         
         if (!(flags & IFF_UP)) {
-            net_printf2("BAD: not UP\n");
+            net_dprintf2("BAD: not UP\n");
             continue;
         }
 
         if (strcmp(ifa->ifa_name, "lo") == 0 || kiwi_str_begins_with(ifa->ifa_name, "usb") || kiwi_str_begins_with(ifa->ifa_name, "SoftAp")) {
-            net_printf2("BAD: IF\n");
+            net_dprintf2("BAD: IF\n");
             continue;
         }
 
         bool is_ipv4LL = (kiwi_str_ends_with(ifa->ifa_name, ":avahi") != NULL);
         
-        net_printf2("OK\n");
+        net_dprintf2("OK\n");
 
         char *ip_pvt;
         socklen_t salen;
@@ -104,12 +104,13 @@ bool find_local_IPs(int retry)
         if (family == AF_INET) {
             #ifdef TEST_DELAYED_IPV4
                 if (test_delayed_ipv4-- != 0) {
-                    net_printf("TEST_DELAYED_IPV4\n");
-                    goto rtn;
+                    net_dprintf("TEST_DELAYED_IPV4\n");
+                    continue;
                 }
             #endif
             
             if (!net.ip4_valid) {
+                kiwi_asfree(net.ip4_if_name);
                 net.ip4_if_name = strdup(ifa->ifa_name);
                 struct sockaddr_in *sin = (struct sockaddr_in *) (ifa->ifa_addr);
                 net.ip4_pvt = INET4_NTOH(* (u4_t *) &sin->sin_addr);
@@ -117,7 +118,7 @@ bool find_local_IPs(int retry)
                 salen = sizeof(struct sockaddr_in);
                 sin = (struct sockaddr_in *) (ifa->ifa_netmask);
                 net.netmask4 = INET4_NTOH(* (u4_t *) &sin->sin_addr);
-                net_printf("IF IPv4 0x%08x /%d 0x%08x %s\n", net.ip4_pvt,
+                net_dprintf("IF IPv4 0x%08x /%d 0x%08x %s\n", net.ip4_pvt,
                     inet_nm_bits(AF_INET, &net.netmask4), net.netmask4, net.ip4_if_name);
             
                 // FIXME: if ip4LL, because a DHCP server wasn't responding, need to periodically reprobe
@@ -130,7 +131,7 @@ bool find_local_IPs(int retry)
                 #endif
             } else {
                 multiple = true;
-                net_printf("BAD: MULTIPLE ipv4 ADDRESS\n");
+                net_dprintf("BAD: MULTIPLE ipv4 ADDRESS\n");
             }
         } else {
             struct sockaddr_in6 *sin6;
@@ -141,43 +142,48 @@ bool find_local_IPs(int retry)
 
             if (is_inet4_map_6(a)) {
                 if (!net.ip4_6_valid) {
+                    kiwi_asfree(net.ip4_6_if_name);
                     net.ip4_6_if_name = strdup(ifa->ifa_name);
                     net.ip4_6_pvt = INET4_NTOH(* (u4_t *) &a[12]);
                     ip_pvt = net.ip4_6_pvt_s;
                     salen = sizeof(struct sockaddr_in);
                     net.netmask4_6 = INET4_NTOH(* (u4_t *) &m[12]);
-                    net_printf("IF IPv4_6 0x%08x /%d 0x%08x %s\n", net.ip4_6_pvt,
+                    net_dprintf("IF IPv4_6 0x%08x /%d 0x%08x %s\n", net.ip4_6_pvt,
                         inet_nm_bits(AF_INET, &net.netmask4_6), net.netmask4_6, net.ip4_6_if_name);
                     net.ip4_6_valid = true;
                 } else {
                     multiple = true;
-                    net_printf("BAD: MULTIPLE ipv4_6 ADDRESS\n");
+                    net_dprintf("BAD: MULTIPLE ipv4_6 ADDRESS\n");
                 }
             } else {
                 if (a[0] == 0xfe && a[1] == 0x80) {
                     if (!net.ip6LL_valid) {
+                        kiwi_asfree(net.ip6LL_if_name);
                         net.ip6LL_if_name = strdup(ifa->ifa_name);
                         memcpy(net.ip6LL_pvt, a, sizeof(net.ip6LL_pvt));
                         ip_pvt = net.ip6LL_pvt_s;
                         salen = sizeof(struct sockaddr_in6);
                         memcpy(net.netmask6LL, m, sizeof(net.netmask6LL));
-                        net_printf("IF IPv6 LINK-LOCAL /%d %s\n", inet_nm_bits(AF_INET6, &net.netmask6LL), net.ip6LL_if_name);
+                        net_dprintf("IF IPv6 LINK-LOCAL /%d %s\n", inet_nm_bits(AF_INET6, &net.netmask6LL), net.ip6LL_if_name);
                         net.ip6LL_valid = true;
                     } else {
                         multiple = true;
-                        net_printf("BAD: MULTIPLE ip6LL ADDRESS\n");
+                        net_dprintf("BAD: MULTIPLE ip6LL ADDRESS\n");
                     }
                 } else
                 if (net.ip6_valid < N_IPV6) {
                     i = net.ip6_valid;
-                    if (i == 0) net.ip6_if_name = strdup(ifa->ifa_name);
+                    if (i == 0) {
+                        kiwi_asfree(net.ip6_if_name);
+                        net.ip6_if_name = strdup(ifa->ifa_name);
+                    }
                     memcpy(net.ip6_pvt[i], a, sizeof(net.ip6_pvt[0]));
                     ip_pvt = net.ip6_pvt_s[i];
                     salen = sizeof(struct sockaddr_in6);
                     memcpy(net.netmask6[i], m, sizeof(net.netmask6[0]));
-                    net_printf("IF IPv6 #%d /%d %s ", i, inet_nm_bits(AF_INET6, net.netmask6[i]), net.ip6_if_name);
-		            for (j=0; j < 16; j++) net_printf2("%02x:", net.ip6_pvt[i][j]);
-		            net_printf2("\n");
+                    net_dprintf("IF IPv6 #%d /%d %s ", i, inet_nm_bits(AF_INET6, net.netmask6[i]), net.ip6_if_name);
+		            for (j=0; j < 16; j++) net_dprintf2("%02x:", net.ip6_pvt[i][j]);
+		            net_dprintf2("\n");
     
                     #ifdef IPV6_TEST
                         net.netmask6[i][8] = 0xff;
@@ -186,7 +192,7 @@ bool find_local_IPs(int retry)
                     net.ip6_valid++;
                 } else {
                     multiple = true;
-                    net_printf("BAD: TOO MANY ipv6 ADDRESSES\n");
+                    net_dprintf("BAD: TOO MANY ipv6 ADDRESSES\n");
                 }
             }
         }
@@ -195,29 +201,29 @@ bool find_local_IPs(int retry)
         
         int rc = getnameinfo(ifa->ifa_addr, salen, ip_pvt, NET_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
         if (rc != 0) {
-            lprintf("NET getnameinfo() failed: %s, fam=%d %s\n", ifa->ifa_name, family, gai_strerror(rc));
+            net_printf("getnameinfo() failed: %s, fam=%d %s\n", ifa->ifa_name, family, gai_strerror(rc));
             continue;
         }
     }
 	
-    lprintf("ip4_valid=%d ip4_6_valid=%d ip6_valid=%d ip6LL_valid=%d\n",
+    net_printf("ip4_valid=%d ip4_6_valid=%d ip6_valid=%d ip6LL_valid=%d\n",
         net.ip4_valid, net.ip4_6_valid, net.ip6_valid, net.ip6LL_valid);
 
 	if (net.ip4_valid) {
 		net.nm_bits4 = inet_nm_bits(AF_INET, &net.netmask4);
-		lprintf("NET(%d): private IPv4 <%s> 0x%08x /%d 0x%08x %s\n", retry, net.ip4_pvt_s, net.ip4_pvt,
+		net_printf("private IPv4 <%s> 0x%08x /%d 0x%08x %s\n", net.ip4_pvt_s, net.ip4_pvt,
 			net.nm_bits4, net.netmask4, net.ip4_if_name);
 	}
 
 	if (net.ip4_6_valid) {
 		net.nm_bits4_6 = inet_nm_bits(AF_INET, &net.netmask4_6);
-		lprintf("NET(%d): private IPv4_6 <%s> 0x%08x /%d 0x%08x %s\n", retry, net.ip4_6_pvt_s, net.ip4_6_pvt,
+		net_printf("private IPv4_6 <%s> 0x%08x /%d 0x%08x %s\n", net.ip4_6_pvt_s, net.ip4_6_pvt,
 			net.nm_bits4_6, net.netmask4_6, net.ip4_6_if_name);
 	}
 
 	for (i = 0; i < net.ip6_valid; i++) {
 		net.nm_bits6[i] = inet_nm_bits(AF_INET6, net.netmask6[i]);
-		lprintf("NET(%d): private IPv6 #%d <%s> ", retry, i, net.ip6_pvt_s[i]);
+		net_printf("private IPv6 #%d <%s> ", i, net.ip6_pvt_s[i]);
 		for (j=0; j < 16; j++) lprintf("%02x:", net.ip6_pvt[i][j]);
 		lprintf(" /%d ", net.nm_bits6[i]);
 		for (j=0; j < 16; j++) lprintf("%02x:", net.netmask6[i][j]);
@@ -226,7 +232,7 @@ bool find_local_IPs(int retry)
 
 	if (net.ip6LL_valid) {
 		net.nm_bits6LL = inet_nm_bits(AF_INET6, &net.netmask6LL);
-		lprintf("NET(%d): private IPv6 LINK-LOCAL <%s> /%d ", retry, net.ip6LL_pvt_s, net.nm_bits6LL);
+		net_printf("private IPv6 LINK-LOCAL <%s> /%d ", net.ip6LL_pvt_s, net.nm_bits6LL);
 		for (i=0; i < 16; i++) lprintf("%02x:", net.netmask6LL[i]);
 		lprintf(" %s\n", net.ip6LL_if_name);
 	}
@@ -251,7 +257,7 @@ bool find_local_IPs(int retry)
 
 rtn:	
 	freeifaddrs(ifaddr);
-    net_printf("ip4_valid=%d ip4_6_valid=%d ip6_valid=%d ip6LL_valid=%d\n",
+    net_dprintf("RTN ip4_valid=%d ip4_6_valid=%d ip6_valid=%d ip6LL_valid=%d\n",
         net.ip4_valid, net.ip4_6_valid, net.ip6_valid, net.ip6LL_valid);
 	return (net.ip4_valid || net.ip4_6_valid || net.ip6_valid || net.ip6LL_valid);
 }
@@ -470,9 +476,9 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
                         local = false;
                     #if 0
                         if (ip6_n) {
-                            net_printf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
+                            net_dprintf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
                         } else {
-                            net_printf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
+                            net_dprintf2("NET DEBUG %s %d %c c=%02x s=%02x nm=%02x\n", ips_type, i, match? 'T':'F', ip_client6[i], ip_server6[i], netmask6[i]);
                         }
                     #endif
                 }
@@ -700,8 +706,9 @@ char *ip_remote(struct mg_connection *mc)
 }
 
 // CAUTION: returned remote_ip could be fake if X-Real-IP or X-Forwarded-For are spoofed
-bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_ip)
+bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_ip, bool *is_loopback)
 {
+    if (is_loopback) *is_loopback = false;
     kiwi_strncpy(remote_ip, ip_remote(mc), NET_ADDRSTRLEN);     // unforwarded
     
     const char *x_real_ip = mg_get_header(mc, "X-Real-IP");
@@ -711,28 +718,35 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
 
     int n = 0;
     char *ip_r = NULL;
+    bool is_loop;
     
     if (x_real_ip != NULL) {
-        //if (id != NULL) printf("%s: %s X-Real-IP %s\n", id, remote_ip, x_real_ip);
+        //printf("check_if_forwarded %s: %s X-Real-IP %s\n", id, remote_ip, x_real_ip);
         n = sscanf(x_real_ip, "%" NET_ADDRSTRLEN_S "ms", &ip_r);
+        if (!kiwi.disable_recent_changes && isLocal_ip(ip_r, &is_loop)) {
+            lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Real-IP %s is_loopback=%d\n", id, ip_r, is_loop);
+            if (is_loop && is_loopback) *is_loopback = true;
+            n = 0;
+        }
     }
     
     if (x_forwarded_for != NULL) {
-        //if (id != NULL) printf("%s: %s X-Forwarded-For %s\n", id, remote_ip, x_forwarded_for);
+        //printf("check_if_forwarded %s: %s X-Forwarded-For %s\n", id, remote_ip, x_forwarded_for);
         if (x_real_ip == NULL || n != 1) {
             // take only client ip in case "X-Forwarded-For: client, proxy1, proxy2 ..."
             n = sscanf(x_forwarded_for, "%" NET_ADDRSTRLEN_S "m[^, ]", &ip_r);
+            if (!kiwi.disable_recent_changes && isLocal_ip(ip_r, &is_loop)) {
+                lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Forwarded-For %s is_loopback=%d\n", id, ip_r, is_loop);
+                if (is_loop && is_loopback) *is_loopback = true;
+                n = 0;
+            }
         }
     }
 
     bool forwarded = false;
     if (n == 1) {
-        if (strcmp(ip_r, "127.0.0.1") != 0) {
-            kiwi_strncpy(remote_ip, ip_r, NET_ADDRSTRLEN);
-            forwarded = true;
-        } else {
-            //printf("check_if_forwarded: BOTH loopback? x_real_ip=<%s> x_forwarded_for=<%s>\n", x_real_ip, x_forwarded_for);
-        }
+        kiwi_strncpy(remote_ip, ip_r, NET_ADDRSTRLEN);
+        forwarded = true;
     }
     
     mg_free_header(x_real_ip);

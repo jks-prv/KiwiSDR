@@ -49,16 +49,21 @@ u2_t ctrl_get()
 	return rv;
 }
 
+
 static void stat_dump(const char *id)
 {
+    u2_t ctrl = ctrl_get();
     stat_reg_t stat = stat_get();
-    printf("%s stat_get=0x%04x %4s|%3s|%5s|%s\n", id, stat.word,
-        (stat.word & 0x80)? "READ" : "",
-        (stat.word & 0x40)? "CLK" : "",
-        (stat.word & 0x20)? "SHIFT" : "",
-        (stat.word & 0x10)? "D1" : "D0"
-        );
+    printf("%s ctrl=0x%04x %4s|%3s|%5s stat=0x%04x %s\n", id,
+        ctrl,
+        (ctrl & CTRL_SER_LE_CSN)? "READ" : "",
+        (ctrl & CTRL_SER_CLK)?    "CLK" : "",
+        (ctrl & CTRL_SER_DATA)?   "SHIFT" : "",
+        stat.word,
+        (stat.word & STAT_DNA_DATA)? "D1" : "D0"
+    );
 }
+
 
 // NB: the eCPU maintains a latched shadow value of SET_CTRL[]
 // This means if a bit is given in the set parameter it persists until given in the clr parameter.
@@ -66,18 +71,18 @@ static void stat_dump(const char *id)
 void ctrl_clr_set(u2_t clr, u2_t set)
 {
 	spi_set_noduplex(CmdCtrlClrSet, clr, set);
-	//printf("ctrl_clr_set(0x%04x, 0x%04x) ctrl_get=0x%04x ", clr, set, ctrl_get());
-	//stat_dump("SET");
+	//printf("ctrl_clr_set       (0x%04x, 0x%04x) ", clr, set);
+	//stat_dump(" SET");
 }
 
 void ctrl_positive_pulse(u2_t bits)
 {
     //printf("ctrl_positive_pulse 0x%x\n", bits);
 	spi_set_noduplex(CmdCtrlClrSet, bits, bits);
-	//printf("ctrl_positive_pulse(0x%04x, 0x%04x) ctrl_get=0x%04x ", bits, bits, ctrl_get());
+	//printf("ctrl_positive_pulse(0x%04x, 0x%04x) ", bits, bits);
 	//stat_dump("RISE");
 	spi_set_noduplex(CmdCtrlClrSet, bits, 0);
-	//printf("ctrl_positive_pulse(0x%04x, 0x%04x) ctrl_get=0x%04x ", bits, 0,    ctrl_get());
+	//printf("ctrl_positive_pulse(0x%04x, 0x%04x) ", bits, 0);
 	//stat_dump("FALL");
 }
 
@@ -99,11 +104,10 @@ stat_reg_t stat_get(int which)
     //real_printf("G-%s ", TaskName()); fflush(stdout);
     SPI_MISO *status = get_misc_miso(MISO_STAT, which);
     stat_reg_t stat;
-    
     spi_get_noduplex(CmdGetStatus, status, sizeof(stat));
+    stat.word = status->word[0];
 	release_misc_miso(which);
     //real_printf("R-%s ", TaskName()); fflush(stdout);
-    stat.word = status->word[0];
 
     return stat;
 }
@@ -133,7 +137,7 @@ void printmem(const char *str, u2_t addr)
 void fpga_panic(int code, const char *s)
 {
     lprintf("FPGA panic: code=%d %s\n", code, s);
-    led_display_fpga_code(code);
+    if (bg) led_display_fpga_code(code);
     panic("FPGA panic");
 }
 
@@ -177,7 +181,7 @@ static SPI_MISO readback;
 static u1_t bbuf[2048];
 static u2_t code2[4096];
 
-void fpga_init() {
+void fpga_init(int check) {
 
     FILE *fp;
     int n, i, j;
@@ -372,20 +376,9 @@ void fpga_init() {
 	//printf("stat.word=0x%04x fw_id=0x%x fpga_ver=0x%x stat_user=0x%x fpga_id=0x%x\n",
 	//    stat.word, stat.fw_id, stat.fpga_ver, stat.stat_user, stat.fpga_id);
 
-	if (stat.fpga_id != fpga_id) {
+	if (check && stat.fpga_id != fpga_id) {
 		lprintf("FPGA ID %d, expecting %d\n", stat.fpga_id, fpga_id);
 		fpga_panic(8, "mismatch");
-	}
-
-	if (stat.fw_id != (FW_ID >> 12)) {
-		lprintf("eCPU firmware ID %d, expecting %d\n", stat.fw_id, FW_ID >> 12);
-		fpga_panic(9, "mismatch");
-	}
-
-	lprintf("FPGA version %d\n", stat.fpga_ver);
-	if (stat.fpga_ver != FPGA_VER) {
-		lprintf("\tbut expecting %d\n", FPGA_VER);
-		fpga_panic(10, "mismatch");
 	}
 
     spi_dev_init2();

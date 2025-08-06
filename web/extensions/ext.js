@@ -11,9 +11,9 @@ var extint = {
    adc_gps_clock_corr: 0,
    adc_clock_nom_Hz: 0,
    audio_data_cb: null,
-   extint_pwd_cb: null,
-   extint_pwd_cb_param: null,
-   extint_conn_type: null,
+   pwd_cb: null,
+   pwd_cb_param: null,
+   conn_type: null,
    ext_names: null,
    iframe_names: [],
    
@@ -66,7 +66,10 @@ function ext_switch_to_client(ext_name, first_time, recv_func)
 
 function ext_send(msg, ws)
 {
-	if (isNoArg(ws)) ws = extint.ws;
+	if (isNoArg(ws)) {
+	   ws = extint.ws;
+	   //console.log('ext_send ORIG ws null, NEW ws = '+ ws.stream);
+	}
 	
 	var len = msg.length;
 	if (len > extint.send_hiwat) {
@@ -549,6 +552,7 @@ function ext_hasCredential(conn_type, cb, cb_param, ws)
 	if (conn_type == 'mfg') conn_type = 'admin';
 	
 	var pwd;
+   //console.log('ext_hasCredential: conn_type='+ conn_type +' cb='+ cb +' cb_param='+ cb_param +' ws='+ ws);
 	if (conn_type == 'admin') {
 	   if (kiwi.admin_save_pwd) {
          pwd = kiwi_storeInit('admin', '');
@@ -736,7 +740,7 @@ function ext_mobile_info(last)
 {
    var w = window.innerWidth;
    var h = window.innerHeight;      // reduced if popup keyboard active
-   if (mobile_laptop_test) { w = 375; h = 812; }   // simulate iPhone X
+   if (kiwi_util.mobile_laptop_test) { w = 375; h = 812; }     // simulate iPhone X
    var rv = { width:w, height:h };
    var isPortrait;
 
@@ -744,7 +748,7 @@ function ext_mobile_info(last)
       isPortrait = last? last.isPortrait : 1;
    } else {
       // if popup keyboard active h could be <= w making test invalid
-      isPortrait = (w < h || mobile_laptop_test)? 1:0;
+      isPortrait = (w < h || kiwi_util.mobile_laptop_test)? 1:0;
    }
    rv.orient_unchanged = (last && last.isPortrait == isPortrait)? 1:0;
 
@@ -1083,6 +1087,7 @@ function injection_environment_changed(changed)
 
 function extint_valpwd_cb(badp)
 {
+   //console.log('extint_valpwd_cb: badp='+ badp +' pwd_cb_param='+ extint.pwd_cb_param);
 	if (extint.pwd_cb) extint.pwd_cb(badp, extint.pwd_cb_param);
 }
 
@@ -1096,6 +1101,7 @@ function extint_open_ws_cb()
 function extint_connect_server()
 {
 	extint.ws = open_websocket('EXT', extint_open_ws_cb, null, extint_msg_cb);
+	//console.log('extint_connect_server EXT WS = '+ extint.ws.stream);
 
 	// when the stream thread is established on the server it will automatically send a "MSG ext_client_init" to us
 }

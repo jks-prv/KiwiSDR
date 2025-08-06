@@ -662,6 +662,11 @@ input[type=range]::-moz-range-thumb {
     margin-top: 32px
 }
 
+.w3-margin-T-128
+{
+    margin-top: 128px !important
+}
+
 .w3-margin-TL-10
 {
     margin: 10px 0 0 10px

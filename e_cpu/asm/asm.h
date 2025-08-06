@@ -49,8 +49,8 @@ int num_strings();
 // tokens
 
 typedef enum {
-	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT, TT_ITER,
-	TT_DEF, TT_FILE, TT_STATS, TT_ALIGN
+	TT_EOL=0, TT_LABEL, TT_SYM, TT_NUM, TT_STR, TT_OPC, TT_PRE, TT_OPR, TT_DATA, TT_STRUCT,
+	TT_ITER, TT_DEF, TT_FILE, TT_STATS, TT_ALIGN
 } token_type_e;
 
 const char * const ttype_s[] = {
@@ -62,6 +62,8 @@ const char * const ttype_s[] = {
 #define	TF_RET		0x0002
 #define	TF_CIN		0x0004
 #define	TF_LOOP		0x0008
+
+#define	TF_SKIP		0x0010
 
 #define	TF_CFG_H	0x0100
 #define	TF_DOT_H	0x0200
@@ -114,7 +116,8 @@ void sym_undefined(tokens_t *tp);
 #define	PP_ELSE		12
 #define	PP_ENDIF	13
 #define	PP_ERROR	14
-#define	PP_DISPLAY	15
+#define	PP_WARNING	15
+#define	PP_DISPLAY	16
 
 // pre-processor operators
 #define	OPR_INC		0
@@ -150,7 +153,7 @@ typedef struct {
 	
 	// DEF
 	int val, width;
-	int flags;
+	int flags;      // TF_* flags
 	char config_prefix[16];
 	
 	// STRUCT

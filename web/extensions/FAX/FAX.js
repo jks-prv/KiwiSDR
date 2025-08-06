@@ -254,9 +254,9 @@ function fax_controls_setup()
 		w3_div('id-fax-controls w3-text-white',
          w3_inline('w3-halign-space-between|width:85%/',
             w3_div('w3-medium w3-text-aqua', '<b>FAX decoder</b>'),
-            w3_div('w3-text-white',
-               "From " + w3_link('', 'https://github.com/seandepagnier/weatherfax_pi', 'weatherfax_pi') +
-               " by Sean D'Epagnier &copy; 2015"
+            w3_div('w3-text-white', 'From ',
+               w3_link('', 'https://github.com/seandepagnier/weatherfax_pi', 'weatherfax_pi') +
+               " Sean D'Epagnier &copy; 2015"
             )
 
          ),
@@ -605,24 +605,28 @@ function FAX_help(show)
    if (show) {
       var s = 
          w3_text('w3-medium w3-bold w3-text-aqua', 'FAX decoder help') +
-         '<br>When "auto align" is checked the phasing information sent at the beginning of most <br>' +
-         'FAXes is used to horizontally align the image. This may not work if the signal is not strong.<br><br>' +
-
-         'When "auto stop" is checked the start and stop tones sent at the beginning and end of most <br>' +
-         'FAXes is used to stop the window scrolling. This may not work if the signal is not strong.<br><br>' +
-
-         'Most stations use an LPM (lines per minute) value of 120. The exception is JJC/JSC which <br>' +
-         'mostly uses 60. <br><br>' +
-         
-         'You can manually align the image by shift-clicking (touch on mobile devices) at the location <br>' +
-         'you want moved to the left edge. <br><br>' +
-
-         'URL parameters: <br>' +
-         'First parameter can be a frequency matching an entry in the station menus. <br>' +
-         w3_text('|color:orange', 'align<i>[:0|1]</i> &nbsp; stop<i>[:0|1]</i> &nbsp; lpm:<i>value</i>') +
-         '<br> So for example this is valid: <i>ext=fax,3855,align,stop</i> <br>' +
-         '';
-      confirmation_show_content(s, 620, 325);
+         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
+            w3_div('w3-margin-R-8',
+               '<br>When "auto align" is checked the phasing information sent at the beginning of most ' +
+               'FAXes is used to horizontally align the image. This may not work if the signal is not strong.<br><br>' +
+      
+               'When "auto stop" is checked the start and stop tones sent at the beginning and end of most ' +
+               'FAXes is used to stop the window scrolling. This may not work if the signal is not strong.<br><br>' +
+      
+               'Most stations use an LPM (lines per minute) value of 120. The exception is JJC/JSC which ' +
+               'mostly uses 60. <br><br>' +
+               
+               'You can manually align the image by shift-clicking (touch on mobile devices) at the location ' +
+               'you want moved to the left edge. <br><br>' +
+      
+               'URL parameters: <br>' +
+               'First parameter can be a frequency matching an entry in the station menus. ' +
+               w3_text('|color:orange', 'align<i>[:0|1]</i> &nbsp; stop<i>[:0|1]</i> &nbsp; lpm:<i>value</i>') +
+               '<br> So for example this is valid: <i>ext=fax,3855,align,stop</i>'
+            )
+         )
+      confirmation_show_content(s, 620, 375);
+      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
    }
    return true;
 }

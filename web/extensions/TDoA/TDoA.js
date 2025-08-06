@@ -283,7 +283,7 @@ function tdoa_controls_setup()
             w3_select('w3-text-red', '', 'sample', 'tdoa.sample_time_i', tdoa.sample_time_i, tdoa.sample_time_s, 'tdoa_sample_time_cb'),
             w3_div('w3-width-full',
                w3_input('id-tdoa-known-location w3-padding-tiny', '', 'tdoa.known_location', '', 'tdoa_edit_known_location_cb',
-                  'Map ref location: type lat, lon and name or click green map markers'
+                  'Map ref location: type lat, lon &amp; name or click green markers'
                )
             )
          )

@@ -45,6 +45,7 @@ Boston, MA  02110-1301, USA.
 #include "kiwi_ui.h"
 #include "ip_blacklist.h"
 #include "ant_switch.h"
+#include "rx_snr.h"
 
 #ifdef USE_SDR
  #include "data_pump.h"
@@ -130,7 +131,7 @@ static void tunnel(void *param)
 
 	char *tname;
     asprintf(&tname, "tunnel[%02d]", c->self_idx);
-    TaskNameSFree(tname);
+    TaskNameSetFree(tname);
     clprintf(c, "TUNNEL: open connection\n");
     
     #define PIPE_R 0
@@ -180,7 +181,7 @@ static void console_task(void *param)
 
 	char *tname;
     asprintf(&tname, "console[%02d]", c->self_idx);
-    TaskNameSFree(tname);
+    TaskNameSetFree(tname);
     cprintf(c, "CONSOLE: open connection\n");
     send_msg_encoded(c, "ADM", "console_c2w", "CONSOLE: open connection\n");
     
@@ -435,6 +436,8 @@ void c2s_admin(void *param)
             if (i == 1) {
                 shmem->zoom_all = zoom_all + 1;
                 shmem->zoom_all_seq++;
+                //printf("zoom_all %d %d <%s>\n", zoom_all, shmem->zoom_all_seq, cmd);
+                continue;
             }
 #endif
 

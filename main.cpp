@@ -80,7 +80,7 @@ int p0=0, p1=0, p2=0, wf_sim, wf_real, wf_time, ev_dump=0, wf_flip, wf_start=1, 
 u4_t ov_mask, snd_intr_usec;
 
 bool need_hardware, kiwi_reg_debug, gps_e1b_only, ecpu_stack_check, spi_show_stats,
-    disable_led_task, is_multi_core, debug_printfs, cmd_debug;
+    disable_led_task, is_multi_core, debug_printfs, cmd_debug, gen_debug;
 
 int main_argc;
 char **main_argv;
@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
 
 	int fw_sel_override = FW_CONFIGURED;
 	int fw_test = 0;
+	int fpga_id_check = 1;
 	int wb_sel, wb_sel_override = -1;
 	
 	version_maj = VERSION_MAJ;
@@ -184,6 +185,7 @@ int main(int argc, char *argv[])
 	
 		if (ARG("-fw")) { ARGL(fw_sel_override); printf("firmware select override: %d\n", fw_sel_override); } else
 		if (ARG("-fw_test")) { ARGL(fw_test); printf("firmware test: %d\n", fw_test); } else
+		if (ARG("-fpga_id")) fpga_id_check = 0; else
 		if (ARG("-wb")) { ARGL(wb_sel_override); printf("wideband rate override: %d\n", wb_sel_override); } else
 		if (ARG("-rdoff")) { ARGL(wf_rd_offset); printf("WF rd_offset: %d\n", wf_rd_offset); } else
 		if (ARG("-wfsd")) { ARGL(wf_slowdown); printf("WF slowdown: %d\n", wf_slowdown); } else
@@ -198,6 +200,7 @@ int main(int argc, char *argv[])
 		if (ARG("-gps")) p_gps = -1; else
 		if (ARG("+sdr")) do_sdr = 1; else
 		if (ARG("-sdr")) do_sdr = 0; else
+		if (ARG("-d")) gen_debug = true; else
 		if (ARG("-debug")) debug_printfs = true; else
 		if (ARG("-gps_debug")) { gps_debug = -1; ARGL(gps_debug); } else
 		if (ARG("-stats") || ARG("+stats")) { print_stats = STATS_TASK; ARGL(print_stats); } else
@@ -377,7 +380,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_4CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
-        nrx_bufs = RXBUF_SIZE_4CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_44 / NRX_SPI;
         lprintf("firmware: SDR_RX4_WF4\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX8_WF2) {
@@ -389,7 +392,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_8CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
-        nrx_bufs = RXBUF_SIZE_8CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_82 / NRX_SPI;
         lprintf("firmware: SDR_RX8_WF2\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX3_WF3) {
@@ -401,7 +404,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_3CH;
         rx1_decim = RX1_WIDE_DECIM;
         rx2_decim = RX2_WIDE_DECIM;
-        nrx_bufs = RXBUF_SIZE_3CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_33 / NRX_SPI;
         lprintf("firmware: SDR_RX3_WF3\n");
     } else
     if (fw_sel == FW_SEL_SDR_RX14_WF0) {
@@ -414,7 +417,7 @@ int main(int argc, char *argv[])
         rx_decim = RX_DECIM_14CH;
         rx1_decim = RX1_STD_DECIM;
         rx2_decim = RX2_STD_DECIM;
-        nrx_bufs = RXBUF_SIZE_14CH / NRX_SPI;
+        nrx_bufs = RXBUF_SIZE_14 / NRX_SPI;
         lprintf("firmware: SDR_RX14_WF0\n");
     } else
     if (fw_sel == FW_SEL_SDR_WB) {
@@ -526,7 +529,7 @@ int main(int argc, char *argv[])
 	if (need_hardware) {
 		peri_init();
 		if (gpio_test_pin) gpio_test(gpio_test_pin);
-		fpga_init();
+		fpga_init(fpga_id_check);
 		//pru_start();
 		eeprom_update(eeprom_action);
 		

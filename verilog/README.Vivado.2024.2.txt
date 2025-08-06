@@ -1,5 +1,7 @@
-Steps to creating and building the KiwiSDR project with Vivado 2022.2
-    Updated 25 March 2023
+Steps to creating and building the KiwiSDR project with Vivado 2024.2
+    Updated 12 July 2025
+
+Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 1) You will most likely be running Vivado on a Windows or Linux machine.
 We run Vivado successfully on an x86-based MacBook Pro using the VirtualBox application to emulate
@@ -85,6 +87,7 @@ KiwiSDR_SDR_GPS/verilog.Vivado.2022.2.ip/ there from your your build machine.
 
 7) Now the main Vivado user interface will appear. Look at the Project Manager > Sources window.
 After it settles down the "KiwiSDR (kiwi.v)" entry should be listed in bold as the top-level module.
+If it isn't in bold then click to select it, then right-click and select the "Set as top" menu entry.
 
 8) Copy the IP definition files. Under the left-side menu called "Project Manager":
     > Add Sources

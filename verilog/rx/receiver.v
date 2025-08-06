@@ -17,50 +17,56 @@ Boston, MA  02110-1301, USA.
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
-module receiver (
-	input wire		   adc_clk,
-	input wire signed [ADC_BITS-1:0] adc_data,
-	input wire         adc_ovfl,
+`timescale 1ns / 100ps
 
-    output wire        rx_rd_C,
-    output wire [15:0] rx_dout_C,
-
-    output wire        wf_rd_C,
-    output wire [15:0] wf_dout_C,
-
-    input  wire [47:0] ticks_A,
-    output wire        adc_ovfl_C,
-    output wire [31:0] adc_count_C,
+module receiver
+    #(parameter _ADC_BITS = "required")
+    (
+        input wire		   adc_clk,
+        input wire signed [_ADC_BITS-1:0] adc_data,
+        input wire         adc_ovfl,
     
-	input  wire		   cpu_clk,
-    output wire        ser,
-    input  wire [31:0] tos,
-    input  wire [10:0] op_11,
-    input  wire        rdReg,
-    input  wire        wrReg,
-    input  wire        wrReg2,
-    input  wire        wrEvt2,
-    input  wire        wrEvtL,
+        output wire        rx_rd_C,
+        output wire [15:0] rx_dout_C,
     
-    input  wire        use_gen_C,
+        output wire        wf_rd_C,
+        output wire [15:0] wf_dout_C,
     
-    input  wire        self_test_en_C,
-    output wire        self_test
+        input  wire [47:0] ticks_A,
+        output wire        adc_ovfl_C,
+        output wire [31:0] adc_count_C,
+        
+        input  wire		   cpu_clk,
+        output wire        rx_ser,
+        input  wire [31:0] tos,
+        input  wire [10:0] op_11,
+        input  wire        rdReg,
+        input  wire        wrReg,
+        input  wire        wrReg2,
+        input  wire        wrEvt2,
+        input  wire        wrEvtL,
+        
+        input  wire        use_gen_C,
+        
+        input  wire        self_test_en_C,
+        output wire        self_test
 	);
 	
 `include "kiwi.gen.vh"
 
-	wire set_rx_chan_C   =  wrReg2 & op_11[SET_RX_CHAN];
-	wire freq_l          =  wrReg2 & op_11[FREQ_L];
-	wire set_rx_freqH_C  = (wrReg2 & op_11[SET_RX_FREQ]) && !freq_l;
-	wire set_rx_freqL_C  = (wrReg2 & op_11[SET_RX_FREQ]) &&  freq_l;
+	wire set_rx_chan_C   = wrReg2 && op_11[SET_RX_CHAN];
+	wire freq_l          = wrReg2 && op_11[FREQ_L];
+	wire set_rx_freqH_C  = wrReg2 && op_11[SET_RX_FREQ] && !freq_l;
+	wire set_rx_freqL_C  = wrReg2 && op_11[SET_RX_FREQ] &&  freq_l;
 	
-	wire set_wf_chan_C   =  wrReg2 & op_11[SET_WF_CHAN];
-	wire set_wf_freqH_C  = (wrReg2 & op_11[SET_WF_FREQ]) && !freq_l;
-	wire set_wf_freqL_C  = (wrReg2 & op_11[SET_WF_FREQ]) &&  freq_l;
-	wire set_wf_decim_C  =  wrReg2 & op_11[SET_WF_DECIM];
-	wire set_wf_offset_C =  wrReg2 & op_11[SET_WF_OFFSET];
-
+    wire set_reg         = wrReg2 && op_11[SET_REG];
+    wire [2:0] set_regno = op_11[2:0];  // SET_REG_NO
+	wire set_wf_chan_C   = set_reg && (set_regno == SET_WF_CHAN);
+	wire set_wf_freqH_C  = set_reg && (set_regno == SET_WF_FREQ) && !freq_l;
+	wire set_wf_freqL_C  = set_reg && (set_regno == SET_WF_FREQ) &&  freq_l;
+	wire set_wf_decim_C  = set_reg && (set_regno == SET_WF_DECIM);
+	wire set_wf_offset_C = set_reg && (set_regno == SET_WF_OFFSET);
+	
 	// The FREEZE_TOS event starts the process of latching and synchronizing of the ecpu TOS data
 	// from the cpu_clk to the adc_clk domain. This is needed by subsequent wrReg instructions
 	// that want to load TOS values into registers clocked in the adc_clk domain.
@@ -253,14 +259,14 @@ module receiver (
 		if (rxn_avail_A[0])
 		    ticks_latched_A <= ticks_A;
 
-	rx_audio_mem rx_audio_mem_inst (
+	rx_audio_mem #(._V_RX_CHANS(V_RX_CHANS)) rx_audio_mem_inst (
 		.adc_clk		(adc_clk),
 		.nrx_samps      (nrx_samps_A),
 		.rx_avail_A     (rxn_avail_A[0]),   // all DDCs should signal available at the same time since decimation is the same
 		.rxn_din_A      (rxn_data_A),
 		.ticks_A        (ticks_latched_A),
         // o
-		.ser            (ser),
+		.ser            (rx_ser),
 		.rd_getI        (rd_getI),
 		.rd_getQ        (rd_getQ),
 		
@@ -292,27 +298,26 @@ module receiver (
 	wire [V_WF_CHANS*16-1:0] wfn_dout_C;
 	MUX #(.WIDTH(16), .SEL(V_WF_CHANS)) wf_dout_mux(.in(wfn_dout_C), .sel(wf_channel_C), .out(wf_dout_C));
 
-	wire rst_wf_sampler_C =	wrReg2 & op_11[WF_SAMPLER_RST];
+    // further qualified with tos[WF_SAMP_*]
+	wire rst_wf_sampler_C =	set_reg && (set_regno == SET_WF_RST);
+
 	wire get_wf_samp_i_C  =	wrEvt2 & op_11[GET_WF_SAMP_I];
 	wire get_wf_samp_q_C  =	(wrEvt2 & op_11[GET_WF_SAMP_Q]) || (wrEvtL & op_11[GET_WF_SAMP_Q_LOOP]);
-	assign wf_rd_C =		get_wf_samp_i_C || get_wf_samp_q_C;
+	assign wf_rd_C        = get_wf_samp_i_C || get_wf_samp_q_C;
 
 	wire samp_wf_rd_rst_C = tos[WF_SAMP_RD_RST];
 	wire samp_wf_sync_C   = tos[WF_SAMP_SYNC];
 
-`ifdef USE_WF_1CIC
 	WATERFALL_1CIC #(.IN_WIDTH(RX_IN_WIDTH)) waterfall_inst [V_WF_CHANS-1:0] (
-`else
-	WATERFALL #(.IN_WIDTH(RX_IN_WIDTH)) waterfall_inst [V_WF_CHANS-1:0] (
-`endif
 		.adc_clk			(adc_clk),
 		.adc_data			(wf_data),
 		
 		.wf_sel_C			(wfn_sel_C),
+		// o
 		.wf_dout_C			(wfn_dout_C),
 
 		.cpu_clk			(cpu_clk),
-		.tos_C              (tos[12:0]),
+		.tos_C              (tos[11:0]),
 		.freeze_tos_A       (freeze_tos_A),
 
 		.samp_wf_rd_rst_C   (samp_wf_rd_rst_C),

@@ -14,9 +14,10 @@ public:
     CHFDLResample();
     ~CHFDLResample();
     int setup(double f_srate, int n_samps);
-    void run(float *sample, int length, HFDL_resamp_t *resamp);
+    bool run(float *sample, int length, HFDL_resamp_t *resamp);
 
 protected:
+    int vec_i;
     CAudioResample *Resample_I, *Resample_Q;
     CVector<_REAL> vecTempResBufIn_I, vecTempResBufIn_Q;
     CVector<_REAL> vecTempResBufOut_I, vecTempResBufOut_Q;

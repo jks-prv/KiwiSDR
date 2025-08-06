@@ -203,6 +203,7 @@ namespace ale {
         void do_modem2();
     
     protected:
+        int vec_i;
         // resampler
         CAudioResample *ResampleObj;
         CVector<_REAL> vecTempResBufIn;
