@@ -76,7 +76,7 @@ void mg_http_send_header(struct mg_connection *mc, const char *name, const char 
     if (which == MG_FIRST_HEADER) mg_printf(mc, "HTTP/1.1 200 OK\r\n");
     mg_printf(mc, "%s: %s\r\n", name, v);
     if (which == MG_LAST_HEADER) {
-        mg_printf(mc, "%s\r\n\r\n", (mc->te_chunked == 0)? "Transfer-Encoding: chunked" : "");
+        mg_printf(mc, "%s\r\n", (mc->te_chunked == 0)? "Transfer-Encoding: chunked\r\n" : "");
     }
 }
 
