@@ -3,7 +3,7 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
-v1.816  August 7, 2025
+v1.816,817  August 7, 2025
     Added SNR strong, wide-band signal filter, e.g. VDSL RFI. (thanks ZL2P)
         New setting admin control tab: "Filter strong signals like VDSL (0-30, 1.8-30 MHz meas only)"
         It is enabled by default. The new algorithm identifies any signal stronger than a threshold
@@ -23,26 +23,6 @@ v1.816  August 7, 2025
         when a channel is first allocated and updated when the connection is fully established.
         This will also make it somewhat easier to spot when there are lots of bot connection
         attempts rather than having to spot them by reviewing the log.
-
-    Fixed problem where connections incorrectly originate from the local 127.0.0.1 loopback address.
-        If you think the fix described here is causing you problems it can be disabled by going to
-        the admin "update" tab, bottom of the page, and setting "Disable recent changes?" to "Yes".
-        Then complain to support@kiwisdr.com
-        
-        Discussion:
-        When the local proxy service client (frpc) running on the Kiwi forwards packets to the
-        Kiwi server they will always have the IP source address 127.0.0.1. This occurs because frpc
-        and the server are running on the same computer. To not lose the actual IP address of the
-        person connecting frpc puts that IP in a special HTTP header. Well, for some reason, the
-        version of the Mongoose web server we use occasionally drops those special headers.
-        The root cause could not be found. But some time ago we ported a much more recent version
-        of Mongoose to the Kiwi and it doesn't have this problem. So the fix is to simply start
-        using this newer version.
-        
-        Also, code was added to specifically reject forwarded connections with the special header
-        containing a local or loopback addresses. This might possibly affect private proxy setups,
-        like those using Tailscale or Nginx etc, if they incorrectly use a local or loopback in the
-        HTTP header. See above for how to disable this change.
 
     Admin webpage tab:
         New button "Display all fonts in bold" which some of us need, lol. (thanks Jerry and KFS)
