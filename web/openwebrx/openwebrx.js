@@ -556,6 +556,9 @@ function kiwi_main_ready()
    w3_do_when_cond(
       function() { return (isArg(rx_chan) && owrx.cfg_loaded); },
       function() {
+         if (cfg.all_fonts_bold)
+            w3_el('id-kiwi-container').style.fontWeight = 'bold';
+
          if (rx_chan != 0) return;
 
          var attn_ampl = 0;
@@ -569,9 +572,6 @@ function kiwi_main_ready()
          // always setup gen so it will get disabled (attn=0) if an rx0 page reloads using a URL where no gen is
          // specified, but it was previously enabled by the URL (i.e. so the gen doesn't continue to run).
          set_gen(gen_freq, attn_ampl);
-         
-         if (cfg.all_fonts_bold)
-            w3_el('id-kiwi-container').style.fontWeight = 'bold';
       },
       null, 500
    );

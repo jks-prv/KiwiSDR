@@ -519,6 +519,15 @@ function control_html()
             )
          ), 36,
 
+         w3_divs('w3-restart/w3-center w3-tspace-8',
+            w3_select('w3-width-auto', 'Number of audio campers per channel', '', 'n_camp', n_camp, n_camp_u, 'admin_select_cb'),
+            w3_div('w3-text-black',
+               'Reduce this value if your Kiwi is experiencing <br>' +
+               'performance problems from too many audio campers.'
+            )
+         )
+
+         /*
          w3_divs('/w3-tspace-8',
             w3_text('w3-margin-B-8 w3-text-teal w3-bold', 'SNR filter (0-30, 1.8-30 MHz measurements only)'),
             w3_checkbox_get_param('//w3-label-inline', 'Filter strong signals like VDSL',
@@ -532,8 +541,11 @@ function control_html()
                ' for details.'
             )
          )
-		);
+         */
+		) +
+		'<hr>';
 
+   /*
 	var s4 =
 		'<hr>' +
 		w3_col_percent('w3-margin-bottom w3-text-teal/w3-container',
@@ -547,8 +559,9 @@ function control_html()
          '', 30
       ) +
 		'<hr>';
+	*/
 
-   return w3_div('id-control w3-text-teal w3-hide', s1 + (admin_sdr_mode? (s2 + s3 + s4) : ''));
+   return w3_div('id-control w3-text-teal w3-hide', s1 + (admin_sdr_mode? (s2 + s3) : ''));
 }
 
 function control_focus()

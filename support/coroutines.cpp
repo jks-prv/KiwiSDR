@@ -187,7 +187,7 @@ struct TASK {
 
 	TASK *interrupted_task;
 	s64_t deadline;
-	u4_t *wakeup_test;
+	volatile u4_t *wakeup_test;
 	u4_t run, cmds;
 	#define N_REASON 64
 	char reason[N_REASON];
@@ -1150,6 +1150,7 @@ void _NextTask(const char *where, u4_t param, u_int64_t pc)
                     
                     if (tp->deadline > 0) {
                         if (tp->deadline < now_us) {
+                            //if (tp->flags & CTF_TRACE_WAKEUP) printf("CTF_TRACE_WAKEUP: deadline=%d %s\n", tp->deadline, task_s(tp));
                             evNT(EC_EVENT, EV_NEXTTASK, -1, "NextTask", evprintf("deadline expired %s, Qrunnable %d", task_s(tp), tp->tq->runnable));
                             tp->deadline = 0;
                             wake = true;
@@ -1157,6 +1158,7 @@ void _NextTask(const char *where, u4_t param, u_int64_t pc)
                     } else
                     if (tp->wakeup_test != NULL) {
                         if (*tp->wakeup_test != 0) {
+                            //if (tp->flags & CTF_TRACE_WAKEUP) printf("CTF_TRACE_WAKEUP: wakeup_test=%p %s\n", tp->wakeup_test, task_s(tp));
                             evNT(EC_EVENT, EV_NEXTTASK, -1, "NextTask", evprintf("wakeup_test completed %s, Qrunnable %d", task_s(tp), tp->tq->runnable));
                             tp->wakeup_test = NULL;
                             wake = true;
@@ -1403,7 +1405,7 @@ int _CreateTask(funcP_t funcP, const char *name, void *param, int priority, u4_t
 	return t->id;
 }
 
-static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, u4_t *wakeup_test=NULL)
+static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, volatile u4_t *wakeup_test = NULL)
 {
 	// usec == 0 means sleep until someone does TaskWakeup() on us
 	// usec > 0 is microseconds time in future (added to current time)
@@ -1433,7 +1435,7 @@ static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, u4_t *wakeup
 	RUNNABLE_NO(t, /* prev_stopped */ t->stopped? 0:-1);
 }
 
-void *_TaskSleep(const char *reason, u64_t usec, u4_t *wakeup_test)
+void *_TaskSleep(const char *reason, u64_t usec, volatile u4_t *wakeup_test)
 {
     TASK *t = cur_task;
 

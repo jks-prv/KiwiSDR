@@ -93,6 +93,7 @@ void TaskCollect();
 #define CTF_TNAME_FREE		0x04000
 #define CTF_SOFT_FAIL		0x08000
 #define CTF_NO_LOG		    0x10000
+#define CTF_TRACE_WAKEUP    0x20000
 
 C_LINKAGE(int _CreateTask(funcP_t entry, const char *name, void *param, int priority, u4_t flags, int f_arg));
 #define CreateTask(f, param, priority)				    _CreateTask(f, #f, param, priority, 0, 0)
@@ -102,7 +103,7 @@ C_LINKAGE(int _CreateTask(funcP_t entry, const char *name, void *param, int prio
 
 // usec == 0 means sleep until someone does TaskWakeup() on us
 // usec > 0 is microseconds time in future (added to current time)
-C_LINKAGE(void *_TaskSleep(const char *reason, u64_t usec, u4_t *wakeup_test));
+C_LINKAGE(void *_TaskSleep(const char *reason, u64_t usec, volatile u4_t *wakeup_test));
 #define TaskSleep()                 _TaskSleep("TaskSleep", 0, NULL)
 #define TaskSleepUsec(us)           _TaskSleep("TaskSleep", us, NULL)
 #define TaskSleepMsec(ms)           _TaskSleep("TaskSleep", MSEC_TO_USEC(ms), NULL)
@@ -111,6 +112,9 @@ C_LINKAGE(void *_TaskSleep(const char *reason, u64_t usec, u4_t *wakeup_test));
 #define TaskSleepReasonUsec(r, us)  _TaskSleep(r, us, NULL)
 #define TaskSleepReasonMsec(r, ms)  _TaskSleep(r, MSEC_TO_USEC(ms), NULL)
 #define TaskSleepReasonSec(r, s)    _TaskSleep(r, SEC_TO_USEC(s), NULL)
+
+// CAUTION: For a wakeup test location shared between multiple tasks more than one task
+// may be woken up simultaneously. So need to check if the reason for sleeping is still present.
 #define TaskSleepWakeupTest(r, wu)  _TaskSleep(r, 0, wu)
 
 void TaskSleepID(int id, u64_t usec);

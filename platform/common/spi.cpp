@@ -213,7 +213,7 @@ static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk
         #endif
 		assert((prev->status & SPI_BUSY_MASK) == SPI_BUSY);
         //printf("spi_dev T%dx|R%dx\n", tx_xfers, prx_xfers);
-        //real_printf(RED "%s " NORM, (mosi->data.cmd == CmdFlush)? "F" : &cmds[mosi->data.cmd][3]); fflush(stdout);
+        //if (mosi->data.cmd != CmdFlush) { real_printf(RED "%s " NORM, &cmds[mosi->data.cmd][3]); fflush(stdout); }
 
         spi_dev(SPI_HOST,
             mosi, tx_xfers,     // MOSI: new request

@@ -213,7 +213,8 @@ void SNR_meas(void *param)
     do {
         static int meas_idx;
         kiwi.snr_meas_active = true;
-        bool filter = cfg_true("snr_meas_filter");
+        //bool filter = cfg_true("snr_meas_filter");
+        bool filter = false;
 	
         // "snr_meas_interval_hrs" is really the menu index
         int custom_min = cfg_int_("snr_meas_custom_min");

@@ -3,6 +3,25 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.818  August 9, 2025
+    Fixed problem where connections incorrectly originate from the local 127.0.0.1 loopback address.
+        When the local proxy service client (frpc) running on the Kiwi forwards packets to the
+        Kiwi server they will always have the IP source address 127.0.0.1. This occurs because frpc
+        and the server are running on the same computer. To not lose the actual IP address of the
+        person connecting frpc puts that IP in a special HTTP header. Well, for some reason, the
+        version of the Mongoose web server we use occasionally drops those special headers.
+        The root cause could not be found. But some time ago we ported a much more recent version
+        of Mongoose to the Kiwi and it doesn't have this problem. So the fix is to simply start
+        using this newer version.
+        
+        Also, code was added to specifically reject forwarded connections with the special header
+        containing a local or loopback addresses. This might possibly affect private proxy setups,
+        like those using Tailscale or Nginx etc, if they incorrectly use a local or loopback in the
+        HTTP header. You can disable this specific change (but not the Mongoose upgrade) by going to
+        the admin "update" tab, bottom of the page, and setting "Disable recent changes?" to "Yes".
+    
+    The SNR strong, wide-band signal filter has been withdrawn.
+
 v1.816,817  August 7, 2025
     Added SNR strong, wide-band signal filter, e.g. VDSL RFI. (thanks ZL2P)
         New setting admin control tab: "Filter strong signals like VDSL (0-30, 1.8-30 MHz meas only)"
