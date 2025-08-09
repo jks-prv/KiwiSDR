@@ -312,17 +312,25 @@ static void ev_handler_http(struct mg_connection *mc, int ev, void *ev_data)
                 mc->init = true;
             }
             
-	        u64_t tstamp;
-            if (kiwi_str_begins_with(mc->uri, "/ws/") ||
+            char *type_m = NULL, *uri_m = NULL;
+            u64_t tstamp;
+            if (
+                // newer ws format web socket
+                kiwi_str_begins_with(mc->uri, "/ws/") ||
                 // kiwirecorder
                 sscanf(mc->uri, "/%lld/", &tstamp) == 1 ||
                 // wideband
-                kiwi_str_begins_with(mc->uri, "/wb/")) {
+                kiwi_str_begins_with(mc->uri, "/wb/") ||
+                // older non ws format web socket still used by 3rd party applications
+                sscanf(mc->uri, "/%8m[^/]/%lld/%256m[^\?]", &type_m, &tstamp, &uri_m) == 3
+                ) {
                 mg_ws_upgrade(mc, hm, NULL);
                 //ev_http_prf("ev_handler_http WEBSOCKET upgrade <%s>\n", mc->uri);
             } else {
                 web_ev_request(mc, ev, ev_data);
             }
+            kiwi_asfree(type_m);
+            kiwi_asfree(uri_m);
             return;
         }
             

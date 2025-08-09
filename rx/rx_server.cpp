@@ -327,7 +327,7 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 	    isWebSocket = true;
 	} else
 	if (sscanf(uri_ts, "%8m[^/]/%lld/%256m[^\?]", &type_m, &tstamp, &uri_m) == 3) {
-	    isWebSocket = false;
+	    isWebSocket = true;
 	} else
     // kiwiclient / kiwirecorder
     if (sscanf(uri_ts, "%lld/%256m[^\?]", &tstamp, &uri_m) == 2) {
