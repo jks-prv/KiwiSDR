@@ -430,14 +430,14 @@ function colormap_draw_transfer(rgb, sx, ex, xinc, y_new)
       c.fillRect(x, y, 2,2);
    }
    
-   var r_gain = cm['r'].gain;
-   var g_gain = cm['g'].gain;
-   var b_gain = cm['b'].gain;
-   var r_y_color = cm['r'].y;
-   var g_y_color = cm['g'].y;
-   var b_y_color = cm['b'].y;
+   var r_gain = cm.r.gain;
+   var g_gain = cm.g.gain;
+   var b_gain = cm.b.gain;
+   var r_y_color = cm.r.y;
+   var g_y_color = cm.g.y;
+   var b_y_color = cm.b.y;
 
-	var c = cmap.ramp_canvas.ctx;
+	c = cmap.ramp_canvas.ctx;
 	var hm1 = cmap.h-1;
    for (x = 0; x < cmap.w; x++) {
       var r = w3_clamp(r_y_color[x] * r_gain, 0, hm1); r = r/hm1 * 255;
@@ -458,12 +458,12 @@ function colormap_update_wf_colormap()
 	var hm1 = cmap.h-1;
    
    var cm = cmap.save['cm' + which];
-   var r_gain = cm['r'].gain;
-   var g_gain = cm['g'].gain;
-   var b_gain = cm['b'].gain;
-   var r_y_color = cm['r'].y;
-   var g_y_color = cm['g'].y;
-   var b_y_color = cm['b'].y;
+   var r_gain = cm.r.gain;
+   var g_gain = cm.g.gain;
+   var b_gain = cm.b.gain;
+   var r_y_color = cm.r.y;
+   var g_y_color = cm.g.y;
+   var b_y_color = cm.b.y;
 
    for (x = 0; x < 256; x++) {
       var i = Math.round(x/255 * (cmap.w-1));
@@ -512,12 +512,13 @@ function colormap_transfer_mousedown_cb(evt)
 
 function colormap_transfer_mousemove_cb(evt)
 {
+   var xy;
    if (cmap.which == -1) return;
    
    switch (cmap.draw) {
    
    case cmap.draw_e.points:
-      var xy = colormap_mouseXY('id-cmap-transfer-canvas', evt);
+      xy = colormap_mouseXY('id-cmap-transfer-canvas', evt);
       //w3_innerHTML('id-owner-info', xy.x.toFixed(0) +','+ xy.y.toFixed(0) +' b='+ evt.buttons +' rgb='+ cmap.rgb);
       if (!evt.buttons || xy.y < -16 || xy.y > (cmap.h + 16)) return;
 
@@ -537,7 +538,7 @@ function colormap_transfer_mousemove_cb(evt)
       if (cmap.xy1)
          c.clearRect(0, 0, cmap.w, cmap.h);
       
-      var xy = colormap_mouseXY('id-cmap-overlay-canvas', evt);
+      xy = colormap_mouseXY('id-cmap-overlay-canvas', evt);
       c.strokeStyle = 'white';
       c.beginPath();
       c.moveTo(cmap.xy0.x, cmap.xy0.y);
@@ -668,7 +669,7 @@ function colormap_help(show)
             '<br>Select a custom colormap from the <x1>colormap</x1> menu (e.g. "cust1") ' +
             'then draw by mousing-down in large box. Try the other controls to see their effect. ' +
             'Colormap changes are shown immediately in the waterfall.'
-         )
+         );
       confirmation_show_content(s, 610, 150);
    }
    return true;

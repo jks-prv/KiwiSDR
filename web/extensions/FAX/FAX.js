@@ -71,6 +71,7 @@ var fax_cmd = { CLEAR:255, DRAW:254 };
 
 function fax_recv(data)
 {
+   var i;
    var canvas = fax.data_canvas;
    var ct = canvas.ctx;
 	var firstChars = arrayBufferToStringLen(data, 3);
@@ -86,7 +87,7 @@ function fax_recv(data)
       
       if (cmd == fax_cmd.DRAW) {
          var imd = canvas.imd;
-         for (var i = 0; i < fax_w; i++) {
+         for (i = 0; i < fax_w; i++) {
             /*
             if (i == 0) {
                imd.data[i*4+0] = 255;
@@ -142,7 +143,7 @@ function fax_recv(data)
       {  // scope
          var ch = cmd;
          ct.fillStyle = fax_scope_colors[ch];
-         for (var i = 0; i < fax_w; i++) {
+         for (i = 0; i < fax_w; i++) {
             ct.fillRect(fax_startx+i,ba[i+1], 1,1);
          }
       }
@@ -154,7 +155,7 @@ function fax_recv(data)
 	var stringData = arrayBufferToString(data);
 	var params = stringData.substring(4).split(" ");
 
-	for (var i=0; i < params.length; i++) {
+	for (i=0; i < params.length; i++) {
 		var param = params[i].split("=");
 
 		if (0 && param[0] != "keepalive") {
@@ -181,7 +182,6 @@ function fax_recv(data)
 
 			case "fax_sps_changed":
 			   if (fax_mkr) {
-               var ct = canvas.ctx;
                ct.fillStyle = 'red';
                ct.fillRect(fax_startx-fax_mkr,fax_image_y-1, fax_mkr,1);
             }
@@ -481,7 +481,6 @@ function fax_shift(evt, requireShiftKey)
    var copy_canvas = fax.copy_canvas;
    var dct = data_canvas.ctx;
    var cct = copy_canvas.ctx;
-   var sx = sx;
    var w = fax_w;
    var h = fax_h;
    var w0 = offset;
@@ -624,7 +623,7 @@ function FAX_help(show)
                w3_text('|color:orange', 'align<i>[:0|1]</i> &nbsp; stop<i>[:0|1]</i> &nbsp; lpm:<i>value</i>') +
                '<br> So for example this is valid: <i>ext=fax,3855,align,stop</i>'
             )
-         )
+         );
       confirmation_show_content(s, 620, 375);
       w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
    }
