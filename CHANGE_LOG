@@ -3,6 +3,12 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.819  August 10, 2025
+    With Mongoose 7.14 support older non ws format web socket URLs so 3rd party applications
+        continue to work, e.g. KiwiKonnect. (thanks Chris, Black Cat Systems)
+    
+    Fixed Javascript syntax error in waterfall extension. (thanks Pierre)
+
 v1.818  August 9, 2025
     Fixed problem where connections incorrectly originate from the local 127.0.0.1 loopback address.
         When the local proxy service client (frpc) running on the Kiwi forwards packets to the
