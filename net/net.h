@@ -84,6 +84,10 @@ typedef struct {
 
 enum { BL_PORT_DEFAULT = 0, BL_PORT_YES = 1, BL_PORT_NO = 2 };
 
+#define N_MTU 6
+const int mtu_v[N_MTU] = { 1500, 1440, 1400, 1344, 1312, 1280 };
+extern int current_mtu;
+
 typedef struct {
     // set by init_NET()
 	ipv46_e pvt_valid;

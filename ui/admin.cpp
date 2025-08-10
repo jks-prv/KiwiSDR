@@ -1072,6 +1072,20 @@ void c2s_admin(void *param)
                 continue;
             }
 
+            int mtu;
+            i = sscanf(cmd, "SET ethernet_MTU=%d", &mtu);
+            if (i == 1) {
+                if (mtu < 0 || mtu >= N_MTU) mtu = 0;
+                if (mtu != current_mtu) {
+                    int mtu_val = mtu_v[mtu];
+                    printf("ETH0 ifconfig eth0 mtu %d\n", mtu_val);
+                    non_blocking_cmd_system_child("kiwi.ifconfig", stprintf("ifconfig eth0 mtu %d", mtu_val), NO_WAIT);
+                    current_mtu = mtu;
+                }
+                continue;
+            }
+
+
 
 ////////////////////////////////
 // GPS

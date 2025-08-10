@@ -132,6 +132,7 @@ int kiwi_reg_lo_kHz, kiwi_reg_hi_kHz;
 float max_thr;
 int n_camp;
 bool log_local_ip, DRM_enable, admin_keepalive, any_preempt_autorun;
+int current_mtu;
 
 #define DC_OFFSET_DEFAULT -0.02F
 #define DC_OFFSET_DEFAULT_PREV 0.05F
@@ -140,9 +141,6 @@ TYPEREAL DC_offset_I, DC_offset_Q;
 
 #define WATERFALL_CALIBRATION_DEFAULT -13
 #define SMETER_CALIBRATION_DEFAULT -13
-
-#define N_MTU 3
-static int mtu_v[N_MTU] = { 1500, 1440, 1400 };
 
 void update_freqs(bool *update_cfg)
 {
@@ -484,7 +482,6 @@ void update_vars_from_config(bool called_at_init)
     
     int mtu = cfg_default_int("ethernet_mtu", 0, &up_cfg);
     if (mtu < 0 || mtu >= N_MTU) mtu = 0;
-    static int current_mtu;
     if (mtu != current_mtu) {
         int mtu_val = mtu_v[mtu];
         printf("ETH0 ifconfig eth0 mtu %d\n", mtu_val);
