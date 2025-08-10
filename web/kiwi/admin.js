@@ -1823,7 +1823,7 @@ var network = {
    ethernet_speed_s: [ ['auto', 1], ['10 Mbps', 1], ['100 Mbps', 1] ],
    ESPEED_10M: 1,
    ESPEED_ENA: 1,
-   ethernet_mtu_s: [ '1500 (default)', '1440', '1400' ],
+   ethernet_mtu_s: [ '1500 (default)', '1440', '1400', '1344', '1312', '1280' ],
    
    restart_delay_s: [ 'no delay', 30, 45, 60, 90, 120, 150, 180 ],
 
@@ -1916,7 +1916,7 @@ function network_html()
             w3_divs('w3-center/',
                w3_select('w3-width-auto', 'Ethernet interface MTU', '', 'ethernet_mtu', cfg.ethernet_mtu, network.ethernet_mtu_s, 'network_ethernet_mtu'),
                w3_div('w3-text-black',
-                  'Select 1440 when having <br> connection problems <br> using 4G networks.')
+                  'Select lower value when <br> having connection issues <br> using mobile networks.')
             )
 			),
 			
@@ -2433,6 +2433,7 @@ function network_ethernet_mtu(path, idx, first)
 	//console.log('network_ethernet_mtu path='+ path +' idx='+ idx +' first='+ first);
    if (first) return;
    admin_select_cb(path, idx, first);
+   ext_send('SET ethernet_MTU='+ idx);
 }
 
 function network_port_open_init()
