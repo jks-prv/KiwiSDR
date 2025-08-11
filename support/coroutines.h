@@ -103,19 +103,19 @@ C_LINKAGE(int _CreateTask(funcP_t entry, const char *name, void *param, int prio
 
 // usec == 0 means sleep until someone does TaskWakeup() on us
 // usec > 0 is microseconds time in future (added to current time)
-C_LINKAGE(void *_TaskSleep(const char *reason, u64_t usec, volatile u4_t *wakeup_test));
-#define TaskSleep()                 _TaskSleep("TaskSleep", 0, NULL)
-#define TaskSleepUsec(us)           _TaskSleep("TaskSleep", us, NULL)
-#define TaskSleepMsec(ms)           _TaskSleep("TaskSleep", MSEC_TO_USEC(ms), NULL)
-#define TaskSleepSec(s)             _TaskSleep("TaskSleep", SEC_TO_USEC(s), NULL)
-#define TaskSleepReason(r)          _TaskSleep(r, 0, NULL)
-#define TaskSleepReasonUsec(r, us)  _TaskSleep(r, us, NULL)
-#define TaskSleepReasonMsec(r, ms)  _TaskSleep(r, MSEC_TO_USEC(ms), NULL)
-#define TaskSleepReasonSec(r, s)    _TaskSleep(r, SEC_TO_USEC(s), NULL)
+C_LINKAGE(void *_TaskSleep(const char *reason, u64_t usec));
+#define TaskSleep()                 _TaskSleep("TaskSleep", 0)
+#define TaskSleepUsec(us)           _TaskSleep("TaskSleep", us)
+#define TaskSleepMsec(ms)           _TaskSleep("TaskSleep", MSEC_TO_USEC(ms))
+#define TaskSleepSec(s)             _TaskSleep("TaskSleep", SEC_TO_USEC(s))
+#define TaskSleepReason(r)          _TaskSleep(r, 0)
+#define TaskSleepReasonUsec(r, us)  _TaskSleep(r, us)
+#define TaskSleepReasonMsec(r, ms)  _TaskSleep(r, MSEC_TO_USEC(ms))
+#define TaskSleepReasonSec(r, s)    _TaskSleep(r, SEC_TO_USEC(s))
 
 // CAUTION: For a wakeup test location shared between multiple tasks more than one task
 // may be woken up simultaneously. So need to check if the reason for sleeping is still present.
-#define TaskSleepWakeupTest(r, wu)  _TaskSleep(r, 0, wu)
+void *TaskSleepWakeupTest(const char *reason, volatile u4_t *wakeup_test, u4_t wakeup_test_val);
 
 void TaskSleepID(int id, u64_t usec);
 
