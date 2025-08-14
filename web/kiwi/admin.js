@@ -884,13 +884,16 @@ function connect_html()
             w3_label('w3-text-top w3-show-inline-block w3-margin-R-16 w3-text-teal', 'Status:') +
 				w3_div('id-connect-rev-status w3-show-inline-block w3-text-black w3-background-pale-aqua', ''),
 				
+				''
+				/*
             w3_div('w3-restart|width:70%;',
                w3_input_get('id-proxy-server', 'Proxy server hostname', 'adm.proxy_server', 'connect_proxy_server_cb'),
                w3_div('w3-text-black',
                   'Change <b>only</b> if you have implemented a private proxy server. <br>' +
-                  'Set to '+ dq(admin.proxy_host) +' for the default proxy service.'
+                  'Set to proxy.kiwisdr.com for the default proxy service.'
                )
             )
+            */
 			)
 		);
 
@@ -1436,6 +1439,7 @@ function connect_rev_status_cb(status)
    connect.focus_query = false;
 }
 
+/*
 function connect_proxy_server_cb(path, val)
 {
    val = val.trim();
@@ -1448,6 +1452,7 @@ function connect_proxy_server_cb(path, val)
    connect_rev_register_cb();
    connect_rev_usage();
 }
+*/
 
 
 ////////////////////////////////
