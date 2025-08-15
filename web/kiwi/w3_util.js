@@ -1297,6 +1297,15 @@ function w3_isVisible(el_id)
 	return (el.style.visibility == 'visible');
 }
 
+function w3_zIndex(el_id, znew)
+{
+	var el = w3_el(el_id);
+	if (!el) return null;
+	var zold = el.style.zIndex;
+	if (isArg(znew)) el.style.zIndex = znew;
+	return zold;
+}
+
 // our standard for confirming (highlighting) a control action (e.g.button push)
 var w3_highlight_time = 250;
 var w3_highlight_color = 'w3-selection-green';
