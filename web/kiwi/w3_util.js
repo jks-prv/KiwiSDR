@@ -3234,7 +3234,7 @@ function w3_checkbox_get(path)
 function w3_checkbox_set(path, checked)
 {
    var el = w3_el(path);
-   //console.log('w3_checkbox_set path='+ path +' el=...');
+   //console.log('w3_checkbox_set path='+ path +' checked='+ checked +' el=...');
    //console.log(el);
    if (!el) return;
 	el.checked = checked? true:false;
