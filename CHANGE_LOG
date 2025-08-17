@@ -3,6 +3,14 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.820  August 18, 2025
+    TDoA extension: (thanks UDXF forum)
+        Fixed problem with sampling hosts not consistently appearing on result maps.
+        Added new checkbox: Show "TDoA map with hosts". This causes the "... with hosts" result map
+            to always be shown at the end of a run rather than the default "... no hosts".
+    
+    Connections to URLs of the form "kiwisdr.local:8073" work again. (thanks nitroengine)
+
 v1.819  August 10, 2025
     Admin network tab: Added lower Ethernet MTU values needed to make a certain UK 4G mobile
         network function. (thanks G8GPO)
