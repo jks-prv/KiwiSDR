@@ -116,6 +116,7 @@ extern int p_i[8];
 
 
 typedef enum { DOM_SEL_NAM=0, DOM_SEL_DUC=1, DOM_SEL_PUB=2, DOM_SEL_SIP=3, DOM_SEL_REV=4 } dom_sel_e;
+const char * const dom_type_s[] = { "NAM", "DUC", "PUB", "SIP", "REV" };
 
 typedef enum { RX4_WF4=0, RX8_WF2=1, RX3_WF3=2, RX14_WF0=3 } firmware_e;
 
