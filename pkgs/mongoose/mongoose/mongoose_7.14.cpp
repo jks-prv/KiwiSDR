@@ -6452,7 +6452,12 @@ static size_t print_ip4(void (*out)(char, void *), void *arg, uint8_t *p) {
 }
 
 static size_t print_ip6(void (*out)(char, void *), void *arg, uint16_t *p) {
-  return mg_xprintf(out, arg, "[%x:%x:%x:%x:%x:%x:%x:%x]", mg_ntohs(p[0]),
+  #ifdef KIWISDR
+    // necessary for the comparisons in net.cpp::isLocal_if_ip()
+    return mg_xprintf(out, arg, "%x:%x:%x:%x:%x:%x:%x:%x", mg_ntohs(p[0]),
+  #else
+    return mg_xprintf(out, arg, "[%x:%x:%x:%x:%x:%x:%x:%x]", mg_ntohs(p[0]),
+  #endif
                     mg_ntohs(p[1]), mg_ntohs(p[2]), mg_ntohs(p[3]),
                     mg_ntohs(p[4]), mg_ntohs(p[5]), mg_ntohs(p[6]),
                     mg_ntohs(p[7]));
