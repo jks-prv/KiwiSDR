@@ -220,7 +220,7 @@ void shmem_ipc_invoke(int signal, int which, int wait)
         while (ipc->done[which] == 0) {
             //real_printf("s.. %s S%d %p[%d]\n", Task_s(tid), signal, &ipc->request[which], which);
             if (tid != 0) {
-                TaskSleepWakeupTest("shmem_ipc_wait_child", &ipc->done[which]);
+                TaskSleepWakeupTest("shmem_ipc_wait_child", &ipc->done[which], 1);
             } else {
                 NextTask("shmem_ipc_wait_child");
             }

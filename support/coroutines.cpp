@@ -188,6 +188,7 @@ struct TASK {
 	TASK *interrupted_task;
 	s64_t deadline;
 	volatile u4_t *wakeup_test;
+	u4_t wakeup_test_val;
 	u4_t run, cmds;
 	#define N_REASON 64
 	char reason[N_REASON];
@@ -1150,15 +1151,15 @@ void _NextTask(const char *where, u4_t param, u_int64_t pc)
                     
                     if (tp->deadline > 0) {
                         if (tp->deadline < now_us) {
-                            //if (tp->flags & CTF_TRACE_WAKEUP) printf("CTF_TRACE_WAKEUP: deadline=%d %s\n", tp->deadline, task_s(tp));
+                            if (tp->flags & CTF_TRACE_WAKEUP) printf("CTF_TRACE_WAKEUP: deadline=%d %s\n", tp->deadline, task_s(tp));
                             evNT(EC_EVENT, EV_NEXTTASK, -1, "NextTask", evprintf("deadline expired %s, Qrunnable %d", task_s(tp), tp->tq->runnable));
                             tp->deadline = 0;
                             wake = true;
                         }
                     } else
                     if (tp->wakeup_test != NULL) {
-                        if (*tp->wakeup_test != 0) {
-                            //if (tp->flags & CTF_TRACE_WAKEUP) printf("CTF_TRACE_WAKEUP: wakeup_test=%p %s\n", tp->wakeup_test, task_s(tp));
+                        if (*tp->wakeup_test == tp->wakeup_test_val) {
+                            if (tp->flags & CTF_TRACE_WAKEUP) printf("CTF_TRACE_WAKEUP: wakeup_test=%p wakeup_test_val=%d %s\n", tp->wakeup_test, tp->wakeup_test_val, task_s(tp));
                             evNT(EC_EVENT, EV_NEXTTASK, -1, "NextTask", evprintf("wakeup_test completed %s, Qrunnable %d", task_s(tp), tp->tq->runnable));
                             tp->wakeup_test = NULL;
                             wake = true;
@@ -1405,7 +1406,7 @@ int _CreateTask(funcP_t funcP, const char *name, void *param, int priority, u4_t
 	return t->id;
 }
 
-static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, volatile u4_t *wakeup_test = NULL)
+static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, volatile u4_t *wakeup_test = NULL, u4_t wakeup_test_val = 0)
 {
 	// usec == 0 means sleep until someone does TaskWakeup() on us
 	// usec > 0 is microseconds time in future (added to current time)
@@ -1420,10 +1421,11 @@ static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, volatile u4_
 	} else {
 	    assert(usec == 0);
         t->wakeup_test = wakeup_test;
+        t->wakeup_test_val = wakeup_test_val;
 		t->deadline = 0;
 		if (wakeup_test != NULL) {
             kiwi_snprintf_buf(t->reason, "(test %p) ", wakeup_test);
-            evNT(EC_EVENT, EV_NEXTTASK, -1, "TaskSleep", evprintf("sleeping test %p %s Qrunnable %d", wakeup_test, task_ls(t), t->tq->runnable));
+            evNT(EC_EVENT, EV_NEXTTASK, -1, "TaskSleep", evprintf("sleeping test %p=%d %s Qrunnable %d", wakeup_test, wakeup_test_val, task_ls(t), t->tq->runnable));
 		} else {
             strcpy(t->reason, "(evt) ");
             evNT(EC_EVENT, EV_NEXTTASK, -1, "TaskSleep", evprintf("sleeping event %s Qrunnable %d", task_ls(t), t->tq->runnable));
@@ -1435,11 +1437,11 @@ static void taskSleepSetup(TASK *t, const char *reason, u64_t usec, volatile u4_
 	RUNNABLE_NO(t, /* prev_stopped */ t->stopped? 0:-1);
 }
 
-void *_TaskSleep(const char *reason, u64_t usec, volatile u4_t *wakeup_test)
+static void *taskSleepCommon(const char *reason, u64_t usec, volatile u4_t *wakeup_test = NULL, u4_t wakeup_test_val = 0)
 {
     TASK *t = cur_task;
 
-    taskSleepSetup(t, reason, usec, wakeup_test);
+    taskSleepSetup(t, reason, usec, wakeup_test, wakeup_test_val);
 
 	#if 0
         static bool trigger;
@@ -1461,6 +1463,16 @@ void *_TaskSleep(const char *reason, u64_t usec, volatile u4_t *wakeup_test)
     t->sleeping = FALSE;
 	t->wakeup = FALSE;
 	return t->wake_param;
+}
+
+void *_TaskSleep(const char *reason, u64_t usec)
+{
+    return taskSleepCommon(reason, usec);
+}
+
+void *TaskSleepWakeupTest(const char *reason, volatile u4_t *wakeup_test, u4_t wakeup_test_val)
+{
+    return taskSleepCommon(reason, 0, wakeup_test, wakeup_test_val);
 }
 
 void TaskSleepID(int id, u64_t usec)

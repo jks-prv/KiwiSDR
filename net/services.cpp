@@ -217,9 +217,10 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
     char *kiwisdr_com = DNS_lookup_result("my_kiwi", "kiwisdr.com", &net.ips_kiwisdr_com);
     int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
     int dom_stat = (dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
-    printf("my_kiwi_register dom=%d dom_stat=%d\n", dom_sel, dom_stat);
+    printf("my_kiwi_register dom=%d dom_%s dom_stat=%d\n", dom_sel, dom_type_s[dom_sel], dom_stat);
 
     const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
+    if (kiwi_emptyStr(server_url)) server_url = strdup("UNSET");
     int add_nat = admcfg_true("auto_add_nat")? 1:0;
     int dhcp = admcfg_true("use_static")? 0:1;
     bool kiwisdr_com_reg = admcfg_true("kiwisdr_com_register");
@@ -230,6 +231,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
 
     // proxy always uses port 8073
     int server_port = (dom_sel == DOM_SEL_REV)? 8073 : net.port_ext;
+    int mtu = mtu_v[cfg_int_("ethernet_mtu")];
 
     asprintf(&cmd_p, "curl -Ls --show-error --ipv4 --connect-timeout 5 "
         "\"%s/php/my_kiwi.php?auth=308bb2580afb041e0514cd0d4f21919c&"
@@ -237,15 +239,15 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         "pub=%s&pvt=%s&"
         "port=%d&dhcp=%d&jq=%d&"
         "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
-        "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&vr=%x&up=%d"
+        "dom=%d&dom%s&dom_stat=%d&dna=%08x%08x&apu=%d&mtu=%d&serno=%d&reg=%d&vr=%x&up=%d"
         "%s\"",
         kiwisdr_com,
         server_url, server_port, net.mac, add_nat, kiwi_str_encode_static(net.hostname),
         net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
         net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
         email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
-        dom_sel, dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
-        net.serno, kiwisdr_com_reg? 1:0, kiwi.vr, timer_sec(),
+        dom_sel, dom_type_s[dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
+        mtu, net.serno, kiwisdr_com_reg? 1:0, kiwi.vr, timer_sec(),
         kstr_sp(cmd_p2));
     cfg_string_free(server_url);
     kiwi_ifree(email, "email");
@@ -925,6 +927,7 @@ static void reg_public(void *param)
 
 	while (1) {
         const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
+        if (kiwi_emptyStr(server_url)) server_url = strdup("UNSET");
         //char *server_enc = kiwi_str_encode((char *) server_url);
 
         const char *admin_email = cfg_string("admin_email", NULL, CFG_OPTIONAL);
@@ -948,14 +951,14 @@ static void reg_public(void *param)
             "pub=%s&pvt=%s&"
             "port=%d&dhcp=%d&jq=%d&"
             "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
-            "dom=%d&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&up=%d"
+            "dom=%d&dom%s&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&up=%d"
             "\" 2>&1",
             kiwisdr_com,
             server_url, server_port, net.mac, add_nat, kiwi_str_encode_static(net.hostname),
             net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
             net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
             email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
-            dom_sel, dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
+            dom_sel, dom_type_s[dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
             net.serno, kiwisdr_com_reg? 1:0, timer_sec()
             );
     

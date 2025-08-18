@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
 
 #include "kiwi.h"
 #include "types.h"
@@ -238,12 +238,12 @@ void mg_ev_setup_api_compat(struct mg_connection *mc)
 {
     // convert IPv4-mapped IPv6 to IPv4
     mg_snprintf(mc->local_ip, sizeof(mc->local_ip), "%M", mg_print_ip, mc->loc.ip);
-    if (kiwi_str_begins_with(mc->local_ip, "[0:0:0:0:0:ffff:"))
+    if (kiwi_str_begins_with(mc->local_ip, "0:0:0:0:0:ffff:"))
         mg_snprintf(mc->local_ip, sizeof(mc->local_ip), "%M", mg_print_ip4, &mc->loc.ip[12]);
     mc->local_port = mg_ntohs(mc->loc.port);
 
     mg_snprintf(mc->remote_ip, sizeof(mc->remote_ip), "%M", mg_print_ip, mc->rem.ip);
-    if (kiwi_str_begins_with(mc->remote_ip, "[0:0:0:0:0:ffff:"))
+    if (kiwi_str_begins_with(mc->remote_ip, "0:0:0:0:0:ffff:"))
         mg_snprintf(mc->remote_ip, sizeof(mc->remote_ip), "%M", mg_print_ip4, &mc->rem.ip[12]);
     mc->remote_port = mg_ntohs(mc->rem.port);
 }

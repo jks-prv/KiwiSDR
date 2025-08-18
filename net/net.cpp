@@ -271,7 +271,7 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
 	int i, rc;
 	
 	struct addrinfo *res, *rp, hint;
-
+	
 	// So it seems getaddrinfo() doesn't work as we expect for IPv4 addresses.
 	// If a remote (client) host has both IPv4 and IPv6 addresses then you might expect
 	// getaddrinfo() to return an ai_family == AF_INET in the results list.

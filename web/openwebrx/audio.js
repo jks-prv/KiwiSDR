@@ -80,7 +80,12 @@ var audio_stat_last_time;
 var audio_running;
 var audio_started;
 var audio_last_output_offset;
-var audio_mode_stereo;
+
+// NB: audio_mode_iq is used by the old "C-QUAM AM Stereo decoder" Javascript that some users
+// still have in their admin webpage tab "additional HTML/Javascript" field.
+// So just make audio_mode_iq shadow the currently named audio_mode_stereo.
+var audio_mode_stereo, audio_mode_iq;
+
 var audio_compression;
 var audio_use_first_sent_comp_value = false;
 var audio_stat_input_epoch;
@@ -256,7 +261,7 @@ function audio_init(is_local, less_buffering, compression)
    // reset globals
    audio_started = false;
    audio_last_output_offset = 0;
-   audio_mode_stereo = false;
+   audio_mode_stereo = audio_mode_iq = false;
    audio_compression = compression? true:false;
    audio_stat_input_epoch = -1;
    audio_prepared_buffers = [];
@@ -883,13 +888,13 @@ function audio_recv(data, ws, firstChars)
          // because we haven't figured out how to make rational_resampler_cc() work yet
          // punt and just use old resampler for IQ/stereo mode
          resample_new = false; resample_old = !resample_new;
-         audio_mode_stereo = true;
+         audio_mode_stereo = audio_mode_iq = true;
 	      audio_channels = 2;
          if (audio.d) console.log('AUDIO !IQ/stereo -> IQ/stereo transition');
          audio_connect(1);
 	   }
 	   audio_last_compression = audio_compression = false;
-	   audio_mode_stereo = true;
+	   audio_mode_stereo = audio_mode_iq = true;
 	} else {
 	
 	   // current buffer flag is not IQ/stereo mode
@@ -913,14 +918,14 @@ function audio_recv(data, ws, firstChars)
                console.log('AUDIO !IQ/stereo, compression change='+ (audio_compression != compressed) +' compressed='+ compressed);
          }
 
-         audio_mode_stereo = false;
+         audio_mode_stereo = audio_mode_iq = false;
 	      audio_channels = 1;
          audio_last_compression = audio_compression = compressed;
          audio_connect(1);
 	   }
 	   
       audio_last_compression = audio_compression = compressed;
-	   audio_mode_stereo = false;
+	   audio_mode_stereo = audio_mode_iq = false;
 	}
    audio_channels = audio_mode_stereo? 2 : 1;
 
