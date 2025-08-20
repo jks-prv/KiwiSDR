@@ -1205,18 +1205,9 @@ void c2s_admin(void *param)
             n = strcmp(cmd, "SET gps_update");
             if (n == 0) {
                 if (gps.IQ_seq_w != gps.IQ_seq_r) {
-                    sb = (char *) "{\"ch\":0,\"IQ\":[";
-                    s4_t iq;
-                    for (j = 0; j < GPS_IQ_SAMPS*NIQ; j++) {
-                        #if GPS_INTEG_BITS == 16
-                            iq = S4(S2(gps.IQ_data[j*2+1]));
-                        #else
-                            iq = S32_16_16(gps.IQ_data[j*2], gps.IQ_data[j*2+1]);
-                        #endif
-                        sb = kstr_asprintf(sb, "%s%d", j? ",":"", iq);
-                    }
-                    sb = kstr_cat(sb, "]}");
+                    sb = gps_IQ_data(gps.IQ_data_ch);
                     send_msg_encoded(conn, "MSG", "gps_IQ_data_cb", "%s", kstr_sp(sb));
+                    //real_printf("%s\n\n", kstr_sp(sb));
                     kstr_free(sb);
                     gps.IQ_seq_r = gps.IQ_seq_w;
                     NextTask("gps_update1");
@@ -1268,69 +1259,9 @@ void c2s_admin(void *param)
                     NextTask("gps_update3");
                 }
     
-                gps_chan_t *c;
-            
-                sb = kstr_asprintf(NULL, "{\"FFTch\":%d,\"ch\":[", gps.FFTch);
-            
-                for (i=0; i < gps_chans; i++) {
-                    c = &gps.ch[i];
-                    int prn = -1;
-                    char prn_s = 'x';
-                    if (c->sat >= 0) {
-                        prn_s = sat_s[Sats[c->sat].type];
-                        prn = Sats[c->sat].prn;
-                    }
-                    sb = kstr_asprintf(sb, "%s{\"ch\":%d,\"prn_s\":\"%c\",\"prn\":%d,\"snr\":%d,\"rssi\":%d,\"gain\":%d,\"age\":\"%s\",\"old\":%d,\"hold\":%d,\"wdog\":%d"
-                        ",\"unlock\":%d,\"parity\":%d,\"alert\":%d,\"sub\":%d,\"sub_renew\":%d,\"soln\":%d,\"ACF\":%d,\"novfl\":%d,\"az\":%d,\"el\":%d}",
-                        i? ", ":"", i, prn_s, prn, c->snr, c->rssi, c->gain, c->age, c->too_old? 1:0, c->hold, c->wdog,
-                        c->ca_unlocked, c->parity, c->alert, c->sub, c->sub_renew, c->has_soln, c->ACF_mode, c->novfl, c->az, c->el);
-                    c->parity = 0;
-                    c->has_soln = 0;
-                    for (j = 0; j < SUBFRAMES; j++) {
-                        if (c->sub_renew & (1<<j)) {
-                            c->sub |= 1<<j;
-                            c->sub_renew &= ~(1<<j);
-                        }
-                    }
-                    NextTask("gps_update4");
-                }
-    
-                sb = kstr_asprintf(sb, "],\"stype\":%d", gps.soln_type);
-    
-                UMS hms(gps.StatDaySec/60/60);
-            
-                unsigned r = (timer_ms() - gps.start)/1000;
-                if (r >= 3600) {
-                    sb = kstr_asprintf(sb, ",\"run\":\"%d:%02d:%02d\"", r / 3600, (r / 60) % 60, r % 60);
-                } else {
-                    sb = kstr_asprintf(sb, ",\"run\":\"%d:%02d\"", (r / 60) % 60, r % 60);
-                }
-    
-                sb = kstr_asprintf(sb, gps.ttff? ",\"ttff\":\"%d:%02d\"" : ",\"ttff\":null", gps.ttff / 60, gps.ttff % 60);
-    
-                if (gps.StatDay != -1)
-                    sb = kstr_asprintf(sb, ",\"gpstime\":\"%s %02d:%02d:%02.0f\"", Week[gps.StatDay], hms.u, hms.m, hms.s);
-                else
-                    sb = kstr_cat(sb, ",\"gpstime\":null");
-    
-                sb = kstr_asprintf(sb, gps.tLS_valid?",\"utc_offset\":\"%+d sec\"" : ",\"utc_offset\":null", gps.delta_tLS);
-    
-                if (gps.StatLat) {
-                    //sb = kstr_asprintf(sb, ",\"lat\":\"%8.6f %c\"", gps.StatLat, gps.StatNS);
-                    sb = kstr_asprintf(sb, ",\"lat\":%.6f", gps.sgnLat);
-                    //sb = kstr_asprintf(sb, ",\"lon\":\"%8.6f %c\"", gps.StatLon, gps.StatEW);
-                    sb = kstr_asprintf(sb, ",\"lon\":%.6f", gps.sgnLon);
-                    sb = kstr_asprintf(sb, ",\"alt\":\"%1.0f m\"", gps.StatAlt);
-                    sb = kstr_asprintf(sb, ",\"map\":\"<a href='http://wikimapia.org/#lang=en&lat=%8.6f&lon=%8.6f&z=18&m=b' target='_blank'>wikimapia.org</a>\"",
-                        gps.sgnLat, gps.sgnLon);
-                } else {
-                    sb = kstr_cat(sb, ",\"lat\":0");
-                }
-                
-                sb = kstr_asprintf(sb, ",\"acq\":%d,\"track\":%d,\"good\":%d,\"fixes\":%d,\"fixes_min\":%d,\"adc_clk\":%.6f,\"adc_corr\":%d,\"is_corr\":%d,\"a\":\"%s\"}",
-                    gps.acquiring? 1:0, gps.tracking, gps.good, gps.fixes, gps.fixes_min, adc_clock_system()/1e6, clk.adc_gps_clk_corrections, clk.is_corr? 1:0, gps.a);
-    
+                sb = gps_update_data();    
                 send_msg_encoded(conn, "MSG", "gps_update_cb", "%s", kstr_sp(sb));
+                //real_printf("%s\n\n", kstr_sp(sb));
                 kstr_free(sb);
                 NextTask("gps_update5");
                 continue;

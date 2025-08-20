@@ -90,6 +90,7 @@ rx_stream_t rx_streams[] = {
 	{ AJAX_ADC,         "adc" },
 	{ AJAX_ADC_OV,      "adc_ov" },
 	{ AJAX_S_METER,     "s-meter" },
+	{ AJAX_GPS,         "gps" },
 #endif
 	{ 0 }
 };

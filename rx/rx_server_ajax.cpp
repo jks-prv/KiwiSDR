@@ -630,6 +630,42 @@ fail:
 	}
 
 	// SECURITY:
+	//	Delivery restricted to the local network.
+	//	Returns JSON
+	case AJAX_GPS: {
+		if (!isLocalIP) {
+			printf("/gps NON_LOCAL FETCH ATTEMPT from %s\n", ip_unforwarded);
+			return (char *) -1;
+		}
+		//printf("/gps REQUESTED from %s\n", ip_unforwarded);
+		
+		if (kiwi_nonEmptyStr(mc->query)) {
+		    int ch;
+		    if (sscanf(mc->query, "iq=%d", &ch) == 1) {
+		        ch = CLAMP(ch, 1, gps_chans);
+		        if (gps.IQ_data_ch_ajax == 0) {
+		            gps.IQ_data_ch_ajax = ch;
+		            sb = kstr_asprintf(NULL, "{\"status\":\"requested\",\"iq\":%d}\n", ch);
+		        } else
+		        if (gps.IQ_seq_ajax_r == gps.IQ_seq_ajax_w) {
+		            sb = kstr_asprintf(NULL, "{\"status\":\"waiting\",\"iq\":%d}\n", ch);
+		        } else {
+		            sb = gps_IQ_data(gps.IQ_data_ch_ajax, FROM_AJAX);
+		            gps.IQ_data_ch_ajax = 0;
+                    gps.IQ_seq_ajax_r = gps.IQ_seq_ajax_w;
+		        }
+		    } else {
+                asprintf(&sb, "/gps: \"%s\" unrecognized, \"iq=<ch>\" is the only recognized option\n", mc->query);
+                printf("%s", sb);
+                break;
+		    }
+		} else {
+            sb = gps_update_data(FROM_AJAX);
+		}
+        return sb;      // NB: return here because sb is already a kstr_t (don't want to do kstr_wrap() below)
+    }
+    
+	// SECURITY:
 	//	OKAY, used by kiwisdr.com and Priyom Pavlova at the moment
 	//	Returns '\n' delimited keyword=value pairs
 	case AJAX_STATUS: {

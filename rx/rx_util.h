@@ -99,3 +99,7 @@ void get_location_grid(char **loc, bool *free_loc, char **grid = NULL, bool *fre
 void on_GPS_solution();
 float dB_fast(float x);
 void rx_modes_init();
+
+#define FROM_AJAX true
+char *gps_IQ_data(int ch, bool from_AJAX = false);
+char *gps_update_data(bool from_AJAX = false);
