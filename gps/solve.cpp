@@ -497,6 +497,7 @@ void update_gps_info_after(GNSSDataForEpoch const& gnssDataForEpoch,
     // red    -> no position solution
     const int grn_yel_red = (pos_solvers[0]->ekf_valid() ? 0 : (pos_solvers[0]->spp_valid() ? 1 : 2));
     GPSstat(STAT_SOLN, 0, grn_yel_red, gnssDataForEpoch.ch_has_soln());
+    gps.solve_seq++;
 
     // update az/el
     const auto elev_azim = pos_solvers[0]->elev_azim(gnssDataForEpoch.sv());

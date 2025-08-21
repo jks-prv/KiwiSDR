@@ -228,6 +228,7 @@ typedef struct {
     int last_samp_hour;
 	u4_t fixes, fixes_min, fixes_min_incr;
 	u4_t fixes_hour, fixes_hour_incr, fixes_hour_samples;
+	u4_t solve_seq;
 
 	double StatWeekSec, StatDaySec;
 	int StatDay;    // 0 = Sunday

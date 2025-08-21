@@ -650,7 +650,7 @@ fail:
 		        if (gps.IQ_seq_ajax_r == gps.IQ_seq_ajax_w) {
 		            sb = kstr_asprintf(NULL, "{\"status\":\"waiting\",\"iq\":%d}\n", ch);
 		        } else {
-		            sb = gps_IQ_data(gps.IQ_data_ch_ajax, FROM_AJAX);
+		            sb = gps_IQ_data(ch, FROM_AJAX);
 		            gps.IQ_data_ch_ajax = 0;
                     gps.IQ_seq_ajax_r = gps.IQ_seq_ajax_w;
 		        }

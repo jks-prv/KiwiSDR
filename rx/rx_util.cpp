@@ -1268,7 +1268,7 @@ char *gps_update_data(bool from_AJAX)
     int i, j;
     gps_chan_t *c;
 
-    char *sb = kstr_asprintf(NULL, "{\"FFTch\":%d,\"ch\":[", gps.FFTch);
+    char *sb = kstr_asprintf(NULL, "{\"FFTch\":%d,\"seq\":%u,\"ch\":[", gps.FFTch, gps.solve_seq);
 
     for (i=0; i < gps_chans; i++) {
         c = &gps.ch[i];
