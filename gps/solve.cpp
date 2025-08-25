@@ -497,6 +497,7 @@ void update_gps_info_after(GNSSDataForEpoch const& gnssDataForEpoch,
     // red    -> no position solution
     const int grn_yel_red = (pos_solvers[0]->ekf_valid() ? 0 : (pos_solvers[0]->spp_valid() ? 1 : 2));
     GPSstat(STAT_SOLN, 0, grn_yel_red, gnssDataForEpoch.ch_has_soln());
+    gps.solve_seq++;
 
     // update az/el
     const auto elev_azim = pos_solvers[0]->elev_azim(gnssDataForEpoch.sv());
@@ -585,7 +586,10 @@ void SolveTask(void *param) {
     
         // while we're waiting send IQ values if requested
         u4_t now = timer_ms();
-            int ch = gps.IQ_data_ch - 1;
+            bool ajax = (gps.IQ_data_ch_ajax > 0);
+            //printf("ajax=%d ch_ajax=%d seq_ajax_w=%d seq_w=%d\n", ajax, gps.IQ_data_ch_ajax, gps.IQ_seq_ajax_w, gps.IQ_seq_w);
+            s2_t *data = ajax? gps.IQ_data_ajax : gps.IQ_data;
+            int ch = (ajax? gps.IQ_data_ch_ajax : gps.IQ_data_ch) - 1;
             if (ch != -1) {
                 spi_set(CmdIQLogReset, ch);
                 //printf("SOLVE CmdIQLogReset ch=%d\n", ch);
@@ -593,10 +597,15 @@ void SolveTask(void *param) {
                 TaskSleepMsec(900);     //jks2
                 SPI_MISO *rx = &SPI_SHMEM->gps_iqdata_miso;
                 spi_get(CmdIQLogGet, rx, S2B(GPS_IQ_SAMPS_W));
-                memcpy(gps.IQ_data, rx->word, S2B(GPS_IQ_SAMPS_W));
+                memcpy(data, rx->word, S2B(GPS_IQ_SAMPS_W));
                // printf("gps.IQ_data %d rx->word %d S2B(GPS_IQ_SAMPS_W) %d\n", \
                     sizeof(gps.IQ_data), sizeof(rx->word), S2B(GPS_IQ_SAMPS_W));
-                gps.IQ_seq_w++;
+                if (ajax) {
+                    gps.IQ_data_ch_ajax = -1;
+                    gps.IQ_seq_ajax_w++;
+                } else {
+                    gps.IQ_seq_w++;
+                }
             }
         //#define SOLVE_RATE  (4-1)   // 1 is GLITCH_GUARD*2
         #define SOLVE_RATE  (2-1)   // 1 is GLITCH_GUARD*2      jks2

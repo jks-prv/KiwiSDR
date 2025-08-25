@@ -2910,7 +2910,7 @@ function gps_iq_ch_cb(path, idx, first)
 {
    _gps.iq_ch = idx = +idx;
    
-   // channel # is biased at 1 so zero indicates "off" (no sampling)
+   // channel # sent to server is biased at 1 so zero indicates "off" (no sampling)
    // make sure IQ data isn't being unnecessarily requested unless GPS tab is in focus and IQ button selected
 	var ch = (_gps.focus && adm.rssi_azel_iq == _gps.IQ)? (idx+1) : 0;
 	console.log('gps_iq_ch_cb idx='+ idx +' path='+ path+' first='+ first +' ch='+ ch +' IQ-button='+ TF(adm.rssi_azel_iq == _gps.IQ) +' focus='+ TF(_gps.focus));
@@ -3030,11 +3030,14 @@ var sub_colors = [ 'w3-red', 'w3-green', 'w3-blue', 'w3-yellow', 'w3-orange' ];
 
 var gps_canvas;
 var gps_last_good_el = [];
-var gps_rssi_azel_iq_s = [ 'RSSI', 'Az/el', 'Position solution map', 'Map', 'LO PLL IQ' ];
+var gps_rssi_azel_iq_s = [
+   'RSSI' + w3_span('w3-normal', '&nbsp; (green bar: sat tracked, red: searching)'),
+   'Az/el', 'Position solution map', 'Map', 'LO PLL IQ' ];
 
 function gps_update_admin_cb()
 {
    if (!gps) return;
+   //console.log('rssi_azel_iq='+ adm.rssi_azel_iq +' iq_ch='+ _gps.iq_ch);
 
 	var i, el, x, y, z, zw, s, cn, az, axis, scale, len, color;
 	
@@ -3046,7 +3049,7 @@ function gps_update_admin_cb()
 			(adm.rssi_azel_iq == _gps.RSSI)? null : w3_table_heads('w3-right-align', 'RSSI'),
          (adm.rssi_azel_iq == _gps.AZEL || adm.rssi_azel_iq == _gps.MAP)? null : 
             w3_table_heads('w3-center|width:35%',
-               ((adm.rssi_azel_iq == _gps.IQ && _gps.iq_ch)? ('Channel '+ _gps.iq_ch +' ') : '') + gps_rssi_azel_iq_s[adm.rssi_azel_iq]
+               ((adm.rssi_azel_iq == _gps.IQ)? ('Channel '+ (_gps.iq_ch+1) +' ') : '') + gps_rssi_azel_iq_s[adm.rssi_azel_iq]
             )
 		);
 	
@@ -4856,6 +4859,7 @@ function admin_msg(param)
 			break;
 
 		case "gps_IQ_data_cb":
+		   //console.log('RX IQ_data');
          _gps.IQ_data = kiwi_JSON_parse('gps_IQ_data_cb', decodeURIComponent(param[1]));
 			break;
 

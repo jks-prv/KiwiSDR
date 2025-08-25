@@ -228,6 +228,7 @@ typedef struct {
     int last_samp_hour;
 	u4_t fixes, fixes_min, fixes_min_incr;
 	u4_t fixes_hour, fixes_hour_incr, fixes_hour_samples;
+	u4_t solve_seq;
 
 	double StatWeekSec, StatDaySec;
 	int StatDay;    // 0 = Sunday
@@ -250,9 +251,10 @@ typedef struct {
 	u4_t shadow_map[360];
 	azel_t qzs_3;
 	
-	int IQ_data_ch;
-	s2_t IQ_data[GPS_IQ_SAMPS_W];
+	int IQ_data_ch, IQ_data_ch_ajax;
+	s2_t IQ_data[GPS_IQ_SAMPS_W], IQ_data_ajax[GPS_IQ_SAMPS_W];
 	u4_t IQ_seq_w, IQ_seq_r;
+	u4_t IQ_seq_ajax_w, IQ_seq_ajax_r;
 
     // reference lat/lon from early GPS fix
 	bool have_ref_lla;

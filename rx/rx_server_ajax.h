@@ -37,3 +37,4 @@ Boston, MA  02110-1301, USA.
 #define AJAX_ADC			13
 #define AJAX_ADC_OV			14
 #define AJAX_S_METER        15
+#define AJAX_GPS            16

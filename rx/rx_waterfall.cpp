@@ -388,7 +388,8 @@ void c2s_waterfall(void *param)
         
 		wf->fft_used = WF_NFFT / WF_USING_HALF_FFT;		// the result is contained in the first half of a complex FFT
 		
-		// if any CIC is used (z != 0) only look at half of it to avoid the aliased images
+		// If any CIC is used (z > 1) only look at half of it to avoid the aliased images.
+		// For z == 1 no CIC is used but only half the FFT is needed.
 		if (wf->zoom != 0) wf->fft_used /= WF_USING_HALF_CIC;
 		
 		float span = conn->adc_clock_corrected / 2 / (1 << wf->zoom);

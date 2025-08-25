@@ -3,6 +3,17 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.821  August 25, 2025
+    Fixed frequency memory icon behavior on mobile devices. (thanks Gary)
+
+    Admin GPS tab:
+        Fixed LO IQ PLL graph heading channel number. (thanks N2CWV)
+        On RSSI graph added comment that only green bars mean sat is being tracked.
+
+    Added AJAX/JSON interface to retrieve GPS data. (thanks N2CWV)
+        Accessible from the local network ONLY.
+        See: kiwisdr.com/info/#id-urls
+
 v1.820  August 18, 2025
     TDoA extension: (thanks UDXF forum)
         Fixed problem with sampling hosts not consistently appearing on result maps.
