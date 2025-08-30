@@ -530,7 +530,6 @@ int main(int argc, char *argv[])
 		peri_init();
 		if (gpio_test_pin) gpio_test(gpio_test_pin);
 		fpga_init(fpga_id_check);
-		//pru_start();
 		eeprom_update(eeprom_action);
 		
 		kiwi.ext_clk = cfg_true("ext_ADC_clk");

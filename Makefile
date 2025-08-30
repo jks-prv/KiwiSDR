@@ -237,11 +237,8 @@ else
     RX = rx
 endif
 
-ifneq ($(RPI),true)
-    _DIRS = pru $(PKGS)
-endif
 _DIR_PLATFORMS = $(addprefix platform/, $(PLATFORMS))
-_DIRS_O3 += . $(PKGS_O3) platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
+_DIRS_O3 += . $(PKGS_O3) platform platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
     $(RX) $(GPS) dev ui cfg dx support net web arch/$(ARCH)
 
 ifeq ($(OPT),0)
@@ -668,18 +665,6 @@ MF_FILES = $(addsuffix .o,$(basename $(notdir $(MAKEFILE_DEPS))))
 MF_OBJ = $(addprefix $(OBJ_DIR)/,$(MF_FILES))
 MF_O3 = $(wildcard $(addprefix $(OBJ_DIR_O3)/,$(MF_FILES)))
 $(MF_OBJ) $(MF_O3): Makefile
-
-
-################################
-# PRU (not currently used)
-################################
-PASM_INCLUDES = $(wildcard pru/pasm/*.h)
-PASM_SOURCE = $(wildcard pru/pasm/*.c)
-pas: $(PASM_INCLUDES) $(PASM_SOURCE) Makefile
-	$(CC) -Wall -D_UNIX_ -I./pru/pasm $(PASM_SOURCE) -o pas
-
-pru/pru_realtime.bin: pas pru/pru_realtime.p pru/pru_realtime.h pru/pru_realtime.hp
-	(cd $(REPO_DIR)/pru; ../pas -V3 -b -L -l -D_PASM_ -D$(SETUP) pru_realtime.p)
 
 
 ################################
@@ -2060,7 +2045,7 @@ clean: clean_ext clean_deprecated $(DEP_LFTP)
 	(cd $(REPO_DIR)/tools; make clean)
 	(cd $(REPO_DIR)/pkgs/noip2; make clean)
 	(cd $(REPO_DIR)/pkgs/EiBi; make clean)
-	-rm -rf $(addprefix pru/pru_realtime.,bin lst txt) $(TOOLS_DIR)/file_optim
+	-rm -rf $(TOOLS_DIR)/file_optim
 	# but not $(KEEP_DIR)
 	-rm -rf $(LOG_FILE) $(BUILD_DIR)/kiwi* $(GEN_DIR) $(OBJ_DIR) $(OBJ_DIR_O3)
 	-rm -f Makefile.1
