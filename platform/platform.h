@@ -34,11 +34,11 @@ Boston, MA  02110-1301, USA.
  #define CPU_FREQ_NOM 1000000
 #endif
 
-#ifdef CPU_AM3359
-#else
+#if defined(CPU_AM5729) || defined(CPU_BCM2837)
  #define HAS_CPU_FREQ
 #endif
 
-#if defined(CPU_AM5729) || defined(CPU_BCM2837)
+#ifdef CPU_AM3359
+#else
  #define HAS_CPU_TEMP
 #endif
