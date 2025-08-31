@@ -32,6 +32,7 @@ Boston, MA  02110-1301, USA.
 #include "str.h"
 #include "jsmn.h"
 #include "gps.h"
+#include "peri.h"
 #include "leds.h"
 #include "timing.h"
 
@@ -297,9 +298,7 @@ static void led_task(void *param)
 
 void led_task_start()
 {
-    #ifdef PLATFORM_beagleY_ai
-        // BYAI only has single green status/activity LED
-    #else
+    #ifdef HAS_BEAGLE_4_LEDS
         #if defined(OPTION_MONITOR_BOOT_BTN) && defined(CPU_AM3359)
             CreateTask(led_task, NULL, ADMIN_PRIORITY);
         #else
@@ -316,8 +315,7 @@ void led_task_stop()
 
 void led_display_fpga_code(int code)
 {
-    #ifdef PLATFORM_beagleY_ai
-    #else
+    #ifdef HAS_BEAGLE_4_LEDS
         led_clear(0);
         
         for (int i = 0; i < 5; i++) {
