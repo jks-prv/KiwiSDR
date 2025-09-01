@@ -70,8 +70,10 @@ Boston, MA  02110-1301, USA.
   #define LED_PATH "/sys/class/leds/beaglebone:green:usr"
   #define NLED 4
 #endif
+
 static int led_fd[NLED][2];
 static int led_delay_off;
+static int led_fpga;
 
 static void led_set_trig(int led, const char *s)
 {
@@ -265,6 +267,25 @@ static void led_display_info()
         led_cylon(1, LED_DLY_POST_CYLON);
         led_set(1,1,1,1, 5000);
         led_set(0,0,0,0, 3000);
+        
+        #ifdef HAS_BEAGLE_4_LEDS
+            if (led_fpga) {
+                for (int i = 0; i < 5; i++) {
+                    // ping-pong
+                    for (int j = 0; j < 5; j++) {
+                        led_set(1,0,1,0, 500);
+                        led_set(0,1,0,1, 500);
+                    }
+                    led_clear(1000);
+                    #define LB(c,v) (((c) & (v))? 1:0)
+                    led_set(LB(led_fpga,8), LB(led_fpga,4), LB(led_fpga,2), LB(led_fpga,1), 5000);
+                    led_clear(1000);
+                }
+                
+                led_flash_all(64);
+                led_clear(1000);
+            }
+        #endif
     }
 }
 
@@ -315,22 +336,5 @@ void led_task_stop()
 
 void led_display_fpga_code(int code)
 {
-    #ifdef HAS_BEAGLE_4_LEDS
-        led_clear(0);
-        
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                led_set(1,0,1,0, 500);
-                led_set(0,1,0,1, 500);
-            }
-            led_clear(1000);
-            #define LB(c,v) (((c) & (v))? 1:0)
-            led_set(LB(code,8), LB(code,4), LB(code,2), LB(code,1), 5000);
-            led_clear(1000);
-        }
-        
-        led_flash_all(32);
-        led_clear(1000);
-        led_set_debian();
-    #endif
+    led_fpga = code;
 }

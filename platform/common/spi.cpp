@@ -155,14 +155,17 @@ void spi_init()
 	junk = &SPI_SHMEM->spi_junk_miso;
 	prev = junk;
 	junk->status = SPI_BUSY;
-	CreateTaskF(spi_pump, 0, SPIPUMP_PRIORITY, CTF_BUSY_HELPER);
+	if (kiwi.hw) CreateTaskF(spi_pump, 0, SPIPUMP_PRIORITY, CTF_BUSY_HELPER);
 }
 
 static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk, int rbytes=0) {
 	int i;
+	uint16_t cmd = mosi->data.cmd;
 	
-	assert(rbytes <= SPIBUF_B);
-	
+	if (!kiwi.hw && (cmd != CmdPing && cmd != CmdPing2 && cmd != CmdGetStatus && cmd != CmdFlush))
+	    panic("spi_scan: no hw");
+
+	assert(rbytes <= SPIBUF_B);	
 	int tx_bytes = tbytes? (sizeof(mosi->data.cmd) + tbytes) : sizeof(mosi->data);
     int tx_xfers = SPI_B2X(tx_bytes);
     
@@ -175,10 +178,10 @@ static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk
     // prev is the rx/miso specified from the LAST spi_scan() call to be applied to THIS SPI transfer
     int prx_xfers = MAX(tx_xfers, prev->len_xfers);
     
-    if (mosi->data.cmd == CmdPumpFlush) mosi->data.cmd = CmdFlush;
+    if (cmd == CmdPumpFlush) cmd = mosi->data.cmd = CmdFlush;
     miso->cmd = mosi->data.cmd;
 
-	if (mosi->data.cmd != CmdFlush) {
+	if (cmd != CmdFlush) {
 	    ecpu_cmds++; //TaskStat(TSTAT_CMDS, 0, "tcm");
 	    spi.xfers++;
 	} else {
@@ -190,14 +193,14 @@ static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk
 	spi.bytes += bytes;
 	
 	#if 0 && defined(PLATFORM_beagleY_ai)
-        //if (mosi->data.cmd == CmdPing || mosi->data.cmd == CmdPing2)
-            printf("%s(%d): tx%d(%dX)|Prx%d(%dX) = T%d(%dX) R%d(%dX)\n", cmds[mosi->data.cmd], mosi->data.cmd,
+        //if (cmd == CmdPing || cmd == CmdPing2)
+            printf("%s(%d): tx%d(%dX)|Prx%d(%dX) = T%d(%dX) R%d(%dX)\n", cmds[cmd], cmd,
                 tx_bytes, tx_xfers, prev->len_bytes, SPI_B2X(prev->len_bytes), bytes, SPI_B2X(bytes),
                 rx_bytes, SPI_B2X(rx_bytes));
     #endif
 	
 	evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_scan", evprintf("ENTER %s(%d) mosi %p:%dx miso(NEXT) %p%s:%dB prev(CUR) %p%s:%dx => T%dx|R%dx",
-		cmds[mosi->data.cmd], mosi->data.cmd, mosi, tx_xfers,
+		cmds[cmd], cmd, mosi, tx_xfers,
 		miso, (miso == junk)? " (junk)":"", rbytes,
 		prev, (prev == junk)? " (junk)":"", prx_xfers,
 		tx_xfers, prx_xfers));
@@ -213,7 +216,7 @@ static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk
         #endif
 		assert((prev->status & SPI_BUSY_MASK) == SPI_BUSY);
         //printf("spi_dev T%dx|R%dx\n", tx_xfers, prx_xfers);
-        //if (mosi->data.cmd != CmdFlush) { real_printf(RED "%s " NORM, &cmds[mosi->data.cmd][3]); fflush(stdout); }
+        //if (cmd != CmdFlush) { real_printf(RED "%s " NORM, &cmds[cmd][3]); fflush(stdout); }
 
         spi_dev(SPI_HOST,
             mosi, tx_xfers,     // MOSI: new request
@@ -256,7 +259,7 @@ static void spi_scan(int wait, SPI_MOSI *mosi, int tbytes=0, SPI_MISO *miso=junk
         }
 	#else
         evSpiCmd(EC_EVENT, EV_SPILOOP, -1, "spi_scan", evprintf(">>> DONE %s(%d) %d retries, PREV %s(%d) %s %p: 0x%x 0x%x 0x%x",
-            cmds[mosi->data.cmd], mosi->data.cmd, retries,
+            cmds[cmd], cmd, retries,
             cmds[prev->cmd], prev->cmd, Task_s(prev->tid),
             prev, prev->word[0], prev->word[1], prev->word[2]));
 	#endif

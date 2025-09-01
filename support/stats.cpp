@@ -780,7 +780,7 @@ void stat_task(void *param)
 		
 		#define CHECK_ECPU_STACK
 		#ifdef CHECK_ECPU_STACK
-		    if (ecpu_stack_check) {
+		    if (kiwi.hw && ecpu_stack_check) {
                 SPI_MISO *sprp = get_misc_miso(MISO_ECPU_STK);
                 spi_get_noduplex(CmdGetSPRP, sprp, 4);
                 printf("e_cpu: SP=%04x RP=%04x\n", sprp->word[0], sprp->word[1]);

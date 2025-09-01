@@ -45,6 +45,7 @@ typedef struct {
     #define RESTART_DELAY_MAX 7
     int restart_delay;
 
+    bool hw;
     bool ext_clk;
     bool isWB;
     bool allow_admin_conns;

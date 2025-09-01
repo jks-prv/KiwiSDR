@@ -397,7 +397,7 @@ float ecpu_use()
 	} ctr_t;
 	ctr_t *c;
 	
-	if (down) return 0;
+	if (!kiwi.hw || down) return 0;
 
 	SPI_MISO *cpu = get_misc_miso(MISO_ECPU_CTR);
 	spi_get_noduplex(CmdGetCPUCtr, cpu, sizeof(u2_t[3]));

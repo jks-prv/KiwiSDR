@@ -753,7 +753,7 @@ void c2s_admin(void *param)
                 // adjust ADC overload detect count mask
                 u4_t ov_counts_mask = (~(ov_counts - 1)) & 0xffff;
                 //printf("ov_counts_mask %d 0x%x\n", ov_counts, ov_counts_mask);
-                spi_set(CmdSetOVMask, 0, ov_counts_mask);
+                if (kiwi.hw) spi_set(CmdSetOVMask, 0, ov_counts_mask);
                 continue;
             }
 #endif

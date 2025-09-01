@@ -40,7 +40,7 @@ float rf_attn_validate(float attn_dB)
 
 void rf_attn_set(float attn_dB)
 {
-    if (kiwi.model == KiwiSDR_1) return;
+    if (!kiwi.hw || kiwi.model == KiwiSDR_1) return;
     attn_dB = rf_attn_validate(attn_dB);
     lprintf("rf_attn internal %.1f\n", attn_dB);
     bool debug = false;

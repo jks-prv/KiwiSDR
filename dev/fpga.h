@@ -37,7 +37,7 @@ stat_reg_t stat_get(int which = -1);
 
 extern char *fpga_file;
 
-void fpga_init(int check);
+int fpga_init(int check, int fpga_sim_fail);
 u64_t fpga_dna();
 u2_t getmem(u2_t addr);
 void setmem(u2_t addr, u2_t data);
