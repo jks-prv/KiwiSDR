@@ -132,8 +132,12 @@ static void drm_pushback_file_data(int rx_chan, int instance, int nsamps, TYPECP
     drm_t *d = &DRM_SHMEM->drm[rx_chan];
     assert(d->init);
     if (!d->test) return;
-    int pct = d->tsamp * 100 / ((d->test == 1)? d->info->tsamps1 : d->info->tsamps2);
-    ext_send_msg(d->rx_chan, false, "EXT drm_bar_pct=%d", pct);
+    static int throttle;
+    if ((throttle & 0xf) == 0) {
+        int pct = d->tsamp * 100 / ((d->test == 1)? d->info->tsamps1 : d->info->tsamps2);
+        ext_send_msg(d->rx_chan, false, "EXT drm_bar_pct=%d", pct);
+    }
+    throttle++;
 
     for (int i = 0; i < nsamps; i++) {
         u2_t t;
