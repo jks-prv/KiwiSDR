@@ -9,7 +9,7 @@
 #include "output-common.h"              // fmtr_descriptor_t
 #include "util.h"                       // struct octet_string, Config, EOL
 #include "pdu.h"                        // struct hfdl_pdu_metadata
-#include "bits.h"
+#include "ansi.h"
 
 static bool fmtr_text_supports_data_type(fmtr_input_type_t type) {
 	return(type == FMTR_INTYPE_DECODED_FRAME);

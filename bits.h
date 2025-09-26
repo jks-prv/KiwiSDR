@@ -1,4 +1,70 @@
+/*
+--------------------------------------------------------------------------------
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301, USA.
+--------------------------------------------------------------------------------
+*/
+
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+
 #pragma once
+
+#include "types.h"
+
+typedef u4_t wires;
+
+typedef u1_t wire;
+typedef u1_t wire2;
+typedef u1_t wire3;
+typedef u1_t wire4;
+typedef u1_t wire5;
+typedef u1_t wire6;
+typedef u1_t wire7;
+typedef u1_t wire8;
+
+typedef u2_t wire9;
+typedef u2_t wire10;
+typedef u2_t wire11;
+typedef u2_t wire12;
+typedef u2_t wire13;
+typedef u2_t wire14;
+typedef u2_t wire15;
+typedef u2_t wire16;
+
+typedef u4_t wire20;
+typedef u4_t wire32;
+
+typedef u64_t wire40;
+
+typedef u1_t reg;
+typedef u1_t reg2;
+typedef u1_t reg3;
+typedef u1_t reg4;
+typedef u1_t reg5;
+typedef u1_t reg6;
+typedef u1_t reg7;
+typedef u1_t reg8;
+
+typedef u2_t reg9;
+typedef u2_t reg10;
+typedef u2_t reg11;
+typedef u2_t reg12;
+typedef u2_t reg13;
+typedef u2_t reg14;
+typedef u2_t reg15;
+typedef u2_t reg16;
+
+typedef u4_t reg32;
 
 // NB: using e.g. "Bn" here instead of "BTn" conflicts with system include files
 
@@ -55,19 +121,26 @@
 #define b19(w)  (((w) >> 19) & 1)
 #define b20(w)  (((w) >> 20) & 1)
 #define b31(w)  (((w) >> 31) & 1)
+#define b32(w)  (((w) >> 32) & 1)
+#define b39(w)  (((w) >> 39) & 1)
 
 #define bn(w,b)     ( ((w) & (1 << (b)))? 1:0 )
-#define bf(f,s,e)   ( ((f) >> (e)) & ((1 << ((s)-(e)+1)) - 1)  )
-#define bf64(f,s,e) ( ((f) >> (e)) & ((1LL << ((s)-(e)+1)) - 1LL)  )
+#define bf(f,s,e)   ( ((f) >> (e)) & ((1U << ((s)-(e)+1)) - 1)  )
+#define bf64(f,s,e) ( ((f) >> (e)) & ((1ULL << ((s)-(e)+1)) - 1LL)  )
 
-#define b7_0(w)     ((w) & H8)
-#define b15_8(w)    (((w) >> 8) & H8)
+#define b7_0(w)     ((w) & 0xff)
+#define b15_8(w)    (((w) >> 8) & 0xff)
 
 #define BIT(w,b)    bn(w,b)
 #define BIS(w,b)    (w) |= 1 << (b)
 #define BIC(w,b)    (w) &= ~(1 << (b))
 #define BIW(w,b)    ( ((w) & ~(1 << (b))) | (1 << (b)) )
 
+// extract bytes
+#define	BYTE3(i)    (((i) >> 24) & 0xff)
+#define	BYTE2(i)    (((i) >> 16) & 0xff)
+#define	BYTE1(i)    (((i) >>  8) & 0xff)
+#define	BYTE0(i)    (((i) >>  0) & 0xff)
 
 // field combine
 
@@ -126,15 +199,3 @@
 // bit set
 #define bset_v(dst,v,src)  ( ((dst) & ~(v)) | (((src) & (v))? (v) : 0) )
 #define bset_n(dst,b,src)  ( ((dst) & ~mf(b,b)) | (((src) & (1 << (b)))? (1 << (b)) : 0) )
-
-
-// black on color unless otherwise noted
-#define RED     "\e[97m\e[101m"     // white on red
-#define YELLOW  "\e[103m"
-#define GREEN   "\e[102m"
-#define CYAN    "\e[106m"
-#define BLUE    "\e[97m\e[104m"     // white on blue
-#define MAGENTA "\e[97m\e[105m"     // white on magenta
-#define GREY    "\e[47m"
-#define NORM    "\e[m"
-#define NONL    " \e[m\n"

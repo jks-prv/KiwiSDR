@@ -1,9 +1,9 @@
 // Copyright (c) 2013-2025 John Seamons, ZL4VO/KF6VO
 
-#ifndef _ASM_H_
-#define _ASM_H_
+#pragma once
 
-#include "../types.h"
+#include "types.h"
+#include "ansi.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -196,5 +196,3 @@ void errmsg(tokens_t *t, const char *fmt, ...);
 
 char *str_ends_with(char *s, const char *cs);
 int count_ones(u4_t v, int *bit_no = NULL);
-
-#endif

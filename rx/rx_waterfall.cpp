@@ -43,6 +43,7 @@ Boston, MA  02110-1301, USA.
 #include "rx_util.h"
 #include "options.h"
 #include "test.h"
+#include "ansi.h"
 
 #include <string.h>
 #include <stdio.h>

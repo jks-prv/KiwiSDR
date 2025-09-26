@@ -19,8 +19,6 @@ Boston, MA  02110-1301, USA.
 
 #pragma once
 
-#include "bits.h"
-
 #include <stdlib.h>
 
 typedef unsigned long long	u64_t;
@@ -37,6 +35,8 @@ typedef float               f32_t;
 typedef double              d64_t;
 
 typedef unsigned int        bf_t;
+
+#include "bits.h"
 
 typedef void (*func_t)();
 typedef void (*funcPI_t)(int);

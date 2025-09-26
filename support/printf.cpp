@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "printf.h"
 #include "shmem.h"
+#include "ansi.h"
 
 #include <sys/file.h>
 #include <fcntl.h>

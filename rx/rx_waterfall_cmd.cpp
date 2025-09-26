@@ -55,6 +55,7 @@ Boston, MA  02110-1301, USA.
 #include "wdsp.h"
 #include "fpga.h"
 #include "rf_attn.h"
+#include "ansi.h"
 
 #ifdef DRM
  #include "DRM.h"

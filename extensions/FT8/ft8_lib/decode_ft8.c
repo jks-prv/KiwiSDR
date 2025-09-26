@@ -6,6 +6,7 @@
 #include "coroutines.h"
 #include "FT8.h"
 #include "PSKReporter.h"
+#include "ansi.h"
 
 #include <stdlib.h>
 #include <string.h>

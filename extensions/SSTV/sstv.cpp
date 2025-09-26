@@ -12,6 +12,7 @@
 #include "web.h"
 #include "misc.h"
 #include "mem.h"
+#include "ansi.h"
 
 #include <sys/mman.h>
 
