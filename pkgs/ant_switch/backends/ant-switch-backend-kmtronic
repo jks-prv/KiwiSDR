@@ -37,7 +37,7 @@ fi
 
 CURLEXEC=/usr/bin/curl
 # no switch auth currently
-CURLOPTS=" --silent --connect-timeout 1 --max-time 2 "
+CURLOPTS=" ${CURLDEBUG} --silent --connect-timeout 1 --max-time 2 "
 
 AntSW_ShowBackend() {
     echo "kmtronic v$VERSION 8ch mix $KMTRONIC_URL"
