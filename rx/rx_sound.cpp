@@ -1334,7 +1334,6 @@ void c2s_sound(void *param)
             //{ real_printf("%d ", s->seq & 1); fflush(stdout); }
             //{ real_printf("q%d ", s->seq); fflush(stdout); }
     
-            //printf("hdr %d S%d\n", sizeof(out_pkt.h), bc); fflush(stdout);
             int aud_bytes;
             int c2s_sound_camp(rx_chan_t *rxc, conn_t *conn, u1_t flags, char *bp, int bytes, int aud_bytes, bool masked_area);
     
@@ -1348,6 +1347,7 @@ void c2s_sound(void *param)
                     out_pkt_wb.h.gpsnsec = 0;
                 }
                 const int bytes = sizeof(out_pkt_wb.h) + bc;
+                //real_printf("wb: hdr %d data %d\n", sizeof(s->out_pkt_real.h), bc); fflush(stdout);
                 app_to_web(conn, (char*) &out_pkt_wb, bytes);
                 aud_bytes = sizeof(out_pkt_wb.h.smeter) + bc;
             } else
@@ -1360,12 +1360,14 @@ void c2s_sound(void *param)
                     s->out_pkt_iq.h.gpsnsec = 0;
                 }
                 const int bytes = sizeof(s->out_pkt_iq.h) + bc;
+                //real_printf("stereo: hdr %d data %d\n", sizeof(s->out_pkt_iq.h), bc); fflush(stdout);
                 app_to_web(conn, (char*) &s->out_pkt_iq, bytes);
                 aud_bytes = sizeof(s->out_pkt_iq.h.smeter) + bc;
                 if (rxc->n_camp)
                     aud_bytes += c2s_sound_camp(rxc, conn, *flags, (char*) &s->out_pkt_iq, bytes, aud_bytes, masked_area);
             } else {
                 const int bytes = sizeof(s->out_pkt_real.h) + bc;
+                //real_printf("mono: hdr %d data %d\n", sizeof(s->out_pkt_real.h), bc); fflush(stdout);
                 app_to_web(conn, (char*) &s->out_pkt_real, bytes);
                 aud_bytes = sizeof(s->out_pkt_real.h.smeter) + bc;
                 if (rxc->n_camp)
