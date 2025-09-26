@@ -2389,7 +2389,11 @@ int mg_url_decode(const char *src, size_t src_len, char *dst, size_t dst_len,
         mg_str_to_num(mg_str_n(src + i + 1, 2), 16, &dst[j], sizeof(uint8_t));
         i += 2;
       } else {
-        return -1;
+        #ifdef KIWISDR
+          dst[j] = src[i];    // Mongoose 5.6 compat
+        #else
+          return -1;
+        #endif
       }
     } else if (is_form_url_encoded && src[i] == '+') {
       dst[j] = ' ';
