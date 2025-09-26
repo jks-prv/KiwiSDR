@@ -25,6 +25,7 @@ Boston, MA  02110-1301, USA.
 #include "web.h"
 #include "str.h"
 #include "sha256.h"
+#include "ansi.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -878,8 +879,8 @@ static u1_t clean_table[128] = {
 //  (ctrl)
     3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
 
-//    ! " # $ % & ' ( ) * + , - . /     not !"#$'()*   yes (space) &+,-./
-    0,1,1,1,1,1,0,1,1,1,1,0,0,0,0,0,
+//    ! " # $ % & ' ( ) * + , - . /     not !"#$'()*    yes (space) %&+,-./
+    0,1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,
 
 //  0 1 2 3 4 5 6 7 8 9 : ; < = > ?     not ;<>         yes :=?
     0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,
@@ -887,8 +888,8 @@ static u1_t clean_table[128] = {
 //  @ (alpha)                           not @
     1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
-//  (alpha)               [ \ ] ^ _     not [\]^_
-    0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,
+//  (alpha)               [ \ ] ^ _     not []^_        yes (backslash)
+    0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,
 
 //  ` (alpha)                           not `
     1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -901,11 +902,15 @@ char *kiwi_str_clean(char *str, int type)
 {
     u1_t *s = (u1_t *) str;
 
-    for (; *s != '\0'; s++) {
+    for (int i = 0; *s != '\0'; s++, i++) {
         if (*s >= 0x80 || ((type & KCLEAN_DELETE) && (clean_table[*s] & KCLEAN_DELETE))) {
+            //real_printf("kiwi_str_clean %d PU1 %d <%c>\n", i, clean_table[*s], *s);
             kiwi_overlap_memcpy(s, s+1, strlen((char *) s+1) + SPACE_FOR_NULL);
+            s--;
+            //real_printf("kiwi_str_clean %d PU2 <%c>\n", i, *s);
         } else
         if ((type & KCLEAN_REPL_SPACE) && (clean_table[*s] & KCLEAN_REPL_SPACE)) {
+            //real_printf("kiwi_str_clean %d %d SP <%c>\n", i, clean_table[*s], *s);
             *s = ' ';
         }
     }
