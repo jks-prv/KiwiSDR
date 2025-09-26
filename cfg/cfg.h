@@ -62,6 +62,7 @@ extern cfg_t cfg_cfg, cfg_adm, cfg_dx, cfg_dxcfg, cfg_dxcomm, cfg_dxcomm_cfg;
 #define CFG_IS_JSON     0x08000
 #define CFG_NO_INTEG    0x10000
 #define CFG_GDB_BREAK   0x20000
+#define CFG_NO_URL_DECO 0x40000
 
 #define CFG_LOOKUP_LVL1 ((jsmntok_t *) -1)
 
@@ -233,7 +234,7 @@ void *_cfg_walk(cfg_t *cfg, const char *id, cfg_walk_cb_t cb, void *param1 = NUL
 
 bool _cfg_int_json(cfg_t *cfg, jsmntok_t *jt, int *num);
 bool _cfg_float_json(cfg_t *cfg, jsmntok_t *jt, double *num);
-bool _cfg_type_json(cfg_t *cfg, jsmntype_t jt_type, jsmntok_t *jt, const char **str);
+bool _cfg_type_json(cfg_t *cfg, jsmntype_t jt_type, jsmntok_t *jt, const char **str, u4_t flags = 0);
 void _cfg_free(cfg_t *cfg, const char *str);
 
 typedef enum { CFG_OPT_NONE, CFG_OPT_ID1, CFG_OPT_ID2, CFG_OPT_NO_DOT } cfg_lookup_e;
