@@ -50,7 +50,11 @@ static void cw_file_data(int rx_chan, int chan, int nsamps, TYPEMONO16 *samps, i
         int pct = e->nsamps * 100 / cws_conf.tsamps;
         e->nsamps += nsamps;
         pct = CLAMP(pct, 3, 100);
-        ext_send_msg(rx_chan, false, "EXT bar_pct=%d", pct);
+        static int throttle;
+        if ((throttle & 0xf) == 0) {
+            ext_send_msg(rx_chan, false, "EXT bar_pct=%d", pct);
+        }
+        throttle++;
     }
 }
 
