@@ -435,7 +435,7 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
 
     char *which = (antenna[0] == '\t')? &antenna[1] : antenna;
     const char *ant_cmd = cfg_string(stprintf("ant_switch.ant%scmd", which), NULL, CFG_OPTIONAL | CFG_NO_URL_DECO);
-    rcprintf(rx_chan, "ant_switch_curl_cmd: antenna=<%s> which=<%s> cmd=<%s>\n", antenna, which, ant_cmd);
+    rcprintf(rx_chan, "ant_switch_curl_cmd: ant=<%s> which=<%s> cmd=<%s>\n", antenna, which, ant_cmd);
     if (kiwi_emptyStr(ant_cmd)) return;
     char *ccmd = strdup(ant_cmd);
     cfg_string_free(ant_cmd);
@@ -474,7 +474,7 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
 
         asprintf(&cmd, "curl -skL '%s' >/dev/null", curl_arg3);
         //asprintf(&cmd, "curl -kL '%s'", curl_arg3);
-        printf("ant_switch: rx_chan=%d ant=%s <%s>\n", rx_chan, antenna, cmd);
+        rcprintf(rx_chan, "ant_switch_curl_cmd: ant=%s <%s>\n", antenna, cmd);
         NextTask("curl START");
         non_blocking_cmd_system_child("antsw.curl", cmd, NO_WAIT);
         kiwi_asfree(cmd);
