@@ -364,6 +364,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
 	    -cp unix_env/sources.D9.new.list /etc/apt/sources.list
     endif
+    ifeq ($(DEBIAN_VERSION),10)
+	    @echo "switch to using Debian 10 (Buster) archive repo"
+	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	    -cp unix_env/sources.D10.new.list /etc/apt/sources.list
+    endif
 	    -apt-get -y $(APT_GET_FORCE) update
 	    -apt-get -y $(APT_GET_FORCE) install debian-archive-keyring
 	    -apt-get -y $(APT_GET_FORCE) update
