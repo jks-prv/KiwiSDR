@@ -120,6 +120,12 @@ function status_focus()
       w3_colors('id-rst-swupd', 'grey', 'lime', adm.update_install);
       w3_colors('id-rst-ipbl',  'grey', 'lime', adm.ip_blacklist_auto_download);
    }
+   
+   if (!kiwi.hw) {
+      w3_innerHTML('id-problems',
+         w3_span('w3-padding-LR-8 w3-red', 'WARNING: No kiwi hardware detected!')
+      );
+   }
 
    if (kiwi.test_cfg_save_seq) {
       cfg_save_json('test_cfg_save_seq 1', 'cfg');
@@ -2526,6 +2532,7 @@ function network_check_port_status_cb(status)
    } else {
       var dom_status = status & 0xf0;
       var ip_status = status & 0x0f;
+      console.log('dom_status='+ dom_status +' ip_status='+ ip_status);
       w3_el('id-net-check-port-dom-s').innerHTML = dom_status? 'NO' : 'YES';
       w3_el('id-net-check-port-ip-s').innerHTML = ip_status? 'NO' : 'YES';
    }

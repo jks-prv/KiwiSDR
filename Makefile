@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 821
+VERSION_MIN = 822
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -237,11 +237,8 @@ else
     RX = rx
 endif
 
-ifneq ($(RPI),true)
-    _DIRS = pru $(PKGS)
-endif
 _DIR_PLATFORMS = $(addprefix platform/, $(PLATFORMS))
-_DIRS_O3 += . $(PKGS_O3) platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
+_DIRS_O3 += . $(PKGS_O3) platform platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
     $(RX) $(GPS) dev ui cfg dx support net web arch/$(ARCH)
 
 ifeq ($(OPT),0)
@@ -346,7 +343,7 @@ endif
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 
     # runs only once per update of the .keyringN.dep filename
-    KEYRING := $(DIR_CFG)/.keyring4.dep
+    KEYRING := $(DIR_CFG)/.keyring5.dep
     $(KEYRING):
 	    @echo "KEYRING.."
     ifeq ($(DEBIAN_VERSION),7)
@@ -367,6 +364,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
 	    -cp unix_env/sources.D9.new.list /etc/apt/sources.list
     endif
+    ifeq ($(DEBIAN_VERSION),10)
+	    @echo "switch to using Debian 10 (Buster) archive repo"
+	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	    -cp unix_env/sources.D10.new.list /etc/apt/sources.list
+    endif
 	    -apt-get -y $(APT_GET_FORCE) update
 	    -apt-get -y $(APT_GET_FORCE) install debian-archive-keyring
 	    -apt-get -y $(APT_GET_FORCE) update
@@ -377,7 +379,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     INSTALL_CERTIFICATES := /tmp/.kiwi-ca-certs
     $(INSTALL_CERTIFICATES):
 	    @echo "INSTALL_CERTIFICATES.."
-	    make $(KEYRING)
 	    -apt-get -y $(APT_GET_FORCE) install ca-certificates
 	    -apt-get -y $(APT_GET_FORCE) update
 	    touch $(INSTALL_CERTIFICATES)
@@ -527,7 +528,7 @@ GEN_ASM = $(GEN_DIR)/kiwi.gen.h verilog/kiwi.gen.vh
 GEN_OTHER_ASM = $(GEN_DIR)/other.gen.h verilog/other.gen.vh
 OUT_ASM = $(GEN_DIR)/kiwi.aout
 GEN_VERILOG = $(addprefix verilog/rx/,cic_rx1_12k.vh cic_rx1_20k.vh cic_rx2_12k.vh cic_rx2_20k.vh cic_rx3_12k.vh cic_rx3_20k.vh cic_wf1.vh cic_wf2.vh)
-SUB_MAKE_DEPS = $(INSTALL_CERTIFICATES) $(GEN_DIR) $(CMD_DEPS) $(LIBS_DEP) $(GEN_ASM) $(GEN_OTHER_ASM) $(GEN_OTHER) $(OUT_ASM) $(GEN_VERILOG)
+SUB_MAKE_DEPS = $(KEYRING) $(INSTALL_CERTIFICATES) $(GEN_DIR) $(CMD_DEPS) $(LIBS_DEP) $(GEN_ASM) $(GEN_OTHER_ASM) $(GEN_OTHER) $(OUT_ASM) $(GEN_VERILOG)
 
 .PHONY: make_prereq
 make_prereq: DISABLE_WS $(SUB_MAKE_DEPS)
@@ -668,18 +669,6 @@ MF_FILES = $(addsuffix .o,$(basename $(notdir $(MAKEFILE_DEPS))))
 MF_OBJ = $(addprefix $(OBJ_DIR)/,$(MF_FILES))
 MF_O3 = $(wildcard $(addprefix $(OBJ_DIR_O3)/,$(MF_FILES)))
 $(MF_OBJ) $(MF_O3): Makefile
-
-
-################################
-# PRU (not currently used)
-################################
-PASM_INCLUDES = $(wildcard pru/pasm/*.h)
-PASM_SOURCE = $(wildcard pru/pasm/*.c)
-pas: $(PASM_INCLUDES) $(PASM_SOURCE) Makefile
-	$(CC) -Wall -D_UNIX_ -I./pru/pasm $(PASM_SOURCE) -o pas
-
-pru/pru_realtime.bin: pas pru/pru_realtime.p pru/pru_realtime.h pru/pru_realtime.hp
-	(cd $(REPO_DIR)/pru; ../pas -V3 -b -L -l -D_PASM_ -D$(SETUP) pru_realtime.p)
 
 
 ################################
@@ -2060,7 +2049,7 @@ clean: clean_ext clean_deprecated $(DEP_LFTP)
 	(cd $(REPO_DIR)/tools; make clean)
 	(cd $(REPO_DIR)/pkgs/noip2; make clean)
 	(cd $(REPO_DIR)/pkgs/EiBi; make clean)
-	-rm -rf $(addprefix pru/pru_realtime.,bin lst txt) $(TOOLS_DIR)/file_optim
+	-rm -rf $(TOOLS_DIR)/file_optim
 	# but not $(KEEP_DIR)
 	-rm -rf $(LOG_FILE) $(BUILD_DIR)/kiwi* $(GEN_DIR) $(OBJ_DIR) $(OBJ_DIR_O3)
 	-rm -f Makefile.1
@@ -2133,7 +2122,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    -systemctl --full --lines=250 enable kiwid.service || true
 	    (cd $(DIR_CFG); jq '.onetime_password_check = false | .admin_password = "" | .user_password = "" | .rev_auto = false | .rev_auto_user = "" | .rev_auto_host = "" | .rev_user = "" | .rev_host = "" | .update_check = true | .update_install = true' admin.json > /tmp/jq && mv /tmp/jq admin.json)
 	    (cd $(DIR_CFG); jq '.sdr_hu_dom_sel = 2 | .server_url = ""' kiwi.json > /tmp/jq && mv /tmp/jq kiwi.json)
-	    (cd $(DIR_CFG); rm -f .do_once.dep .keyring4.dep frpc.ini seq_serno)
+	    (cd $(DIR_CFG); rm -f .do_once.dep .keyring*.dep frpc.ini seq_serno)
 	    -rm -f /tmp/.kiwi* /root/.ssh/auth* /root/.ssh/known*
 	    -rm -f .bashrc.local.common build.log _FLASHED_FROM_SD_
 	    -touch unix_env/reflash_delay_update

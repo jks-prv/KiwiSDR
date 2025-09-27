@@ -32,6 +32,7 @@ Boston, MA  02110-1301, USA.
 #include "debug.h"
 #include "data_pump.h"
 #include "fpga.h"
+#include "ansi.h"
 
 #include <string.h>
 #include <stdio.h>

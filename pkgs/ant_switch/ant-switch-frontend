@@ -189,6 +189,7 @@ AntSW_ShowUsage() {
 	echo "     and it's configuration / help"
 	echo "sa = Set antenna switch address, IP or URL (if applicable)."
 	echo "ga = Get antenna switch address."
+	echo "d <cmd>  = Run <cmd> in debug mode."
 	echo "h = help"
 }
 
@@ -199,75 +200,95 @@ AntSW_Validate() {
     fi
 }
 
-case $1 in
-	1|2|3|4|5|6|7|8|9|10)
-        AntSW_LoadBackend
-		AntSW_Validate $1
-		AntSW_Initialize
-		AntSW_SelectAntenna $1
-		AntSW_ReportSelected
-		;;
-	+1|+2|+3|+4|+5|+6|+7|+8|+9|+10)
-        AntSW_LoadBackend
-		AntSW_Validate $1
-		AntSW_Initialize
-		antadd=${1//+} 
-		AntSW_AddAntenna $antadd
-		AntSW_ReportSelected
-		;;
-	-1|-2|-3|-4|-5|-6|-7|-8|-9|-10)
-        AntSW_LoadBackend
-		AntSW_Validate $1
-		AntSW_Initialize
-		antremove=${1//-} 
-		AntSW_RemoveAntenna $antremove
-		AntSW_ReportSelected
-		;;
-	t1|t2|t3|t4|t5|t6|t7|t8|t9|t10)
-        AntSW_LoadBackend
-		AntSW_Validate $1
-		AntSW_Initialize
-        anttoggle=${1//t}
-		AntSW_ToggleAntenna $anttoggle
-		AntSW_ReportSelected
-		;;
-	tg|g)
-        AntSW_LoadBackend
-		AntSW_Initialize
-		AntSW_GroundAll
-		AntSW_ReportSelected
-		;;
-	s|q)
-        AntSW_LoadBackend
-		AntSW_Initialize
-		AntSW_ShowSelected
-		;;
-	bi)
-	    AntSW_LoadBackend
-		AntSW_ShowBackend
-		;;
-    bs)
-        AntSW_SelectBackend $2
-        ;;
-    be)
-        AntSW_EnumerateBackends
-        ;;
-    ga)
-        AntSW_LoadBackend
-        AntSW_GetAddress
-        ;;
-    sa)
-        AntSW_LoadBackend
-        AntSW_SetAddress $2
-        ;;
-	h|"")
-		AntSW_ShowUsage
-		;;
+AntSW_Command() {
+    #echo "AntSW_Command1=$1" >/dev/stderr
+    #echo "AntSW_Command2=$2" >/dev/stderr
+    #echo "DEBUG=${DEBUG}" >/dev/stderr
+    
+    case $1 in
+        1|2|3|4|5|6|7|8|9|10)
+            AntSW_LoadBackend
+            AntSW_Validate $1
+            AntSW_Initialize
+            AntSW_SelectAntenna $1
+            AntSW_ReportSelected
+            ;;
+        +1|+2|+3|+4|+5|+6|+7|+8|+9|+10)
+            AntSW_LoadBackend
+            AntSW_Validate $1
+            AntSW_Initialize
+            antadd=${1//+} 
+            AntSW_AddAntenna $antadd
+            AntSW_ReportSelected
+            ;;
+        -1|-2|-3|-4|-5|-6|-7|-8|-9|-10)
+            AntSW_LoadBackend
+            AntSW_Validate $1
+            AntSW_Initialize
+            antremove=${1//-} 
+            AntSW_RemoveAntenna $antremove
+            AntSW_ReportSelected
+            ;;
+        t1|t2|t3|t4|t5|t6|t7|t8|t9|t10)
+            AntSW_LoadBackend
+            AntSW_Validate $1
+            AntSW_Initialize
+            anttoggle=${1//t}
+            AntSW_ToggleAntenna $anttoggle
+            AntSW_ReportSelected
+            ;;
+        tg|g)
+            AntSW_LoadBackend
+            AntSW_Initialize
+            AntSW_GroundAll
+            AntSW_ReportSelected
+            ;;
+        s|q)
+            AntSW_LoadBackend
+            AntSW_Initialize
+            AntSW_ShowSelected
+            ;;
+        bi)
+            AntSW_LoadBackend
+            AntSW_ShowBackend
+            ;;
+        bs)
+            AntSW_SelectBackend $2
+            ;;
+        be)
+            AntSW_EnumerateBackends
+            ;;
+        ga)
+            AntSW_LoadBackend
+            AntSW_GetAddress
+            ;;
+        sa)
+            AntSW_LoadBackend
+            AntSW_SetAddress $2
+            ;;
+        h|"")
+            AntSW_ShowUsage
+            ;;
+    
+        *)
+            echo "Invalid command \"$1\""
+            echo ""
+            echo "See help"
+            echo "$0 h"
+            ;;
+    esac
+}
 
-	*)
-		echo "Invalid command \"$1\""
-		echo ""
-		echo "See help"
-		echo "$0 h"
-		;;
+case $1 in
+    d)
+        DEBUG=1
+        CURLDEBUG="--verbose"
+        shift
+        AntSW_Command $1 $2
+        ;;
+    *)
+        DEBUG=0
+        CURLDEBUG=
+        AntSW_Command $1 $2
+        ;;
 esac

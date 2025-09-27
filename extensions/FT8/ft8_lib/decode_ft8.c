@@ -6,6 +6,7 @@
 #include "coroutines.h"
 #include "FT8.h"
 #include "PSKReporter.h"
+#include "ansi.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -241,7 +242,7 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
         // }
         // monitor_resynth(mon, cand, resynth_signal);
         // char resynth_path[80];
-        // sprintf(resynth_path, "resynth_%04f_%02.1f.wav", freq_hz, time_sec);
+        // snprintf(resynth_path, sizeof(resynth_path), "resynth_%04f_%02.1f.wav", freq_hz, time_sec);
         // save_wav(resynth_signal, resynth_len, 12000, resynth_path);
 #endif
 
@@ -572,7 +573,7 @@ void decode_ft8_init(int rx_chan, int proto, int debug)
     ftx_protocol_t protocol = proto? FTX_PROTOCOL_FT4 : FTX_PROTOCOL_FT8;
     ft8->protocol = protocol;
     float slot_period = ((protocol == FTX_PROTOCOL_FT8) ? FT8_SLOT_TIME : FT4_SLOT_TIME);
-    sprintf(ft8->protocol_s, "FT%d", (protocol == FTX_PROTOCOL_FT8)? 8:4);
+    snprintf(ft8->protocol_s, sizeof(ft8->protocol_s), "FT%d", (protocol == FTX_PROTOCOL_FT8)? 8:4);
     ft8->slot_period = slot_period;
     int sample_rate = snd_rate;
     int num_samples = slot_period * sample_rate;

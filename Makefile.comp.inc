@@ -96,10 +96,10 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
         CFLAGS += -DDEVSYS
         
         # platform choice when building on development machine
-        BYAI := 
+        #BYAI := true
         BBAI_64 := true
-        BBAI := 
-        RPI := 
+        #BBAI := true
+        #RPI := true
         BBG_BBB := $(and $(if $(BYAI),,true), $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
         PLATFORM = BBG_BBB
 

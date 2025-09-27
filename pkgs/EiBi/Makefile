@@ -11,7 +11,7 @@ ARCH = sitara
 PLATFORM = beaglebone_black
 PKGS = pkgs/mongoose pkgs/jsmn pkgs/parson pkgs/sha256
 GPS = gps gps/ka9q-fec gps/GNSS-SDRLIB
-DIRS = . pru $(PKGS) web extensions
+DIRS = . $(PKGS) web extensions
 DIRS += platform/common platform/beaglebone platform/$(PLATFORM) $(EXT_DIRS) rx rx/CuteSDR rx/csdr $(GPS) cfg dx net ui support arch arch/$(ARCH)
 DIRS += ../build/gen
 

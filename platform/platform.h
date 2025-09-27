@@ -15,30 +15,30 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
-#include "types.h"
+#ifdef PLATFORM_beagleY_ai
+ #define GPIO_HAT
+#else
+ #define GPIO_P8_P9
+ #define HAS_BEAGLE_4_LEDS
+#endif
 
-u2_t ctrl_get();
-void ctrl_clr_set(u2_t clr, u2_t set);
-void ctrl_positive_pulse(u2_t bits);
-void ctrl_set_ser_dev(u2_t ser_dev);
-void ctrl_clr_ser_dev();
+#ifdef CPU_TDA4VM
+ #define CPU_FREQ_NOM 2000000
+#elif defined(CPU_AM67) || defined(AM62)
+ #define CPU_FREQ_NOM 1400000
+#else
+ #define CPU_FREQ_NOM 1000000
+#endif
 
-typedef union {
-    u2_t word;
-    struct {
-        u2_t stat:10, fpga_id:3, unused_inputs:1, dna:1, ovfl:1;
-    };
-} stat_reg_t;
-stat_reg_t stat_get(int which = -1);
+#if defined(CPU_AM5729) || defined(CPU_BCM2837)
+ #define HAS_CPU_FREQ
+#endif
 
-extern char *fpga_file;
-
-int fpga_init(int check, int fpga_sim_fail);
-u64_t fpga_dna();
-u2_t getmem(u2_t addr);
-void setmem(u2_t addr, u2_t data);
-void printmem(const char *str, u2_t addr);
+#ifdef CPU_AM3359
+#else
+ #define HAS_CPU_TEMP
+#endif

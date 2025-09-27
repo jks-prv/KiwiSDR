@@ -33,10 +33,6 @@
 #include "spi_dev.h"
 #include "spi_pio.h"
 
-#ifdef CPU_AM3359
- #include "spi_pio.h"
-#endif
-
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <stdio.h>
@@ -357,10 +353,10 @@ void spi_dev_init2()
         #elif CPU_AM67
             use_spidev = 1;
             if (!spi_no_async) use_async = 1;
-            printf("SPI: CPU_%s use_async=%d\n", ARCH_CPU_S, use_async);
         #else
             #error must define use_spidev/use_async for CPU
         #endif
+        printf("SPI: CPU_%s use_async=%d\n", ARCH_CPU_S, use_async);
     #endif
 
         if (use_async) {

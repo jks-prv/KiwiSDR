@@ -1234,6 +1234,7 @@ function w3_disable(el_id, disable, prop)
    if (!isString(prop)) prop = 'w3-disabled';
    
    el = w3_el(el_id);
+   if (!el) return null;
    //console.log('w3_disable disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
    //console.log(el);
    w3_set_props(el, prop, disable);
@@ -1286,6 +1287,7 @@ function w3_visible(el_id, visible)
    if (!isArg(visible)) visible = true;
    
 	var el = w3_el(el_id);
+   if (!el) return null;
 	el.style.visibility = visible? 'visible' : 'hidden';
 	return el;
 }

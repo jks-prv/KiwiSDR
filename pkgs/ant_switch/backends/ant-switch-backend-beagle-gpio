@@ -160,7 +160,9 @@ AntSW_ReportSelected() {
 	for GPIOPIN in "${SAFEGPIOS[@]}"; do
 		antidx=$(($antidx+1))
         VAL=`cat /sys/class/gpio/gpio${GPIOPIN}/value`
-        #echo R${antidx} ${GPIOPIN}=${VAL}
+        if [ "x${DEBUG}" == "x1" ]; then
+            echo R${antidx} ${GPIOPIN}=${VAL} >/dev/stderr
+        fi
 		if [ "x${VAL}" == "x1" ]; then
 			selectedantennas="${selectedantennas}${antidx},"
 			antennafound=$(($antennafound+1))

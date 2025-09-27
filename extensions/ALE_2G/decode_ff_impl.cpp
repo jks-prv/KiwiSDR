@@ -38,6 +38,8 @@ Significant portions of source code were based on the LinuxALE project (under GN
     #define STANDALONE_TEST
 #endif
 
+#include "ansi.h"
+
 // this is here before Kiwi includes to prevent our "#define printf ALT_PRINTF" mechanism being disturbed
 #include "decode_ff_impl.h"
 

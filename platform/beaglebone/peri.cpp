@@ -49,7 +49,7 @@ static bool init;
  static u4_t pmux_base[NPMUX] = { PMUX_BASE };
  static u4_t gpio_base[NGPIO] = { GPIO0_BASE, GPIO1_BASE, GPIO2_BASE, GPIO3_BASE };
 
- static u4_t gpio_pmux_reg_off[NGPIO][32] = {
+ static u4_t gpio_pmux_reg_off[NGPIO][GPIO_NPINS] = {
  //                0      1      2      3      4      5      6      7      8      9     10     11     12     13     14     15     16     17     18     19     20     21     22     23     24     25     26     27     28     29     30     31
  /* gpio0 */	{ 0x000, 0x000, 0x950, 0x954, 0x958, 0x95c, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x980, 0x984, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x820, 0x824, 0x000, 0x000, 0x828, 0x82c, 0x000, 0x000, 0x870, 0x874 },
  /* gpio1 */	{ 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x830, 0x834, 0x838, 0x83c, 0x840, 0x844, 0x848, 0x84c, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x000, 0x878, 0x87c, 0x000, 0x000 },
@@ -63,7 +63,7 @@ static bool init;
  static u4_t gpio_base[NGPIO] = { GPIO1_BASE, GPIO2_BASE, GPIO3_BASE, GPIO4_BASE, GPIO5_BASE, GPIO6_BASE, GPIO7_BASE, GPIO8_BASE };
 
  // NB: when both non-zero first entry is ball with GPIO, second should be set "driver off" (mode 15)
- static u4_t gpio_pmux_reg_off[NGPIO * NBALL][32] = {
+ static u4_t gpio_pmux_reg_off[NGPIO * NBALL][GPIO_NPINS] = {
  //                0       1       2       3       4       5       6       7       8       9      10      11      12      13      14      15      16      17      18      19      20      21      22      23      24      25      26      27      28      29      30      31
  /* gpio1 */	{ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 },
                 { 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 },
@@ -234,7 +234,7 @@ gpio_t GPIO_NONE	= { 0xff, 0xff, 0xff, 0xff };
 
 // BYAI HAT connector
 
-#ifdef PLATFORM_beagleY_ai
+#ifdef GPIO_HAT
 //                        { bank,  bit, pin,           eeprom_offset }
     gpio_t SPIn_SCLK	= { GPIO1,  14, PIN(HAT,  8),  88 };
     gpio_t SPIn_MISO	= { GPIO1,   7, PIN(HAT, 36),  90 }; // d0
@@ -584,34 +584,10 @@ void peri_init()
 #endif
 	
 #ifdef CPU_AM5729
-    #if 1
-        #if 0
-            real_printf("PRCM_GPIO2=%p before\n", PRCM_GPIO2);
-            real_printf("PRCM_GPIO3=%p before\n", PRCM_GPIO3);
-            real_printf("PRCM_GPIO4=%p before\n", PRCM_GPIO4);
-            real_printf("PRCM_GPIO5=%p before\n", PRCM_GPIO5);
-            real_printf("PRCM_GPIO6=%p before\n", PRCM_GPIO6);
-            real_printf("PRCM_GPIO7=%p before\n", PRCM_GPIO7);
-            real_printf("PRCM_GPIO8=%p before\n", PRCM_GPIO8);
-            real_printf("PRCM_SPI2=%p before\n", PRCM_SPI2);
-        #endif
-    
-        // on boot gpio4, gpio8 and spi2 blocks are powered down.
-        PRCM_GPIO2 = PRCM_GPIO3 = PRCM_GPIO4 = PRCM_GPIO5 = PRCM_GPIO6 = PRCM_GPIO7 = PRCM_GPIO8 = MODMODE_GPIO_ENA;
-        PRCM_SPI2 = MODMODE_SPI_ENA;
-        spin_ms(10);
-    
-        #if 0
-            real_printf("PRCM_GPIO2=%p after\n", PRCM_GPIO2);
-            real_printf("PRCM_GPIO3=%p after\n", PRCM_GPIO3);
-            real_printf("PRCM_GPIO4=%p after\n", PRCM_GPIO4);
-            real_printf("PRCM_GPIO5=%p after\n", PRCM_GPIO5);
-            real_printf("PRCM_GPIO6=%p after\n", PRCM_GPIO6);
-            real_printf("PRCM_GPIO7=%p after\n", PRCM_GPIO7);
-            real_printf("PRCM_GPIO8=%p after\n", PRCM_GPIO8);
-            real_printf("PRCM_SPI2=%p after\n", PRCM_SPI2);
-        #endif
-	#endif
+    // on boot gpio4, gpio8 and spi2 blocks are powered down.
+    PRCM_GPIO2 = PRCM_GPIO3 = PRCM_GPIO4 = PRCM_GPIO5 = PRCM_GPIO6 = PRCM_GPIO7 = PRCM_GPIO8 = MODMODE_GPIO_ENA;
+    PRCM_SPI2 = MODMODE_SPI_ENA;
+    spin_ms(10);
 #endif
 	
 #ifdef CPU_TDA4VM
@@ -626,19 +602,20 @@ void peri_init()
     
 #ifdef CPU_AM67
     // all kinds of holes in the PADCONFIG address space
-    // data sheet 5.2
+    // data sheet 5.3.11
     u4_t pin, reg;
     for (pin = reg = 0; pin <= 86; pin++, reg += 4) {   // GPIO0 0..86
         if (reg == 0x80 || reg == 0x11c) reg += 4;
         gpio_pmux_reg_off[GPIO0][pin] = reg;
     }
-    for (pin = 7, reg = 0x194; pin <= 72; pin++, reg += 4) {    // GPIO1 7..72 (i.e. no 0..6)
+    for (pin = 7, reg = 0x194; pin <= 72; pin++, reg += 4) {    // GPIO1 7..31, 42..72
         if (pin == 32) { pin = 42; reg = 0x224; }
         if (pin == 47) reg  = 0x23c;
         if (pin == 50) reg = 0x254;
         gpio_pmux_reg_off[GPIO1][pin] = reg;
     }
     for (pin = reg = 0; pin <= 23; pin++, reg += 4) {   // MCU_GPIO0 0..23
+        if (pin == 21) reg = 0x5c;
         if (pin == 22) reg = 0x80;
         gpio_pmux_reg_off[GPIO2][pin] = reg;
     }
@@ -655,7 +632,7 @@ void peri_init()
     CMD_READY.init();
     SND_INTR.init();
 
-    #ifdef PLATFORM_beagleY_ai
+    #ifdef GPIO_HAT
         G5.init();
         G6.init();
         G7.init();
@@ -737,7 +714,7 @@ void peri_init()
 	gpio_setup(CMD_READY, GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO, PMUX_IO_PU);
 	gpio_setup(SND_INTR,  GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO, PMUX_IO_PU);
 
-#ifdef PLATFORM_beagleY_ai
+#ifdef GPIO_HAT
     gpio_setup(G5 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
     gpio_setup(G6 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
     gpio_setup(G7 , GPIO_DIR_BIDIR, GPIO_HIZ, PMUX_IO_PU, PMUX_IO);
@@ -788,7 +765,7 @@ void peri_init()
 
 void gpio_setup_ant_switch()
 {
-	#ifdef PLATFORM_beagleY_ai
+	#ifdef GPIO_HAT
 	#else
         GPIO_OUTPUT(P811); GPIO_WRITE_BIT(P811, 0);
         GPIO_OUTPUT(P812); GPIO_WRITE_BIT(P812, 0);
@@ -803,7 +780,7 @@ void gpio_setup_ant_switch()
     #endif
 }
 
-#ifdef PLATFORM_beagleY_ai
+#ifdef GPIO_HAT
     static gpio_t *idx_HAT_2_gpio[] = {
         NULL,       NULL,       NULL,       NULL,       NULL,       NULL,       &FPGA_INIT, NULL,   // hat 1-8
         NULL,       NULL,       NULL,       NULL,       &SPIn_CS1,  NULL,       &CMD_READY, NULL,   // hat 9-16
@@ -826,7 +803,7 @@ void gpio_setup_ant_switch()
 void gpio_test(int gpio_test_pin) {
     gpio_t *gpio_p = NULL;
     
-    #ifdef PLATFORM_beagleY_ai
+    #ifdef GPIO_HAT
         const char *conn_s = "HAT";
         if (gpio_test_pin >= 1 && gpio_test_pin <= 40) {
             gpio_p = idx_HAT_2_gpio[gpio_test_pin - 1];

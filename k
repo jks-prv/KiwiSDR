@@ -106,12 +106,8 @@ else
         LOAD_SPI=${LOAD_SPIPIO}
     fi
 
-    DEV_PRU=${DEV}-P
-    DEVID_PRU=cape-bone-${DEV_PRU}
-
     CAPE=${DEVID}-00A0
     SPI=${DEVID_SPI}-00A0
-    PRU=${DEVID_PRU}-00A0
 fi
 
 DEBIAN=$(cat /etc/debian_version)
@@ -177,18 +173,6 @@ echo ${PLATFORM} "Debian ${DEBIAN}" ${USE_SPI}
                     echo ${DEVID_SPI} > ${SLOTS_FN};
                 fi
             fi
-
-            # PRU (future)
-            #if test \( ! -f /lib/firmware/${PRU}.dtbo \) -o \( /lib/firmware/${PRU}.dts -nt /lib/firmware/${PRU}.dtbo \) ; then
-            #    echo compile ${DEV_PRU} device tree;
-            #    (cd /lib/firmware; dtc -O dtb -o ${PRU}.dtbo -b 0 -@ ${PRU}.dts);
-            #    # don't unload old slot because this is known to cause panics; must reboot
-            #fi
-
-            #if ! grep -q ${DEVID_PRU} ${SLOTS_FN} ; then
-            #    echo load ${DEV_PRU} device tree;
-            #    echo ${DEVID_PRU} > ${SLOTS_FN};
-            #fi
         fi
     fi
 

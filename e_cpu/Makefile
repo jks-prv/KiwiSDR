@@ -3,14 +3,15 @@
 #
 # Copyright (c) 2013-2025 John Seamons, ZL4VO/KF6VO
 
+KIWI_SRC = ..
 
-include ../Makefile.comp.inc
+include $(KIWI_SRC)/Makefile.comp.inc
 
 BUILD_DIR = ../../build
 TOOLS_DIR = $(BUILD_DIR)/tools
 GEN_DIR = $(BUILD_DIR)/gen
 
-CFLAGS = -I. -I./asm -I.. -D_GNU_SOURCE -g 
+CFLAGS = -I. -I./asm -I.. -I$(KIWI_SRC) -D_GNU_SOURCE -g 
 ifeq ($(ASAN),1)
     CFLAGS += -fsanitize=address
 endif

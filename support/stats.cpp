@@ -21,6 +21,7 @@ Boston, MA  02110-1301, USA.
 #include "config.h"
 #include "options.h"
 #include "kiwi.h"
+#include "platform.h"
 #include "stats.h"
 #include "rx.h"
 #include "rx_util.h"
@@ -171,19 +172,15 @@ static void webserver_collect_print_stats(int print)
         }
 		
 		kstr_free(reply);
-	    int cpufreq_kHz = 1000000, temp_deg_mC = 0;
+	    int cpufreq_kHz = CPU_FREQ_NOM, temp_deg_mC = 0;
 
-        #if defined(CPU_AM5729) || defined(CPU_AM67) || defined(CPU_TDA4VM) || defined(CPU_BCM2837)
-	        #ifdef CPU_TDA4VM
-	            cpufreq_kHz = 2000000;  // FIXME: /sys/devices/system/cpu/cpufreq/ is empty currently
-	        #elif defined(CPU_AM67)
-	            cpufreq_kHz = 1400000;  // FIXME: /sys/devices/system/cpu/cpufreq/ is empty currently
-	        #else
-                reply = read_file_string_reply("/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq");
-                sscanf(kstr_sp(reply), "%d", &cpufreq_kHz);
-                kstr_free(reply);
-            #endif
+        #ifdef HAS_CPU_FREQ
+            reply = read_file_string_reply("/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq");
+            sscanf(kstr_sp(reply), "%d", &cpufreq_kHz);
+            kstr_free(reply);
+        #endif
 
+        #ifdef HAS_CPU_TEMP
             reply = read_file_string_reply("/sys/class/thermal/thermal_zone0/temp");
             sscanf(kstr_sp(reply), "%d", &temp_deg_mC);
             kstr_free(reply);
@@ -783,7 +780,7 @@ void stat_task(void *param)
 		
 		#define CHECK_ECPU_STACK
 		#ifdef CHECK_ECPU_STACK
-		    if (ecpu_stack_check) {
+		    if (kiwi.hw && ecpu_stack_check) {
                 SPI_MISO *sprp = get_misc_miso(MISO_ECPU_STK);
                 spi_get_noduplex(CmdGetSPRP, sprp, 4);
                 printf("e_cpu: SP=%04x RP=%04x\n", sprp->word[0], sprp->word[1]);

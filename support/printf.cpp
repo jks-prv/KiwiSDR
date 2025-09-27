@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "printf.h"
 #include "shmem.h"
+#include "ansi.h"
 
 #include <sys/file.h>
 #include <fcntl.h>
@@ -438,7 +439,7 @@ void lprintf(const char *fmt, ...)
 
 void rcprintf(int rx_chan, const char *fmt, ...)
 {
-	conn_t *c = rx_channels[rx_chan].conn;
+	conn_t *c = (rx_chan >= 0)? rx_channels[rx_chan].conn : NULL;
 
 	va_list ap;
 	va_start(ap, fmt);
@@ -448,7 +449,7 @@ void rcprintf(int rx_chan, const char *fmt, ...)
 
 void rclprintf(int rx_chan, const char *fmt, ...)
 {
-	conn_t *c = rx_channels[rx_chan].conn;
+	conn_t *c = (rx_chan >= 0)? rx_channels[rx_chan].conn : NULL;
 
 	va_list ap;
 	va_start(ap, fmt);
@@ -458,7 +459,7 @@ void rclprintf(int rx_chan, const char *fmt, ...)
 
 void rcfprintf(int rx_chan, u4_t printf_type, const char *fmt, ...)
 {
-	conn_t *c = rx_channels[rx_chan].conn;
+	conn_t *c = (rx_chan >= 0)? rx_channels[rx_chan].conn : NULL;
 
 	va_list ap;
 	va_start(ap, fmt);

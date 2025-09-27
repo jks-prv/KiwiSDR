@@ -169,6 +169,7 @@ alias aah='echo "Antenna switch shell aliases:"; \
            echo "ar 1-9: remove antenna 1-9 if switch supports antenna mixing"; \
            echo "at 1-9: toggle antenna 1-9 if switch supports antenna mixing"; \
            echo "ant <cmd>: run frontend script using <cmd> command"; \
+           echo "ad <cmd>: run frontend script using <cmd> command with debugging turned on"; \
            echo "ah: show frontend script help"; \
            echo "aah: show this list of aliases"'
 alias cda="cd ~/KiwiSDR/pkgs/ant_switch"
@@ -193,6 +194,7 @@ alias a9="./ant-switch-frontend 9"
 alias aa="function _aa () { ./ant-switch-frontend +\$1 ; } ; _aa"
 alias ar="function _ar () { ./ant-switch-frontend -\$1 ; } ; _ar"
 alias at="function _at () { ./ant-switch-frontend t\$1 ; } ; _at"
+alias ad="function _ad () { ./ant-switch-frontend d \$1 ; } ; _ad"
 
 # pki colordiff
 p_diff_exclude="--exclude=.DS_Store --exclude=.git --exclude=.svn ${no_diff}"

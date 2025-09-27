@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
 	int fw_sel_override = FW_CONFIGURED;
 	int fw_test = 0;
 	int fpga_id_check = 1;
+	int fpga_sim_fail = 0;
 	int wb_sel, wb_sel_override = -1;
 	
 	version_maj = VERSION_MAJ;
@@ -186,6 +187,7 @@ int main(int argc, char *argv[])
 		if (ARG("-fw")) { ARGL(fw_sel_override); printf("firmware select override: %d\n", fw_sel_override); } else
 		if (ARG("-fw_test")) { ARGL(fw_test); printf("firmware test: %d\n", fw_test); } else
 		if (ARG("-fpga_id")) fpga_id_check = 0; else
+		if (ARG("-fpga_fail")) fpga_sim_fail = 1; else
 		if (ARG("-wb")) { ARGL(wb_sel_override); printf("wideband rate override: %d\n", wb_sel_override); } else
 		if (ARG("-rdoff")) { ARGL(wf_rd_offset); printf("WF rd_offset: %d\n", wf_rd_offset); } else
 		if (ARG("-wfsd")) { ARGL(wf_slowdown); printf("WF slowdown: %d\n", wf_slowdown); } else
@@ -478,7 +480,6 @@ int main(int argc, char *argv[])
 
         lprintf("firmware: rx_chans=%d rx_wb_buf_chans=%d wb_chans=%d wf_chans=%d gps_chans=%d\n",
             rx_chans, rx_wb_buf_chans, wb_chans, wf_chans, gps_chans);
-
         nrx_samps = NRX_SAMPS_CHANS(rx_wb_buf_chans);
         nrx_samps_total = nrx_samps * rx_wb_buf_chans;
         snd_intr_usec = 1e6 / ((float) snd_rate/nrx_samps);
@@ -529,16 +530,19 @@ int main(int argc, char *argv[])
 	if (need_hardware) {
 		peri_init();
 		if (gpio_test_pin) gpio_test(gpio_test_pin);
-		fpga_init(fpga_id_check);
-		//pru_start();
-		eeprom_update(eeprom_action);
-		
-		kiwi.ext_clk = cfg_true("ext_ADC_clk");
-		
-		ctrl_clr_set(0xffff, CTRL_EEPROM_WP);
-
-		net.dna = fpga_dna();
-		printf("device DNA %08x|%08x\n", PRINTF_U64_ARG(net.dna));
+		if (fpga_init(fpga_id_check, fpga_sim_fail)) {
+		    kiwi.hw = true;
+            eeprom_update(eeprom_action);
+            
+            kiwi.ext_clk = cfg_true("ext_ADC_clk");
+            
+            ctrl_clr_set(0xffff, CTRL_EEPROM_WP);
+    
+            net.dna = fpga_dna();
+            printf("device DNA %08x|%08x\n", PRINTF_U64_ARG(net.dna));
+        } else {
+            lprintf("*** NO KIWI HARDWARE DETECTED\n");
+        }
 	}
 	
 	rx_server_init();
@@ -549,28 +553,30 @@ int main(int argc, char *argv[])
 
 	web_server_init(WS_INIT_START);
 
-    // need to do gps clock switch even if gps is not enabled
-    gps_fe_init();
-
-    printf("switching GPS clock..\n");
-    kiwi_msleep(100);
-    ctrl_clr_set(0, CTRL_GPS_CLK_EN);
-    kiwi_msleep(100);
+    if (kiwi.hw) {
+        // need to do gps clock switch even if gps is not enabled
+        gps_fe_init();
     
-    // switch to ext clock only after GPS clock switch occurs
-    if (kiwi.ext_clk) {
-        printf("switching to external ADC clock..\n");
-		ctrl_clr_set(0, CTRL_OSC_DIS);
+        printf("switching GPS clock..\n");
         kiwi_msleep(100);
+        ctrl_clr_set(0, CTRL_GPS_CLK_EN);
+        kiwi_msleep(100);
+        
+        // switch to ext clock only after GPS clock switch occurs
+        if (kiwi.ext_clk) {
+            printf("switching to external ADC clock..\n");
+            ctrl_clr_set(0, CTRL_OSC_DIS);
+            kiwi_msleep(100);
+        }
+        
+        rf_attn_init();
+        
+        if (do_gps) {
+            #ifdef USE_GPS
+                gps_main(argc, argv);
+            #endif
+        }
     }
-    
-    rf_attn_init();
-	
-	if (do_gps) {
-        #ifdef USE_GPS
-		    gps_main(argc, argv);
-		#endif
-	}
     
 	CreateTask(stat_task, NULL, MAIN_PRIORITY);
 

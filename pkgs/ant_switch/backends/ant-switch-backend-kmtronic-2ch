@@ -39,7 +39,7 @@ else
 fi
 
 # no switch auth currently
-CURLCMD="/usr/bin/curl --silent --connect-timeout 1 --max-time 2 "
+CURLCMD="/usr/bin/curl ${CURLDEBUG} --silent --connect-timeout 1 --max-time 2 "
 #CURLCMD="echo "
 
 AntSW_ShowBackend() {

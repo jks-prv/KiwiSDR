@@ -182,7 +182,7 @@ void rx_server_init()
     ov_mask = 0xfc00;
 
     #ifdef USE_SDR
-        spi_set(CmdSetOVMask, 0, ov_mask);
+        if (kiwi.hw) spi_set(CmdSetOVMask, 0, ov_mask);
     #endif
     
     c2s_waterfall_once();
@@ -388,7 +388,7 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 	// handle case of server initially starting disabled, but then being enabled later by admin
 #ifdef USE_SDR
 	static bool init_snd_wf;
-	if (!init_snd_wf) {
+	if (kiwi.hw && !init_snd_wf) {
 		c2s_sound_init();
 		c2s_waterfall_init();
 		init_snd_wf = true;
@@ -423,16 +423,19 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
         lprintf("WARNING: allow_admin_conns still unset > 60 seconds after startup\n");
     }
     
-	if (down || update_in_progress || backup_in_progress) {
+	if (!kiwi.hw || down || update_in_progress || backup_in_progress) {
 		conn_printf("down=%d UIP=%d BIP=%d stream=%s\n", down, update_in_progress, backup_in_progress, st->uri);
         conn_printf("URL <%s> <%s> %s\n", mc->uri, mc->query, ip_forwarded);
         bool update_backup = (update_in_progress || backup_in_progress);
 
         // internal STREAM_SOUND connections don't understand "reason_disabled" API, see below
-		if (st->type == STREAM_SOUND && !internal) {
+		if ((st->type == STREAM_SOUND || st->type == STREAM_MFG) && !internal) {
 			int type;
 			const char *reason_disabled = NULL;
 
+			if (!kiwi.hw) {
+				type = 3;
+			} else
 			if (!down && update_in_progress) {
 				type = 1;
 			} else
@@ -453,7 +456,7 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
             //printf("DOWN %s %s\n", rx_streams[st->type].uri, ip_forwarded);
 			return NULL;
 		} else
-		if (internal && update_backup) {
+		if (internal && (!kiwi.hw || update_backup)) {
 			return NULL;
 		}
 
@@ -462,7 +465,7 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 			return NULL;
 		}
 
-		// should only get here for admin connections or internal connections when not update/backup
+		// should only get here for admin connections or internal connections when down (only)
 	}
 
     bool isRetry = false;

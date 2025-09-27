@@ -88,7 +88,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 	//printf("rx_server_ajax: uri=<%s> qs=<%s>\n", uri, mc->query);
 	
 	// these require a query string
-	if (mc->query == NULL && (st->type == AJAX_PHOTO || st->type == AJAX_DX)) {
+	if (kiwi_emptyStr(mc->query) && (st->type == AJAX_PHOTO || st->type == AJAX_DX)) {
 		lprintf("rx_server_ajax: missing query string! uri=<%s>\n", uri);
 		return NULL;
 	}
@@ -123,7 +123,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 
 		if (rc == 0) {
             int key_cmp = -1;
-            if (mc->query && current_authkey) {
+            if (kiwi_nonEmptyStr(mc->query) && current_authkey) {
                 key_cmp = strcmp(mc->query, current_authkey);
                 kiwi_asfree(current_authkey);
                 current_authkey = NULL;
@@ -203,7 +203,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 		n = 0;
 		
 		key_cmp = -1;
-		if (mc->query && current_authkey) {
+		if (kiwi_nonEmptyStr(mc->query) && current_authkey) {
 			key_cmp = strcmp(mc->query, current_authkey);
             //printf("DX UPLOAD: AUTH key=%s ckey=%s %s\n", mc->query, current_authkey, key_cmp? "FAIL" : "OK");
 		}
@@ -445,7 +445,7 @@ fail:
 	//	Returns JSON
 	case AJAX_SNR: {
         //printf("/snr qs=<%s>\n", mc->query);
-        if (mc->query && strncmp(mc->query, "meas", 4) == 0) {
+        if (kiwi_nonEmptyStr(mc->query) && strncmp(mc->query, "meas", 4) == 0) {
             if (isLocalIP) {
                 if (0 && cfg_true("ant_switch.enable") && (antsw.using_ground || antsw.using_tstorm)) {
                     asprintf(&sb, "/snr: ERROR antenna is grounded\n");
@@ -510,6 +510,12 @@ fail:
 		}
 		//printf("/adc REQUESTED from %s\n", ip_unforwarded);
 		
+		if (!kiwi.hw) {
+            asprintf(&sb, "/adc: no kiwi hardware detected\n");
+            printf("%s", sb);
+            break;
+        }
+		
         SPI_MISO *adc_ctr = get_misc_miso(MISO_ADC_CTR);
             spi_get_noduplex(CmdGetADCCtr, adc_ctr, sizeof(u2_t[3]));
         release_misc_miso();
@@ -519,7 +525,7 @@ fail:
         //printf("/adc qs=<%s>\n", mc->query);
         u4_t level = 0;
         // "%i" so decimal or hex beginning with 0x can be specified
-        if (mc->query && sscanf(mc->query, "level=%i", &level) == 1) {
+        if (kiwi_nonEmptyStr(mc->query) && sscanf(mc->query, "level=%i", &level) == 1) {
             adc_level = level & ((1 << (ADC_BITS-1)) - 1);
             //printf("/adc SET level=%d(0x%x)\n", adc_level, adc_level);
             #define COUNT_ADC_OVFL 0x2000
@@ -543,7 +549,7 @@ fail:
 		//printf("/adc_ov REQUESTED from %s\n", ip_unforwarded);
 		
 		int count = dpump.rx_adc_ovfl_cnt;
-		if (mc->query) {
+		if (kiwi_nonEmptyStr(mc->query)) {
 		    if (strcmp(mc->query, "reset") == 0) {
 		        dpump.rx_adc_ovfl_cnt = 0;
 		    } else {
@@ -559,7 +565,7 @@ fail:
 	// SECURITY:
 	//	Returns simple S-meter value
 	case AJAX_S_METER: {
-	    if (mc->query == NULL) {
+	    if (kiwi_emptyStr(mc->query)) {
             asprintf(&sb, "/s-meter: missing freq/mode, try my_kiwi:8073/s-meter/?(passband center freq in kHz)(optional mode, default CWN)\n");
             printf("%s\n", sb);
             break;

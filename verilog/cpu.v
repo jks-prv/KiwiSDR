@@ -50,13 +50,13 @@ module CPU (
     //////////////////////////////////////////////////////////////////////////
     // Instruction set
     //
-    //	1111 110000000000
-    //	5432 109876543210
+    //	1111 1100 00000000
+    //	5432 1098 76543210
     
     //	0... .... ........ push 0..0x7fff
 
     //  bbbb bbbb -------- op8 [7:0]
-    //	100p pppp R....... alu opcodes, R = rtn
+    //	100p pppp R....... alu opcodes, R = ret
     //	100p pppp Riiiiiii  addi, imm [6:0] 0-127
     //	100p pppp RCxxxxxx  add, C = carry-in
     //	100p pppp R210xxLc  rdBit, 210 (one hot) selects 'ser' bit input, L=loop, c=[01] which loop counter
@@ -209,9 +209,8 @@ module CPU (
     wire        cin = (op8 == op_add && opt_cin && carry) || op8 == op_sub;
     reg  [31:0] a, b, alu;
     wire        shl_lsb = opt_rot? tos[31] : 1'b0;
-    wire        shr_msb = opt_rot? tos[31] : (opt_uns? 1'b0 : tos[31]);
+    wire        shr_msb = opt_rot? tos[ 0] : (opt_uns? 1'b0 : tos[31]);
 
-	// FIXME: use a c_out instead and reduce s width to 32 from 33?
 	// FIXME: combine adder & multipler(s) into a single DSP slice?
     ip_add_u32b cpu_sum (.a(a), .b(b), .s({cout, sum}), .c_in(cin));
 
@@ -223,8 +222,8 @@ module CPU (
         else                a = nos;
 
     always @*
-        if (op8 == op_sub) b = ~tos;
-        else               b =  tos;
+        if (op8 == op_sub)  b = ~tos;
+        else                b =  tos;
 
     always @*
         if      (op_push)   alu = op;       // side-effect alu[31:16] <= 0
@@ -234,7 +233,7 @@ module CPU (
             op_add, op_addi,
             op_sub          : alu = sum;
             op_mult         : alu = prod40[31:0];
-            op_mult20       : alu = prod40[31:0];           // NB: nos <= sext(prod40[39:32]) above
+            op_mult20       : alu = prod40[31:0];       // NB: nos <= sext(prod40[39:32]) above
             op_and          : alu = nos & tos;
             op_or           : alu = nos | tos;
 			op_xor          : alu = nos ^ tos;

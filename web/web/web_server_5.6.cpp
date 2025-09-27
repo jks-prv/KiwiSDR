@@ -95,12 +95,11 @@ void webserver_connection_cleanup(conn_t *c)
 		TASK:
 		web_server()
 			mg_poll_server()	// also forces mongoose internal buffering to write to sockets
-			mg_iterate_over_connections()
-				iterate_callback()
-					is_websocket:
-						[app_to_web() =>] nbuf_dequeue(s2c) => mg_ws_send()
-					other:
-						ERROR
+                iterate_callback()
+                    is_websocket:
+                        [app_to_web() =>] nbuf_dequeue(s2c) => mg_ws_send()
+                    other:
+                        ERROR
 			LOOP
 					
 */

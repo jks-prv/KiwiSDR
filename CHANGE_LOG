@@ -3,6 +3,22 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.822  September 28, 2025
+    Antenna switch:
+        Use the "\+" escape sequence where you need a plus sign ('+') to appear in the curl fields.
+        Example "192.168.1.222?cmd=ant+1\+2+on" gives "192.168.1.222?cmd=ant 1+2 on" (thanks IW2NKE)
+        
+        Debugging mode added to ant-switch-frontend script. Preface any command with 'd' to enable.
+        E.g. "d s" to query switch status with curl debugging ("--verbose") enabled. Also sets
+        script "DEBUG" variable which individual scripts can use to trigger debugging actions.
+        The "ad" alias helps with this e.g. "ad s" instead of "./ant-switch-frontend d s"
+    
+    SSTV extension: Works on 3-channel mode Kiwi again. (thanks nitroengine)
+    
+    The server will now run and allow you to connect as admin even if the Kiwi board is broken
+        (e.g. FPGA not responding) or not installed. The FPGA communication failure LED pattern is
+        then appended to the IP address LED pattern in this case (see: kiwisdr.com/info/#id-fpga)
+
 v1.821  August 25, 2025
     Fixed frequency memory icon behavior on mobile devices. (thanks Gary)
 

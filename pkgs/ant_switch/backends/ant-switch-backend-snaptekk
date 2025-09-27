@@ -36,7 +36,7 @@ else
 fi
 
 CURLEXEC=/usr/bin/curl
-CURLOPTS=" --silent --connect-timeout 1 --max-time 2 "
+CURLOPTS=" ${CURLDEBUG} --silent --connect-timeout 1 --max-time 2 "
 
 AntSW_ShowBackend() {
     echo "snaptekk v$VERSION 8ch mix $SNAPTEKK_URL"
@@ -127,7 +127,7 @@ AntSW_ReportSelected() {
 		# gui doesn't get hang. fixme.
 		digits="0000000000"
 	fi
-        for s in 1 2 3 4 5 6 7 8; do
+    for s in 1 2 3 4 5 6 7 8; do
 		thisbit=${digits:${s}:1}
 		if [ "x$thisbit" == "x1" ]; then
 			selectedantennas="${selectedantennas}$(($s)),"

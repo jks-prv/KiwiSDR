@@ -30,7 +30,7 @@
 IPADDRESS=192.168.1.234
 VERSION=2.0
 CURLEXEC=/usr/bin/curl
-CURLOPTS=" --silent --connect-timeout 2"
+CURLOPTS=" ${CURLDEBUG} --silent --connect-timeout 2"
 
 CONFFILE="/etc/default/ms-s"$N_CH"a-web"
 [ -r $CONFFILE ] && . $CONFFILE

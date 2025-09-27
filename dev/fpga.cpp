@@ -49,7 +49,6 @@ u2_t ctrl_get()
 	return rv;
 }
 
-
 static void stat_dump(const char *id)
 {
     u2_t ctrl = ctrl_get();
@@ -64,12 +63,15 @@ static void stat_dump(const char *id)
     );
 }
 
-
 // NB: the eCPU maintains a latched shadow value of SET_CTRL[]
 // This means if a bit is given in the set parameter it persists until given in the clr parameter.
 // But it doesn't have to be given in subsequent set parameters to persist due to the latching.
 void ctrl_clr_set(u2_t clr, u2_t set)
 {
+    if (!kiwi.hw) {
+        printf("ctrl_clr_set: no hw, unexpected call\n");
+        return;
+    }
 	spi_set_noduplex(CmdCtrlClrSet, clr, set);
 	//printf("ctrl_clr_set       (0x%04x, 0x%04x) ", clr, set);
 	//stat_dump(" SET");
@@ -114,6 +116,7 @@ stat_reg_t stat_get(int which)
 
 u2_t getmem(u2_t addr)
 {
+    if (!kiwi.hw) return 0;
 	SPI_MISO *mem = get_misc_miso(MISO_GETMEM);
 	
 	memset(mem->word, 0x55, sizeof(mem->word));
@@ -126,6 +129,7 @@ u2_t getmem(u2_t addr)
 
 void setmem(u2_t addr, u2_t data)
 {
+    if (!kiwi.hw) return;
 	spi_set_noduplex(CmdSetMem, addr, data);
 }
 
@@ -136,9 +140,8 @@ void printmem(const char *str, u2_t addr)
 
 void fpga_panic(int code, const char *s)
 {
-    lprintf("FPGA panic: code=%d %s\n", code, s);
-    if (bg) led_display_fpga_code(code);
-    panic("FPGA panic");
+    lprintf("*** FPGA panic: code=%d %s\n", code, s);
+    led_display_fpga_code(code);
 }
 
 
@@ -181,12 +184,17 @@ static SPI_MISO readback;
 static u1_t bbuf[2048];
 static u2_t code2[4096];
 
-void fpga_init(int check) {
+int fpga_init(int check, int fpga_sim_fail) {
 
     FILE *fp;
     int n, i, j;
 
 	spi_dev_init(spi_clkg, spi_speed);
+
+    if (fpga_sim_fail) {
+        fpga_panic(15, "--fpga_fail test flag");
+        return 0;
+    }
 
 #ifdef TEST_FLAG_SPI_RFI
 	if (spi_test)
@@ -198,12 +206,12 @@ void fpga_init(int check) {
 		GPIO_WRITE_BIT(FPGA_PGM, 0);	// assert FPGA_PGM LOW
 		for (i=0; i < 1*M && GPIO_READ_BIT(FPGA_INIT) == 1; i++)	// wait for FPGA_INIT to acknowledge init process
 			;
-		if (i == 1*M) fpga_panic(1, "FPGA_INIT never went LOW");
+		if (i == 1*M) { fpga_panic(1, "FPGA_INIT never went LOW"); return 0; }
 		spin_us(100);
 		GPIO_WRITE_BIT(FPGA_PGM, 1);	// de-assert FPGA_PGM
 		for (i=0; i < 1*M && GPIO_READ_BIT(FPGA_INIT) == 0; i++)	// wait for FPGA_INIT to complete
 			;
-		if (i == 1*M) fpga_panic(2, "FPGA_INIT never went HIGH");
+		if (i == 1*M) { fpga_panic(2, "FPGA_INIT never went HIGH"); return 0; }
 	}
 
 	// FPGA configuration bitstream
@@ -212,7 +220,7 @@ void fpga_init(int check) {
     char *sum = non_blocking_cmd_fmt(NULL, "sum %s", file);
     lprintf("FPGA firmware: %s %.5s\n", file, kstr_sp(sum));
     fp = fopen(file, "rb");
-    if (!fp) fpga_panic(3, "fopen config");
+    if (!fp) { fpga_panic(3, "fopen config"); return 0; }
     kstr_free(sum);
     kiwi_asfree(file);
     kiwi_asfree(fpga_file);
@@ -277,8 +285,10 @@ void fpga_init(int check) {
 
     fclose(fp);
 
-	if (GPIO_READ_BIT(FPGA_INIT) == 0)
+	if (GPIO_READ_BIT(FPGA_INIT) == 0) {
 		fpga_panic(4, "FPGA config CRC error");
+		return 0;
+	}
 
 	spin_ms(100);
 
@@ -287,7 +297,7 @@ void fpga_init(int check) {
     sum = non_blocking_cmd_fmt(NULL, "sum %s", aout);
 	printf("e_cpu firmware: %s %.5s\n", aout, kstr_sp(sum));
     fp = fopen(aout, "rb");
-    if (!fp) fpga_panic(5, "fopen aout");
+    if (!fp) { fpga_panic(5, "fopen aout"); return 0; }
     kstr_free(sum);
 
 
@@ -317,8 +327,7 @@ void fpga_init(int check) {
             } else
                 break;
         }
-        if (i == 10)
-            fpga_panic(6, "FPGA not responding to ping1");
+        if (i == 10) { fpga_panic(6, "FPGA not responding to ping1"); return 0; }
     #else
         spin_ms(100);
         printf("ping..\n");
@@ -328,6 +337,7 @@ void fpga_init(int check) {
             lprintf("FPGA not responding: 0x%04x\n", ping->word[0]);
             evSpi(EC_DUMP, EV_SPILOOP, -1, "main", "dump");
             fpga_panic(6, "FPGA not responding to ping1");
+            return 0;
         }
     #endif
 
@@ -366,6 +376,7 @@ void fpga_init(int check) {
 		lprintf("FPGA not responding: 0x%04x\n", ping->word[0]);
 		evSpi(EC_DUMP, EV_SPILOOP, -1, "main", "dump");
         fpga_panic(7, "FPGA not responding to ping2");
+        return 0;
 	}
 
 	#ifdef USE_GPS
@@ -379,7 +390,9 @@ void fpga_init(int check) {
 	if (check && stat.fpga_id != fpga_id) {
 		lprintf("FPGA ID %d, expecting %d\n", stat.fpga_id, fpga_id);
 		fpga_panic(8, "mismatch");
+		return 0;
 	}
 
     spi_dev_init2();
+    return 1;
 }

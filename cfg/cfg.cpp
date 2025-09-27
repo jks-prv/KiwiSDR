@@ -456,7 +456,7 @@ jsmntok_t *_cfg_lookup_json(cfg_t *cfg, const char *id, cfg_lookup_e option)
 	return NULL;
 }
 
-bool _cfg_type_json(cfg_t *cfg, jsmntype_t jt_type, jsmntok_t *jt, const char **str)
+bool _cfg_type_json(cfg_t *cfg, jsmntype_t jt_type, jsmntok_t *jt, const char **str, u4_t flags)
 {
 	if (!cfg->init) return false;
 	
@@ -465,7 +465,11 @@ bool _cfg_type_json(cfg_t *cfg, jsmntype_t jt_type, jsmntok_t *jt, const char **
 	if (jt->type == jt_type) {
 		int n = jt->end - jt->start;
 		*str = (const char *) kiwi_imalloc("_cfg_type_json", n + SPACE_FOR_NULL);
-		mg_url_decode((const char *) s, n, (char *) *str, n + SPACE_FOR_NULL, 0);
+		//real_printf("_cfg_type_json: CFG_NO_URL_DECO=%d <%s>\n", flags & CFG_NO_URL_DECO, s); fflush(stdout);
+		if (flags & CFG_NO_URL_DECO)
+		    kiwi_strncpy((char *) *str, s, n + SPACE_FOR_NULL);
+		else
+		    mg_url_decode((const char *) s, n, (char *) *str, n + SPACE_FOR_NULL, 0);
 		return true;
 	} else {
 		return false;
@@ -978,7 +982,7 @@ const char *_cfg_string(cfg_t *cfg, const char *name, bool *error, u4_t flags)
 	bool err = false;
 
 	jsmntok_t *jt = _cfg_lookup_json(cfg, name, CFG_OPT_NONE);
-	if (!jt || jt == CFG_LOOKUP_LVL1 || _cfg_type_json(cfg, JSMN_STRING, jt, &str) == false) {
+	if (!jt || jt == CFG_LOOKUP_LVL1 || _cfg_type_json(cfg, JSMN_STRING, jt, &str, flags) == false) {
 		err = true;
 	}
 	if (error) *error = err;
@@ -1515,6 +1519,7 @@ static void _cfg_write_file(void *param)
 	FILE *fp;
 
     //real_printf("_cfg_write_file %s %d|%d\n", cfg->filename, strlen(cfg->json_write), cfg->json_buf_size);
+    //real_printf("%s\n", cfg->json_write);
 	scallz("_cfg_write_file fopen", (fp = fopen(cfg->filename, "w")));
 	fprintf(fp, "%s\n", cfg->json_write);
 	fclose(fp);

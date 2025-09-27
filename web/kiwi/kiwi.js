@@ -2475,6 +2475,9 @@ function kiwi_down(type, reason)
 	} else
 	if (type == 2) {
 		s = "Backup in progress.";
+	} else
+	if (type == 3) {
+		s = "No Kiwi hardware detected.";
 	} else {
 		if (reason == null || reason == '') {
 			reason = 'Sorry, this KiwiSDR server is being used for development right now. <br>' +
@@ -3134,6 +3137,10 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 
 		case "ext_clk":
 			kiwi.ext_clk = parseInt(param[1]);
+			break;
+
+		case "hw":
+			kiwi.hw = parseInt(param[1]);
 			break;
 
 		case "abyy":

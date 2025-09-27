@@ -417,12 +417,14 @@ int main(int argc, char *argv[])
 		
 		fclose(ifp[ifn]);
 		ifn--;
-		fn = ifiles[ifn];
 		
-		ifl++;
-		strcpy(ifiles_list[ifl], fn);
-        tp->ttype = TT_FILE; tp->str = ifiles_list[ifl]; tp++;
-		//printf("FILE %s(%d)\n", fn, ifl);
+		if (ifn >= 0) {
+            fn = ifiles[ifn];
+            ifl++;
+            strcpy(ifiles_list[ifl], fn);
+            tp->ttype = TT_FILE; tp->str = ifiles_list[ifl]; tp++;
+            //printf("FILE %s(%d)\n", fn, ifl);
+        }
 	}
 
 	fn = ifiles[0];
