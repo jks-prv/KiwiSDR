@@ -334,7 +334,7 @@ ftx_message_rc_t ftx_message_decode(const ftx_message_t* msg, ftx_callsign_hash_
         // FTX_MESSAGE_TYPE_ARRL_FD
         // FTX_MESSAGE_TYPE_WWDIGI
         field1 = NULL;
-        sprintf(message, "Unsupported message type");
+        snprintf(message, sizeof(message), "Unsupported message type");
         rc = FTX_MESSAGE_RC_ERROR_TYPE;
         break;
     }

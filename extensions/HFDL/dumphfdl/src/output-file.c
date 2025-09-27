@@ -91,7 +91,7 @@ static int32_t out_file_open(out_file_ctx_t *self) {
 			return -1;
 		}
 		filename = XCALLOC(self->prefix_len + tlen + 2, sizeof(uint8_t));
-		sprintf(filename, "%s%s%s", self->filename_prefix, suffix, self->extension);
+		snprintf(filename, sizeof(filename), "%s%s%s", self->filename_prefix, suffix, self->extension);
 	} else {
 		filename = strdup(self->filename_prefix);
 	}
