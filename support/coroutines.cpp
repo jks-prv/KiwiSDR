@@ -1441,19 +1441,27 @@ static void *taskSleepCommon(const char *reason, u64_t usec, volatile u4_t *wake
 {
     TASK *t = cur_task;
 
-    taskSleepSetup(t, reason, usec, wakeup_test, wakeup_test_val);
-
-	#if 0
-        static bool trigger;
-        if (t->id == 2 && !trigger) {
-            evNT(EC_DUMP, EV_NEXTTASK, 30, "TaskInit", "DUMP 30 MSEC");
-            trigger = true;
+    if (t->flags & CTF_FORK_CHILD) {
+        if (usec != 0) {
+            kiwi_usleep((u4_t) usec);
+        } else {
+            printf("taskSleepCommon CTF_FORK_CHILD with usec=0?\n"); 
         }
-	#endif
-
-	do {
-		NextTask(t->reason);
-	} while (!t->wakeup);
+    } else {
+        taskSleepSetup(t, reason, usec, wakeup_test, wakeup_test_val);
+    
+        #if 0
+            static bool trigger;
+            if (t->id == 2 && !trigger) {
+                evNT(EC_DUMP, EV_NEXTTASK, 30, "TaskInit", "DUMP 30 MSEC");
+                trigger = true;
+            }
+        #endif
+    
+        do {
+            NextTask(t->reason);
+        } while (!t->wakeup);
+    }
     
 	evNT(EC_EVENT, EV_NEXTTASK, -1, "TaskSleep", evprintf("woke %s Qrunnable %d", task_ls(t), t->tq->runnable));
 
