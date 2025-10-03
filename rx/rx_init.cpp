@@ -516,11 +516,12 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("init.floor_dB", 0, &up_cfg);
     cfg_default_int("init.ceil_dB", 5, &up_cfg);
 
-    int _dom_sel = cfg_default_int("sdr_hu_dom_sel", DOM_SEL_NAM, &up_cfg);
+    net.dom_sel = cfg_default_int("sdr_hu_dom_sel", DOM_SEL_NAM, &up_cfg);
+    //printf("rx_init: dom_sel=%d\n", net.dom_sel);
 
     #if 0
         // try and get this Kiwi working with the proxy
-        //printf("serno=%d dom_sel=%d\n", serial_number, _dom_sel);
+        //printf("serno=%d dom_sel=%d\n", serial_number, net.dom_sel);
 	    if (serial_number == 1006 && _dom_sel == DOM_SEL_NAM) {
             cfg_set_int("sdr_hu_dom_sel", DOM_SEL_REV);
             update_cfg = cfg_gdb_break(true);
@@ -542,7 +543,7 @@ void update_vars_from_config(bool called_at_init)
         // DOM_SEL_NAM=0 and DOM_SEL_PUB=2. This can result in DOM_SEL_NAM selected but the corresponding
         // domain field blank which has bad consequences (e.g. TDoA host file corrupted).
         // So do some consistency checking here.
-        if (dom_sel == DOM_SEL_NAM && (*server_url == '\0' || strcmp(server_url, "kiwisdr.example.com") == 0)) {
+        if (net.dom_sel == DOM_SEL_NAM && (*server_url == '\0' || strcmp(server_url, "kiwisdr.example.com") == 0)) {
             lprintf("### DOM_SEL check: DOM_SEL_NAM but server_url=\"%s\"\n", server_url);
             lprintf("### DOM_SEL check: forcing change to DOM_SEL_PUB\n");
             cfg_set_int("sdr_hu_dom_sel", DOM_SEL_PUB);

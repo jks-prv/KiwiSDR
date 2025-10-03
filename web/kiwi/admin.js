@@ -993,9 +993,9 @@ function connect_update_url()
    w3_flag_cond('id-connect-url', !ok, ok? host_and_port : '(incomplete information, fill-in field above)');
 }
 
-function connect_stop_proxy()
+function connect_restart_proxy()
 {
-   ext_send('SET stop_proxy');
+   ext_send('SET restart_proxy');
 }
 
 function connect_my_kiwi_register()
@@ -1004,16 +1004,21 @@ function connect_my_kiwi_register()
    setTimeout(function() { ext_send('SET my_kiwi_register'); }, 3000);
 }
 
+function connect_update_connect_mode(server_url, check_restart)
+{
+	connect_update_url();
+	connect_restart_proxy();
+	connect_my_kiwi_register();
+	if ((!isArg(check_restart) || check_restart) && server_url != '') w3_restart_cb();
+}
+
 function connect_dom_nam_focus(ok)
 {
    var server_url = (ok == false)? '' : cfg.sdr_hu_dom_name;
    console.log('connect_dom_nam_focus ok='+ ok +' server_url='+ server_url);
 	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.NAM, EXT_SAVE);
-	connect_update_url();
-	connect_stop_proxy();
-	connect_my_kiwi_register();
-	if (server_url != '') w3_restart_cb();
+	connect_update_connect_mode(server_url);
 }
 
 function connect_dom_duc_focus()
@@ -1022,10 +1027,7 @@ function connect_dom_duc_focus()
    console.log('connect_dom_duc_focus server_url='+ server_url);
 	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.DUC, EXT_SAVE);
-	connect_update_url();
-	connect_stop_proxy();
-	connect_my_kiwi_register();
-	if (server_url != '') w3_restart_cb();
+	connect_update_connect_mode(server_url);
 }
 
 function connect_dom_rev_focus(check_restart)
@@ -1035,9 +1037,7 @@ function connect_dom_rev_focus(check_restart)
    console.log('connect_dom_rev_focus server_url='+ server_url);
 	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.REV, EXT_SAVE);
-	connect_update_url();
-	connect_my_kiwi_register();
-	if (check_restart && server_url != '') w3_restart_cb();
+	connect_update_connect_mode(server_url, check_restart);
 }
 
 function connect_dom_pub_focus()
@@ -1046,10 +1046,7 @@ function connect_dom_pub_focus()
    console.log('connect_dom_pub_focus server_url='+ server_url);
 	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.PUB, EXT_SAVE);
-	connect_update_url();
-	connect_stop_proxy();
-	connect_my_kiwi_register();
-	if (server_url != '') w3_restart_cb();
+	connect_update_connect_mode(server_url);
 }
 
 function connect_dom_sip_focus(ok)
@@ -1058,10 +1055,7 @@ function connect_dom_sip_focus(ok)
    console.log('connect_dom_sip_focus ok='+ ok +' server_url='+ server_url);
 	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
 	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.SIP, EXT_SAVE);
-	connect_update_url();
-	connect_stop_proxy();
-	connect_my_kiwi_register();
-	if (server_url != '') w3_restart_cb();
+	connect_update_connect_mode(server_url);
 }
 
 

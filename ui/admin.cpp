@@ -582,10 +582,10 @@ void c2s_admin(void *param)
                 continue;
             }
     
-            i = strcmp(cmd, "SET stop_proxy");
+            i = strcmp(cmd, "SET restart_proxy");
             if (i == 0) {
-                lprintf("PROXY: stopping frpc\n");
-                system("killall -q frpc");
+                lprintf("PROXY: restarting frpc\n");
+                proxy_frpc_restart();
                 continue;
             }
     
@@ -650,8 +650,7 @@ void c2s_admin(void *param)
                         // That also means two separate system()s must be used below because the
                         // second one detaches with a "&".
                         lprintf("PROXY: (re)starting frpc\n");
-                        system("killall -q frpc; sleep 1");
-                        system("/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
+                        proxy_frpc_restart();
                     }
                 }
             
@@ -846,8 +845,7 @@ void c2s_admin(void *param)
             if (i == 0) {
                 const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
                 // proxy always uses a fixed port number
-                int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
-                int server_port = (dom_sel == DOM_SEL_REV)? PROXY_SERVER_PORT : net.port_ext;
+                int server_port = (net.dom_sel == DOM_SEL_REV)? PROXY_SERVER_PORT : net.port_ext;
                 asprintf(&cmd_p, "curl -Ls --ipv4 --connect-timeout 15 \"kiwisdr.com/php/check_port_open.php/?url=%s:%d\"",
                     server_url, server_port);
                 reply = non_blocking_cmd(cmd_p, &status);

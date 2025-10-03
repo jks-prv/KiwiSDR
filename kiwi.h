@@ -40,6 +40,7 @@ typedef struct {
     
     int current_nusers;
     bool dbgUs;
+    tid_t proxy_task_tid;
     
     #define RESTART_DELAY_30_SEC 1
     #define RESTART_DELAY_MAX 7
