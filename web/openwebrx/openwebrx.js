@@ -7034,7 +7034,7 @@ function freqstep_cb(path, sel, first, ev)
 	
 	// set step size from band channel spacing
 	if (step_Hz == 0) {
-		var b = find_band(fnew);
+		var b = find_band_border(sel, fnew);
 		step_Hz = special_step(b, sel, 'freqstep_cb');
 	}
 
@@ -7074,17 +7074,18 @@ function freqstep_cb(path, sel, first, ev)
 	freqmode_set_dsp_kHz(Hz/1000, null, { dont_clear_wf:true });
 }
 
-var freq_step_last_mode, freq_step_last_band;
+var freq_step_last_mode, freq_step_last_bandL, freq_step_last_bandH;
 
 function freq_step_update_ui(force)
 {
 	if (isUndefined(cur_mode) || kiwi_passbands(cur_mode) == undefined ) return;
-	var b = find_band(freq_displayed_Hz);
+	var bL = find_band_border(0, freq_displayed_Hz);
+	var bH = find_band_border(num_step_buttons-1, freq_displayed_Hz);
 	
 	//console.log("freq_step_update_ui: lm="+freq_step_last_mode+' cm='+cur_mode);
-	if (!force && freq_step_last_mode == cur_mode && freq_step_last_band == b) return;
+	if (!force && freq_step_last_mode == cur_mode && freq_step_last_bandL == bL && freq_step_last_bandH == bH) return;
 
-	var show_9_10 = (b && (b.name == 'LW' || b.name == 'MW') && ext_mode(cur_mode).AM_SAx_IQ_DRM)? true:false;
+	var show_9_10 = (bH && (bH.name == 'LW' || bH.name == 'MW') && ext_mode(cur_mode).AM_SAx_IQ_DRM)? true:false;
 	
 	if (kiwi_isMobile()) {
 	   w3_hide2('id-9-10-cell', !show_9_10);
@@ -7093,11 +7094,15 @@ function freq_step_update_ui(force)
 	   w3_disable('id-9-10-cell', !show_9_10);
 	}
 
-	for (var i=0; i < num_step_buttons; i++) {
-		var step_Hz = up_down[cur_mode][i]*1000;
+	for (var sel = 0; sel < num_step_buttons; sel++) {
+	   var b = (sel < num_step_buttons/2)? bL : bH;
+	   
+		var step_Hz = up_down[cur_mode][sel]*1000;
 		if (step_Hz == 0) {
-			step_Hz = special_step(b, i, 'freq_step_update_ui');
+			step_Hz = special_step(b, sel, 'freq_step_update_ui');
 		}
+	   //console.log('freq_step_update_ui sel='+ sel +' step_Hz='+ step_Hz +' b=...');
+	   //console.log(b);
 
 		var title;
 		var absHz = Math.abs(step_Hz);
@@ -7110,11 +7115,12 @@ function freq_step_update_ui(force)
 		else {
 			title = (posHz? '+':'-')+'400/'+(posHz? '+':'-')+'1000';
 		}
-		w3_el('id-step-'+i).title = title +'\nclick-hold to repeat';
+		w3_el('id-step-'+ sel).title = title +'\nclick-hold to repeat';
 	}
 	
 	freq_step_last_mode = cur_mode;
-	freq_step_last_band = b;
+	freq_step_last_bandL = bL;
+	freq_step_last_bandH = bH;
 }
 
 
@@ -7847,6 +7853,12 @@ function find_band(freqHz)
 	scale_canvas_top = band_canvas_h + dx_container_h;
 	
 scale_container_h = band_canvas_h + dx_container_h + scale_canvas_h;
+
+function find_band_border(sel, freqHz)
+{
+   freqHz += (sel < num_step_buttons/2)? -1 : 1;
+   return find_band(freqHz);
+}
 
 function mk_bands_scale()
 {
