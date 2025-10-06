@@ -706,7 +706,7 @@ void update_vars_from_config(bool called_at_init)
         admcfg_default_bool("use_kalman_position_solver", true, &update_admcfg);
         admcfg_default_int("rssi_azel_iq", 0, &update_admcfg);
 
-        admcfg_default_bool("always_acq_gps", false, &update_admcfg);
+        admcfg_default_bool("always_acq_gps", true, &update_admcfg);
         gps.set_date = admcfg_default_bool("gps_set_date", false, &update_admcfg);
         gps.include_alert_gps = admcfg_default_bool("include_alert_gps", false, &update_admcfg);
         //real_printf("gps.include_alert_gps=%d\n", gps.include_alert_gps);
