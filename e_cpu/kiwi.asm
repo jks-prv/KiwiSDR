@@ -101,7 +101,7 @@ NoCmd:
 				rdBit0								; host_srq
 
 #if USE_GPS
-                loop_gps_chans
+                gps_chans_m1_to_loop
 gps_srq_loop:   push	0
 				rdBit0
 				loop    gps_srq_loop
@@ -122,10 +122,11 @@ no_rx_svc:											; host_srq gps_srq(gps_chans-1) ... (0)
 #endif
 
 #if USE_GPS
-                call    loop2_gps_chans             ; host_srq gps_srq(gps_chans-1) ... (0)
+                call    gps_chans_m1_to_loop2       ; host_srq gps_srq(gps_chans-1) ... (0)
 gps_svc_loop:                                       ; gps_srq
                 brZ     no_gps_svc                  ; 
 			wrEvt2	CPU_CTR_ENA
+			                                        ; convert loop2 count to ch#
                 call    push_gps_chans_m1           ; #chans_m1
                 loop2_from                          ; #chans_m1 loop_ch#(11 10 ... 0)
                 sub                                 ; #ch(11-11=0 11-10=1 ... 11-0=11)
@@ -134,7 +135,7 @@ gps_svc_loop:                                       ; gps_srq
                 swap                                ; this ch#
 				call	GPS_Method					;
 			wrEvt2	CPU_CTR_DIS
-no_gps_svc:     loop2   gps_svc_loop                ; NB: loop2 because GPS_Method() uses shl64_n
+no_gps_svc:     loop2   gps_svc_loop                ; NB: loop2 because GPS_Method() calls shl64_n (which uses loop)
 
 #endif
 				

@@ -511,11 +511,11 @@ push_gps_chans_m1:
                 push    gps_chans_m1        ; &gps_chans_m1
                 fetch16.r                   ; #chans_m1
 
-loop_gps_chans:
+gps_chans_m1_to_loop:
                 call    push_gps_chans_m1   ; #chans_m1
                 to_loop.r                   ;
 
-loop2_gps_chans:
+gps_chans_m1_to_loop2:
                 call    push_gps_chans_m1   ; #chans_m1
                 to_loop2.r                  ;
 
@@ -606,13 +606,13 @@ CmdGetClocks:   wrEvt	HOST_RST
                 wrReg	HOST_TX
                 
                 push	0
-                loop_gps_chans
+                gps_chans_m1_to_loop
                 ALIGN
                 rdBit0.loop                 ; chan srq
                 wrReg	HOST_TX
                 
                 push	GPS_channels + ch_NAV_MS
-                loop2_gps_chans
+                gps_chans_m1_to_loop2
 upload_clk_loop:
                 call	UploadClock
                 loop2   upload_clk_loop     ; NB: loop2 because UploadClock() eventually uses loop insn
@@ -620,7 +620,7 @@ upload_clk_loop:
 
 CmdGetGlitches: wrEvt	HOST_RST
                 push	GPS_channels + ch_NAV_GLITCH
-                loop_gps_chans
+                gps_chans_m1_to_loop
 glitch_loop:                                ; &GPS_channels + ch_NAV_GLITCH
 				wrEvt	GET_MEMORY
 				addi	sizeof GPS_CHAN - 2 ; &(GPS_channels+1) + ch_NAV_GLITCH
