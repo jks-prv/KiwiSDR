@@ -498,14 +498,14 @@ static int _frpc_func(void *param)
 	args->cmd_poll_msec = 1000;
 	if (args->kstr == NULL) {
 	    int rv = args->cmd_stat? 1:0;
-	    //printf("_frpc_func DONE cmd_stat=%d rv=%d\n", args->cmd_stat, rv);
+	    //real_printf("_frpc_func DONE cmd_stat=%d rv=%d\n", args->cmd_stat, rv);
 	    return rv;
 	} else {
 	    char *sp = kstr_sp(args->kstr);
-	    //printf("_frpc_func <%s>\n", sp);
+	    //real_printf("_frpc_func <%s>\n", sp);
 	    if (strstr(sp, "start proxy success")) {
 	        net.proxy_running = true;       // net is in shmem, so this works
-	        //printf("_frpc_func net.proxy_running\n");
+	        //real_printf("_frpc_func net.proxy_running\n");
 	    }
 	    return 0;
     }
@@ -514,9 +514,13 @@ static int _frpc_func(void *param)
 static void proxy_task(void *param)
 {
     char *cmd_p;
-    //asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stdout --log-level=debug -c " DIR_CFG "/frpc.ini 2>&1");
-    asprintf(&cmd_p, "/usr/local/bin/frpc -c " DIR_CFG "/frpc.ini");
     int rv;
+
+    // NB: Must capture frpc output so "start proxy success" log message can be detected above.
+    // The char-oriented /dev/stderr must be used instead of the line-oriented /dev/stdout to
+    // guarantee the output is seen.
+    //asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr --log-level=debug -c " DIR_CFG "/frpc.ini 2>&1");
+    asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr -c " DIR_CFG "/frpc.ini 2>&1");
     
     // Wait for wakeup on server restart or when admin makes proxy cfg changes.
     // Never stops after that (until next server restart with proxy disabled).
