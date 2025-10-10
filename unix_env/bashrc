@@ -149,6 +149,8 @@ alias bly="jq '.ip_blacklist_auto_download = true | .ip_blacklist = \"\"' /root/
 alias trunc="truncate -s 0"
 alias keys="cd /root; mkdir -p .ssh; cd .ssh; cat >authorized_keys"
 alias keys2="cp authorized_keys authorized_keys2"
+alias ss="/bin/ss -tulapn"
+alias netstat="/bin/ss -tulapn"
 
 # debian acct
 alias chod="chown debian:debian"
