@@ -3926,7 +3926,7 @@ function zoom_dir_s(dir)
 // TDoA does this via zoom_center = 0.6
 var zoom_center = 0.5;
 
-var ZOOM_NOMINAL = 10, ZOOM_BAND = 6;
+var ZOOM_NOMINAL = 9, ZOOM_BAND = 6;
 var zoom_nom = 0, zoom_old_nom = 0;
 var zoom_levels_max = 0;
 var zoom_level = 0;
