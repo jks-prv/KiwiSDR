@@ -168,7 +168,7 @@ CmdWFReset:
 				rdReg	HOST_RX             ; WF_SAMP_*
 				FreezeTOS
 				wrReg2	SET_REG | SET_WF_RST
-            	ret
+                ret
 
 CmdGetWFSamples:
 				rdReg	HOST_RX				; wf_chan

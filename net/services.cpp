@@ -258,20 +258,21 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
 
 void proxy_frpc_setup(const char *proxy_server, const char *user, const char *host, int port)
 {
+    const char *actual_proxy_server;
     if (kiwi_emptyStr(user) || kiwi_emptyStr(host) || kiwi_emptyStr(proxy_server))
         return;
 
     // criteria for using secondary proxy server(s)
     //#define PROXY2_ENABLE
-    //#define PROXY2_TEST
+    //#define PROXY2_TEST 1
     #ifdef PROXY2_ENABLE
         // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
-        const char *actual_proxy_server = isdigit(host[0])? "proxy2.kiwisdr.com" : proxy_server;
+        actual_proxy_server = isdigit(host[0])? "proxy2.kiwisdr.com" : proxy_server;
     #elif PROXY2_TEST
-        const char *actual_proxy_server = strcmp(host, "jksp2")? proxy_server : "proxy2.kiwisdr.com";
+        actual_proxy_server = strcmp(host, "jksp2")? proxy_server : "proxy2.kiwisdr.com";
     #else
         // no redirection
-        const char *actual_proxy_server = proxy_server;
+        actual_proxy_server = proxy_server;
     #endif
 
     lprintf("PROXY init frpc.ini: actual_proxy_server=%s\n", actual_proxy_server);
