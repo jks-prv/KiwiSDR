@@ -67,16 +67,20 @@ web/kiwisdr.min.js: $(FILES_EMBED_JS_PKG)
 	cat $(FILES_EMBED_JS_F2) >web/kiwisdr.min.js
 	gzip --fast --keep --force web/kiwisdr.min.js
 
+#NO_CSS_GZIP := true
 web/kiwisdr.min.css: $(FILES_EMBED_CSS_PKG)
 	echo "/* $(FILES_EMBED_CSS_KEEP_MIN) */\n" >web/kiwisdr.min.css
 	cat $(FILES_EMBED_CSS_KEEP_MIN) >>web/kiwisdr.min.css
 	cat `$(FILE_OPTIM) -t7 -u -css $(FILES_EMBED_CSS_F1)` >>web/kiwisdr.min.css
 #	cat $(FILES_EMBED_CSS_KEEP_MIN2) >>web/kiwisdr.min.css
 	cat `$(FILE_OPTIM) -t7 -u -css $(FILES_EMBED_CSS_F2)` >>web/kiwisdr.min.css
-	@echo "############################################"
-	@echo "# CAUTION 4/2024: gzip of kiwisdr.min.css disabled due to browser unzip corruption!"
-	@echo "############################################"
-#	gzip --fast --keep --force web/kiwisdr.min.css
+    ifeq ($(NO_CSS_GZIP),true)
+	    @echo "############################################"
+	    @echo "# CAUTION 4/2024: gzip of kiwisdr.min.css disabled due to browser unzip corruption!"
+	    @echo "############################################"
+    else
+	    gzip --fast --keep --force web/kiwisdr.min.css
+    endif
 
 .PHONY: loptim_embed
 loptim_embed: $(FILE_OPTIM)
