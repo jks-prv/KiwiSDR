@@ -67,12 +67,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 		# fixme: test, but presumably the 1GB (min) of DRAM on RPi 3B & 4 would support this many
 		MAKE_ARGS := -j 4
 	else
-		ifeq ($(DEBIAN_VERSION),7)
-			# Debian 7 gcc runs out of memory compiling edata_always*.cpp in parallel
-			MAKE_ARGS :=
-		else
-			MAKE_ARGS :=
-		endif
+		MAKE_ARGS :=
 	endif
 else
 	# choices when building on development machine
@@ -324,13 +319,7 @@ else
 		CMD_DEPS += /usr/bin/cpufreq-info
 	endif
 
-	# -lrt required for clock_gettime() on Debian 7; see clock_gettime(2) man page
-	# jq command isn't available on Debian 7
-	ifeq ($(DEBIAN_VERSION),7)
-		LIBS += -lrt
-	else
-		CMD_DEPS += /usr/bin/jq
-	endif
+	CMD_DEPS += /usr/bin/jq
 endif
 
 
@@ -346,12 +335,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     KEYRING := $(DIR_CFG)/.keyring5.dep
     $(KEYRING):
 	    @echo "KEYRING.."
-    ifeq ($(DEBIAN_VERSION),7)
-	    @echo "switch to using Debian 7 (Wheezy) archive repo"
-	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
-	    -sed -e 's/ftp\.us/archive/' < /etc/apt/sources.list >/tmp/sources.list
-	    -mv /tmp/sources.list /etc/apt/sources.list
-    endif
     ifeq ($(DEBIAN_VERSION),8)
 	    @echo "switch to using Debian 8 (Jessie) archive repo"
 	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
@@ -487,10 +470,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	        -apt-get -y install cpufrequtils
     endif
 
-    ifneq ($(DEBIAN_VERSION),7)
-        /usr/bin/jq:
-	        -apt-get -y $(APT_GET_FORCE) install jq
-    endif
+    /usr/bin/jq:
+	    -apt-get -y $(APT_GET_FORCE) install jq
 
 endif
 
@@ -1646,7 +1627,6 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 
 	    install -D -o root -g root -m 0644 unix_env/gdbinit ~root/.gdbinit
 	    install -D -o root -g root -m 0644 unix_env/gdb_break ~root/.gdb_break
-	    install -D -o root -g root -m 0644 unix_env/gdb_valgrind ~root/.gdb_valgrind
 
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/v.sed $(DIR_CFG)/v.sed
 	    install -D -o root -g root -m 0644 $(DIR_CFG_SRC)/vd.sed $(DIR_CFG)/vd.sed
@@ -1879,9 +1859,6 @@ force_update:
 
 dump_eeprom:
 	@echo "KiwiSDR cape EEPROM:"
-    ifeq ($(DEBIAN_VERSION),7)
-	    -hexdump -C /sys/bus/i2c/devices/1-0054/eeprom
-    else
     ifeq ($(BBAI_64),true)
 	    -hexdump -C /sys/bus/i2c/devices/5-0054/eeprom
     else
@@ -1892,7 +1869,6 @@ dump_eeprom:
 	    -hexdump -C /sys/bus/i2c/devices/1-0050/eeprom
     else
 	    -hexdump -C /sys/bus/i2c/devices/2-0054/eeprom
-    endif
     endif
     endif
     endif

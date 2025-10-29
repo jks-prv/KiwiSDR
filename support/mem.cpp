@@ -72,10 +72,8 @@ void kiwi_ifree(const char *from, void *ptr)
 
 #ifdef MALLOC_DEBUG
 
-// bypass if using valgrind so there are no lingering references from here that defeat leak detection
-
 //#define MALLOC_DEBUG_PRF
-#if defined(MALLOC_DEBUG_PRF) && !defined(USE_VALGRIND)
+#if defined(MALLOC_DEBUG_PRF)
  #define kmprintf(x) real_printf x;
  //#define kmprintf(x) if (strstr(from, ".json")) real_printf x;
 #else
@@ -118,10 +116,6 @@ static int mt_enter(const char *from, void *ptr, int size)
 	int i;
 	mtrace_t *mt;
 	
-	#ifdef USE_VALGRIND
-	    return 0;
-	#endif
-	
 	for (i=0; i < NMT; i++) {
 		mt = &mtrace[i];
 		if (mt->ptr == ptr) {
@@ -155,10 +149,6 @@ static void mt_remove(const char *from, void *ptr)
 	int i, j;
 	mtrace_t *mt, *mt2;
 	size_t size = 0;
-	
-	#ifdef USE_VALGRIND
-	    return;
-	#endif
 	
 	for (i=0; i < mem.hiwat; i++) {
 		mt = &mtrace[i];

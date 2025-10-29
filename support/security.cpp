@@ -20,7 +20,6 @@ Boston, MA  02110-1301, USA.
 #include "types.h"
 #include "config.h"
 #include "kiwi.h"
-#include "valgrind.h"
 #include "mem.h"
 #include "misc.h"
 #include "str.h"

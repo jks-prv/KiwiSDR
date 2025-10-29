@@ -20,7 +20,6 @@ Boston, MA  02110-1301, USA.
 #include "types.h"
 #include "config.h"
 #include "kiwi.h"
-#include "valgrind.h"
 #include "rx.h"
 #include "misc.h"
 #include "timer.h"
@@ -371,13 +370,6 @@ static void snd_service()
                     evLatency(EC_EVENT, EV_DPUMP, 0, "DATAPUMP", evprintf("latency %.3f msec", last/1e3));
                     evLatency(EC_DUMP, EV_DPUMP, ev_dump, "DATAPUMP", evprintf("DUMP in %.3f sec", ev_dump/1000.0));
                 }
-            #endif
-            
-            #if 0
-                #ifndef USE_VALGRIND
-                    lprintf("DATAPUMP RESET #%d %5d %5d %5d %.3f msec\n",
-                        dpump.resets, diff, stored, current, (timer_us() - last_run_us)/1e3);
-                #endif
             #endif
             
             //real_printf("."); fflush(stdout);

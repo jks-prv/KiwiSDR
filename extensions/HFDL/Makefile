@@ -1,9 +1,5 @@
 HFDL_SKIP ?= false
 
-ifeq ($(DEBIAN_VERSION),7)
-    HFDL_SKIP = true
-endif
-
 THIS_HFDL = extensions/HFDL
 $(GEN_DIR)/ext_init.cpp: $(THIS_HFDL)/Makefile
 

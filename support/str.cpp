@@ -646,7 +646,7 @@ static void kiwi_fewer_encode(const char *src, char *dst, size_t dst_len) {
       dst[2] = hex[(* (const unsigned char *) src) & 0xf];
       dst[3] = '>';
       dst += 3;
-    } else break;	// KiwiSDR: for valgrind, don't leave uninitialized bytes in string
+    } else break;	// KiwiSDR: don't leave uninitialized bytes in string
   }
 
   *dst = '\0';

@@ -23,7 +23,6 @@
 #include "types.h"
 #include "kiwi.h"
 #include "config.h"
-#include "valgrind.h"
 #include "mem.h"
 #include "misc.h"
 #include "str.h"
@@ -62,30 +61,14 @@
 	pretty easily, we developed a new scheme for setting the initial sp & pc using the signal calls
 	sigaltstack() and sigaction() with the SA_ONSTACK flag. This works fine. 
 	
-	The interest in moving to Debian 8 was motivated by needing a more recent valgrind that didn't
-	have a bug interfacing with gdb. And also that SPIDEV DMA is fixed in the more recent Debian 8
-	kernel.
-
-	Both methods are included in the code. But note that the signal method doesn't work with valgrind
-	even on Debian 7 (reasons unknown). The jmp_buf method with de-mangling is currently the default
-	so that those few Kiwis still running Debian 7 will continue to work.
+	Both methods are included in the code. But the signal scheme is used by default.
 
 */
 
 #ifdef DEVSYS
 	//#define SETUP_TRAMP_USING_JMP_BUF
 #else
-    #ifdef CPU_AM3359
-        // 10/6/2019 this seems broken all of a sudden?!?
-	    //#define SETUP_TRAMP_USING_JMP_BUF
-    #endif
-    
-    #ifdef CPU_AM5729
-    #endif
-#endif
-
-#if defined(HOST) && defined(USE_VALGRIND)
-	#include <valgrind/valgrind.h>
+	//#define SETUP_TRAMP_USING_JMP_BUF
 #endif
 
 #include "sanitizer.h"
@@ -151,8 +134,6 @@ struct ctx_t {
     u64_t *stack, *stack_last;
     u4_t stack_size_u64;            // in STACK_SIZE_U64_T (not bytes)
     u4_t stack_size_bytes;
-    bool valgrind_stack_reg;
-	int valgrind_stack_id;
 #ifdef USE_ASAN
 	void *fake_stack;
 #endif
@@ -629,17 +610,6 @@ static void task_stack(int id)
 	c->stack_size_bytes = c->stack_size_u64 * sizeof(u64_t);
 	//printf("task_stack T%d %d (STACK_SIZE_U64_T) %d bytes %p-%p\n", id, c->stack_size_u64, c->stack_size_bytes, c->stack, c->stack_last);
 
-#if defined(HOST) && defined(USE_VALGRIND)
-	if (RUNNING_ON_VALGRIND) {
-		if (!c->valgrind_stack_reg) {
-			c->valgrind_stack_id = VALGRIND_STACK_REGISTER(c->stack, c->stack_last);
-			c->valgrind_stack_reg = true;
-		}
-
-		return;
-	}
-#endif
-
 #ifdef USE_ASAN
 	return;
 #endif
@@ -655,6 +625,8 @@ static void task_stack(int id)
 }
 
 #ifdef SETUP_TRAMP_USING_JMP_BUF
+
+#warning using SETUP_TRAMP_USING_JMP_BUF
 
 // Debian 8 includes the glibc version that does pointer mangling of internal data structures
 // like jmp_buf as a security measure. It's just a simple xor, so we can figure out the key easily.
@@ -838,13 +810,6 @@ void TaskCheckStacks(bool report)
 	TASK *t;
 	u64_t *s;
 	
-
-#if defined(HOST) && defined(USE_VALGRIND)
-	// as you'd expect, valgrind gets real upset about our stack checking scheme
-	if (RUNNING_ON_VALGRIND)
-		return;
-#endif
-
 #ifdef USE_ASAN
 	return;
 #endif
@@ -937,9 +902,6 @@ void TaskRemove(int id)
     	panic("TaskRemove");
     }
 
-#if defined(HOST) && defined(USE_VALGRIND)
-	//VALGRIND_STACK_DEREGISTER(t->ctx->valgrind_stack_id);
-#endif
     NextTask("TaskRemove");
 	if (t == cur_task && !t->valid) panic("shouldn't return");
 }

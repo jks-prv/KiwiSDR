@@ -122,9 +122,6 @@ retry:
 }
 
 eeprom_t eeprom;
-static bool debian7 = true;
-
-#define EEPROM_DEV_DEBIAN7  "/sys/bus/i2c/devices/1-0054/eeprom"
 
 #ifdef CPU_TDA4VM
  #define EEPROM_DEV     "/sys/bus/i2c/devices/5-0054/eeprom"
@@ -151,14 +148,8 @@ int eeprom_check(model_e *model, bool *old_model_fmt)
         init = true;
     }
 	
-	fn = EEPROM_DEV_DEBIAN7;
+	fn = EEPROM_DEV;
 	fp = fopen(fn, "r");
-	
-	if (fp == NULL && errno == ENOENT) {
-		fn = EEPROM_DEV;
-		debian7 = false;
-		fp = fopen(fn, "r");
-	}
 	
 	if (fp == NULL) {
 		mlprintf("EEPROM check: open %s %s\n", fn, strerror(errno));
@@ -333,7 +324,7 @@ void eeprom_write(eeprom_action_e action, int serno, int model, char *key)
 	ctrl_clr_set(CTRL_EEPROM_WP, 0);    // takes effect about 600 us before last write
 	kiwi_msleep(1);
 
-	fn = debian7? EEPROM_DEV_DEBIAN7 : EEPROM_DEV;
+	fn = EEPROM_DEV;
 
 	if ((fp = fopen(fn, "r+")) == NULL) {
 		mlprintf("EEPROM write: open %s %s\n", fn, strerror(errno));
