@@ -448,7 +448,8 @@ static void misc_NET(void *param)
 	lprintf("PROXY: %s dom_sel_menu=%d %s\n", proxy? "YES":"NO", net.dom_sel, proxy_server);
 	
 	if (proxy) {
-	    if (!kiwi_file_exists(DIR_CFG "/frpc.ini")) {
+	    // Always setup at startup in case cfg has become out-of-sync with frpc.ini
+	    //if (!kiwi_file_exists(DIR_CFG "/frpc.ini")) {
             bool rev_auto = admcfg_true("rev_auto");
             const char *user, *host;
             if (rev_auto) {
@@ -464,7 +465,7 @@ static void misc_NET(void *param)
 
             proxy_frpc_setup(proxy_server, user, host, net.port_ext);
             admcfg_string_free(user); admcfg_string_free(host);
-	    }
+	    //}
 	    
 		lprintf("PROXY: starting frpc\n");
 		rev_enable_start = true;
@@ -521,7 +522,7 @@ static void proxy_task(void *param)
     // The char-oriented /dev/stderr must be used instead of the line-oriented /dev/stdout to
     // guarantee the output is seen.
     //asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr --log-level=debug -c " DIR_CFG "/frpc.ini 2>&1");
-    asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr -c " DIR_CFG "/frpc.ini 2>&1");
+    asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr -c " DIR_CFG "/frpc.ini 2>&1 | tee -a /var/log/frpc.log");
     
     // Wait for wakeup on server restart or when admin makes proxy cfg changes.
     // Never stops after that (until next server restart with proxy disabled).
@@ -532,9 +533,10 @@ static void proxy_task(void *param)
         if (net.dom_sel != DOM_SEL_REV)
             TaskSleepReason("wait enable");
 
-        printf("proxy_task WAKEUP\n");
+        //printf("proxy_task WAKEUP\n");
         rv = non_blocking_cmd_func_foreach("kiwi.proxy", cmd_p, _frpc_func, 0, 1000);
-        //printf("proxy_task EXIT rv=%d\n", rv);
+        lprintf("PROXY: proxy_task EXIT rv=%d see /var/log/frpc.log for possible error messages\n", rv);
+        TaskSleepReasonSec("restart", 20);
     };
 }
 
