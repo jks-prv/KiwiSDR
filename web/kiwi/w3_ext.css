@@ -282,6 +282,10 @@ input[type=range]::-moz-range-thumb {
     background-color: rgb(240, 240, 240);
 }
 
+.w3-menu-item-selected {
+    background-color: lawnGreen;
+}
+
 .w3-menu-item-hover:hover {
     background-color: rgb(79, 157, 251);
     color: white;
