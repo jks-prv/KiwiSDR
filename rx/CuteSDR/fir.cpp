@@ -94,7 +94,7 @@ const TYPEREAL* Hptr;
 //	Process InLength InBuf[] samples and place in OutBuf[]
 //  Note the Coefficient array is twice the length and has a duplicated set
 // in order to eliminate testing for buffer wrap in the inner loop
-//  ex: if 3 tap FIR with coefficients{21,-43,15} is mae into a array of 6 entries
+//  ex: if 3 tap FIR with coefficients{21,-43,15} is made into an array of 6 entries
 //   {21, -43, 15, 21, -43, 15 }
 //COMPLEX version
 /////////////////////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ TYPEREAL* HQptr;
 //	Process InLength InBuf[] samples and place in OutBuf[]
 //  Note the Coefficient array is twice the length and has a duplicated set
 // in order to eliminate testing for buffer wrap in the inner loop
-//  ex: if 3 tap FIR with coefficients{21,-43,15} is mae into a array of 6 entries
+//  ex: if 3 tap FIR with coefficients{21,-43,15} is made into an array of 6 entries
 //   {21, -43, 15, 21, -43, 15 }
 //REAL in COMPLEX out version (for Hilbert filter pair)
 /////////////////////////////////////////////////////////////////////////////////
@@ -356,7 +356,7 @@ int CFir::InitLPFilter(int NumTaps, TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpa
             u4_t coef2 = (u4_t) (s4_t) roundf((m_Coef[n] * 256.0f) * 512.0f);
             #define CFIR_18b 0x3ffff
             u4_t m = CFIR_18b;
-            real_printf("CFir_taps %02d: %.6g %d 0x%05x 0x%05x\n", n, m_Coef[n], coef1, coef1&m, coef2&m);
+            real_printf("CFir_taps %02d: %9.6f %3d 0x%05x 0x%05x\n", n, m_Coef[n], coef1, coef1&m, coef2&m);
         }
     }
     

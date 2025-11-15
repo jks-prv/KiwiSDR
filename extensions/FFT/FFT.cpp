@@ -44,8 +44,6 @@ typedef struct {
 	float fft_scale, spectrum_scale;
 	u4_t last_ms;
 	
-	TYPECPX iswap[INTEG_WIDTH], isamps[INTEG_WIDTH];
-	
 	struct {
 		u1_t bin;
 		u1_t fft[INTEG_WIDTH];
