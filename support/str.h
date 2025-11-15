@@ -82,9 +82,10 @@ char *kiwi_str_encode_static(char *src, int flags DEF_0);
 
 typedef struct {
     char *str;
+    int num;
     char delim;
 } str_split_t;
-enum { KSPLIT_NO_SKIP_EMPTY_FIELDS = 0x1, KSPLIT_HANDLE_EMBEDDED_DELIMITERS = 0x2 };
+enum { KSPLIT_NO_SKIP_EMPTY_FIELDS = 0x1, KSPLIT_HANDLE_EMBEDDED_DELIMITERS = 0x2, KSPLIT_PARSE_NUMERIC = 0x4 };
 int kiwi_split(char *ocp, char **mbuf, const char *delims, str_split_t argv[], int nargs, int flags DEF_0);
 
 enum { KCLEAN_DELETE = 1, KCLEAN_REPL_SPACE = 2 };
