@@ -20,6 +20,7 @@
 
 #include "gps.h"
 #include "ephemeris.h"
+#include "printf.h"
 
 #include <stdio.h>
 #include <math.h>

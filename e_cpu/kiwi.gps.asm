@@ -40,8 +40,9 @@
 				 u16	ch_CG_GAIN		2						; KI, KP (stored as KP-KI)
 				 u16	ch_LO_GAIN		2						; KI, KP (stored as KP-KI)
 				 u16	ch_unlocked		1
-				 u16    ch_E1B_mode     1
+				 u16    ch_sat_mode     1
 				 u16    ch_LO_polarity  1
+				 u16    ch_even_odd     1
 				ENDS
 
 GPS_channels:	REPEAT	GPS_MAX_CHANS
@@ -277,11 +278,13 @@ g_continue:
 
                 // C/A or E1B?
                 r                           ; Inav pe-pl:H L this
-                addi    ch_E1B_mode         ; Inav pe-pl:H L &ch_E1B_mode
-                fetch16                     ; Inav pe-pl:H L e1b_mode
+                addi    ch_sat_mode         ; Inav pe-pl:H L &ch_sat_mode
+                fetch16                     ; Inav pe-pl:H L ch_sat_mode
+                push    E1B_MODE            ; Inav pe-pl:H L ch_sat_mode E1B_MODE
+                and                         ; Inav pe-pl:H L E1B_MODE?
                 brNZ    E1B_CG_loop         ; Inav pe-pl:H L
 
-                // C/A BPSK
+                // C/A and SBAS BPSK
 				// close the CG loop based on error term pe-pl
                 br      close_CG_loop       ; Inav pe-pl:H L
 
@@ -316,9 +319,15 @@ close_CG_loop:                              ; Inav errH L
                 
                 r                           ; Inav this
                 dup                         ; Inav this this
-                addi    ch_E1B_mode         ; Inav this &ch_E1B_mode
-                fetch16                     ; Inav this e1b_mode
-                brNZ    NavSave             ; Inav this                     // E1B nav case
+                addi    ch_sat_mode         ; Inav this &ch_sat_mode
+                fetch16                     ; Inav this ch_sat_mode
+                dup                         ; Inav this ch_sat_mode ch_sat_mode
+                push    E1B_MODE            ; Inav this ch_sat_mode ch_sat_mode E1B_MODE
+                and                         ; Inav this ch_sat_mode E1B_MODE?
+                brNZ    E1BSave             ; Inav this ch_sat_mode         // E1B nav case
+                push    SBAS_MODE           ; Inav this ch_sat_mode SBAS_MODE
+                and                         ; Inav this SBAS_MODE?
+                brNZ    SBASave             ; Inav this                     // SBAS nav case
                 // fall through ...                                         // L1 C/A nav case
 
                 //
@@ -399,6 +408,37 @@ NavSame:        // if ch_NAV_MS == 19 then goto NavSave
                 drop						; Inav
                 drop.r						;
 
+SBASave:                                    ; Inav this
+                addi	ch_even_odd			; Inav &even_odd
+                xor16						; Inav even_odd^1
+                brZ     SBASave2            ; Inav 
+                r_from						; Inav this(&ms)        NB: pops final this from r stack
+                drop                        ; Inav
+                drop.r                      ;
+
+SBASave2:                                   ; Inav
+                // ch_NAV_MS = 0
+				push	0                   ; Inav 0
+				r						    ; Inav 0 &ms(this)
+                store16                     ; Inav &ms(this)
+                
+				// ch_NAV_BITS = (ch_NAV_BITS + 1) & (MAX_NAV_BITS - 1)
+                addi	ch_NAV_BITS			; Inav &cnt
+                fetch16						; Inav cnt
+                dup							; Inav cnt cnt
+                addi	1					; Inav cnt cnt+1
+                push	MAX_NAV_BITS - 1
+                and							; Inav cnt wrapped
+                r							; Inav cnt wrapped this
+                addi	ch_NAV_BITS			; Inav cnt wrapped &cnt
+                store16                     ; ; Inav cnt &cnt
+                drop						; Inav cnt
+                br      NavShift            ; Inav cnt
+
+E1BSave:                                    ; Inav &ms ch_sat_mode
+                pop                         ; Inav &ms
+                // fall through ...
+
 NavSave:                                    ; Inav &ms
                 // ch_NAV_MS = 0
 				push	0                   ; Inav &ms 0
@@ -416,9 +456,11 @@ NavSave:                                    ; Inav &ms
                 and							; Inav cnt wrapped
                 r							; Inav cnt wrapped this
                 addi	ch_NAV_BITS			; Inav cnt wrapped &cnt
-                store16
+                store16                     ; Inav cnt &cnt
                 drop						; Inav cnt
+                // fall through ...
 
+NavShift:                                   ; Inav cnt
 				// ch_NAV_BUF[] <<= |= Inav
 				REPEAT	4
 				 shr						; Inav cnt/16
@@ -556,11 +598,9 @@ CmdSetSat:      rdReg	HOST_RX             ; chan#
                 rdReg	HOST_RX             ; this sat#
                 dup                         ; this sat# sat#
                 wrReg   SET_SAT             ; this sat#
-                push    E1B_MODE            ; this sat# E1B_MODE
-                and                         ; this e1b_mode
-                swap                        ; eb1_mode this
-                addi    ch_E1B_mode         ; e1b_mode &ch_E1B_mode
-                store16                     ; &ch_E1B_mode
+                swap                        ; sat# this
+                addi    ch_sat_mode         ; sat# &ch_sat_mode
+                store16                     ; &ch_sat_mode
                 pop.r                       ;
 
 CmdSetE1Bcode:

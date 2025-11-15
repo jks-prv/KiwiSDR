@@ -1257,11 +1257,16 @@ void c2s_admin(void *param)
                     NextTask("gps_update3");
                 }
     
-                sb = gps_update_data();    
+                sb = gps_update_data();
                 send_msg_encoded(conn, "MSG", "gps_update_cb", "%s", kstr_sp(sb));
                 //real_printf("%s\n\n", kstr_sp(sb));
                 kstr_free(sb);
                 NextTask("gps_update5");
+                continue;
+            }
+
+            if (strncmp(cmd, "SET GPS_SBAS=", 13) == 0) {
+                gps_sbas_select(&cmd[13]);
                 continue;
             }
 #endif

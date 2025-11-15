@@ -52,6 +52,7 @@ void gps_main(int argc, char *argv[])
     // due to FPGA space limitations
     spi_set(CmdSetChans, gps_chans-1);      // NB: -1 because of how to_loop[2] insn works
 	SearchInit();
+	ChanInit();
 
     for(int i=0; i<gps_chans; i++) {
     	char *tname;

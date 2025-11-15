@@ -716,12 +716,21 @@ void update_vars_from_config(bool called_at_init)
 
         gps.acq_Navstar = admcfg_default_bool("acq_Navstar", true, &update_admcfg);
         if (!gps.acq_Navstar) ChanRemove(Navstar);
+        gps.acq_SBAS = admcfg_default_bool("acq_SBAS", true, &update_admcfg);
+        if (!gps.acq_SBAS) ChanRemove(SBAS);
         gps.acq_QZSS = admcfg_default_bool("acq_QZSS", true, &update_admcfg);
         if (!gps.acq_QZSS) ChanRemove(QZSS);
         gps.QZSS_prio = admcfg_default_bool("QZSS_prio", false, &update_admcfg);
         gps.acq_Galileo = admcfg_default_bool("acq_Galileo", true, &update_admcfg);
         if (!gps.acq_Galileo) ChanRemove(E1B);
-        //real_printf("Navstar=%d QZSS=%d Galileo=%d\n", gps.acq_Navstar, gps.acq_QZSS, gps.acq_Galileo);
+        //real_printf("Navstar=%d SBAS=%d QZSS=%d Galileo=%d\n", gps.acq_Navstar, gps.acq_SBAS, gps.acq_QZSS, gps.acq_Galileo);
+        
+        admcfg_default_string("gps_SBAS", "0", &update_admcfg);
+        if (called_at_init) {
+            const char *sbas = admcfg_string("gps_SBAS", NULL, CFG_REQUIRED);
+            gps_sbas_select((char *) sbas);
+            admcfg_string_free(sbas);
+        }
 
         // force plot_E1B true because there is no longer an option switch in the admin interface (to make room for new ones)
         bool plot_E1B = admcfg_default_bool("plot_E1B", true, &update_admcfg);

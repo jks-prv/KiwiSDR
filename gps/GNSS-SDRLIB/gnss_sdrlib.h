@@ -101,7 +101,7 @@ using namespace gnsssdrgui;
 #include "fftw3.h"
 #include "rtklib.h"
 #ifndef KIWI
-#include "libusb-1.0/libusb.h"
+//#include "libusb-1.0/libusb.h"
 #endif
 #ifdef STEREO
 #include "stereo.h"
@@ -551,6 +551,7 @@ typedef struct {
     // KiwiSDR
     int sat;
     int tow_updated;
+    short sbas_seq;
 } sdrnav_t;
 
 /* sdr channel struct */
@@ -803,14 +804,17 @@ extern int paritycheck(sdrnav_t *nav);
 extern int findpreamble(sdrnav_t *nav);
 extern int decodenav(sdrnav_t *nav);
 extern void check_hamming(int *hamming, int n, int parity, int m);
+extern void sdrnav_init();
 
 /* sdrnav_gps/gal/glo.c/sbs.c ------------------------------------------------*/
 extern int decode_l1ca(sdrnav_t *nav);
 extern int E1B_subframe(sdrnav_t *nav, int *error);
 extern int decode_g1(sdrnav_t *nav);
 extern int decode_b1i(sdrnav_t *nav);
-extern int decode_l1sbas(sdrnav_t *nav);
+extern int decode_l1sbas(sdrnav_t *nav, int *error, int *status);
 extern int paritycheck_l1ca(int *bits);
+extern int SBAS_subframe(sdrnav_t *nav, uint64_t buffloc, uint64_t cnt, int *error, int *status);
+extern void SBAS_init();
 
 /* sdrout.c ------------------------------------------------------------------*/
 extern void createrinexopt(rnxopt_t *opt);

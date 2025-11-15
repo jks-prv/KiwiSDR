@@ -5,83 +5,6 @@
 *-----------------------------------------------------------------------------*/
 #include "gnss_sdrlib.h"
 
-/* sdr navigation data function ------------------------------------------------
-* decide navigation bit and decode navigation data
-* args   : sdrch_t *sdr     I/O sdr channel struct
-*          uint64_t buffloc I   buffer location
-*          uint64_t cnt     I   counter of sdr channel thread
-* return : none
-*-----------------------------------------------------------------------------*/
-extern void sdrnavigation(sdrch_t *sdr, uint64_t buffloc, uint64_t cnt)
-{
-    int sfn;
-
-    sdr->nav.biti=cnt%sdr->nav.rate; /* current bit location for bit sync */
-    sdr->nav.ocodei=(sdr->nav.biti-sdr->nav.synci-1); /* overlay code index */
-    if (sdr->nav.ocodei<0) sdr->nav.ocodei+=sdr->nav.rate;
-
-    /* navigation bit synchronization */
-    /* if synchronization does not need (NH20 case) */
-    if (sdr->nav.rate==1&&cnt>2000/(sdr->ctime*1000)) {
-        sdr->nav.synci=0;
-        sdr->nav.flagsync=ON;
-    }
-    /* check bit synchronization */
-    if (!sdr->nav.flagsync&&cnt>2000/(sdr->ctime*1000))
-        sdr->nav.flagsync=checksync(sdr->trk.II[0],sdr->trk.oldI[0],&sdr->nav);
-    
-    if (sdr->nav.flagsync) {
-        /* navigation bit determination */
-        if (checkbit(sdr->trk.II[0],sdr->trk.loopms,&sdr->nav)==OFF) {
-            //SDRPRINTF("%s nav sync error!!\n",sdr->satstr);
-        }
-
-        /* check navigation frame synchronization */
-        if (sdr->nav.swsync) {
-            /* FEC (foward error correction) decoding */
-            if (!sdr->nav.flagtow) predecodefec(&sdr->nav);
-
-            /* frame synchronization (preamble search) */
-            if (!sdr->nav.flagtow) sdr->nav.flagsyncf=findpreamble(&sdr->nav);
-
-            /* preamble is found */
-            if (sdr->nav.flagsyncf&&!sdr->nav.flagtow) {
-                /* set reference sample data */
-                sdr->nav.firstsf=buffloc;
-                sdr->nav.firstsfcnt=cnt;
-                SDRPRINTF("*** find preamble! %s %d %d ***\n",
-                    sdr->satstr,(int)cnt,sdr->nav.polarity);
-                sdr->nav.flagtow=ON;
-            }
-        }
-        /* decoding navigation data */
-        if (sdr->nav.flagtow&&sdr->nav.swsync) {
-            /* if frame bits are stored */
-            if ((int)(cnt-sdr->nav.firstsfcnt)%sdr->nav.update==0) {
-                predecodefec(&sdr->nav); /* FEC decoding */
-                sfn=decodenav(&sdr->nav); /* navigation message decoding */
-                
-                SDRPRINTF("%s ID=%d tow:%.1f week=%d cnt=%d\n",
-                    sdr->satstr,sfn,sdr->nav.sdreph.tow_gpst,
-                    sdr->nav.sdreph.week_gpst,(int)cnt);
-
-                /* set reference tow data */
-                if (sdr->nav.sdreph.tow_gpst==0) {
-                    /* reset if tow does not decoded */
-                    sdr->nav.flagsyncf=OFF;
-                    sdr->nav.flagtow=OFF;
-                } else if (cnt-sdr->nav.firstsfcnt==0) {
-                    sdr->nav.flagdec=ON;
-                    sdr->nav.sdreph.eph.sat=sdr->sat; /* satellite number */
-                    sdr->nav.firstsftow=sdr->nav.sdreph.tow_gpst; /* tow */
-
-                    if (sdr->nav.ctype==CTYPE_G1)
-                        sdr->prn=sdr->nav.sdreph.prn;
-                }
-            }
-        }
-    }
-}
 /* extract unsigned/signed bits ------------------------------------------------
 * extract unsigned/signed bits from byte data (two components case)
 * args   : uint8_t *buff    I   byte data
@@ -188,100 +111,8 @@ extern void interleave(const int *in, int row, int col, int *out)
         }
     }
 }
-/* navigation bit synchronization ----------------------------------------------
-* check synchronization of navigation bit
-* args   : double IP        I   correlation output (IP data)
-*          double oldIP     I   previous correlation output
-*          sdrnav_t *nav    I/O navigation struct
-* return : int                  1:synchronization 0: not synchronization
-*-----------------------------------------------------------------------------*/
-extern int checksync(double IP, double IPold, sdrnav_t *nav)
-{
-    int i,corr=0,maxi;
-    
-    /* BeiDou MEO/IGSO satellite (secondary code is NH20) */
-    if (nav->ctype==CTYPE_B1I&&nav->sdreph.prn>5) {
-        shiftdata(&nav->bitsync[0],&nav->bitsync[1],sizeof(int),nav->rate-1);
-        nav->bitsync[nav->rate-1]=(IP<0?-1:1);
-        
-        /* correlation between NH20 */
-        for (i=0;i<nav->rate;i++)
-            corr+=nav->ocode[i]*nav->bitsync[i];
-        
-        /* if synchronization success */
-        if (abs(corr)==nav->rate) {
-            nav->synci=nav->biti; /* synchronization bit index */
-            return 1;
-        }
-    /* other satellite */
-    } else {
-        if (IPold*IP<0) {
-            nav->bitsync[nav->biti]+=1; /* voting bit position */
-            /* check vote count */
-            maxi=maxvi(nav->bitsync,nav->rate,-1,-1,&nav->synci);
-            
-            /* if synchronization success */
-            if (maxi>NAVSYNCTH) {
-                /* synchronization bit index */
-                nav->synci--; /* minus 1 index*/
-                if (nav->synci<0) nav->synci=nav->rate-1;
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-/* navigation data bit decision ------------------------------------------------
-* navigation data bit is determined using accumulated IP data
-* args   : double IP        I   correlation output (IP data)
-*          int    loopms    I   interval of loop filter (ms) 
-*          sdrnav_t *nav    I/O navigation struct
-* return : int                  synchronization status 1:sync 0: not sync
-*-----------------------------------------------------------------------------*/
-extern int checkbit(double IP, int loopms, sdrnav_t *nav)
-{
-    int diffi=nav->biti-nav->synci,syncflag=ON,polarity=1;
-
-    nav->swreset=OFF;
-    nav->swsync=OFF;
-
-    /* if synchronization is started */
-    if (diffi==1||diffi==-nav->rate+1) {
-        nav->bitIP=IP; /* reset */
-        nav->swreset=ON;
-        nav->cnt=1;
-    } 
-    /* after synchronization */
-    else {
-        nav->bitIP+=IP; /* cumsum */
-        if (nav->bitIP*IP<0) syncflag=OFF;
-    }
-
-    /* genetaing loop filter timing */
-    if (nav->cnt%loopms==0) nav->swloop=ON;
-    else nav->swloop=OFF;
-
-    /* if synchronization is finished */
-    if (diffi==0) {
-        if (nav->flagpol) {
-            polarity=-1;
-        } else {
-            polarity=1;
-        }
-        nav->bit=(nav->bitIP<0)?-polarity:polarity;
-
-        /* set bit*/
-        shiftdata(&nav->fbits[0],&nav->fbits[1],sizeof(int),
-            nav->flen+nav->addflen-1); /* shift to left */
-        nav->fbits[nav->flen+nav->addflen-1]=nav->bit; /* add last */
-        nav->swsync=ON;
-    }
-    nav->cnt++;
-
-    return syncflag;
-}
-/* decode foward error correction ----------------------------------------------
-* pre-decode foward error correction (before preamble detection)
+/* decode forward error correction ----------------------------------------------
+* pre-decode forward error correction (before preamble detection)
 * args   : sdrnav_t *nav    I/O navigation struct
 * return : none
 *-----------------------------------------------------------------------------*/
@@ -292,21 +123,13 @@ extern void predecodefec(sdrnav_t *nav)
     unsigned char dec[94];
     int dec2[NAVFLEN_SBAS/2];
 
-    /* GPS/QZS L1CA / GLONASS G1 / Galileo E1B / BeiDou B1I */
-    if (nav->ctype==CTYPE_L1CA ||
-        nav->ctype==CTYPE_G1   ||
-        nav->ctype==CTYPE_B1I  ||
-        nav->ctype==CTYPE_E1B) {
-        /* FEC is not used before preamble detection */
-        memcpy(nav->fbitsdec,nav->fbits,sizeof(int)*(nav->flen+nav->addflen));
-    }
     /* SBAS L1 / QZS L1SAIF */
     if (nav->ctype==CTYPE_L1SAIF||
         nav->ctype==CTYPE_L1SBAS) {
         /* 1/2 convolutional code */
         init_viterbi27_port(nav->fec,0);
-        for (i=0;i<NAVFLEN_SBAS+NAVADDFLEN_SBAS;i++)
-            enc[i]=(nav->fbits[i]==1)? 0:255;
+        for (i=0; i < NAVFLEN_SBAS + NAVADDFLEN_SBAS; i++)
+            enc[i] = (nav->fbits[i] == 1)? 0:255;
         update_viterbi27_blk_port(nav->fec,enc,(nav->flen+nav->addflen)/2);
         chainback_viterbi27_port(nav->fec,dec,nav->flen/2,0);
         for (i=0;i<94;i++) {
@@ -334,24 +157,6 @@ extern int paritycheck(sdrnav_t *nav)
     for (i=0;i<nav->flen+nav->addflen;i++) 
         bits[i]=nav->polarity*nav->fbitsdec[i];
 
-    /* GPS/QZS L1CA parity check */
-#ifndef KIWI
-    if (nav->ctype==CTYPE_L1CA) {
-        /* chacking all words */
-        for (i=0;i<10;i++) {
-            /* bit inversion */
-            if (bits[i*30+1]==-1) {
-                for (j=2;j<26;j++) 
-                    bits[i*30+j]*=-1;
-            }
-            stat+=paritycheck_l1ca(&bits[i*30]);
-        }
-        /* all parities are correct */
-        if (stat==10) {
-            return 1;
-        }
-    }
-#endif
     /* SBAS L1 / QZS SAIF parity check */
     if (nav->ctype==CTYPE_L1SAIF||nav->ctype==CTYPE_L1SBAS) {
         bits2byte(&bits[0],226,29,1,bin);
@@ -362,12 +167,6 @@ extern int paritycheck(sdrnav_t *nav)
         if (crc==getbitu(pbin,0,24)) {
             return 1;
         }
-    }
-    /* Galileo E1B / GLONASS G1 */
-    if (nav->ctype==CTYPE_E1B ||
-        nav->ctype==CTYPE_B1I ||
-        nav->ctype==CTYPE_G1 ) {
-        return 1;
     }
 
     return 0;
@@ -381,11 +180,6 @@ extern int findpreamble(sdrnav_t *nav)
 {
     int i,corr=0;
 
-    /* GPS/QZS L1CA / BeiDou B1I*/
-    if (nav->ctype==CTYPE_L1CA || nav->ctype==CTYPE_B1I) {
-        for (i=0;i<nav->prelen;i++)
-            corr+=(nav->fbitsdec[nav->addflen+i]*nav->prebits[i]);
-    }
     /* L1-SBAS/SAIF */
     /* check 2 preambles */
     if (nav->ctype==CTYPE_L1SAIF||nav->ctype==CTYPE_L1SBAS) {
@@ -394,21 +188,7 @@ extern int findpreamble(sdrnav_t *nav)
             corr+=(nav->fbitsdec[i+250]*nav->prebits[ 8+i]);
         }
     }
-    /*  GLONASS G1 */
-    /* time mark is last in word */
-    if (nav->ctype==CTYPE_G1) {
-        for (i=0;i<nav->prelen;i++)
-            corr+=(nav->fbitsdec[nav->flen-nav->prelen+i]*nav->prebits[i]);
-    }
-    /* Galileo E1B */
-    /* check preambles in two words */
-    if (nav->ctype==CTYPE_E1B) {
-        for (i=0;i<nav->prelen;i++)
-            corr+=(nav->fbitsdec[i]*nav->prebits[i]);
-        for (i=0;i<nav->prelen;i++)
-            corr+=(nav->fbitsdec[i+250]*nav->prebits[i]);
-        corr=(int)(corr/2);
-    }
+
     /* check preamble match */
     if (abs(corr)==nav->prelen) { /* preamble matched */
         nav->polarity=corr>0?1:-1; /* set bit polarity */
@@ -425,33 +205,8 @@ extern int findpreamble(sdrnav_t *nav)
 
     return 0;
 }
-/* decode navigation data ------------------------------------------------------
-* decode navigation frame
-* args   : sdrnav_t *nav    I/O navigation struct
-* return : int                  0:decode sucsess 0: decode error
-*-----------------------------------------------------------------------------*/
-extern int decodenav(sdrnav_t *nav)
+
+extern void sdrnav_init()
 {
-    switch (nav->ctype) {
-#ifndef KIWI
-        /* GPS/QZSS L1CA (LNAV) */
-        case CTYPE_L1CA:
-            return decode_l1ca(nav);
-        /* QZSS L1-SAIF/SBAS L1 */
-        case CTYPE_L1SAIF:
-        case CTYPE_L1SBAS:
-            return decode_l1sbas(nav);
-        /* GLONASS G1 */
-        case CTYPE_G1:
-            return decode_g1(nav);
-        /* BeiDou B1I */
-        case CTYPE_B1I:
-            return decode_b1i(nav);
-#endif
-        /* Galileo E1B (I/NAV) */
-        case CTYPE_E1B:
-            return E1B_subframe(nav, NULL);
-        default:
-            return -1;
-    }
+    SBAS_init();
 }

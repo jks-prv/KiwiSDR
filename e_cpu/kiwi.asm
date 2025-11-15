@@ -589,6 +589,17 @@ decr16:										; addr
 				store16						; data-1 addr
 				drop.r						; data-1
 
+// xor bit-0 a u16 memory location and keep updated value on stack
+xor16:										; addr
+				dup							; addr addr
+				fetch16						; addr data
+				push    1                   ; addr data 1
+				xor                         ; addr data^1
+				dup							; addr data^1 data^1
+				rot							; data^1 data^1 addr
+				store16						; data^1 addr
+				drop.r						; data^1
+
 clr16:                                      ; addr
                 push    0                   ; addr 0
                 swap                        ; 0 addr
