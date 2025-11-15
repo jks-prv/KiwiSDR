@@ -175,6 +175,8 @@ var kiwi = {
    fmem_mode_save: 0,
    fmem_arr: null,
    
+   gps_sbas_menu_shown: 0,
+   
    no_reopen_retry: false,
    wf_preview_mode: false,
    
@@ -2898,6 +2900,87 @@ function user_cb(obj)
 
 
 ////////////////////////////////
+// #dx labels
+////////////////////////////////
+
+function dx_freq_list_init()
+{
+   w3_menu('id-dx-freq-list-menu', 'dx_freq_list_menu_item_cb');
+}
+
+function dx_freq_list(label, extname)
+{
+   //console.log('MARKER search_ident='+ label.ident +' extname='+ extname);
+   kiwi.dx_freq_list_ident = kiwi_decodeURIComponent('dx-freq-list', label.ident);
+   kiwi.dx_cur_extname = extname;
+   kiwi.dx_cur_label = label;
+   wf_send('SET MARKER db='+ dx.db +' search_ident='+ label.ident);
+}
+
+function dx_freq_list_cb(list)
+{
+   var have_ext = isNonEmptyString(kiwi.dx_cur_extname);
+   list = list.split(',');
+   
+   // open ext immediately if label has only one freq instance
+   if (have_ext && list.length <= 1) {
+      dx_click({ type: 'open_ext', label: kiwi.dx_cur_label });
+      return;
+   }
+   
+   if (w3_isVisible('id-dx-freq-list-menu')) {
+      kiwi.dx_freq_list_menu_shown = 0;
+      return;
+   }
+   kiwi.dx_freq_list_menu_shown = 1;
+   
+   var x = owrx.last_pageX, y = owrx.last_pageY;
+   x += ((x - 128) >= 0)? -128 : 16;
+
+   if (have_ext) list.unshift('open ext');
+   list.unshift('<hr>');
+   list.unshift('!'+ kiwi.dx_freq_list_ident);     // NB: '!' means menu item disabled
+   kiwi.dx_freq_list = list;
+   
+   w3_menu_items('id-dx-freq-list-menu', list, Math.min(list.length, 10));
+   w3_menu_popup('id-dx-freq-list-menu',
+      function(evt, first) {     // close_func(), return true to close menu
+         //event_dump(evt, 'close_func');
+         // if 'm' key or click on freq-menu icon, take toggle state into account
+         var close_keyup = (evt.type == 'keyup' && (evt.key != 'm' || !kiwi.dx_freq_list_menu_shown));
+         var tgt_isMenu = w3_contains(evt.target, 'w3-menu');
+         var tgt_isMenuButton = w3_contains(evt.target, 'w3-menu-button');
+         var menu_shown = kiwi.dx_freq_list_menu_shown;
+         var click = ((evt.type == 'click' || ((evt.type == 'mousedown' || evt.type == 'touchstart') && !tgt_isMenuButton) || evt.type == 'touchend'));
+         var close_click = (click && !first && (!tgt_isMenu || !menu_shown));
+         var close = (close_keyup || close_click);
+         return close;
+      },
+      x, y);
+}
+
+function dx_freq_list_menu_item_cb(idx, x, cb_param, ev)
+{
+   idx = +idx;
+   //console.log('freq_memory_menu_item_cb idx='+ idx);
+   if (idx != -1) {
+      var item = kiwi.dx_freq_list[idx];
+      //console.log(item);
+      if (item == 'open ext') {
+         //console.log('OPEN EXT <'+ kiwi.dx_cur_extname +'>');
+         //console.log(kiwi.dx_cur_label);
+         //kiwi.dx_cur_el.click();     // NB: doesn't work in mobile Safari, so use below
+         dx_click({ type: 'open_ext', label: kiwi.dx_cur_label });
+      } else {
+         //console.log('freq_memory_menu_item_cb f_dial_kHz='+ item);
+         ext_tune(item, /* keep current passband */ null, ext_zoom.CUR);
+      }
+   }
+   return w3.CLOSE_MENU;
+}
+
+
+////////////////////////////////
 // misc
 ////////////////////////////////
 
@@ -3156,6 +3239,12 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 		      dx.db_short_s[dx.DB_STORED] = s;
 		   }
 		   break;
+
+		case "dx_freq_list":
+			var list = param[1];
+			//console.log('dx_freq_list: '+ list);
+			dx_freq_list_cb(list);
+			break;
 
 		case "client_public_ip":
 			client_public_ip = param[1].replace(/::ffff:/, '');    // remove IPv4-mapped IPv6 if any

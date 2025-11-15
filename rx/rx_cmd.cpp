@@ -887,8 +887,8 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                         // If freq offset was specified in URL apply it if conditions allow.
                         // Doesn't change configuration offset, just current software offset.
                         double foff = freq.offset_kHz;
-                        cprintf(conn, "foff: foff_set_in_URL=%d foff_in_URL=%.2f freq.offset_kHz=%.2f\n", conn->foff_set_in_URL, conn->foff_in_URL, foff);
                         if (conn->foff_set_in_URL && conn->foff_in_URL != foff) {
+                            cprintf(conn, "foff: foff_set_in_URL=%d foff_in_URL=%.2f freq.offset_kHz=%.2f\n", conn->foff_set_in_URL, conn->foff_in_URL, foff);
                             cprintf(conn, "foff: URL %.3lf current %.3lf\n", conn->foff_in_URL, foff);
                             if (!conn->isLocal) {
                                 cprintf(conn, "foff: not local conn\n");
@@ -1204,6 +1204,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
     // With 8 params to search for and return labels in the visible area defined by max/min freq.
     // With 5 params to search for the next label above or below the visible area when label stepping.
     // With 2 params giving the min/max index of the dx table to supply to the admin DX tab.
+    // With 2 params to search for a match of the ident and return a list of matching frequencies.
     // With params associated with dx list searching.
     // Returning counts of the number of types used.
     
@@ -1230,8 +1231,8 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             }
 
             // values for compatibility with client side
-            enum { DX_ADM_MKRS = 0, DX_ADM_SEARCH_FREQ = 1, DX_STEP = 2, DX_ADM_SEARCH_IDENT = 3, DX_MKRS = 4, DX_ADM_SEARCH_NOTES = 5 };
-            const char *func_s[] = { "DX_ADM_MKRS", "DX_ADM_SEARCH_FREQ", "DX_STEP", "DX_ADM_SEARCH_IDENT", "DX_MKRS", "DX_ADM_SEARCH_NOTES" };
+            enum { DX_ADM_MKRS = 0, DX_ADM_SEARCH_FREQ = 1, DX_STEP = 2, DX_ADM_SEARCH_IDENT = 3, DX_MKRS = 4, DX_ADM_SEARCH_NOTES = 5, DX_FREQ_LIST = 6 };
+            const char *func_s[] = { "DX_ADM_MKRS", "DX_ADM_SEARCH_FREQ", "DX_STEP", "DX_ADM_SEARCH_IDENT", "DX_MKRS", "DX_ADM_SEARCH_NOTES", "DX_FREQ_LIST" };
             int func;
 
             if (sscanf(cmd, "SET MARKER db=%d min=%lf max=%lf zoom=%d width=%d eibi_types_mask=0x%x filter_tod=%d anti_clutter=%d",
@@ -1242,6 +1243,9 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             if (sscanf(cmd, "SET MARKER db=%d dir=%d freq=%lf eibi_types_mask=0x%x filter_tod=%d",
                 &db, &dir, &min, &eibi_types_mask, &filter_tod) == 5) {
                 func = DX_STEP;
+            } else
+            if (sscanf(cmd, "SET MARKER db=%d search_ident=%256ms", &db, &ident) == 2) {
+                func = DX_FREQ_LIST;
             } else
             if (sscanf(cmd, "SET MARKER idx1=%d idx2=%d", &idx1, &idx2) == 2) {
                 func = DX_ADM_MKRS;
@@ -1259,12 +1263,12 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 func = DX_ADM_SEARCH_NOTES;
                 db = DB_STORED;
             } else {
-                clprintf(conn, "CMD_MARKER: unknown variant [%s]\n", cmd);
+                //clprintf(conn, "CMD_MARKER: unknown variant [%s]\n", cmd);
                 DX_DONE();
                 
                 #ifdef OPTION_DENY_APP_FINGERPRINT_CONN
                     if (!conn->auth_admin) {
-                        clprintf(conn, "API: non-Kiwi app fingerprint was denied connection\n");
+                        clprintf(conn, "API: non-Kiwi app fingerprint-4 was denied connection: %s\n", conn->remote_ip);
                         send_msg(conn, SM_NO_DEBUG, "MSG too_busy=%d", cfg_int("ext_api_nchans", NULL, CFG_REQUIRED));
                         conn->kick = true;
                     }
@@ -1383,6 +1387,29 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 }
                 dx_print_search(true, "DX_ADM_SEARCH_NOTES <%s> found #%d\n", notes, pos);
                 send_msg(conn, false, "MSG mkr_search_pos=2,%d", pos);
+                DX_DONE();
+                return true;
+            }
+            
+            if (func == DX_FREQ_LIST) {
+                dx_print_search(dp->notes, "DX_FREQ_LIST db=%d <%s>\n", db, ident);
+                sb = (char *) "";
+                bool comma = false;
+                dx_t *cur_list = dx_db->list;
+                int cur_len = dx_db->actual_len;
+                dx_t *dp = &cur_list[0];
+                for (i = 0; dp < &cur_list[cur_len]; i++, dp++) {
+                    //dx_print_search(true, "DX_FREQ_LIST %d: %.2f <%s> <%s>\n", i, dp->freq, dp->ident, ident);
+                    if (strcasecmp(dp->ident, ident) == 0) {    // compares URL encoded versions
+                        sb = kstr_asprintf(sb, "%s%.2f", comma? ",":"", dp->freq + ((double) dp->offset / 1000.0));
+                        comma = true;
+                        send++;
+                    }
+                }
+                dx_print_search(true, "DX_FREQ_LIST found #%d\n", send);
+                if (send > 0)
+                    send_msg(conn, false, "MSG dx_freq_list=%s", kstr_sp(sb));
+                kstr_free(sb);
                 DX_DONE();
                 return true;
             }
