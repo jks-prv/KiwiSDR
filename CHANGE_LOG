@@ -3,10 +3,47 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.823  November 16, 2025
+    DX label frequency list menus:
+        When click-holding on a DX label a menu will now appear if there are multiple labels that
+        have the same label text. The menu allows the frequencies of these multiple labels to be
+        selected directly.
+    
+        Example: Click-hold on the 10 MHz WWVH/WWV label and a menu with all the WWV frequencies
+        (2.5, 5, 10, 15, 20 MHz) appears. A menu entry "open ext" will be shown if a label has an
+        associated extension. If a label only has a single frequency (e.g. WWVB, DCF77) click-holding
+        will immediately open the extension (if any). Type 'h' with the cursor in the label area for
+        a complete description.
+
+    Updated to EiBi-B25 database. (thanks MeolsKopite)
+
+    Proxy service: The proxy service client (frpc) is now managed in its own process such that it
+    will better respond to timeout / restarts when the Kiwi restarts faster then the network router.
+    For example after a power failure.
+    
+    When the current frequency is exactly between adjacent or overlapping bands the frequency step
+    buttons now make more sense. Example: Current frequency is 7300 kHz when in ITU R2 (Americas)
+    mode where the 40m amateur band ends, and the 41m broadcast band begins, at 7300.
+    Previously the leftmost "-" step button (or 'alt-j' shortcut key) would step down -5 kHz into
+    the amateur band instead of -1 kHz as it should. (thanks Steffen)
+    
+    Admin GPS tab:
+        Checkbox "Acquire if Kiwi busy?" now defaults to checked (true) for a new Kiwi run for the
+        first time. This change will not disturb any change to the setting you may have made using
+        the admin interface. (thanks NU6F)
+        
+        Added SBAS satellites for development purposes. No SBAS corrections are currently done.
+    
+    TDoA: Changed timeout value so message "Timeout: excessive runtime" will appear instead of the
+    more obscure "Protocol timeout" when the TDoA algorithm runs too long.
+    
+    Added IP address to the "denied connection" log messages triggered by bots. (thanks F5LFE)
+
 v1.822  September 28, 2025
     Antenna switch:
         Use the "\+" escape sequence where you need a plus sign ('+') to appear in the curl fields.
-        Example "192.168.1.222?cmd=ant+1\+2+on" gives "192.168.1.222?cmd=ant 1+2 on" (thanks IW2NKE)
+        Example "192.168.1.222?cmd=ant+1\+2+on" gives "192.168.1.222?cmd=ant 1+2 on"
+        Note that '+' alone gives a single space as before. (thanks IW2NKE)
         
         Debugging mode added to ant-switch-frontend script. Preface any command with 'd' to enable.
         E.g. "d s" to query switch status with curl debugging ("--verbose") enabled. Also sets
