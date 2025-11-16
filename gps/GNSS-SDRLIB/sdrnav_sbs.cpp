@@ -124,11 +124,12 @@ extern int SBAS_subframe(sdrnav_t *nav, uint64_t buffloc, uint64_t cnt, int *err
         
     /* check navigation frame synchronization */
     if (nav->swsync) {
-        /* FEC (foward error correction) decoding */
-        if (!nav->flagtow) predecodefec(nav);
-
-        /* frame synchronization (preamble search) */
-        if (!nav->flagtow) nav->flagsyncf = findpreamble(nav);
+        if (!nav->flagtow) {
+            predecodefec(nav);      // FEC (foward error correction) decoding
+            NextTask("SBAS_subframe");
+            nav->flagsyncf = findpreamble(nav);     // frame synchronization (preamble search)
+            NextTask("SBAS_subframe");
+        }
 
         /* preamble is found */
         if (nav->flagsyncf && !nav->flagtow) {
@@ -146,6 +147,7 @@ extern int SBAS_subframe(sdrnav_t *nav, uint64_t buffloc, uint64_t cnt, int *err
         /* if frame bits are stored */
         if ((int)(cnt - nav->firstsfcnt) % nav->update == 0) {
             predecodefec(nav); /* FEC decoding */
+            NextTask("SBAS_subframe");
             mt = decode_l1sbas(nav, error, status); /* navigation message decoding */
             
             #define GPS_SBAS_LIST_IDS
