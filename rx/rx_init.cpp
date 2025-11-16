@@ -716,7 +716,7 @@ void update_vars_from_config(bool called_at_init)
 
         gps.acq_Navstar = admcfg_default_bool("acq_Navstar", true, &update_admcfg);
         if (!gps.acq_Navstar) ChanRemove(Navstar);
-        gps.acq_SBAS = admcfg_default_bool("acq_SBAS", true, &update_admcfg);
+        gps.acq_SBAS = admcfg_default_bool("acq_SBAS", false, &update_admcfg);
         if (!gps.acq_SBAS) ChanRemove(SBAS);
         gps.acq_QZSS = admcfg_default_bool("acq_QZSS", true, &update_admcfg);
         if (!gps.acq_QZSS) ChanRemove(QZSS);
