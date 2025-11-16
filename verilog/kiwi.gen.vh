@@ -158,7 +158,7 @@
 `define DEF_GPS_INTEG_BITS 1
 	localparam GPS_REPL_BITS = 18;    // DEFp 0x12
 `define DEF_GPS_REPL_BITS 1
-	localparam MAX_NAV_BITS = 128;    // DEFp 0x80
+	localparam MAX_NAV_BITS = 512;    // DEFp 0x200
 `define DEF_MAX_NAV_BITS 1
 	localparam GPS_RPT = 32;    // DEFp 0x20
 `define DEF_GPS_RPT 1
@@ -182,6 +182,8 @@
 `define DEF_E1B_CODE_XFERS 1
 	localparam E1B_CODE_LOOP = 2044;    // DEFp 0x7fc
 `define DEF_E1B_CODE_LOOP 1
+	localparam SBAS_MODE = 4096;    // DEFp 0x1000
+`define DEF_SBAS_MODE 1
 	localparam GET_CHAN_IQ = 0;    // DEFb: bit number for value: 0x1
 	localparam GET_SRQ = 1;    // DEFb: bit number for value: 0x2
 	localparam GET_SNAPSHOT = 2;    // DEFb: bit number for value: 0x4

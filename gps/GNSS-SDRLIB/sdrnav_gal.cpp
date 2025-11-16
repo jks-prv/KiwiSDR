@@ -471,7 +471,7 @@ extern int E1B_subframe(sdrnav_t *nav, int *error)
     if (!err && checkcrc_e1b(dec_e1b1,dec_e1b2) < 0) {
         //SDRPRINTF("error: E1B CRC mismatch\n");
         id = getbitu(dec_e1b1,2,6);
-        //printf("%s CRC error, word #%d\n", PRN(nav->sat), id);
+        //printf("%s E1B-CRC error, word #%d\n", PRN(nav->sat), id);
         err = GPS_ERR_CRC;
     }
     

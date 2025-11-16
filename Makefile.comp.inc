@@ -238,16 +238,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             # needed for iq_display.cpp et al
             CPP_FLAGS += -std=gnu++11
             APT_GET_FORCE = --force-yes
-        else ifeq ($(DEBIAN_VERSION),7)
-            # clang 3.0 available on Debian 7.9 doesn't work
-            CC = gcc
-            CPP = g++
-            CFLAGS += -DKIWI_DEBIAN_7
-            CFLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
-            VIS_OPT = -O3
-            # needed for iq_display.cpp et al (-std=gnu++11 isn't available on Debian 7.9)
-            CPP_FLAGS += -std=gnu++0x
-            APT_GET_FORCE = --force-yes
         else
             # Debian 12+
             CC = clang
@@ -260,9 +250,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
         endif
     endif
 
-    ifeq ($(DEBIAN_VERSION),7)
-        DEB := D7
-    else ifeq ($(DEBIAN_VERSION),8)
+    ifeq ($(DEBIAN_VERSION),8)
         DEB := D8
     else ifeq ($(DEBIAN_VERSION),9)
         DEB := D9
@@ -332,12 +320,7 @@ else ifeq ($(BBG_BBB),true)
     PLAT := BBG_BBB
     PLAT_BACKUP := beaglebone-black
     BINARY_INSTALL := true
-    FP_FLAGS += -mtune=cortex-a8 -mcpu=cortex-a8
-    ifeq ($(DEBIAN_VERSION),7)
-        FP_FLAGS += -mfpu=neon -mfloat-abi=hard
-    else
-        FP_FLAGS += -mfpu=neon-vfpv3 -mfloat-abi=hard
-    endif
+    FP_FLAGS += -mtune=cortex-a8 -mcpu=cortex-a8 -mfpu=neon-vfpv3 -mfloat-abi=hard
     ARCH_DIR = arm32
     LIB_ARCH = arm-linux-gnueabihf
 else

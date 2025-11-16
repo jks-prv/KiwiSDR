@@ -26,6 +26,7 @@
 #include "ephemeris.h"
 #include "fec.h"
 #include "gnss_sdrlib.h"
+#include "ansi.h"
 
 #include <inttypes.h>
 #include <stdlib.h>
@@ -37,7 +38,7 @@
 const int PWR_LEN = 8;
 
 struct UPLOAD { // Embedded CPU CHANNEL structure
-    uint16_t nav_ms;                // Milliseconds C/A: 0-19, E1B: 0
+    uint16_t nav_ms;                // Milliseconds C/A: 0-19, E1B: 0, SBAS: 0-1
     uint16_t nav_bits;              // Bit count
     uint16_t nav_glitch;            // Glitch count
     uint16_t nav_prev;              // Last data bit
@@ -48,8 +49,9 @@ struct UPLOAD { // Embedded CPU CHANNEL structure
     uint16_t ca_gain[2];            // Code loop ki, kp
     uint16_t lo_gain[2];            // Carrier loop ki, kp
     uint16_t ca_unlocked;
-    uint16_t E1B_mode;
+    uint16_t sat_mode;
     uint16_t LO_polarity;
+    uint16_t even_odd;
     //uint16_t pp[2], pe[2], pl[2];
 };
 
@@ -59,12 +61,13 @@ struct CHANNEL { // Locally-held channel data
     int pwr_pos;                    // Circular counter
     int gain_adj_lo, gain_adj_cg;   // AGC
     int ch, sat;                    // Association
-    int isE1B;
+    int isE1B, isSBAS;
     int ACF_mode;
     int inverted;
     int alert;                      // Subframe alert flag
     int probation;                  // Temporarily disables use if channel noisy
     int holding, rd_pos;            // NAV data bit counters
+    int tholding;
     u4_t id;
     int codegen_init;
     int subframe_bits, nsync, total_bits, bits_tow, expecting_preamble, drop_seq;
@@ -120,8 +123,8 @@ static double GetFreq(uint16_t *u) { // Convert NCO command to Hertz
 
 #define L1_PRELEN 8
 
-const char L1preambleUpright [] = {1,0,0,0,1,0,1,1};
-const char L1preambleInverse [] = {0,1,1,1,0,1,0,0};
+const char L1preambleUpright[8] = {1,0,0,0,1,0,1,1};
+const char L1preambleInverse[8] = {0,1,1,1,0,1,0,0};
 
 static int L1_parity(char *p, char *word, char D29, char D30) {
     char *d = word-1;
@@ -142,8 +145,11 @@ static int L1_parity(char *p, char *word, char D29, char D30) {
 #define E1B_TSYM_PP     (E1B_PRELEN + E1B_NSYM)
 #define E1B_TSYM_PW     (E1B_TSYM_PP * 2)
 
-const char E1BpreambleUpright [] = {0,1,0,1,1,0,0,0,0,0};
-const char E1BpreambleInverse [] = {1,0,1,0,0,1,1,1,1,1};
+const char E1BpreambleUpright[10] = {0,1,0,1,1,0,0,0,0,0};
+const char E1BpreambleInverse[10] = {1,0,1,0,0,1,1,1,1,1};
+
+const char SBASpreambleUpright[3][8] = {{0,1,0,1,0,0,1,1}, {1,0,0,1,1,0,1,0}, {1,1,0,0,0,1,1,0}};
+const char SBASpreambleInverse[3][8] = {{1,0,1,0,1,1,0,0}, {0,1,1,0,0,1,0,1}, {0,0,1,1,1,0,0,1}};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -192,7 +198,7 @@ void CHANNEL::SetGainAdjCG(int adj) {
     int e1b_gain_adj = gps_cg_gain? gps_cg_gain : E1B_CG_GAIN_ADJ;
     ca_ki += (isE1B? e1b_gain_adj : 0) + gain_adj_cg;
     ca_kp += (isE1B? e1b_gain_adj : 0) + gain_adj_cg;
-    //printf("ch%02d %s CmdSetGainCG gain=%d ki=%d kp=%d\n", ch+1, PRN(sat), gain_adj_cg, cg_ki, cg_kp);
+    //printf("ch%02d %s CmdSetGainCG gain=%d ki=%d kp=%d\n", ch+1, PRN(sat), gain_adj_cg, ca_ki, ca_kp);
     spi_set(CmdSetGainCG, ch, ca_ki + ((ca_kp-ca_ki)<<16));
 }
 
@@ -201,6 +207,7 @@ void CHANNEL::SetGainAdjCG(int adj) {
 void CHANNEL::Reset(int sat, int codegen_init) {
     this->sat = sat;
     isE1B = is_E1B(sat);
+    isSBAS = is_SBAS(sat);
     this->codegen_init = codegen_init;
     
     spi_set(CmdSetSat, ch, codegen_init);
@@ -241,6 +248,8 @@ void CHANNEL::Reset(int sat, int codegen_init) {
         //printf("**** downloaded E1B code table ch%02d %s\n", ch+1, PRN(sat));
     }
     
+    // SBAS? ...
+    
     uint32_t ca_rate = CPS/FS*powf(2,32);
     spi_set(CmdSetRateCG, ch, ca_rate);
 
@@ -274,9 +283,10 @@ void CHANNEL::Start( // called from search thread to initiate acquisition
 
     this->sat = sat;
     isE1B = is_E1B(sat);
+    isSBAS = is_SBAS(sat);
     nav.sat = sat;
     Ephemeris[sat].Init(sat);
-    subframe_bits = isE1B? E1B_TSYM_PW : 300;
+    subframe_bits = isE1B? E1B_TSYM_PW : (isSBAS? (NAVFLEN_SBAS + NAVADDFLEN_SBAS) : 300);
     ACF_mode = 0;
 
     // Estimate Doppler from FFT bin shift
@@ -375,29 +385,34 @@ void CHANNEL::Acquisition(bool delay) {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 void CHANNEL::Tracking() {
-    char buf[E1B_TSYM_PW + MAX_NAV_BITS - 1];
+    //#define MAXBUF (E1B_TSYM_PW + MAX_NAV_BITS - 1)
+    #define MAXBUF (NAVFLEN_SBAS + NAVADDFLEN_SBAS + MAX_NAV_BITS - 1)
+    char xbuf[MAXBUF];
 
-    const int POLLING_PS = 4;  // Poll 4 times per second
-    const int POLLING_US = 1000000 / POLLING_PS;
+    //jksx-sbas const int POLLING_PS = 4;  // Poll 4 times per second
+    int polling_ps = isSBAS? 4 : 4;
+    int POLLING_US = 1000000 / polling_ps;
     
-    assert(E1B_BPS/POLLING_PS < MAX_NAV_BITS/2);    // make sure there is enough buffering for poll rate
+    assert( E1B_BPS/polling_ps < MAX_NAV_BITS/2);   // make sure there is enough buffering for poll rate
+    assert(SBAS_BPS/polling_ps < MAX_NAV_BITS/2);   // make sure there is enough buffering for poll rate
 
-    const int TIMEOUT = 60 * POLLING_PS;   // Bail after 60 seconds on LOS
-    const int TIMEOUT_E1B = 90 * POLLING_PS;
+    int TIMEOUT = 60 * polling_ps;   // Bail after 60 seconds on LOS
+    int TIMEOUT_E1B = 90 * polling_ps;
 
-	//const int LOW_BITS_TIMEOUT = 60 * POLLING_PS;
-	const int LOW_BITS_TIMEOUT = 90 * POLLING_PS;
+	//int LOW_BITS_TIMEOUT = 60 * polling_ps;
+	int LOW_BITS_TIMEOUT = 90 * polling_ps;
 	const int LOW_BITS = 96;
 
-	const int LOW_RSSI_TIMEOUT = 30 * POLLING_PS;
-	const int LOW_RSSI_E1B_TIMEOUT = 15 * POLLING_PS;
+	int LOW_RSSI_TIMEOUT = 30 * polling_ps;
+	int LOW_RSSI_E1B_TIMEOUT = 15 * polling_ps;
     const float LOW_RSSI = 300*300;
 
-	const int KICK_PLL_RSSI_INTERVAL = 16 * POLLING_PS;
+	int KICK_PLL_RSSI_INTERVAL = 16 * polling_ps;
     const float KICK_PLL_RSSI = 500*500;
 
 	float sumpwr=0;
     holding=0;
+    tholding=0;
 
 	evGPS(EC_TRIG3, EV_GPS, ch, "GPS", "trig3 Tracking1");
 	static int firsttime[16];
@@ -419,6 +434,43 @@ void CHANNEL::Tracking() {
         spi_set(CmdSetPolarity, ch, 0);
     }
 
+    if (isSBAS) {
+        nav.ctype = nav.sdreph.ctype = CTYPE_L1SBAS;
+        nav.sbas_seq = 0;
+        nav.sdreph.prn = Sats[sat].prn;
+        nav.sdreph.eph.iodc = -1;
+
+        nav.rate = NAVRATE_SBAS;
+        nav.flen = NAVFLEN_SBAS;
+        nav.addflen = NAVADDFLEN_SBAS;
+        nav.prelen = NAVPRELEN_SBAS;
+        nav.sdreph.cntth = NAVEPHCNT_SBAS;
+        nav.update = (int)(nav.flen/3 * nav.rate);
+        int pre_sbs[24]= { 1,-1, 1,-1, 1, 1,-1,-1,
+                          -1, 1, 1,-1,-1, 1,-1, 1,
+                          -1,-1, 1, 1, 1,-1,-1, 1}; /* SBAS L1/QZS L1SAIF preamble */
+        memcpy(nav.prebits, pre_sbs, sizeof(int) * nav.prelen);
+
+        int polys[2] = { 0x4f, 0x6d };          // k=7; Galileo E1B
+        set_viterbi27_polynomial_port(polys);
+        nav.fec = create_viterbi27_port(NAVFLEN_SBAS/2);
+
+        /* overlay code (all 1) */
+        nav.ocode = (short *)calloc(nav.rate, sizeof(short));
+        for (int i = 0; i < nav.rate; i++) nav.ocode[i] = 1;
+
+        nav.bitsync =  (int *)  calloc(nav.rate, sizeof(int));
+        nav.fbits =    (char *) calloc(nav.flen + nav.addflen, sizeof(int));
+        nav.fbitsdec = (int *)  calloc(nav.flen + nav.addflen, sizeof(int));
+    }
+
+    //#define GPS_SHOW_BPS
+    #ifdef GPS_SHOW_BPS
+        #define T_INTERVAL 10
+        #define T_INTERVAL_MS (T_INTERVAL * 1000)
+        u4_t t_trig = timer_ms() + T_INTERVAL_MS;
+    #endif
+    
     for (int watchdog=0; watchdog < (isE1B? TIMEOUT_E1B:TIMEOUT) && !abort; watchdog++) {
     
 	    //evGPS(EC_EVENT, EV_GPS, ch, "GPS", evprintf("TaskSleepMsec(250) ch %d", ch+1));
@@ -429,7 +481,7 @@ void CHANNEL::Tracking() {
         // Process NAV data
         //for(int avail = RemoteBits(ul.nav_bits) & ~0xF; avail; avail-=16) {
         int avail = RemoteBits(ul.nav_bits) & ~0xF;
-        evGPS(EC_EVENT, EV_GPS, ch, "GPS", evprintf("Tracking ch %d avail %d holding %d W/D %d", ch+1, avail, holding, watchdog/POLLING_PS));
+        evGPS(EC_EVENT, EV_GPS, ch, "GPS", evprintf("Tracking ch %d avail %d holding %d W/D %d", ch+1, avail, holding, watchdog/polling_ps));
         evGPS(EC_TRIG3, EV_GPS, ch, "GPS", "trig3 Tracking2");
 
 		//if (!firsttime[ch] && avail >= (MAX_NAV_BITS - 16)) {
@@ -443,20 +495,59 @@ void CHANNEL::Tracking() {
             int word = ul.nav_buf[rd_pos/16];
             for (int i=0; i<16; i++) {
                 word <<= 1;
-                buf[holding++] = (word >> 16) & 1;
+                xbuf[holding++] = (word >> 16) & 1;
+                tholding++;
             }
             rd_pos += 16;
             rd_pos &= MAX_NAV_BITS-1;
 			bits_tow += 16;
         }
+        
+        #ifdef GPS_SHOW_BPS
+            if (ch == 0) {
+                if (timer_ms() >= t_trig) {
+                    printf("%s: %d bps\n", PRN(sat), tholding/T_INTERVAL);
+                    tholding = 0;
+                    t_trig += T_INTERVAL_MS;
+                }
+            }
+        #endif
 
         while (holding >= subframe_bits) {      // Enough for a subframe?
             int nbits, err;
             
-            if ((err = ParityCheck(buf, &nbits)) == 0) {
+if (isSBAS) {
+#if 0
+    int bad = 0;
+    for (int z=0; z<500; z+=2) {
+        if (xbuf[z] == xbuf[z+1]) {
+            //real_printf(GREEN "%d", xbuf[z]);
+        } else {
+            //real_printf(RED "%d", xbuf[z]);
+            bad++;
+        }
+    }
+    //real_printf(NONL);
+    real_printf("ch%d %s hold=%d bad=%02d %s\n", ch, PRN(sat), holding, bad, (bad < 3)? (CYAN "--OK--" NORM) : "");
+#endif
+#if 0
+    for (int z=0; z<500; z++) {
+        real_printf(GREEN "%d", xbuf[z]);
+    }
+    real_printf(NONL);
+    real_printf("ch%d %s hold=%d\n", ch, PRN(sat), holding);
+#endif
+}
+            if ((err = ParityCheck(xbuf, &nbits)) == 0) {
+				//printf("%s %s(%d) nbits=%d\n", PRN(sat), gps_err_s[err], err, nbits);
 				watchdog=0; sumpwr=0;
 			} else {
-				if (nbits != 1) GPSstat(STAT_SUB, 0, ch, PARITY);
+				if (0 && err > GPS_ERR_PREAMBLE) {
+				    printf("%s %s(%d) nbits=%d\n", PRN(sat), gps_err_s[err], err, nbits);
+				}
+				if (err == GPS_ERR_CRC) {
+				    GPSstat(STAT_SUB, 0, ch, PARITY);
+				}
 			}
 			
 			// ParityCheck() return nbits = 1 to shift buf by 1 bit until a preamble match
@@ -504,8 +595,8 @@ void CHANNEL::Tracking() {
             // decrement of holding occur atomically. Otherwise GetSnapshot() / LoadAtomic()
             // won't have synchronized information for GetClock().
             
-            memmove(buf, buf+nbits, holding-=nbits);
-			GPSstat(STAT_WDOG, 0, ch, watchdog/POLLING_PS, holding, ul.ca_unlocked);
+            memmove(xbuf, xbuf + nbits, holding -= nbits);
+			GPSstat(STAT_WDOG, 0, ch, watchdog/polling_ps, holding, ul.ca_unlocked);
 			
 			if (ch+1 == gps.kick_lo_pll_ch) {
 			    printf("%s manual-KICK ch%02d LO PLL =========================================================\n",
@@ -517,10 +608,10 @@ void CHANNEL::Tracking() {
 
 		Status();
 #ifndef QUIET
-		printf(" wdog %d\n", watchdog/POLLING_PS);
+		printf(" wdog %d\n", watchdog/polling_ps);
 #endif
-    	GPSstat(STAT_WDOG, 0, ch, watchdog/POLLING_PS, holding, ul.ca_unlocked);
-    	//GPSstat(STAT_WDOG, 0, ch, watchdog/POLLING_PS, holding, 0);
+    	GPSstat(STAT_WDOG, 0, ch, watchdog/polling_ps, holding, ul.ca_unlocked);
+    	//GPSstat(STAT_WDOG, 0, ch, watchdog/polling_ps, holding, 0);
     	//GPSstat(STAT_EPL, 0, ch, (ul.pe[1]<<16) | ul.pe[0], (ul.pp[1]<<16) | ul.pp[0], (ul.pl[1]<<16) | ul.pl[0]);
         CheckPower();
         
@@ -537,17 +628,21 @@ void CHANNEL::Tracking() {
         	break;
 
         if (!seen_data && avgpwr > KICK_PLL_RSSI && (watchdog % KICK_PLL_RSSI_INTERVAL) == KICK_PLL_RSSI_INTERVAL-1) {
-            //printf("%s auto-KICK ch%02d LO PLL wdog %d ================================================\n",
-            //    PRN(sat), ch+1, watchdog/POLLING_PS);
+            //printf("%s auto-KICK ch%02d LO PLL avgpwr=%d wdog=%d ================================================\n",
+            //    PRN(sat), ch+1, sqrt(avgpwr), watchdog/polling_ps);
             Acquisition(false);
         }
         
-        if (timer_sec() - t_last_data > 10) {
-        	GPSstat(STAT_SUB, 0, ch, -1);       // blank if nothing received recently
-        }
+        #if 0
+            if (timer_sec() - t_last_data > 15) {
+                GPSstat(STAT_SUB, 0, ch, -1);       // blank if nothing received recently
+                t_last_data = timer_sec();
+                //printf("%s nothing recently\n", PRN(sat));
+            }
+        #endif
     }
 
-    if (isE1B) delete_viterbi27_port(nav.fec);
+    if (isE1B || isSBAS) delete_viterbi27_port(nav.fec);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -561,7 +656,7 @@ void CHANNEL::SignalLost() {
     spi_set(CmdSetMask, BusyFlags);
 
     GPSstat(STAT_POWER, -1, ch); // Flatten bar graph
-    isE1B = 0;
+    isE1B = isSBAS = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -731,7 +826,25 @@ void CHANNEL::Status() {
 
 int CHANNEL::ParityCheck(char *buf, int *nbits) {
     char p[6];
+    int id, error = GPS_ERR_NONE;
 
+    if (isSBAS) {
+        //nav.polarity = ???;
+        nav.fbits = buf;
+        nav.tow_updated = 0;
+        id = SBAS_subframe(&nav, 0, 0, &error, &gps.ch[ch].sbas_status);
+        if (id == -1) {
+            //if (error == GPS_ERR_CRC) printf("%s SBAS-GPS_ERR_CRC\n", PRN(sat));
+            *nbits = (error == GPS_ERR_PREAMBLE)? 1 : NAVFLEN_SBAS;
+        } else {
+            GPSstat(STAT_SUB, 0, ch, nav.sbas_seq+1, 0);
+            nav.sbas_seq++;
+            nav.sbas_seq = nav.sbas_seq % 5;
+            *nbits = NAVFLEN_SBAS;
+        }
+        return error;
+    } else
+    
     if (isE1B) {
         // Upright or inverted preamble?  Resolves phase ambiguity.
         #ifdef TEST_VECTOR
@@ -741,7 +854,10 @@ int CHANNEL::ParityCheck(char *buf, int *nbits) {
                      memcmp(buf+E1B_TSYM_PP, E1BpreambleUpright, E1B_PRELEN) == 0) inverted = 0;
             else if (memcmp(buf, E1BpreambleInverse, E1B_PRELEN) == 0 &&
                      memcmp(buf+E1B_TSYM_PP, E1BpreambleInverse, E1B_PRELEN) == 0) inverted = 1;
-            else return *nbits = 1;
+            else {
+                *nbits = 1;
+                return GPS_ERR_PREAMBLE;
+            }
         #endif
         
         if (nsync == 0) total_bits = 0;
@@ -753,13 +869,17 @@ int CHANNEL::ParityCheck(char *buf, int *nbits) {
         nav.flen = 500;
         nav.fbits = buf;
         nav.tow_updated = 0;
-        int error = 0;
-        int id = E1B_subframe(&nav, &error);
+        id = E1B_subframe(&nav, &error);
+        //if (error) printf("%s E1B_subframe %s(%d)\n", PRN(sat), gps_err_s[error], error);
         if (error) probation = 2;
-        if (error == GPS_ERR_SLIP) return *nbits = E1B_TSYM_PP;     // need to slip by a page (half a word)
+        if (error == GPS_ERR_SLIP) {
+            *nbits = E1B_TSYM_PP;    // need to slip by a page (half a word)
+            return GPS_ERR_SLIP;
+        }
         if (error && (error != GPS_ERR_ALERT && error != GPS_ERR_OOS)) {
             //if (isSat(E1B,36)) real_printf("e%d:%d ", error, id); fflush(stdout);
-            return *nbits = subframe_bits;     // any other errors (CRC etc)
+            *nbits = subframe_bits;     // any other errors (GPS_ERR_CRC etc)
+            return error;
         }
 
         if (nav.tow_updated)    // page had TOW so reset bit counter
@@ -778,6 +898,7 @@ int CHANNEL::ParityCheck(char *buf, int *nbits) {
 
         if (probation) probation--;
         *nbits = subframe_bits;
+        return error;
     } else {
         // L1 C/A
         
@@ -790,19 +911,22 @@ int CHANNEL::ParityCheck(char *buf, int *nbits) {
                     printf("%s EXPECTED PREAMBLE\n", PRN(sat));
                 expecting_preamble++;
             }
-            return *nbits = 1;
+            *nbits = 1;
+            return GPS_ERR_PREAMBLE;
         }
     
-        //jks2
-        if (gps_debug && Sats[sat].prn == abs(gps_debug) && LASTsub == 3) {
-            printf("%s SF4 seq %d\n", PRN(sat), drop_seq);
-            drop_seq++;
-            LASTsub = 4;
-            if (drop_seq & 1) {
-                printf("%s drop SF4 seq %d\n", PRN(sat), drop_seq);
-                return *nbits = 1;
+        #if 0
+            if (gps_debug && Sats[sat].prn == abs(gps_debug) && LASTsub == 3) {
+                printf("%s SF4 seq %d\n", PRN(sat), drop_seq);
+                drop_seq++;
+                LASTsub = 4;
+                if (drop_seq & 1) {
+                    printf("%s drop SF4 seq %d\n", PRN(sat), drop_seq);
+                    *nbits = 1;
+                    return GPS_ERR_DEBUG;
+                }
             }
-        }
+        #endif
         
         expecting_preamble = 0;
         
@@ -817,7 +941,9 @@ int CHANNEL::ParityCheck(char *buf, int *nbits) {
                 // forced by our dropped preamble bit simulation
                 if (!(gps_debug && Sats[sat].prn == abs(gps_debug) && LASTsub == 4))
                 probation=2;
-                return *nbits = i+30;
+				//printf("%s Nav-PARITY nbits=%d\n", PRN(sat), i+30);
+                *nbits = i+30;
+                return GPS_ERR_CRC;
             }
         }
 
@@ -827,9 +953,10 @@ int CHANNEL::ParityCheck(char *buf, int *nbits) {
         if (probation) probation--;
         bits_tow = holding - subframe_bits;
         *nbits = subframe_bits;
+        return GPS_ERR_NONE;
     }
 
-    return 0;
+    return error;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -936,11 +1063,19 @@ void ChanStart( // called from search thread to initiate acquisition of detected
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-void ChanRemove(sat_e type) {
+void ChanRemove(sat_e type, int prn) {
 
     for (int ch = 0; ch < gps_chans; ch++) {
         if (!(BusyFlags & (1<<ch))) continue;
         if (Sats[Chans[ch].sat].type != type) continue;
+        if (prn != -1 && prn != Sats[Chans[ch].sat].prn) continue;
         Chans[ch].abort = true;
+        printf("GPS: ch%d ABORT %s\n", ch, PRN(Chans[ch].sat));
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+void ChanInit() {
+    sdrnav_init();
 }

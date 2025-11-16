@@ -115,7 +115,9 @@ typedef struct {
     #define N_HOSTNAME 15
     char hostname[N_HOSTNAME + SPACE_FOR_NULL];
     
+    int dom_sel;
     int proxy_status, DUC_status;
+    bool proxy_running;
 	
 	// IPv4
 	bool ip4_valid;

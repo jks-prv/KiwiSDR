@@ -21,11 +21,11 @@ Boston, MA  02110-1301, USA.
 
 // black on color unless otherwise noted
 #define RED     "\e[97m\e[101m"     // white on red
-#define YELLOW  "\e[103m"
-#define GREEN   "\e[102m"
-#define CYAN    "\e[106m"
+#define YELLOW  "\e[30m\e[103m"     // black on yellow
+#define GREEN   "\e[30m\e[102m"     // black on green
+#define CYAN    "\e[30m\e[106m"     // black on cyan
 #define BLUE    "\e[97m\e[104m"     // white on blue
 #define MAGENTA "\e[97m\e[105m"     // white on magenta
-#define GREY    "\e[47m"
-#define NORM    "\e[m"
-#define NONL    " \e[m\n"
+#define GREY    "\e[30m\e[47m"      // black on grey
+#define NORM    "\e[0m"
+#define NONL    " \e[0m\n"

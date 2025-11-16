@@ -32,3 +32,4 @@ void my_kiwi_register(bool reg = true, int root_pwd_unset = 0, int debian_pwd_de
 void file_GET(void *param);
 
 void proxy_frpc_setup(const char *proxy_server, const char *user, const char *host, int port);
+void proxy_frpc_restart();

@@ -2138,7 +2138,7 @@ function tdoa_submit_button_cb2()
    );
    //console.log('$TDoA tdoa.php RUNNING');
    
-   var expire = Date.now() + 200000;   // tdoa.php has 180s timeout
+   var expire = Date.now() + 250000;
    //var expire = Date.now() + 21000;  // testing
    //console.log('$TDoA /progress.json START');
    tdoa.progress_interval = setInterval(function() {

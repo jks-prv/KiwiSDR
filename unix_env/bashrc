@@ -14,7 +14,6 @@ BBAI="$(test -e /proc/device-tree && cat /proc/device-tree/model | sed "s/\(.*\)
 BBG_BBB="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "AM335x" && echo "true" || echo "false")"
 RPI="$(test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "Raspberry Pi" && echo "true" || echo "false")"
 
-DEBIAN_7="$(cat /etc/debian_version | grep -q -s "7\." && echo "true" || echo "false")"
 DEBIAN_8="$(cat /etc/debian_version | grep -q -s "8\." && echo "true" || echo "false")"
 DEBIAN_9="$(cat /etc/debian_version | grep -q -s "9\." && echo "true" || echo "false")"
 DEBIAN_10="$(cat /etc/debian_version | grep -q -s "10\." && echo "true" || echo "false")"
@@ -41,10 +40,7 @@ elif [ "x${BBAI}" == "xtrue" ] ; then
     fi
 elif [ "x${BBG_BBB}" == "xtrue" ] ; then
     export CPU="AM3359"
-    if [ "x${DEBIAN_7}" == "xtrue" ] ; then
-        export CC="gcc"
-        APT_GET_FORCE="--force-yes"
-    elif [ "x${DEBIAN_8}" == "xtrue" ] ; then
+    if [ "x${DEBIAN_8}" == "xtrue" ] ; then
         export CC="clang-6.0"
         APT_GET_FORCE="--force-yes"
     elif [ "x${DEBIAN_10}" == "xtrue" ] ; then
@@ -149,6 +145,8 @@ alias bly="jq '.ip_blacklist_auto_download = true | .ip_blacklist = \"\"' /root/
 alias trunc="truncate -s 0"
 alias keys="cd /root; mkdir -p .ssh; cd .ssh; cat >authorized_keys"
 alias keys2="cp authorized_keys authorized_keys2"
+alias ss="/bin/ss -tulapn"
+alias netstat="/bin/ss -tulapn"
 
 # debian acct
 alias chod="chown debian:debian"
@@ -525,10 +523,8 @@ alias cddt2="cd ${d_dt2}"
 type lsb_release >/dev/null 2>&1 || { lsb_release() { :; } ; }
 alias dog="echo Debian `cat /etc/debian_version`; cat /etc/dogtag; uname -a; lsb_release -ds"
 alias tag=dog
-alias slots7="cat /sys/devices/bone_capemgr.*/slots"
 alias slots8="cat /sys/devices/platform/bone_capemgr/slots"
 alias slots="cat /sys/devices/platform/bone_capemgr/slots"
-alias unslot7="echo > /sys/devices/bone_capemgr.*/slots"
 alias unslot8="echo > /sys/devices/platform/bone_capemgr/slots"
 alias pins="more /sys/kernel/debug/pinctrl/44e10800.pinmux/pins"
 alias spi="lsmod | grep -i spidev; ls -la /dev/*spi*"
@@ -669,21 +665,9 @@ alias nfsdn="cd ~; umount -a -f -t nfs"
 alias gk="gdb ../build/kiwi.bin"
 # aliases added to ~/.gdbinit
 # gdb> asan // sets ASAN breakpoint
-# gdb> {ng,ng7} // no gps, leds
-# gdb> {k,k7}   // normal run
+# gdb> ng // no gps, leds
+# gdb> k   // normal run
 #
 # to detect leaks type "leaks" or "indiv_leaks"
 # can't use gdb
 # use admin > control > restart to trigger leak report
-
-# KiwiSDR valgrind with gdb (deprecated, use clang ASAN)
-#   'vgh' alias below is a reminder of the sequence of commands
-#	start valgrind with a "--vgdb-error=0" variant below, e.g. vggdb
-#   it will wait for gdb to connect
-#   start gdb; bload; vg; the "target remote | vgdb" from the vg will auto-connect to the valgrind pid
-alias vgh="echo 'cdp; vggdb/vggdball [-gps etc]; in another window: cdp; gk, bload, vg, c'"
-alias vg="valgrind -v --track-origins=yes --leak-check=full ../build/kiwi.bin"
-alias vgd="valgrind -v --track-origins=yes --leak-check=full ../build/kiwi.bin -gps -leds"
-alias vgall="valgrind -v --track-origins=yes --leak-check=full --show-leak-kinds=all ../build/kiwi.bin"
-alias vggdb="valgrind -v --track-origins=yes --leak-check=full --vgdb-error=0 ../build/kiwi.bin"
-alias vggdball="valgrind -v --track-origins=yes --leak-check=full --show-leak-kinds=all --vgdb-error=0 ../build/kiwi.bin"

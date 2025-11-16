@@ -36,11 +36,12 @@ FILES_EMBED_HTML_F2 = $(subst web/,,$(shell $(FILE_OPTIM) -t3 -u -html $(FILES_E
 
 EMBED_FOPT_W = $(FILES_EMBED_JS_F) $(FILES_EMBED_JS_NOPKG_F) $(FILES_EMBED_CSS_F1) $(FILES_EMBED_CSS_F2) $(FILES_EMBED_HTML_F)
 
-############################################
-# CAUTION 4/2024: gzip of kiwisdr.min.css disabled due to browser unzip corruption!
-############################################
-#EMBED_NW = $(subst web/,,$(FILES_EMBED_MISC)) $(FILES_EMBED_HTML_F2) $(subst web/,,$(FILES_EMBED_JS_NOPKG2)) kiwisdr.min.js.gz kiwisdr.min.css.gz
-EMBED_NW = $(subst web/,,$(FILES_EMBED_MISC)) $(FILES_EMBED_HTML_F2) $(subst web/,,$(FILES_EMBED_JS_NOPKG2)) kiwisdr.min.js.gz kiwisdr.min.css
+#NO_CSS_GZIP := true
+ifeq ($(NO_CSS_GZIP),true)
+    EMBED_NW = $(subst web/,,$(FILES_EMBED_MISC)) $(FILES_EMBED_HTML_F2) $(subst web/,,$(FILES_EMBED_JS_NOPKG2)) kiwisdr.min.js.gz kiwisdr.min.css
+else
+    EMBED_NW = $(subst web/,,$(FILES_EMBED_MISC)) $(FILES_EMBED_HTML_F2) $(subst web/,,$(FILES_EMBED_JS_NOPKG2)) kiwisdr.min.js.gz kiwisdr.min.css.gz
+endif
 
 CLEAN_MIN_GZ += web/kiwisdr.min.js web/kiwisdr.min.js.gz web/kiwisdr.min.css web/kiwisdr.min.css.gz
 
@@ -73,10 +74,13 @@ web/kiwisdr.min.css: $(FILES_EMBED_CSS_PKG)
 	cat `$(FILE_OPTIM) -t7 -u -css $(FILES_EMBED_CSS_F1)` >>web/kiwisdr.min.css
 #	cat $(FILES_EMBED_CSS_KEEP_MIN2) >>web/kiwisdr.min.css
 	cat `$(FILE_OPTIM) -t7 -u -css $(FILES_EMBED_CSS_F2)` >>web/kiwisdr.min.css
-	@echo "############################################"
-	@echo "# CAUTION 4/2024: gzip of kiwisdr.min.css disabled due to browser unzip corruption!"
-	@echo "############################################"
-#	gzip --fast --keep --force web/kiwisdr.min.css
+    ifeq ($(NO_CSS_GZIP),true)
+	    @echo "############################################"
+	    @echo "# CAUTION 4/2024: gzip of kiwisdr.min.css disabled due to browser unzip corruption!"
+	    @echo "############################################"
+    else
+	    gzip --fast --keep --force web/kiwisdr.min.css
+    endif
 
 .PHONY: loptim_embed
 loptim_embed: $(FILE_OPTIM)

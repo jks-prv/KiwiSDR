@@ -356,7 +356,7 @@ static void called_every_second()
                     clprintf(c, "API: TRIG=%s %s(T%d) f_kHz=%.3f freq_trig=%d hasDelimiter=%d z=%d\n",
                         trig? "T":"F", rx_conn_type(c), c->type, f_kHz, freq_trig, hasDelimiter, c->zoom);
                     if (trig) {
-                        clprintf(c, "API: non-Kiwi app fingerprint was denied connection\n");
+                        clprintf(c, "API: non-Kiwi app fingerprint was denied connection: %s\n", c->remote_ip);
                         kick = true;
                     } else {
                         if (kiwi_str_begins_with(c->ident_user, "TDoA_service")) {
@@ -375,7 +375,7 @@ static void called_every_second()
                                 (f >= (21928-10) && f <= (21997+10))
                             );
                             if (freq_trig) {
-                                clprintf(c, "API: non-Kiwi app fingerprint-2 was denied connection\n");
+                                clprintf(c, "API: non-Kiwi app fingerprint-2 was denied connection: %s\n", c->remote_ip);
                                 c->kick = true;
                             }
                         }

@@ -390,6 +390,20 @@ function kiwi_array_iter_rv(a, func)
    return rv;
 }
 
+function kiwi_array_join_cond(a, join_char, cond_func)
+{
+   var j = 0, s = '';
+   a.forEach(
+      function(el,i) {
+         if (cond_func(el,i)) {
+            s += (j? join_char : '') + el;
+            j++;
+         }
+      }
+   );
+   return s;
+}
+
 function kiwi_array_remove_undefined(ar)
 {
    var ra = [];
@@ -1084,29 +1098,31 @@ function event_dump(evt, id, oneline)
          return;
       }
       console.log('EVENT_DUMP: '+ id +' type='+ evt.type);
-      console.log('key: '+ key_stringify(evt));
-      ct_id = evt.currentTarget? evt.currentTarget.id : '(null)';
-      console.log('this.id='+ this.id +' tgt.name='+ evt.target.nodeName +' tgt.id='+ evt.target.id +' ctgt.id='+ ct_id);
-      console.log('button='+ button +' buttons='+ buttons +' detail='+ evt.detail);
-      
-      if (evt.type.startsWith('touch')) {
-         console.log('pageX='+ evt.pageX +' clientX='+ evt.clientX +' screenX='+ evt.screenX);
-         console.log('pageY='+ evt.pageY +' clientY='+ evt.clientY +' screenY='+ evt.screenY);
-      } else {
-         console.log('pageX='+ evt.pageX +' clientX='+ evt.clientX +' screenX='+ evt.screenX +' offX(EXP)='+ evt.offsetX +' layerX(DEPR)='+ evt.layerX);
-         console.log('pageY='+ evt.pageY +' clientY='+ evt.clientY +' screenY='+ evt.screenY +' offY(EXP)='+ evt.offsetY +' layerY(DEPR)='+ evt.layerY);
+      if (evt.target) {
+         console.log('key: '+ key_stringify(evt));
+         ct_id = evt.currentTarget? evt.currentTarget.id : '(null)';
+         console.log('this.id='+ this.id +' tgt.name='+ evt.target.nodeName +' tgt.id='+ evt.target.id +' ctgt.id='+ ct_id);
+         console.log('button='+ button +' buttons='+ buttons +' detail='+ evt.detail);
+         
+         if (evt.type.startsWith('touch')) {
+            console.log('pageX='+ evt.pageX +' clientX='+ evt.clientX +' screenX='+ evt.screenX);
+            console.log('pageY='+ evt.pageY +' clientY='+ evt.clientY +' screenY='+ evt.screenY);
+         } else {
+            console.log('pageX='+ evt.pageX +' clientX='+ evt.clientX +' screenX='+ evt.screenX +' offX(EXP)='+ evt.offsetX +' layerX(DEPR)='+ evt.layerX);
+            console.log('pageY='+ evt.pageY +' clientY='+ evt.clientY +' screenY='+ evt.screenY +' offY(EXP)='+ evt.offsetY +' layerY(DEPR)='+ evt.layerY);
+         }
+         
+         console.log('evt, evt.target, evt.currentTarget, evt.relatedTarget, elementFromPoint:');
+         console.log(evt);
+         console.log(evt.target);
+         console.log(evt.currentTarget);
+         console.log(evt.relatedTarget);
+         var el_s = w3_elementAtPointer(evt);
+         if (el_s)
+            console.log(el_s);
+         else
+            console.log('(no x,y)');
       }
-      
-      console.log('evt, evt.target, evt.currentTarget, evt.relatedTarget, elementFromPoint:');
-      console.log(evt);
-      console.log(evt.target);
-      console.log(evt.currentTarget);
-      console.log(evt.relatedTarget);
-      var el_s = w3_elementAtPointer(evt);
-      if (el_s)
-         console.log(el_s);
-      else
-         console.log('(no x,y)');
       console.log('----');
    }
 }

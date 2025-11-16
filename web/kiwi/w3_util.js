@@ -3738,7 +3738,7 @@ function w3_menu(psa, cb)
 }
 
 // menu items can be in argument list or passed as an array
-function w3_menu_items(id, arr, max_vis)
+function w3_menu_items(id, arr, max_vis, selected)
 {
    //console.log('w3_menu_items id='+ id);
    if (w3int.menu_debug) canvas_log('w3_menu_items cur='+ w3int.menu_cur_id);
@@ -3769,7 +3769,7 @@ function w3_menu_items(id, arr, max_vis)
          prop += 'w3-menu-item-hr';
          idx++;
       } else
-      if (items[i].charAt(0) == '!') {    // first char == '!' hack to disable menu item
+      if (isString(items[i]) && items[i].charAt(0) == '!') {    // first char == '!' hack to disable menu item
          prop += 'w3-menu-item-disabled';
          items[i] = items[i].substr(1);
          idx++;
@@ -3777,6 +3777,8 @@ function w3_menu_items(id, arr, max_vis)
          prop += 'w3-menu-item';
          idx++;
          if (!kiwi_isMobile()) prop += ' w3-menu-item-hover';
+         if (isArg(selected) && selected[i])
+            prop += ' w3-menu-item-selected';
       }
       var psa = w3_psa_mix('', prop, '', attr);
       s += w3_div(psa, items[i]);

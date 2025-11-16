@@ -120,7 +120,7 @@ void rx_set_freq_offset_kHz(double foff_kHz)
     freq.offset_kHz = foff_kHz;
     freq.offmax_kHz = foff_kHz + ui_srate_kHz;
     freq.offset_Hz = (u64_t) (foff_kHz * 1e3);
-    printf("FOFF foff_kHz=%.2f offset_Hz=%lld\n", foff_kHz, freq.offset_Hz);
+    //printf("FOFF foff_kHz=%.2f offset_Hz=%lld\n", foff_kHz, freq.offset_Hz);
 }
 
 bool rx_freq_inRange(double freq_kHz)
@@ -192,7 +192,7 @@ void rx_loguser(conn_t *c, logtype_e type)
                     (f >= (21928-10) && f <= (21997+10))
                 );
                 if (freq_trig) {
-                    clprintf(c, "API: non-Kiwi app fingerprint-3 was denied connection\n");
+                    clprintf(c, "API: non-Kiwi app fingerprint-3 was denied connection: %s\n", c->remote_ip);
                     c->kick = true;
                     return;
                 }
@@ -1279,9 +1279,9 @@ char *gps_update_data(bool from_AJAX)
             prn = Sats[c->sat].prn;
         }
         sb = kstr_asprintf(sb, "%s\n{\"ch\":%d,\"prn_s\":\"%c\",\"prn\":%d,\"snr\":%d,\"rssi\":%d,\"gain\":%d,\"age\":\"%s\",\"old\":%d,\"hold\":%d,\"wdog\":%d"
-            ",\"unlock\":%d,\"parity\":%d,\"alert\":%d,\"sub\":%d,\"sub_renew\":%d,\"soln\":%d,\"ACF\":%d,\"novfl\":%d,\"az\":%d,\"el\":%d}",
+            ",\"unlock\":%d,\"parity\":%d,\"alert\":%d,\"sub\":%d,\"sub_renew\":%d,\"soln\":%d,\"ACF\":%d,\"novfl\":%d,\"az\":%d,\"el\":%d,\"sbas\":%d}",
             i? ",":"", i, prn_s, prn, c->snr, c->rssi, c->gain, c->age, c->too_old? 1:0, c->hold, c->wdog,
-            c->ca_unlocked, c->parity, c->alert, c->sub, c->sub_renew, c->has_soln, c->ACF_mode, c->novfl, c->az, c->el);
+            c->ca_unlocked, c->parity, c->alert, c->sub, c->sub_renew, c->has_soln, c->ACF_mode, c->novfl, c->az, c->el, c->sbas_status);
         c->parity = 0;
         c->has_soln = 0;
         for (j = 0; j < SUBFRAMES; j++) {

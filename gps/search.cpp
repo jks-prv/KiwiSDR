@@ -188,6 +188,7 @@ void SearchInit() {
         sp->sat = sat;
         switch (sp->type) {
             case Navstar: default: asprintf(&sp->prn_s, "N%02d ", sp->prn); gps.n_Navstar++; break;
+            case SBAS: asprintf(&sp->prn_s, "S%d", sp->prn); gps.n_SBAS++; break;
             case QZSS: asprintf(&sp->prn_s, "Q%d", sp->prn); gps.n_QZSS++; break;
             case E1B: asprintf(&sp->prn_s, "E%02d ", sp->prn); gps.n_E1B++; break;
         }
@@ -243,7 +244,7 @@ void SearchInit() {
     printf("..planning\n");
 
     for (sp = Sats; sp->prn != -1; sp++) {
-        if (sp->type != Navstar && sp->type != QZSS) continue;
+        if (sp->type == E1B) continue;
         int T1 = sp->T1, T2 = sp->T2;
 
 		//printf("computing CODE FFT for %s T1 %d T2 %d\n", sp->prn_s, T1, T2);
@@ -540,10 +541,7 @@ void SearchTask(void *param) {
 	GPSstat(STAT_ACQUIRE, 0, 1);
 
     for(;;) {
-        if (!gps.acq_Navstar && !gps.acq_QZSS && !gps.acq_Galileo) {
-            TaskSleepSec(1);    // wait for UI to change acq settings
-            continue;
-        }
+        bool acquire = false;
         
         for (sp = Sats; sp->prn != -1; sp++) {
             sat = sp->sat;
@@ -551,6 +549,7 @@ void SearchTask(void *param) {
             if (sp->type == Navstar && !gps.acq_Navstar) continue;
             if (sp->type == QZSS && !gps.acq_QZSS) continue;
             if (sp->type == E1B && !gps.acq_Galileo) continue;
+            if (sp->type == SBAS && (!gps.acq_SBAS || !sp->selected)) continue;
 
             if (gps_debug > 0 && sp->prn != gps_debug) continue;
             if (gps_debug) if (sp->type == E1B) continue;
@@ -563,8 +562,10 @@ void SearchTask(void *param) {
             //if (sp->prn != 11 && sp->prn != 12) continue;
             //if (sp->prn != 11) continue;
             
+            acquire = true;
+            
             //jks2
-            min_sig = (sp->type == E1B)? 16 : minimum_sig;
+            min_sig = (sp->type == E1B)? 16 : ((sp->type == SBAS)? 16 : minimum_sig);
 
             if (sp->busy) {     // sat already acquired?
             	NextTask("busy1");		// let cpu run
@@ -578,6 +579,7 @@ void SearchTask(void *param) {
                 case Navstar: default: codegen_init = (T1<<4) + T2; break;
                 case QZSS: codegen_init = G2_INIT | T2; break;
                 case E1B: codegen_init = E1B_MODE | (sp->prn-1); break;
+                case SBAS: codegen_init = SBAS_MODE | G2_INIT | T2; break;
             }
 
             if ((ch = ChanReset(sat, codegen_init)) < 0) {      // all channels busy?
@@ -618,7 +620,38 @@ void SearchTask(void *param) {
 			//    ch+1, PRN(sat), snr, init, (int) (lo_shift*BIN_SIZE), ca_shift);
             ChanStart(ch, sat, t_sample, lo_shift, ca_shift, (int) snr);
     	}
+
+        if (!acquire) {
+            TaskSleepSec(1);    // wait for UI to change acq settings
+            continue;
+        }
 	}
+}
+
+void gps_sbas_select(char *sbas)
+{
+    int i, n;
+    printf("GPS_SBAS=%s\n", sbas);
+    #define NQS 32
+    char *r_buf;
+    str_split_t qs[NQS+1];
+    n = kiwi_split(sbas, &r_buf, ",", qs, NQS, KSPLIT_PARSE_NUMERIC);
+    gps.sbas_log = qs[0].num;
+    //printf("SBAS: log=%d\n", gps.sbas_log);
+    SATELLITE *sp;
+    for (sp = Sats; sp->prn != -1; sp++) {
+        if (sp->type != SBAS) continue;
+        bool selected = false;
+        for (i=1; i < n; i++) {
+            //printf("prn=%d n=%d i=%d num=%d\n", sp->prn, n, i, qs[i].num);
+            if (qs[i].num == sp->prn) {
+                selected = true;
+                //printf("SBAS: S%d selected\n", sp->prn);
+            }
+        }
+        sp->selected = selected;
+        if (!selected) ChanRemove(SBAS, sp->prn);
+    }
 }
 
 static int gps_acquire = 1;

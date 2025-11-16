@@ -20,7 +20,6 @@ Boston, MA  02110-1301, USA.
 #include "types.h"
 #include "config.h"
 #include "kiwi.h"
-#include "valgrind.h"
 #include "rx.h"
 #include "clk.h"
 #include "misc.h"
@@ -314,10 +313,6 @@ int main(int argc, char *argv[])
     
     #if defined(USE_ASAN)
     	lprintf("### compiled with USE_ASAN\n");
-    #endif
-    
-    #if defined(HOST) && defined(USE_VALGRIND)
-    	lprintf("### compiled with USE_VALGRIND\n");
     #endif
     
     assert(TRUE != FALSE);

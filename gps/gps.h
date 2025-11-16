@@ -46,11 +46,13 @@ void gps_main(int argc, char *argv[]);
 
 #define L1_f 1575.42e6  // L1 carrier
 #define L1_CODE_PERIOD (L1_CODELEN*1000/CPS_I)
-#define L1_BPS 50.0     // NAV data rate
+#define L1_BPS 50.0     // NAV data rate (20 msec)
 
 #define E1B_f 1575.42e6 // E1B carrier
 #define E1B_CODE_PERIOD (E1B_CODELEN*1000/CPS_I)
-#define E1B_BPS 250.0   // NAV data rate
+#define E1B_BPS 250.0   // NAV data rate (4 msec)
+
+#define SBAS_BPS 500.0  // NAV data rate (2 msec)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Parameters
@@ -111,7 +113,7 @@ typedef struct {
     
     int sat;
     char *prn_s;
-    bool busy;
+    bool busy, selected;
 } SATELLITE;
 
 #define is_Navstar(sat)     (Sats[sat].type == Navstar)
@@ -128,6 +130,7 @@ extern SATELLITE Sats[];
 // maximum number of sats possible, not current number of active sats
 #define NUM_NAVSTAR_SATS    32
 #define NUM_E1B_SATS        50
+#define NUM_SBAS_SATS       38
 
 extern u1_t E1B_code1[NUM_E1B_SATS][E1B_CODELEN];
 
@@ -142,6 +145,7 @@ void SearchTask(void *param);
 void SearchTaskRun();
 void SearchEnable(int sat);
 void SearchParams(int argc, char *argv[]);
+void gps_sbas_select(char *sbas);
 
 //////////////////////////////////////////////////////////////
 // Tracking
@@ -149,11 +153,12 @@ void SearchParams(int argc, char *argv[]);
 #define SUBFRAMES 5
 #define PARITY 6
 
+void ChanInit();
 void ChanTask(void *param);
 int  ChanReset(int sat, int codegen_init);
 void ChanStart(int ch, int sat, int t_sample, int lo_shift, int ca_shift, int snr);
 bool ChanSnapshot(int ch, uint16_t wpos, int *p_sat, int *p_bits, int *p_bits_tow, float *p_pwr);
-void ChanRemove(sat_e type);
+void ChanRemove(sat_e type, int prn = -1);
 
 //////////////////////////////////////////////////////////////
 // Solution
@@ -183,11 +188,10 @@ typedef enum {
     STAT_SOLN
 } STAT;
 
-#define GPS_ERR_SLIP    1
-#define GPS_ERR_CRC     2
-#define GPS_ERR_ALERT   3
-#define GPS_ERR_OOS     4
-#define GPS_ERR_PAGE    5
+enum {GPS_ERR_NONE, GPS_ERR_PREAMBLE, GPS_ERR_SLIP, GPS_ERR_CRC, GPS_ERR_ALERT, GPS_ERR_OOS, GPS_ERR_PAGE, GPS_ERR_DEBUG};
+const char * const gps_err_s[] = { "none", "pre", "slip", "parity", "alert", "oos", "page", "debug" };
+
+enum {GPS_STAT_GRN = 1, GPS_STAT_YEL, GPS_STAT_RED, GPS_STAT_BLU};
 
 typedef struct {
     int az, el;
@@ -207,6 +211,7 @@ typedef struct {
     int az, el;
     int has_soln;
     int ACF_mode;
+    int sbas_status;
 } gps_chan_t;
 
 typedef struct {
@@ -219,8 +224,8 @@ typedef struct {
 } gps_map_t;
 
 typedef struct {
-    int n_Navstar, n_QZSS, n_E1B;
-    bool acq_Navstar, acq_QZSS, QZSS_prio, acq_Galileo;
+    int n_Navstar, n_SBAS, n_QZSS, n_E1B;
+    bool acq_Navstar, acq_SBAS, acq_QZSS, QZSS_prio, acq_Galileo;
 	bool acquiring, tLS_valid;
 	unsigned start, ttff;
 	int tracking, good, FFTch;
@@ -237,6 +242,7 @@ typedef struct {
     signed delta_tLS, delta_tLSF;
     bool include_alert_gps;
     bool include_E1B;
+    bool sbas_log;
     bool set_date, date_set;
     int tod_chan;
     int soln_type, E1B_plot_separately;

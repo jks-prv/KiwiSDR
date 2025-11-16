@@ -215,9 +215,8 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         cmd_p2 = kstr_asprintf(cmd_p2, "&r=%d&d=%d", root_pwd_unset, debian_pwd_default);
 
     char *kiwisdr_com = DNS_lookup_result("my_kiwi", "kiwisdr.com", &net.ips_kiwisdr_com);
-    int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
-    int dom_stat = (dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
-    printf("my_kiwi_register dom=%d dom_%s dom_stat=%d\n", dom_sel, dom_type_s[dom_sel], dom_stat);
+    int dom_stat = (net.dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
+    printf("my_kiwi_register dom=%d dom_%s dom_stat=%d\n", net.dom_sel, dom_type_s[net.dom_sel], dom_stat);
 
     const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
     if (kiwi_emptyStr(server_url)) server_url = strdup("UNSET");
@@ -230,7 +229,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
     cfg_string_free(admin_email);
 
     // proxy always uses port 8073
-    int server_port = (dom_sel == DOM_SEL_REV)? 8073 : net.port_ext;
+    int server_port = (net.dom_sel == DOM_SEL_REV)? 8073 : net.port_ext;
     int mtu = mtu_v[cfg_int_("ethernet_mtu")];
 
     asprintf(&cmd_p, "curl -Ls --show-error --ipv4 --connect-timeout 5 "
@@ -246,7 +245,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
         net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
         email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
-        dom_sel, dom_type_s[dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
+        net.dom_sel, dom_type_s[net.dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
         mtu, net.serno, kiwisdr_com_reg? 1:0, kiwi.vr, timer_sec(),
         kstr_sp(cmd_p2));
     cfg_string_free(server_url);
@@ -259,20 +258,21 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
 
 void proxy_frpc_setup(const char *proxy_server, const char *user, const char *host, int port)
 {
+    const char *actual_proxy_server;
     if (kiwi_emptyStr(user) || kiwi_emptyStr(host) || kiwi_emptyStr(proxy_server))
         return;
 
     // criteria for using secondary proxy server(s)
     //#define PROXY2_ENABLE
-    //#define PROXY2_TEST
+    //#define PROXY2_TEST 1
     #ifdef PROXY2_ENABLE
         // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
-        const char *actual_proxy_server = isdigit(host[0])? "proxy2.kiwisdr.com" : proxy_server;
+        actual_proxy_server = isdigit(host[0])? "proxy2.kiwisdr.com" : proxy_server;
     #elif PROXY2_TEST
-        const char *actual_proxy_server = strcmp(host, "jksp2")? proxy_server : "proxy2.kiwisdr.com";
+        actual_proxy_server = strcmp(host, "jksp2")? proxy_server : "proxy2.kiwisdr.com";
     #else
         // no redirection
-        const char *actual_proxy_server = proxy_server;
+        actual_proxy_server = proxy_server;
     #endif
 
     lprintf("PROXY init frpc.ini: actual_proxy_server=%s\n", actual_proxy_server);
@@ -443,14 +443,13 @@ static void misc_NET(void *param)
 	}
 
     // reverse proxy
-	system("killall -q frpc");
-	int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
-	bool proxy = (dom_sel == DOM_SEL_REV);
+	bool proxy = (net.dom_sel == DOM_SEL_REV);
     const char *proxy_server = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
-	lprintf("PROXY: %s dom_sel_menu=%d %s\n", proxy? "YES":"NO", dom_sel, proxy_server);
+	lprintf("PROXY: %s dom_sel_menu=%d %s\n", proxy? "YES":"NO", net.dom_sel, proxy_server);
 	
 	if (proxy) {
-	    if (!kiwi_file_exists(DIR_CFG "/frpc.ini")) {
+	    // Always setup at startup in case cfg has become out-of-sync with frpc.ini
+	    //if (!kiwi_file_exists(DIR_CFG "/frpc.ini")) {
             bool rev_auto = admcfg_true("rev_auto");
             const char *user, *host;
             if (rev_auto) {
@@ -466,11 +465,11 @@ static void misc_NET(void *param)
 
             proxy_frpc_setup(proxy_server, user, host, net.port_ext);
             admcfg_string_free(user); admcfg_string_free(host);
-	    }
+	    //}
 	    
 		lprintf("PROXY: starting frpc\n");
 		rev_enable_start = true;
-		system("sleep 1; /usr/local/bin/frpc -c " DIR_CFG "/frpc.ini &");
+		proxy_frpc_restart();
 	}
 	admcfg_string_free(proxy_server);
 
@@ -478,10 +477,67 @@ static void misc_NET(void *param)
     // this must be at the end of the routine since it waits an arbitrary amount of time
     
     NET_WAIT_COND("my_kiwi", "misc_NET", net.pub_valid);
+    
+    if (net.dom_sel == DOM_SEL_REV) {
+        NET_WAIT_COND("my_kiwi", "misc_NET", net.proxy_running);
+    }
 
     if (admcfg_true("my_kiwi")) {
         my_kiwi_register(true, root_pwd_unset, debian_pwd_default);
     }
+}
+
+void proxy_frpc_restart()
+{
+    system("killall -q frpc");
+    system("sleep 1");
+    TaskWakeup(kiwi.proxy_task_tid);
+}
+
+static int _frpc_func(void *param)
+{
+	nbcmd_args_t *args = (nbcmd_args_t *) param;
+	args->cmd_poll_msec = 1000;
+	if (args->kstr == NULL) {
+	    int rv = args->cmd_stat? 1:0;
+	    //real_printf("_frpc_func DONE cmd_stat=%d rv=%d\n", args->cmd_stat, rv);
+	    return rv;
+	} else {
+	    char *sp = kstr_sp(args->kstr);
+	    //real_printf("_frpc_func <%s>\n", sp);
+	    if (strstr(sp, "start proxy success")) {
+	        net.proxy_running = true;       // net is in shmem, so this works
+	        //real_printf("_frpc_func net.proxy_running\n");
+	    }
+	    return 0;
+    }
+}
+
+static void proxy_task(void *param)
+{
+    char *cmd_p;
+    int rv;
+
+    // NB: Must capture frpc output so "start proxy success" log message can be detected above.
+    // The char-oriented /dev/stderr must be used instead of the line-oriented /dev/stdout to
+    // guarantee the output is seen.
+    //asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr --log-level=debug -c " DIR_CFG "/frpc.ini 2>&1");
+    asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr -c " DIR_CFG "/frpc.ini 2>&1 | tee -a /var/log/frpc.log");
+    
+    // Wait for wakeup on server restart or when admin makes proxy cfg changes.
+    // Never stops after that (until next server restart with proxy disabled).
+    // Just keeps restarting if connection timeout or abnormal exit.
+    TaskSleepReason("wait start");
+
+    while (1) {
+        if (net.dom_sel != DOM_SEL_REV)
+            TaskSleepReason("wait enable");
+
+        //printf("proxy_task WAKEUP\n");
+        rv = non_blocking_cmd_func_foreach("kiwi.proxy", cmd_p, _frpc_func, 0, 1000);
+        lprintf("PROXY: proxy_task EXIT rv=%d see /var/log/frpc.log for possible error messages\n", rv);
+        TaskSleepReasonSec("restart", 20);
+    };
 }
 
 static bool ipinfo_json(int https, const char *url, const char *path, const char *ip_s, const char *lat_s = NULL, const char *lon_s = NULL)
@@ -940,9 +996,8 @@ static void reg_public(void *param)
         bool kiwisdr_com_reg = admcfg_true("kiwisdr_com_register");
 
         // proxy always uses port 8073
-	    int dom_sel = cfg_int("sdr_hu_dom_sel", NULL, CFG_REQUIRED);
-        int server_port = (dom_sel == DOM_SEL_REV)? 8073 : net.port_ext;
-        int dom_stat = (dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
+        int server_port = (net.dom_sel == DOM_SEL_REV)? 8073 : net.port_ext;
+        int dom_stat = (net.dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
 
 	    // done here because updating timer_sec() is sent
         asprintf(&cmd_p, "wget --timeout=30 --tries=2 --inet4-only -qO- "
@@ -958,7 +1013,7 @@ static void reg_public(void *param)
             net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
             net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
             email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
-            dom_sel, dom_type_s[dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
+            net.dom_sel, dom_type_s[net.dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
             net.serno, kiwisdr_com_reg? 1:0, timer_sec()
             );
     
@@ -1055,7 +1110,9 @@ void services_start()
 	CreateTask(pvt_NET, 0, SERVICES_PRIORITY);
 	CreateTask(pub_NET, 0, SERVICES_PRIORITY);
 	CreateTask(get_TZ, 0, SERVICES_PRIORITY);
+    kiwi.proxy_task_tid = CreateTask(proxy_task, 0, SERVICES_PRIORITY);
 	CreateTask(misc_NET, 0, SERVICES_PRIORITY);
+
     if (snr_meas) SNR_meas_tid = CreateTaskF(SNR_meas, 0, SERVICES_PRIORITY, CTF_NO_LOG);
 	//CreateTask(git_commits, 0, SERVICES_PRIORITY);
 

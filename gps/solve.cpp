@@ -46,7 +46,7 @@ struct SNAPSHOT {
     int ch, sat, srq, ms;
     mutable int bits;
     int bits_tow, chips, cg_phase;
-    bool isE1B;
+    bool isE1B, isSBAS;
     mutable bool tow_delayed;
     bool LoadAtomic(int ch, uint16_t *up, uint16_t *dn, int srq);
     double GetClock() const;
@@ -72,6 +72,7 @@ bool SNAPSHOT::LoadAtomic(int ch_, uint16_t *up, uint16_t *dn, int srq_) {
     && Ephemeris[sat].Valid()) {
 
         isE1B = is_E1B(sat);
+        isSBAS = is_SBAS(sat);
         srq = srq_;
         ms = up[0];
         if (srq) ms += isE1B? E1B_CODE_PERIOD : L1_CODE_PERIOD;     // add one code period for un-serviced epochs
@@ -95,7 +96,7 @@ bool SNAPSHOT::LoadAtomic(int ch_, uint16_t *up, uint16_t *dn, int srq_) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-static int LoadAtomic() {
+static int LoadAtomicAll() {
 
 	// i.e. { ticks[47:0], srq[gps_chans-1:0], { gps_chans { clock_replica } } }
 	// clock_replica = { ch_NAV_MS[15:0], ch_NAV_BITS[15:0], cg_phase_code[15:0] }
@@ -145,18 +146,19 @@ static int LoadReplicas() {
     TaskSleepMsec(GLITCH_GUARD);
 
     // Gather consistent snapshot of all channels
-    int pass1 = LoadAtomic();
+    int pass1 = LoadAtomicAll();
     int pass2 = 0;
 
     // Get glitch counters "after"
     TaskSleepMsec(GLITCH_GUARD);
     spi_get(CmdGetGlitches, glitches+1, gps_chans*2);
 
-    // Strip noisy channels
+    // Strip disabled or noisy channels
     for (int i=0; i<pass1; i++) {
         int ch = Replicas[i].ch;
         if (glitches[0].word[ch] != glitches[1].word[ch]) continue;
         if (Replicas[i].isE1B && !gps.include_E1B) continue;
+        if (Replicas[i].isSBAS) continue;
         if (i>pass2) memcpy(Replicas+pass2, Replicas+i, sizeof(SNAPSHOT));
         pass2++;
     }
@@ -198,6 +200,9 @@ double SNAPSHOT::GetClock() const {
             lprintf("GPS E1B BAD cg_phase\n");
             bad = true;
         }
+    } else
+    if (isSBAS) {
+        bad = true;
     } else {
         if (ms < 0 && ms > (19+1)) {
             lprintf("GPS C/A BAD ms\n");
@@ -323,6 +328,7 @@ public:
         _chans     = 0;
         for (int i=0; i<chans; ++i) {
             NextTask("solve1");
+            if (Replicas[i].isSBAS) continue;
 
             // power of received signal
             _weight[_chans] = replicas[i].power;
@@ -343,10 +349,11 @@ public:
             double t_k = replicas[i].eph.TimeOfEphemerisAge(t_tx);
             UMS hms(fabs(t_k)/60/60);
             if (hms.u > 9) hms.u = 9;
-            gps.ch[i].too_old = (hms.u >= 4);
-            snprintf(gps.ch[i].age, GPS_N_AGE, "%c%01d:%02d:%02.0f",
+            int ch_no = Replicas[i].ch;
+            gps.ch[ch_no].too_old = (hms.u >= 4);
+            snprintf(gps.ch[ch_no].age, GPS_N_AGE, "%c%01d:%02d:%02.0f",
                 (t_k < 0)? '-':' ', hms.u, hms.m, hms.s);
-            //printf("ch%02d %s t_k %s\n", i, PRN(Replicas[i].sat), gps.ch[i].age);
+            //printf("ch%02d %s isSBAS=%d age=%s\n", ch_no+1, PRN(Replicas[i].sat), Replicas[i].isSBAS, gps.ch[ch_no].age);
 
             // get SV position in ECEF coords
             replicas[i].eph.GetXYZ(&_sv[0][_chans],
@@ -495,7 +502,7 @@ void update_gps_info_after(GNSSDataForEpoch const& gnssDataForEpoch,
     // green  -> EKF
     // yellow -> SPP
     // red    -> no position solution
-    const int grn_yel_red = (pos_solvers[0]->ekf_valid() ? 0 : (pos_solvers[0]->spp_valid() ? 1 : 2));
+    const int grn_yel_red = (pos_solvers[0]->ekf_valid() ? GPS_STAT_GRN : (pos_solvers[0]->spp_valid() ? GPS_STAT_YEL : GPS_STAT_RED));
     GPSstat(STAT_SOLN, 0, grn_yel_red, gnssDataForEpoch.ch_has_soln());
     gps.solve_seq++;
 
@@ -513,7 +520,7 @@ void update_gps_info_after(GNSSDataForEpoch const& gnssDataForEpoch,
             const int el = std::round(elev_azim[i].elev_deg);
             const int az = std::round(elev_azim[i].azim_deg);
 
-            // printf("%s NEW EL/AZ=%2d %3d\n", PRN(sat), el, az);
+            //printf("%s NEW EL/AZ=%2d %3d\n", PRN(sat), el, az);
             if (az < 0 || az >= 360 || el <= 0 || el > 90)
                 continue;
 
@@ -531,7 +538,7 @@ void update_gps_info_after(GNSSDataForEpoch const& gnssDataForEpoch,
                 }
             }
             // special treatment for QZS_3 
-            if (gnssDataForEpoch.prn(i)  == 199 && gnssDataForEpoch.type(i) == QZSS) {
+            if (gnssDataForEpoch.prn(i) == 199 && gnssDataForEpoch.type(i) == QZSS) {
                 gps.qzs_3.az = az;
                 gps.qzs_3.el = el;
                 //printf("QZS-3 az=%d el=%d\n", az, el);

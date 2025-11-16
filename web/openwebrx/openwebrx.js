@@ -3926,7 +3926,7 @@ function zoom_dir_s(dir)
 // TDoA does this via zoom_center = 0.6
 var zoom_center = 0.5;
 
-var ZOOM_NOMINAL = 10, ZOOM_BAND = 6;
+var ZOOM_NOMINAL = 9, ZOOM_BAND = 6;
 var zoom_nom = 0, zoom_old_nom = 0;
 var zoom_levels_max = 0;
 var zoom_level = 0;
@@ -7034,7 +7034,7 @@ function freqstep_cb(path, sel, first, ev)
 	
 	// set step size from band channel spacing
 	if (step_Hz == 0) {
-		var b = find_band(fnew);
+		var b = find_band_border(sel, fnew);
 		step_Hz = special_step(b, sel, 'freqstep_cb');
 	}
 
@@ -7074,17 +7074,18 @@ function freqstep_cb(path, sel, first, ev)
 	freqmode_set_dsp_kHz(Hz/1000, null, { dont_clear_wf:true });
 }
 
-var freq_step_last_mode, freq_step_last_band;
+var freq_step_last_mode, freq_step_last_bandL, freq_step_last_bandH;
 
 function freq_step_update_ui(force)
 {
 	if (isUndefined(cur_mode) || kiwi_passbands(cur_mode) == undefined ) return;
-	var b = find_band(freq_displayed_Hz);
+	var bL = find_band_border(0, freq_displayed_Hz);
+	var bH = find_band_border(num_step_buttons-1, freq_displayed_Hz);
 	
 	//console.log("freq_step_update_ui: lm="+freq_step_last_mode+' cm='+cur_mode);
-	if (!force && freq_step_last_mode == cur_mode && freq_step_last_band == b) return;
+	if (!force && freq_step_last_mode == cur_mode && freq_step_last_bandL == bL && freq_step_last_bandH == bH) return;
 
-	var show_9_10 = (b && (b.name == 'LW' || b.name == 'MW') && ext_mode(cur_mode).AM_SAx_IQ_DRM)? true:false;
+	var show_9_10 = (bH && (bH.name == 'LW' || bH.name == 'MW') && ext_mode(cur_mode).AM_SAx_IQ_DRM)? true:false;
 	
 	if (kiwi_isMobile()) {
 	   w3_hide2('id-9-10-cell', !show_9_10);
@@ -7093,11 +7094,15 @@ function freq_step_update_ui(force)
 	   w3_disable('id-9-10-cell', !show_9_10);
 	}
 
-	for (var i=0; i < num_step_buttons; i++) {
-		var step_Hz = up_down[cur_mode][i]*1000;
+	for (var sel = 0; sel < num_step_buttons; sel++) {
+	   var b = (sel < num_step_buttons/2)? bL : bH;
+	   
+		var step_Hz = up_down[cur_mode][sel]*1000;
 		if (step_Hz == 0) {
-			step_Hz = special_step(b, i, 'freq_step_update_ui');
+			step_Hz = special_step(b, sel, 'freq_step_update_ui');
 		}
+	   //console.log('freq_step_update_ui sel='+ sel +' step_Hz='+ step_Hz +' b=...');
+	   //console.log(b);
 
 		var title;
 		var absHz = Math.abs(step_Hz);
@@ -7110,11 +7115,12 @@ function freq_step_update_ui(force)
 		else {
 			title = (posHz? '+':'-')+'400/'+(posHz? '+':'-')+'1000';
 		}
-		w3_el('id-step-'+i).title = title +'\nclick-hold to repeat';
+		w3_el('id-step-'+ sel).title = title +'\nclick-hold to repeat';
 	}
 	
 	freq_step_last_mode = cur_mode;
-	freq_step_last_band = b;
+	freq_step_last_bandL = bL;
+	freq_step_last_bandH = bH;
 }
 
 
@@ -7207,6 +7213,8 @@ function freq_memory_menu_init()
 
 function freq_memory_menu_open(shortcut_key)
 {
+   //console.log('freq_memory_menu CB vis='+ w3_isVisible('id-freq-memory-menu') +' shown='+ kiwi.freq_memory_menu_shown);
+
    if (w3_isVisible('id-freq-memory-menu')) {
       kiwi.freq_memory_menu_shown = 0;
       //canvas_log('FMS0');
@@ -7215,7 +7223,6 @@ function freq_memory_menu_open(shortcut_key)
    kiwi.freq_memory_menu_shown = 1;
    //canvas_log('FMS1');
 
-   //console.log('freq_memory_menu_open='+ kiwi.freq_memory_menu_shown);
    var x = owrx.last_pageX, y = owrx.last_pageY;
    if (shortcut_key != true)
       x += ((x - 128) >= 0)? -128 : 16;
@@ -7255,11 +7262,12 @@ function freq_memory_menu_open(shortcut_key)
    w3_menu_items('id-freq-memory-menu', fmem_copy, Math.min(fmem_copy.length, 10));
    w3_menu_popup('id-freq-memory-menu',
       function(evt, first) {     // close_func(), return true to close menu
-         //event_dump(evt, 'close_func');
+         //event_dump(evt, 'close_func', true);
          // if 'm' key or click on freq-menu icon, take toggle state into account
          var close_keyup = (evt.type == 'keyup' && (evt.key != 'm' || !kiwi.freq_memory_menu_shown));
          var tgt_isMenu = w3_contains(evt.target, 'w3-menu');
          var tgt_isMenuButton = w3_contains(evt.target, 'w3-menu-button');
+         //console.log('freq_memory_menu CLOSE close_keyup='+ close_keyup +' tgt_isMenu='+ tgt_isMenu +' tgt_isMenuButton='+ tgt_isMenuButton);
          var menu_shown = kiwi.freq_memory_menu_shown;
          var click = ((evt.type == 'click' || ((evt.type == 'mousedown' || evt.type == 'touchstart') && !tgt_isMenuButton) || evt.type == 'touchend'));
          var close_click = (click && !first && (!tgt_isMenu || !menu_shown));
@@ -7269,7 +7277,7 @@ function freq_memory_menu_open(shortcut_key)
          //event_dump(evt, 'freq-memory-menu close_func='+ close, true);
          //canvas_log('menu_popup close_func='+ TF(close) +' ev='+ evt.type +' kup='+ TF(close_keyup) +' clk='+ TF(close_click));
          //canvas_log(TF(click) + TF(first) + TF(tgt_isMenu) + TF(menu_shown) +'{TF(F||F)}');
-
+         //console.log('freq_memory_menu CLOSE menu_shown='+ menu_shown +' click='+ click +' close_click='+ close_click +' close='+ close);
          return close;
       },
       x, y);
@@ -7847,6 +7855,12 @@ function find_band(freqHz)
 	scale_canvas_top = band_canvas_h + dx_container_h;
 	
 scale_container_h = band_canvas_h + dx_container_h + scale_canvas_h;
+
+function find_band_border(sel, freqHz)
+{
+   freqHz += (sel < num_step_buttons/2)? -1 : 1;
+   return find_band(freqHz);
+}
 
 function mk_bands_scale()
 {
@@ -8486,6 +8500,7 @@ function dx_init()
    }
 
    dx_database_cb('', dx.db, false, {open:open});
+   dx_freq_list_init();
    
    if (dx.step_superDARN) setTimeout(
       function() {
@@ -9784,6 +9799,7 @@ function dx_evt(path, cb_param, first, evt)
    return rv;
 }
 
+// signal bandwidth indicator (e.g. used by SuperDARN labels)
 function dx_sig_bw(gid)
 {
    var label = (gid >= 0)? dx.list[gid] : null;
@@ -9827,26 +9843,35 @@ function dx_sig_bw(gid)
 function dx_click(ev, gid)
 {
    var hold = (ev.type == 'hold');
+   var open_ext = (ev.type == 'open_ext');   // 'open ext' entry in dx freq list menu
+   var label;
+   //alert('DXC '+ ev.type);
    //canvas_log('DXC '+ ev.type);
    //event_dump(ev, 'dx_click');
-	if (!hold && ev.shiftKey && dx.db == dx.DB_STORED) {
+
+	if (!hold && !open_ext && ev.shiftKey && dx.db == dx.DB_STORED) {
 		dx_show_edit_panel(ev, gid);
 	} else {
 	   // easier to do this way since it's about the only element that
 	   // intercepts mousedown/touchstart without subsequent propagation
-	   w3_menu_close('dx_click');
-	   dx_sig_bw(gid);
+	   if (!open_ext) {
+         w3_menu_close('dx_click');
+         dx_sig_bw(gid);
+         
+         // allow anchor links within the ident to be clicked
+         if (ev.target && ev.target.nodeName == 'A') {
+            console.log('dx_click: link within label');
+            dx.ctrl_click = false;
+            return ev;     // let click go through to anchor element
+         }
 	   
-	   // allow anchor links within the ident to be clicked
-	   if (ev.target && ev.target.nodeName == 'A') {
-	      console.log('dx_click: link within label');
-		   dx.ctrl_click = false;
-		   return ev;     // let click to through to anchor element
-	   }
-	   
-	   owrx.dx_click_gid_last_stored = (dx.db == dx.DB_STORED)? gid : undefined;
-	   owrx.dx_click_gid_last_until_tune = gid;
-	   var label = dx.list[gid];
+         owrx.dx_click_gid_last_stored = (dx.db == dx.DB_STORED)? gid : undefined;
+         owrx.dx_click_gid_last_until_tune = gid;
+         label = dx.list[gid];
+      } else {
+         label = ev.label;
+      }
+
 	   var freq = label.freq;
 	   var f_base = freq - kiwi.freq_offset_kHz;
 		var mode = kiwi.modes_lc[dx_decode_mode(label.flags)];
@@ -9899,6 +9924,12 @@ function dx_click(ev, gid)
       var extname = extint.extname? extint.extname : '';
 		//console_log_dbgUs('dx_click gid='+ gid +' f='+ freq +'|'+ f_base +' mode='+ mode +' cur_mode='+ cur_mode +' lo='+ lo +' hi='+ hi +' params=<'+ params +'> extname=<'+ extname +'> param=<'+ extint.param +'>');
 
+      if (hold) {
+         dx_freq_list(label, extname);
+		   dx.ctrl_click = false;
+         return;
+      }
+
       // EiBi database frequencies are dial/carrier (i.e. not pbc)
       if (dx.db == dx.DB_EiBi) {
          
@@ -9914,10 +9945,12 @@ function dx_click(ev, gid)
 		// setting DRM mode above opens DRM extension
 		var check_ext;
 		if (kiwi_isMobile()) {
-		   check_ext = hold;    // on mobile open extension only on a hold, not just a click
+		   //check_ext = hold;    // on mobile open extension only on a hold, not just a click
+		   check_ext = open_ext;
 		} else {
          //check_ext = (!hold && ((dx.db == dx.DB_EiBi)? ev.shiftKey : !any_alternate_click_event(ev)));
-         check_ext = (!hold && !any_alternate_click_event(ev));
+         //check_ext = (!hold && !any_alternate_click_event(ev));
+		   check_ext = open_ext;
          //if (!check_ext && hold) check_ext = true;    // test hold on desktop
       }
       //canvas_log('CKEXT='+ check_ext);
@@ -9934,7 +9967,7 @@ function dx_click(ev, gid)
             var s =
                w3_divs('/w3-margin-B-8',
                   w3_text('w3-margin-left w3-text-white', 'Open '+ dx.extname +'<br>extension?'),
-                  w3_button('w3-green w3-margin-left', 'Confirm', 'dx_ext_open'),
+                  w3_button('w3-green w3-margin-left', 'Confirm', 'dx_open_ext'),
                   w3_button('w3-red w3-margin-left', 'Cancel', 'confirmation_panel_close')
                );
 		      confirmation_show_content(s, 175, 140);
@@ -9951,7 +9984,7 @@ function dx_click(ev, gid)
 }
 
 /*
-function dx_ext_open()
+function dx_open_ext()
 {
    confirmation_panel_close();
    extint_open(dx.extname);
@@ -10006,6 +10039,14 @@ function dx_help(show)
          w3_text('w3-medium w3-bold w3-text-aqua', 'DX label help') +
          w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
             w3_div('w3-margin-R-8',
+               'DX label click help: <br>' +
+               'Click to tune to label frequency. <br>' +
+               'Click-hold for menu of all frequencies having the same label name. <br>' +
+               'Labels with black bar on right have an associated extension. <br>' +
+               'Click "open ext" in freq menu to open extension (if any). <br>' +
+               'Extension opened immediately for single frequency labels (e.g. WWVB, DCF77) <br>' +
+               '<br>' +
+               
                'There are three types of DX labels seen in the area above the frequency scale: <br>' +
                '1) Labels from a stored database, editable by the Kiwi owner/admin. <br>'+
                '2) Labels from a read-only copy of the <a href="http://www.eibispace.de" target="_blank">EiBi database</a> that cannot be modified. <br>' +
@@ -10975,6 +11016,18 @@ function panels_setup()
 	
 	var mobile = kiwi_isMobile()?
 	   (' inputmode='+ dq(kiwi_is_iOS()? 'decimal' : 'tel') +' ontouchstart="popup_keyboard_touchstart(event)" onclick="this.select()"') : '';
+	/*
+	var mobile = '';
+	if (kiwi_isMobile()) {
+	   mobile = ' inputmode='+ dq(kiwi_is_iOS()? 'decimal' : 'tel');
+	   if (kiwi_is_iOS()) {
+	      //mobile += ' step="any" pattern="[0-9]*(\.[0-9]+)?"';
+	      //mobile += ' step="any"';
+	   }
+	   mobile += ' ontouchstart="popup_keyboard_touchstart(event)" onclick="this.select()"';
+	   alert(mobile);
+	}
+	*/
 	
 	w3_el("id-control-freq1").innerHTML =
 	   w3_inline('w3-halign-space-between/',

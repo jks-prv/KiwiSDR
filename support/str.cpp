@@ -407,6 +407,8 @@ int kiwi_split(char *ocp, char **mbuf, const char *delims, str_split_t argv[], i
 	    bool not_empty = (ap->str[0] != '\0');
 		if ((flags & KSPLIT_NO_SKIP_EMPTY_FIELDS) || not_empty) {
             ap->delim = (not_empty && tp)? ocp[(tp - *mbuf) - 1] : '\0';
+            if (flags & KSPLIT_PARSE_NUMERIC)
+                ap->num = strtol(ap->str, NULL, 0);
             //if (dbg) real_printf("kiwi_split %d <%s> <%s>\n", n, ap->str, ASCII[ap->delim]);
 			n++;
 			if (++ap >= &argv[nargs])
@@ -646,7 +648,7 @@ static void kiwi_fewer_encode(const char *src, char *dst, size_t dst_len) {
       dst[2] = hex[(* (const unsigned char *) src) & 0xf];
       dst[3] = '>';
       dst += 3;
-    } else break;	// KiwiSDR: for valgrind, don't leave uninitialized bytes in string
+    } else break;	// KiwiSDR: don't leave uninitialized bytes in string
   }
 
   *dst = '\0';

@@ -516,11 +516,12 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("init.floor_dB", 0, &up_cfg);
     cfg_default_int("init.ceil_dB", 5, &up_cfg);
 
-    int _dom_sel = cfg_default_int("sdr_hu_dom_sel", DOM_SEL_NAM, &up_cfg);
+    net.dom_sel = cfg_default_int("sdr_hu_dom_sel", DOM_SEL_NAM, &up_cfg);
+    //printf("rx_init: dom_sel=%d\n", net.dom_sel);
 
     #if 0
         // try and get this Kiwi working with the proxy
-        //printf("serno=%d dom_sel=%d\n", serial_number, _dom_sel);
+        //printf("serno=%d dom_sel=%d\n", serial_number, net.dom_sel);
 	    if (serial_number == 1006 && _dom_sel == DOM_SEL_NAM) {
             cfg_set_int("sdr_hu_dom_sel", DOM_SEL_REV);
             update_cfg = cfg_gdb_break(true);
@@ -542,7 +543,7 @@ void update_vars_from_config(bool called_at_init)
         // DOM_SEL_NAM=0 and DOM_SEL_PUB=2. This can result in DOM_SEL_NAM selected but the corresponding
         // domain field blank which has bad consequences (e.g. TDoA host file corrupted).
         // So do some consistency checking here.
-        if (dom_sel == DOM_SEL_NAM && (*server_url == '\0' || strcmp(server_url, "kiwisdr.example.com") == 0)) {
+        if (net.dom_sel == DOM_SEL_NAM && (*server_url == '\0' || strcmp(server_url, "kiwisdr.example.com") == 0)) {
             lprintf("### DOM_SEL check: DOM_SEL_NAM but server_url=\"%s\"\n", server_url);
             lprintf("### DOM_SEL check: forcing change to DOM_SEL_PUB\n");
             cfg_set_int("sdr_hu_dom_sel", DOM_SEL_PUB);
@@ -705,7 +706,7 @@ void update_vars_from_config(bool called_at_init)
         admcfg_default_bool("use_kalman_position_solver", true, &update_admcfg);
         admcfg_default_int("rssi_azel_iq", 0, &update_admcfg);
 
-        admcfg_default_bool("always_acq_gps", false, &update_admcfg);
+        admcfg_default_bool("always_acq_gps", true, &update_admcfg);
         gps.set_date = admcfg_default_bool("gps_set_date", false, &update_admcfg);
         gps.include_alert_gps = admcfg_default_bool("include_alert_gps", false, &update_admcfg);
         //real_printf("gps.include_alert_gps=%d\n", gps.include_alert_gps);
@@ -715,12 +716,21 @@ void update_vars_from_config(bool called_at_init)
 
         gps.acq_Navstar = admcfg_default_bool("acq_Navstar", true, &update_admcfg);
         if (!gps.acq_Navstar) ChanRemove(Navstar);
+        gps.acq_SBAS = admcfg_default_bool("acq_SBAS", false, &update_admcfg);
+        if (!gps.acq_SBAS) ChanRemove(SBAS);
         gps.acq_QZSS = admcfg_default_bool("acq_QZSS", true, &update_admcfg);
         if (!gps.acq_QZSS) ChanRemove(QZSS);
         gps.QZSS_prio = admcfg_default_bool("QZSS_prio", false, &update_admcfg);
         gps.acq_Galileo = admcfg_default_bool("acq_Galileo", true, &update_admcfg);
         if (!gps.acq_Galileo) ChanRemove(E1B);
-        //real_printf("Navstar=%d QZSS=%d Galileo=%d\n", gps.acq_Navstar, gps.acq_QZSS, gps.acq_Galileo);
+        //real_printf("Navstar=%d SBAS=%d QZSS=%d Galileo=%d\n", gps.acq_Navstar, gps.acq_SBAS, gps.acq_QZSS, gps.acq_Galileo);
+        
+        admcfg_default_string("gps_SBAS", "0", &update_admcfg);
+        if (called_at_init) {
+            const char *sbas = admcfg_string("gps_SBAS", NULL, CFG_REQUIRED);
+            gps_sbas_select((char *) sbas);
+            admcfg_string_free(sbas);
+        }
 
         // force plot_E1B true because there is no longer an option switch in the admin interface (to make room for new ones)
         bool plot_E1B = admcfg_default_bool("plot_E1B", true, &update_admcfg);

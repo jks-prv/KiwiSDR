@@ -1,9 +1,5 @@
 DRM_SKIP ?= false
 
-ifeq ($(DEBIAN_VERSION),7)
-    DRM_SKIP = true
-endif
-
 THIS_DRM = extensions/DRM
 $(GEN_DIR)/ext_init.cpp: $(THIS_DRM)/Makefile
 
