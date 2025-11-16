@@ -7,7 +7,7 @@ v1.823  November 16, 2025
     DX label frequency list menus:
         When click-holding on a DX label a menu will now appear if there are multiple labels that
         have the same label text. The menu allows the frequencies of these multiple labels to be
-        selected directly.
+        selected directly. This works for all the label databases: stored, EiBi and community.
     
         Example: Click-hold on the 10 MHz WWVH/WWV label and a menu with all the WWV frequencies
         (2.5, 5, 10, 15, 20 MHz) appears. A menu entry "open ext" will be shown if a label has an
