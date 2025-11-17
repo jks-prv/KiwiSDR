@@ -3,6 +3,13 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.824  November 18, 2025
+    Revert to previous use of modifier keys with DX labels:
+        Click opens extension if label has one.
+        Shift-click open label control panel.
+        Ctrl/alt/option-click skips opening extension.
+    Click-hold continues to open the new label menu added in the last release.
+
 v1.823  November 16, 2025
     DX label frequency list menus:
         When click-holding on a DX label a menu will now appear if there are multiple labels that
