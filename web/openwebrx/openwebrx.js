@@ -10071,11 +10071,11 @@ function dx_help(show)
                      '<li>Clicking the label sets the freq/mode and opens the extension (if any).</li>' +
                      '<li>Shift-clicking opens the DX labels panel.</li>' +
                      '<li>PC</li><ul>' +
-                        '<li>Alt-click sets the freq/mode without openning the extension.</li>' +
+                        '<li>Alt-click sets the freq/mode without opening the extension.</li>' +
                         '<li>Shift-alt-click to toggle the label active (admin only).</li>' +
                      '</ul>' +
                      '<li>Mac</li><ul>' +
-                        '<li>Alt/option-click sets the freq/mode without openning the extension.</li>' +
+                        '<li>Alt/option-click sets the freq/mode without opening the extension.</li>' +
                         '<li>Shift-alt/option-click to toggle the label active (admin only).</li>' +
                         '<li>On Mac the control key can be used in place of alt/option.</li>' +
                      '</ul>' +
