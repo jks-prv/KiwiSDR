@@ -10022,14 +10022,6 @@ function dx_help(show)
          w3_text('w3-medium w3-bold w3-text-aqua', 'DX label help') +
          w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
             w3_div('w3-margin-R-8',
-               'DX label click help: <br>' +
-               'Click to tune to label frequency. <br>' +
-               'Click-hold for menu of all frequencies having the same label name. <br>' +
-               'Labels with black bar on right have an associated extension. <br>' +
-               'Click "open ext" in freq menu to open extension (if any). <br>' +
-               'Extension opened immediately for single frequency labels (e.g. WWVB, DCF77) <br>' +
-               '<br>' +
-               
                'There are three types of DX labels seen in the area above the frequency scale: <br>' +
                '1) Labels from a stored database, editable by the Kiwi owner/admin. <br>'+
                '2) Labels from a read-only copy of the <a href="http://www.eibispace.de" target="_blank">EiBi database</a> that cannot be modified. <br>' +
@@ -10068,13 +10060,16 @@ function dx_help(show)
          
                'Labels that have an extension specified have a black bar on the right part of the label. <br>' +
                'This is for consistency between the desktop and mobile interfaces. <br>' +
-               'Other behavior is device specific: <br><br>' +
+               'Click-hold a label (or Touch-hold on mobile) to open a menu for the label. ' +
+               'Use menu "open ext" to open label extension (if any) or select frequency of labels with the same name.' +
+               '<br>Other behavior is device specific: <br><br>' +
+
                'Desktop:' +
                   '<ul>' +
                      '<li>Extension labels are magenta when moused-over as opposed to the usual yellow.</li>' +
                      '<li>Labels outside their scheduled time (if any) will mouse-over grey.</li>' +
-                     '<li>Clicking the label sets the freq/mode and opens the extension.</li>' +
-                     '<li>For the stored database shift-clicking opens the DX labels panel (admin only).</li>' +
+                     '<li>Clicking the label sets the freq/mode and opens the extension (if any).</li>' +
+                     '<li>Shift-clicking opens the DX labels panel.</li>' +
                      '<li>PC</li><ul>' +
                         '<li>Alt-click sets the freq/mode without openning the extension.</li>' +
                         '<li>Shift-alt-click to toggle the label active (admin only).</li>' +
@@ -10088,7 +10083,6 @@ function dx_help(show)
                'Mobile:' +
                   '<ul>' +
                      '<li>Touching a label sets the freq/mode.</li>' +
-                     '<li>Touch-hold a label to set freq/mode and open the extension.</li>' +
                      '<li>After touching a label use the right-click menu to open edit panel for that label.</li>' +
                   '</ul>' +
 
