@@ -9848,8 +9848,9 @@ function dx_click(ev, gid)
    //alert('DXC '+ ev.type);
    //canvas_log('DXC '+ ev.type);
    //event_dump(ev, 'dx_click');
+   //console.log('dx_click hold='+ hold +' open_ext='+ open_ext +' shift='+ ev.shiftKey +' alt='+ any_alternate_click_event());
 
-	if (!hold && !open_ext && ev.shiftKey && dx.db == dx.DB_STORED) {
+	if (!hold && !open_ext && ev.shiftKey) {
 		dx_show_edit_panel(ev, gid);
 	} else {
 	   // easier to do this way since it's about the only element that
@@ -9930,11 +9931,7 @@ function dx_click(ev, gid)
          return;
       }
 
-      // EiBi database frequencies are dial/carrier (i.e. not pbc)
-      if (dx.db == dx.DB_EiBi) {
-         
-      }
-
+      // NB: EiBi database frequencies are dial/carrier (i.e. not pbc)
       extint.mode_prior_to_dx_click = cur_mode;
 		freqmode_set_dsp_kHz(f_base, mode, { open_ext:true, no_clear_last_gid:1 });
 		if (lo || hi) {
@@ -9950,7 +9947,8 @@ function dx_click(ev, gid)
 		} else {
          //check_ext = (!hold && ((dx.db == dx.DB_EiBi)? ev.shiftKey : !any_alternate_click_event(ev)));
          //check_ext = (!hold && !any_alternate_click_event(ev));
-		   check_ext = open_ext;
+		   //check_ext = open_ext;
+         check_ext = ((!hold && !any_alternate_click_event(ev)) || open_ext);
          //if (!check_ext && hold) check_ext = true;    // test hold on desktop
       }
       //canvas_log('CKEXT='+ check_ext);
@@ -9958,21 +9956,6 @@ function dx_click(ev, gid)
 		if (mode != 'drm' && check_ext && !dx.ctrl_click && params) {
          //canvas_log('OPEN '+ extint.extname);
 		   console_log_dbgUs('dx_click ext='+ extint.extname +' <'+ extint.param +'>');
-		   
-		   // (we use touch-hold now)
-		   /*
-		   // give mobile a chance to abort
-		   if (kiwi_isMobile()) {
-		      dx.extname = extint.extname;
-            var s =
-               w3_divs('/w3-margin-B-8',
-                  w3_text('w3-margin-left w3-text-white', 'Open '+ dx.extname +'<br>extension?'),
-                  w3_button('w3-green w3-margin-left', 'Confirm', 'dx_open_ext'),
-                  w3_button('w3-red w3-margin-left', 'Cancel', 'confirmation_panel_close')
-               );
-		      confirmation_show_content(s, 175, 140);
-		   } else
-		   */
 		   {
 			   extint_open(extint.extname, 250);
 			}
@@ -10039,14 +10022,6 @@ function dx_help(show)
          w3_text('w3-medium w3-bold w3-text-aqua', 'DX label help') +
          w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
             w3_div('w3-margin-R-8',
-               'DX label click help: <br>' +
-               'Click to tune to label frequency. <br>' +
-               'Click-hold for menu of all frequencies having the same label name. <br>' +
-               'Labels with black bar on right have an associated extension. <br>' +
-               'Click "open ext" in freq menu to open extension (if any). <br>' +
-               'Extension opened immediately for single frequency labels (e.g. WWVB, DCF77) <br>' +
-               '<br>' +
-               
                'There are three types of DX labels seen in the area above the frequency scale: <br>' +
                '1) Labels from a stored database, editable by the Kiwi owner/admin. <br>'+
                '2) Labels from a read-only copy of the <a href="http://www.eibispace.de" target="_blank">EiBi database</a> that cannot be modified. <br>' +
@@ -10085,19 +10060,22 @@ function dx_help(show)
          
                'Labels that have an extension specified have a black bar on the right part of the label. <br>' +
                'This is for consistency between the desktop and mobile interfaces. <br>' +
-               'Other behavior is device specific: <br><br>' +
+               'Click-hold a label (or Touch-hold on mobile) to open a menu for the label. ' +
+               'Use menu "open ext" to open label extension (if any) or select frequency of labels with the same name.' +
+               '<br>Other behavior is device specific: <br><br>' +
+
                'Desktop:' +
                   '<ul>' +
                      '<li>Extension labels are magenta when moused-over as opposed to the usual yellow.</li>' +
                      '<li>Labels outside their scheduled time (if any) will mouse-over grey.</li>' +
-                     '<li>Clicking the label sets the freq/mode and opens the extension.</li>' +
-                     '<li>For the stored database shift-clicking opens the DX labels panel (admin only).</li>' +
+                     '<li>Clicking the label sets the freq/mode and opens the extension (if any).</li>' +
+                     '<li>Shift-clicking opens the DX labels panel.</li>' +
                      '<li>PC</li><ul>' +
-                        '<li>Alt-click sets the freq/mode without openning the extension.</li>' +
+                        '<li>Alt-click sets the freq/mode without opening the extension.</li>' +
                         '<li>Shift-alt-click to toggle the label active (admin only).</li>' +
                      '</ul>' +
                      '<li>Mac</li><ul>' +
-                        '<li>Alt/option-click sets the freq/mode without openning the extension.</li>' +
+                        '<li>Alt/option-click sets the freq/mode without opening the extension.</li>' +
                         '<li>Shift-alt/option-click to toggle the label active (admin only).</li>' +
                         '<li>On Mac the control key can be used in place of alt/option.</li>' +
                      '</ul>' +
@@ -10105,7 +10083,6 @@ function dx_help(show)
                'Mobile:' +
                   '<ul>' +
                      '<li>Touching a label sets the freq/mode.</li>' +
-                     '<li>Touch-hold a label to set freq/mode and open the extension.</li>' +
                      '<li>After touching a label use the right-click menu to open edit panel for that label.</li>' +
                   '</ul>' +
 
