@@ -1,7 +1,7 @@
 
 /*
 	_Extremely_ quick & dirty assembler for the language used in Andrew Holme's FORTH-like FPGA processor
-	for his homemade GPS project: holmea.demon.co.uk/GPS
+	for his homemade GPS project: www.aholme.co.uk/GPS/Main.htm
 	
 	We made slight changes to some of the pre-processing directives to make our parsing easier.
 	

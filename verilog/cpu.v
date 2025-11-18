@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-// http://www.holmea.demon.co.uk/GPS/Main.htm
+// http://www.aholme.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
 // Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
