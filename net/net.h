@@ -60,6 +60,16 @@ Boston, MA  02110-1301, USA.
         net_dprintf2("NET_WAIT_COND WAKEUP task=%s from=%s(%s) cond=(%s)\n", TaskName(), caller, from, #cond); \
     }
 
+#define NET_WAIT_COND_DEBUG(caller, from, cond) \
+    if (!(cond)) { \
+        net_dprintf2("NET_WAIT_COND SLEEP task=%s from=%s(%s) cond=(%s)\n", TaskName(), caller, from, #cond); \
+        while (!(cond)) { \
+            TaskSleepSec(5); \
+            net_dprintf2("NET_WAIT_COND CHECK task=%s from=%s(%s) cond=(%s)\n", TaskName(), caller, from, #cond); \
+        } \
+        net_dprintf2("NET_WAIT_COND WAKEUP task=%s from=%s(%s) cond=(%s)\n", TaskName(), caller, from, #cond); \
+    }
+
 typedef enum { IPV_NONE = 0, IPV4 = 4, IPV6 = 6 } ipv46_e;
 
 // dot to host (little-endian) conversion

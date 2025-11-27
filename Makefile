@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 824
+VERSION_MIN = 825
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -129,23 +129,23 @@ check_detect:
     endif
 
 ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
-.PHONY: xc
-ifeq ($(XC),)
-    xc: 
-	    @if [ ! -f $(KIWI_XC_REMOTE_FS)/ID.txt ] && \
-	        [ ! -f $(KIWI_XC_REMOTE_FS)/boot/config.txt ]; then \
-	        echo "ERROR: remote filesystem $(KIWI_XC_REMOTE_FS) not mounted?"; \
-	        exit -1; \
-	    fi
-	    @make XC=-DXC $@
-else
-    xc: make_prereq
-	    @echo KIWI_XC_HOST = $(KIWI_XC_HOST)
-	    @echo KIWI_XC_HOST_PORT = $(KIWI_XC_HOST_PORT)
-	    @echo KIWI_XC_REMOTE_FS = $(KIWI_XC_REMOTE_FS)
-	    @echo KIWI_XC_COPY_SOURCES = $(KIWI_XC_COPY_SOURCES)
-	    @make $(MAKE_ARGS) build_makefile_inc
-	    @make $(MAKE_ARGS) make_all
+    .PHONY: xc
+    ifeq ($(XC),)
+        xc: 
+	        @if [ ! -f $(KIWI_XC_REMOTE_FS)/ID.txt ] && \
+	            [ ! -f $(KIWI_XC_REMOTE_FS)/boot/config.txt ]; then \
+	            echo "ERROR: remote filesystem $(KIWI_XC_REMOTE_FS) not mounted?"; \
+	            exit -1; \
+	        fi
+	        @make XC=-DXC $@
+    else
+        xc: make_prereq
+	        @echo KIWI_XC_HOST = $(KIWI_XC_HOST)
+	        @echo KIWI_XC_HOST_PORT = $(KIWI_XC_HOST_PORT)
+	        @echo KIWI_XC_REMOTE_FS = $(KIWI_XC_REMOTE_FS)
+	        @echo KIWI_XC_COPY_SOURCES = $(KIWI_XC_COPY_SOURCES)
+	        @make $(MAKE_ARGS) build_makefile_inc
+	        @make $(MAKE_ARGS) make_all
     endif
 endif
 
@@ -473,6 +473,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     /usr/bin/jq:
 	    -apt-get -y $(APT_GET_FORCE) install jq
 
+	.PHONY frpc
+    frpc: lftp
+	    cp $(DIR_FILE_SRC)/pkgs/frp/$(ARCH_DIR)/frpc /usr/local/bin
+	    chmod +x /usr/local/bin/frpc
+	    sum /usr/local/bin/frpc
 endif
 
 

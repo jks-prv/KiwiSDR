@@ -640,7 +640,9 @@ function tdoa_place_host_marker(h, map)
 {
    var marker;
    h.have_event_listeners = [];
-   h.hp = h.h +':'+ h.p;
+   h.hp = h.h;
+   if (!h.h.endsWith('proxy.kiwisdr.com'))
+      h.hp += ':'+ h.p;
    h.call = h.id.replace(/\-/g, '/');    // decode slashes
    
    var title = tdoa_host_title(h);
@@ -3332,7 +3334,10 @@ function tdoa_waterfall_close()
 function tdoa_wf_preview(h)
 {
    //console.log(h);
+   // NB: always include port in xxx.proxy.kiwisdr.com:8073 because otherwise
+   // redirection fails with open_websocket()
    tdoa.wf_url = h.hp;
+   tdoa.wf_url_full = h.h +':'+ h.p;
    tdoa.wf_id_snr = h.id_snr;
    w3_innerHTML('id-tdoa-submit-status', 'Waterfall preview: '+ h.id_snr +' ('+ tdoa.wf_url +')');
 
@@ -3361,7 +3366,7 @@ function tdoa_wf_preview(h)
       tdoa_waterfall_add_queue,  // recv_cb
       on_ws_error,               // error_cb
       tdoa_waterfall_close,      // close_cb
-      { url: tdoa.wf_url, new_ts: true, qs: '', all_msg_cb: tdoa_all_msg_cb }
+      { url: tdoa.wf_url_full, new_ts: true, qs: '', all_msg_cb: tdoa_all_msg_cb }
    );
 
    tdoa.wf_conn_bad = false;

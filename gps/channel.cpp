@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-// http://www.holmea.demon.co.uk/GPS/Main.htm
+// http://www.aholme.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
 #include "gps.h"
@@ -476,6 +476,7 @@ void CHANNEL::Tracking() {
 	    //evGPS(EC_EVENT, EV_GPS, ch, "GPS", evprintf("TaskSleepMsec(250) ch %d", ch+1));
         TaskSleepUsec(POLLING_US);
         UploadEmbeddedState();
+        if (isSBAS) NextTask("SBAS");
         TaskStat(TSTAT_INCR|TSTAT_ZERO, 0, "trk");
 
         // Process NAV data

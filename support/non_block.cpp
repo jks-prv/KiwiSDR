@@ -303,6 +303,7 @@ static void _non_blocking_cmd_foreach(void *param)
 
     // give func() the option of returning cmd stat or something else
 	args->cmd_stat = pclose(pf);    // yes, pclose returns exit status of cmd
+    //printf("_non_blocking_cmd_foreach cmd_stat=%d\n", args->cmd_stat);
     args->kstr = NULL;
     child_exit(args->func((void *) args));
 	#undef NCHUNK

@@ -146,7 +146,9 @@ alias trunc="truncate -s 0"
 alias keys="cd /root; mkdir -p .ssh; cd .ssh; cat >authorized_keys"
 alias keys2="cp authorized_keys authorized_keys2"
 alias ss="/bin/ss -tulapn"
+alias ssr="/bin/ss -tulapnr"
 alias netstat="/bin/ss -tulapn"
+alias netstatr="/bin/ss -tulapnr"
 
 # debian acct
 alias chod="chown debian:debian"
@@ -598,7 +600,8 @@ alias st="stty -a"
 alias adc="function _adc () { while true; do curl -s $_our_ip:8073/adc?level=\$1; sleep 0.5; done ; } ; _adc"
 alias adcov="function _adcov () { curl -s $_our_ip:8073/adc_ov } ; _adcov"
 alias adcovr="function _adcovr () { curl -s $_our_ip:8073/adc_ov?reset } ; _adcovr"
-alias flog="tail -n 100 -f /var/log/frpc.log"
+alias plog="tail -n 100 -f /var/log/frpc.log"
+alias prlog="tail -n 100 -f /var/log/frpc.log"
 
 
 # networking
