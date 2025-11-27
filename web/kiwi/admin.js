@@ -868,7 +868,7 @@ function connect_html()
 
                // host name
                w3_inline('id-proxy-host w3-valign-end/',
-                  w3_input_get('|width:70%/', "Host name: a-z, 0-9, -, _<br>(all lower case, no leading '-' or digit, see instructions)",
+                  w3_input_get('|width:70%/', "Host name: a-z, 0-9, - <br>(all lower case, no leading '-' or digit, see instructions)",
                      'adm.rev_host', 'connect_rev_host_cb', '', 'required'
                   ),
                   w3_div('id-connect-proxy_server w3-margin-L-8 w3-show-inline-block')
@@ -1352,7 +1352,7 @@ function connect_rev_status_cb(status)
 		case   2: s = 'Updating host name, registration successful'; break;     // FRPC_UPDATE_HOST
 
 		case 100: s = 'User key or host name field blank'; break;
-		case 101: s = 'User key invalid. Did you email your user/API key to support@kiwisdr.com as per the instructions?'; break;
+		case 101: s = 'User key invalid. Did you request a user key from support@kiwisdr.com as per the instructions?'; break;
 		case 102: s = 'Host name already in use; please choose another and retry'; break;
 		case 103: s = 'Invalid characters in user key or host name field (use a-z, 0-9, -, _)'; break;
 

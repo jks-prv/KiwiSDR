@@ -31,5 +31,21 @@ bool wakeup_reg_kiwisdr_com(wakeup_reg_e wakeup_reg);
 void my_kiwi_register(bool reg = true, int root_pwd_unset = 0, int debian_pwd_default = 0);
 void file_GET(void *param);
 
+// net.proxy_status
+#define PR_REG_OK           0
+#define PR_NEW_ACCT_OK      1
+#define PR_UPD_HOSTNAME_OK  2
+#define PR_USER_HOST_BLANK  100
+#define PR_BAD_USER_KEY     101
+#define PR_HOST_INUSE       102
+#define PR_INVALID_CHARS    103
+#define PR_AUTO_NO_HOST     150
+#define PR_AUTO_NO_USER     151
+#define PR_AUTO_DUP_ACCT    152
+#define PR_RUNNING          200
+#define PR_PENDING          201
+#define PR_NO_CONTACT       900
+#define PR_INVALID_STATUS   901
+
 void proxy_frpc_setup(const char *proxy_server, const char *user, const char *host, int port);
 void proxy_frpc_restart();

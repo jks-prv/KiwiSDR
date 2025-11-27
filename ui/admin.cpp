@@ -576,7 +576,7 @@ void c2s_admin(void *param)
 
             i = strcmp(cmd, "SET rev_status_query");
             if (i == 0) {
-                net.proxy_status = rev_enable_start? 200:201;
+                net.proxy_status = rev_enable_start? PR_RUNNING : PR_PENDING;
                 printf("rev_status_query: rev_status=%d\n", net.proxy_status);
                 send_msg(conn, SM_NO_DEBUG, "ADM rev_status=%d", net.proxy_status);
                 continue;

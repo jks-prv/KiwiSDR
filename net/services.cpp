@@ -269,7 +269,7 @@ void proxy_frpc_setup(const char *proxy_server, const char *user, const char *ho
         // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
         actual_proxy_server = isdigit(host[0])? "proxy2.kiwisdr.com" : proxy_server;
     #elif PROXY2_TEST
-        actual_proxy_server = strcmp(host, "jksp2")? proxy_server : "proxy2.kiwisdr.com";
+        actual_proxy_server = strcmp(host, "jks")? proxy_server : "proxy2.kiwisdr.com";
     #else
         // no redirection
         actual_proxy_server = proxy_server;
@@ -479,7 +479,8 @@ static void misc_NET(void *param)
     NET_WAIT_COND("my_kiwi", "misc_NET", net.pub_valid);
     
     if (net.dom_sel == DOM_SEL_REV) {
-        NET_WAIT_COND("my_kiwi", "misc_NET", net.proxy_running);
+        // wait for proxy to get running
+        TaskSleepSec(10);
     }
 
     if (admcfg_true("my_kiwi")) {
@@ -497,20 +498,10 @@ void proxy_frpc_restart()
 static int _frpc_func(void *param)
 {
 	nbcmd_args_t *args = (nbcmd_args_t *) param;
-	args->cmd_poll_msec = 1000;
-	if (args->kstr == NULL) {
-	    int rv = args->cmd_stat? 1:0;
-	    //real_printf("_frpc_func DONE cmd_stat=%d rv=%d\n", args->cmd_stat, rv);
-	    return rv;
-	} else {
-	    char *sp = kstr_sp(args->kstr);
-	    //real_printf("_frpc_func <%s>\n", sp);
-	    if (strstr(sp, "start proxy success")) {
-	        net.proxy_running = true;       // net is in shmem, so this works
-	        //real_printf("_frpc_func net.proxy_running\n");
-	    }
-	    return 0;
-    }
+	if (args->kstr == NULL)
+        return WEXITSTATUS(args->cmd_stat);      // cmd_stat only valid at end of cmd output
+    else
+        return 0;
 }
 
 static void proxy_task(void *param)
@@ -518,11 +509,8 @@ static void proxy_task(void *param)
     char *cmd_p;
     int rv;
 
-    // NB: Must capture frpc output so "start proxy success" log message can be detected above.
-    // The char-oriented /dev/stderr must be used instead of the line-oriented /dev/stdout to
-    // guarantee the output is seen.
-    //asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr --log-level=debug -c " DIR_CFG "/frpc.ini 2>&1");
-    asprintf(&cmd_p, "/usr/local/bin/frpc -L /dev/stderr -c " DIR_CFG "/frpc.ini 2>&1 | tee -a /var/log/frpc.log");
+    //asprintf(&cmd_p, "/usr/local/bin/frpc -L /var/log/frpc.log --log-level=debug -c " DIR_CFG "/frpc.ini");
+    asprintf(&cmd_p, "/usr/local/bin/frpc -L /var/log/frpc.log -c " DIR_CFG "/frpc.ini");
     
     // Wait for wakeup on server restart or when admin makes proxy cfg changes.
     // Never stops after that (until next server restart with proxy disabled).
@@ -535,7 +523,15 @@ static void proxy_task(void *param)
 
         //printf("proxy_task WAKEUP\n");
         rv = non_blocking_cmd_func_foreach("kiwi.proxy", cmd_p, _frpc_func, 0, 1000);
-        lprintf("PROXY: proxy_task EXIT rv=%d see /var/log/frpc.log for possible error messages\n", rv);
+        rv = WEXITSTATUS(rv);
+        if (rv == 42) {
+            // no point in continuing if there is no valid client authorization (i.e. user key invalid)
+            lprintf("PROXY: proxy_task EXIT client authorization failed\n", rv);
+            net.proxy_status = PR_BAD_USER_KEY;     // for benefit of my.kiwisdr.com
+            break;
+        } else {
+            lprintf("PROXY: proxy_task RETRY rv=%d see /var/log/frpc.log for possible error messages\n", rv);
+        }
         TaskSleepReasonSec("restart", 20);
     };
 }
