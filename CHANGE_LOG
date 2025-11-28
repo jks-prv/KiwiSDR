@@ -3,7 +3,7 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
-v1.825  November 28, 2025
+v1.825,826  November 28, 2025
     Enable test of proxy load balancing.
 
 v1.824  November 18, 2025
