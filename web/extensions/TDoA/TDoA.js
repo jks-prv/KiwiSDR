@@ -1781,6 +1781,7 @@ function tdoa_edit_url_field_cb(path, val, first)
 
    // create host record so listen/preview functions work on manually entered sampling stations
    var hp = val.split(':');
+   if (hp.length == 1) hp[1] = '8073';
    f.host = { h:hp[0], p:hp[1] };
    //console.log(f);
 
@@ -2052,6 +2053,7 @@ function tdoa_submit_button_cb2()
          continue;
       }
       a = a.split(':');
+      if (a.length == 1) a[1] = '8073';
       if (a.length != 2 || a[0] == '' || a[1] == '') {
          f.good = false;
          continue;
