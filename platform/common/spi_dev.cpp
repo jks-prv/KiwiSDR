@@ -190,10 +190,13 @@ void spi_dev(SPI_SEL sel, SPI_MOSI *mosi, int tx_xfers, SPI_MISO *miso, int rx_x
 
 void spi_dev_mode(int spi_mode)
 {
-    u1_t mode = spi_mode | NOT(SPI_CS_HIGH) | NOT(SPI_NO_CS) | NOT(SPI_LSB_FIRST), check_mode;
-    if (ioctl(spi_fd, SPI_IOC_WR_MODE, &mode) < 0) sys_panic("SPI_IOC_WR_MODE");
-    if (ioctl(spi_fd, SPI_IOC_RD_MODE, &check_mode) < 0) sys_panic("SPI_IOC_RD_MODE");
-    lprintf("SPIDEV: spi_mode 0x%x|0x%x\n", mode, check_mode);
+    assert(init);
+    if (use_spidev) {
+        u1_t mode = spi_mode | NOT(SPI_CS_HIGH) | NOT(SPI_NO_CS) | NOT(SPI_LSB_FIRST), check_mode;
+        if (ioctl(spi_fd, SPI_IOC_WR_MODE, &mode) < 0) sys_panic("SPI_IOC_WR_MODE");
+        if (ioctl(spi_fd, SPI_IOC_RD_MODE, &check_mode) < 0) sys_panic("SPI_IOC_RD_MODE");
+        lprintf("SPIDEV: spi_mode 0x%x|0x%x\n", mode, check_mode);
+    }
 }
 
 static void _spi_dev_init(int spi_clkg, int spi_speed)
