@@ -3,307 +3,171 @@
 // Copyright (C) 2013 Andrew Holme
 //
 // This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // http://www.aholme.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#include "gps.h"
 
-#include "types.h"
-#include "kiwi.gen.h"
-#include "timing.h"
+// NOTE: updated 17-Dec-2025
+// Rules enforced:
+// - USABLE => enabled
+// - NOT USABLE / DECOMMISSIONED / RETIRED => commented out (disable) with //
+// - UNDER COMMISSIONING / TEST => commented out (disable) with //
 
-#include <inttypes.h>
-#include <math.h>
+SATELLITE Sats[] = {
 
-// select debugging
-//#define TEST_VECTOR
-#define	QUIET
+    // SBAS PRN 120-158
+    // en.wikipedia.org/wiki/GPS-aided_GEO_augmented_navigation
+    // 11/04/2025 SBAS update based on information of www.gps.gov/pseudorandom-noise-code-assignments
+    // PRN, G2 delay, G2 init
+    // NB: listed first so better chance of obtaining a channel
 
-void gps_main(int argc, char *argv[]);
+    // WAAS (USA SBAS)
+    {131, 1012, 00551, SBAS},  // Eutelsat 117 West B
+    {133,  603, 01731, SBAS},  // SES-15
+    {135,  359, 01216, SBAS},  // Intelsat Galaxy 30
+  //{138,  386, 00450, SBAS},  // Ceased operational WAAS transmissions on May 17, 2022. en.wikipedia.org/wiki/Anik_F1R
 
-///////////////////////////////////////////////////////////////////////////////
-// Frequencies
+    // UK-SBAS (United-Kingdom SBAS)
+    {158,  904, 01542, SBAS},  // UK SBAS Testbed over Inmarsat 3F5
 
-// MAX2769B / SE4150L
-#define FC 4.092e6		// Carrier @ 2nd IF
-#define FS 16.368e6     // Sampling rate
-#define FS_I 16368000
+    // EGNOS (Europe SBAS)
+    {121,  175, 01241, SBAS},  // Eutelsat 5WB en.wikipedia.org/wiki/Eutelsat_5_West_B
+    {123,   21, 00232, SBAS},  // ASTRA 5B
+    {126,  886, 01764, SBAS},  // Inmarsat 4F2
+    {136,  595, 00740, SBAS},  // HOTBIRD 13G en.wikipedia.org/wiki/Hot_Bird#Hotbird_13G
+  //{150,  853, 01041, SBAS},  // reserved
 
-#define CPS 1.023e6		// Chip rate
-#define CPS_I 1023000
+    // SDCM (RUSSIA SBAS)
+    {125, 235, 01076, SBAS},   // Luch-5B Satellite en.wikipedia.org/wiki/Luch_5B
+    {140, 456, 01653, SBAS},   // Luch-5V Satellite en.wikipedia.org/wiki/Luch_5V
+    {141, 499, 01411, SBAS},   // Luch-5A Satellite en.wikipedia.org/wiki/Luch_5A
 
-#define L1_f 1575.42e6  // L1 carrier
-#define L1_CODE_PERIOD (L1_CODELEN*1000/CPS_I)
-#define L1_BPS 50.0     // NAV data rate (20 msec)
+    // ALSBAS/ASAL (Algeria SBAS)
+    {148,  163, 00335, SBAS},  // ALCOMSAT-1 en.wikipedia.org/wiki/Alcomsat-1
 
-#define E1B_f 1575.42e6 // E1B carrier
-#define E1B_CODE_PERIOD (E1B_CODELEN*1000/CPS_I)
-#define E1B_BPS 250.0   // NAV data rate (4 msec)
+    // ASECNA/A-SBAS (Africa and Indian Ocean SBAS)
+    {120,  145, 01106, SBAS},  // SES-12
+    {147,  118, 00355, SBAS},  // NigComSat-1R
 
-#define SBAS_BPS 500.0  // NAV data rate (2 msec)
+    // GAGAN (India SBAS)
+    {127,  657, 00717, SBAS},  // GSAT-8 en.wikipedia.org/wiki/GSAT-8 
+    {128,  634, 01532, SBAS},  // GSAT-10 en.wikipedia.org/wiki/GSAT-10
+    {132,  176, 00520, SBAS},  // GSAT-15 en.wikipedia.org/wiki/GSAT-15
 
-///////////////////////////////////////////////////////////////////////////////
-// Parameters
+    // BDSBAS (China SBAS)  en.wikipedia.org/wiki/BeiDou#BeiDou-3
+    {130,  355, 00341, SBAS},  // Compass-G1
+    {143,  307, 01312, SBAS},  // Compass-G3
+    {144,  127, 01060, SBAS},  // Compass-G2
 
-#define	MIN_SIG     16
+    // KASS (South Korea SBAS)
+    {134,  130, 00706, SBAS},  // MEASAT-3D en.wikipedia.org/wiki/MEASAT_Satellite_Systems
 
-// Decimate by 4 to reduce the FFT size to 16k given 64k input samples
-#define DECIM       4
-//#define DECIM       8
-#define SAMPLE_RATE (FS_I / DECIM)
+    // MSAS (Japan SBAS)
+    {129,  762, 01250, SBAS},  // QZS-3
+    {137,   68, 01007, SBAS},  // QZS-3
+  //{139,  797, 00305, SBAS},  // QZS-7 - Launch planned (PRN assignment exists, not used here)
 
-#define GPS_FFT_POW2 1
-//#define GPS_FFT_POW2 0
-#if GPS_FFT_POW2
-    const float BIN_SIZE = 249.755859375;     // Hz, 4 ms
+    // SPAN/SouthPAN (AUS/NZ SBAS)
+    {122,   52, 00267, SBAS},  // Inmarsat 4F1
 
-    #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
-     const int   FFT_LEN  = FS_I/BIN_SIZE/DECIM;
-     const int   NSAMPLES = FS_I/BIN_SIZE;
-    #else
-     #define FFT_LEN  	(65536/DECIM)   // (FS_I/BIN_SIZE/DECIM)
-     #define NSAMPLES  	65536           // (FS_I/BIN_SIZE)
-    #endif
-#else
-    #define	BIN_SIZE	250		// Hz, 4 ms
-    #define FFT_LEN  	(FS_I/BIN_SIZE/DECIM)
-    #define NSAMPLES  	(FS_I/BIN_SIZE)
-#endif
-
-///////////////////////////////////////////////////////////////////////////////
-// Official GPS constants
-
-const double PI = 3.1415926535898;
-
-const double MU = 3.986005e14;          // WGS 84: earth's gravitational constant for GPS user
-const double OMEGA_E = 7.2921151467e-5; // WGS 84: earth's rotation rate
-
-const double C = 2.99792458e8; // Speed of light
-
-const double F = -4.442807633e-10; // -2*sqrt(MU)/pow(C,2)
-
-///////////////////////////////////////////////////////////////////////////////
-
-typedef enum { Navstar, SBAS, QZSS, E1B } sat_e;
-const char sat_s[sizeof(sat_e)] = { 'N', 'S', 'Q', 'E' };
-
-typedef struct {
-    int prn;
-    union {
-        struct {
-            int T1, T2;
-        };
-        struct {
-            int G2_delay, G2_init;
-        };
-    };
-    sat_e type;
+    // Navstar
+    // www.navcen.uscg.gov/gps-constellation
+    // PRN, G2 tap, G2 tap
     
-    int sat;
-    char *prn_s;
-    bool busy, selected;
-} SATELLITE;
+    { 1,  2,  6, Navstar},
+    { 2,  3,  7, Navstar},
+    { 3,  4,  8, Navstar},
+    { 4,  5,  9, Navstar},
+    { 5,  1,  9, Navstar},
+    { 6,  2, 10, Navstar},
+    { 7,  1,  8, Navstar},
+    { 8,  2,  9, Navstar},
+    { 9,  3, 10, Navstar},
+    {10,  2,  3, Navstar},
+    {11,  3,  4, Navstar},
+    {12,  5,  6, Navstar},
+    {13,  6,  7, Navstar},
+    {14,  7,  8, Navstar},
+    {15,  8,  9, Navstar},
+    {16,  9, 10, Navstar},
+    {17,  1,  4, Navstar},
+    {18,  2,  5, Navstar},
+    {19,  3,  6, Navstar},
+    {20,  4,  7, Navstar},
+    {21,  5,  8, Navstar},
+    {22,  6,  9, Navstar},
+    {23,  1,  3, Navstar},
+    {24,  4,  6, Navstar},
+    {25,  5,  7, Navstar},
+    {26,  6,  8, Navstar},
+    {27,  7,  9, Navstar},
+    {28,  8, 10, Navstar},
+    {29,  1,  6, Navstar},
+    {30,  2,  7, Navstar},
+    {31,  3,  8, Navstar},
+    {32,  4,  9, Navstar},
 
-#define is_Navstar(sat)     (Sats[sat].type == Navstar)
-#define is_SBAS(sat)        (Sats[sat].type == SBAS)
-#define is_QZSS(sat)        (Sats[sat].type == QZSS)
-#define is_E1B(sat)         (Sats[sat].type == E1B)
+    // QZSS (Japan) prn(saif) = 183++, prn(std) = 193++
+    // last checked: 17-Dec-2025
+    // KiwiSDR typically tracks GPS-like L1 C/A. Keep only QZSS PRNs that transmit L1 C/A.
+    // PRN, G2 delay, G2 init
 
-#define MAX_SATS    128
+//  {193, 339, 01050, QZSS},   // SVN1, QZS-1, terminated 15-Sep-2023
+    {194, 208, 01607, QZSS},   // SVN2, QZS-2, L1 C/A
+    {195, 711, 01747, QZSS},   // SVN4, QZS-4, L1 C/A
+//  {196, 189, 01305, QZSS},   // SVN5, QZS-1R: L1C/L1C(B) (no L1 C/A) -> disable for L1 C/A-only tracking
+    {199, 663, 00727, QZSS},   // SVN3, QZS-3, L1 C/A
+//  {200, 942, 00147, QZSS},   // SVN7, QZS-6: L1C/L1C(B) (no L1 C/A) -> disable for L1 C/A-only tracking
+//  {201, 173, 01206, QZSS},   // QZS-7: not launched / not operational on L1 C/A
+//  {202, 900, 01045, QZSS},   // QZSS Test
 
-extern SATELLITE Sats[];
+    // Galileo E1B
+    // last checked: 17-Dec-2025
+    // Source: GSC Constellation Information (status) + NAGUs
+    // PRN, (E1B codes derived separately)
+    // Keep PRNs strictly in numeric order. No blank lines.
 
-#define G2_INIT     0x400
-
-// maximum number of sats possible, not current number of active sats
-#define NUM_NAVSTAR_SATS    32
-#define NUM_E1B_SATS        50
-#define NUM_SBAS_SATS       38
-
-extern u1_t E1B_code1[NUM_E1B_SATS][E1B_CODELEN];
-
-#define PRN(sat)        (Sats[sat].prn_s)
-
-//////////////////////////////////////////////////////////////
-// Search
-
-void SearchInit();
-void SearchFree();
-void SearchTask(void *param);
-void SearchTaskRun();
-void SearchEnable(int sat);
-void SearchParams(int argc, char *argv[]);
-void gps_sbas_select(char *sbas);
-
-//////////////////////////////////////////////////////////////
-// Tracking
-
-#define SUBFRAMES 5
-#define PARITY 6
-
-void ChanInit();
-void ChanTask(void *param);
-int  ChanReset(int sat, int codegen_init);
-void ChanStart(int ch, int sat, int t_sample, int lo_shift, int ca_shift, int snr);
-bool ChanSnapshot(int ch, uint16_t wpos, int *p_sat, int *p_bits, int *p_bits_tow, float *p_pwr);
-void ChanRemove(sat_e type, int prn = -1);
-
-//////////////////////////////////////////////////////////////
-// Solution
-
-void SolveTask(void *param);
-
-//////////////////////////////////////////////////////////////
-// User interface
-
-typedef enum {
-    STAT_SAT,
-    STAT_POWER,
-    STAT_WDOG,
-    STAT_SUB,
-    STAT_LAT,
-    STAT_LON,
-    STAT_ALT,
-    STAT_TIME,
-    STAT_DOP,
-    STAT_LO,
-    STAT_CA,
-    STAT_PARAMS,
-    STAT_ACQUIRE,
-    STAT_EPL,
-    STAT_NOVFL,
-    STAT_DEBUG,
-    STAT_SOLN
-} STAT;
-
-enum {GPS_ERR_NONE, GPS_ERR_PREAMBLE, GPS_ERR_SLIP, GPS_ERR_CRC, GPS_ERR_ALERT, GPS_ERR_OOS, GPS_ERR_PAGE, GPS_ERR_DEBUG};
-const char * const gps_err_s[] = { "none", "pre", "slip", "parity", "alert", "oos", "page", "debug" };
-
-enum {GPS_STAT_GRN = 1, GPS_STAT_YEL, GPS_STAT_RED, GPS_STAT_BLU};
-
-typedef struct {
-    int az, el;
-} azel_t;
-
-typedef struct {
-    int sat;
-    int snr;
-    int rssi, gain;
-    #define GPS_N_AGE (8 + SPACE_FOR_NULL)
-    char age[GPS_N_AGE];
-    bool too_old;
-    int wdog;
-    int hold, ca_unlocked, parity, alert;
-    int sub, sub_renew;
-    int novfl, frames, par_errs;
-    int az, el;
-    int has_soln;
-    int ACF_mode;
-    int sbas_status;
-} gps_chan_t;
-
-typedef struct {
-    int x, y;
-    float lat, lon;
-} gps_pos_t;
-
-typedef struct {
-    float lat, lon;
-} gps_map_t;
-
-typedef struct {
-    int n_Navstar, n_SBAS, n_QZSS, n_E1B;
-    bool acq_Navstar, acq_SBAS, acq_QZSS, QZSS_prio, acq_Galileo;
-	bool acquiring, tLS_valid;
-	unsigned start, ttff;
-	int tracking, good, FFTch;
-
-    int last_samp_hour;
-	u4_t fixes, fixes_min, fixes_min_incr;
-	u4_t fixes_hour, fixes_hour_incr, fixes_hour_samples;
-	u4_t solve_seq;
-
-	double StatWeekSec, StatDaySec;
-	int StatDay;    // 0 = Sunday
-	double StatLat, StatLon, StatAlt, sgnLat, sgnLon;
-	int StatNS, StatEW;
-    signed delta_tLS, delta_tLSF;
-    bool include_alert_gps;
-    bool include_E1B;
-    bool sbas_log;
-    bool set_date, date_set;
-    int tod_chan;
-    int soln_type, E1B_plot_separately;
-	gps_chan_t ch[GPS_MAX_CHANS];
-	
-	//#define AZEL_NSAMP (4*60)
-	#define AZEL_NSAMP 60
-	int az[AZEL_NSAMP][MAX_SATS];
-	int el[AZEL_NSAMP][MAX_SATS];
-	int last_samp;
-	
-	u4_t shadow_map[360];
-	azel_t qzs_3;
-	
-	int IQ_data_ch, IQ_data_ch_ajax;
-	s2_t IQ_data[GPS_IQ_SAMPS_W], IQ_data_ajax[GPS_IQ_SAMPS_W];
-	u4_t IQ_seq_w, IQ_seq_r;
-	u4_t IQ_seq_ajax_w, IQ_seq_ajax_r;
-
-    // reference lat/lon from early GPS fix
-	bool have_ref_lla;
-	float ref_lat, ref_lon, ref_alt;
-
-    // E1B_plot_separately == false
-    #define MAP_ALL 0           // green map pin
+  //{ 1,0,0,E1B},    // GSAT0210 (E01) NOT USABLE
+    { 2,0,0,E1B},    // GSAT0211 (E02) USABLE
+    { 3,0,0,E1B},    // GSAT0212 (E03) USABLE
+    { 4,0,0,E1B},    // GSAT0213 (E04) USABLE
+    { 5,0,0,E1B},    // GSAT0214 (E05) USABLE
+    { 6,0,0,E1B},    // GSAT0227 (E06) USABLE
+    { 7,0,0,E1B},    // GSAT0207 (E07) USABLE
+    { 8,0,0,E1B},    // GSAT0208 (E08) USABLE
+    { 9,0,0,E1B},    // GSAT0209 (E09) USABLE
+    {10,0,0,E1B},    // GSAT0224 (E10) USABLE
+    {11,0,0,E1B},    // GSAT0101 (E11) USABLE
+    {12,0,0,E1B},    // GSAT0102 (E12) USABLE
+    {13,0,0,E1B},    // GSAT0220 (E13) USABLE
+  //{14,0,0,E1B},    // GSAT0202 (E14) NOT USABLE
+    {15,0,0,E1B},    // GSAT0221 (E15) USABLE
+    {16,0,0,E1B},    // GSAT0232 (E16) USABLE
+  //{17,0,0,E1B},    // unused
+  //{18,0,0,E1B},    // GSAT0201 (E18) NOT USABLE
+    {19,0,0,E1B},    // GSAT0103 (E19) USABLE
+  //{20,0,0,E1B},    // GSAT0104 (E20) RETIRED/DECOMMISSIONED
+    {21,0,0,E1B},    // GSAT0215 (E21) USABLE
+  //{22,0,0,E1B},    // GSAT0204 (E22) NOT USABLE
+    {23,0,0,E1B},    // GSAT0226 (E23) USABLE
+  //{24,0,0,E1B},    // GSAT0205 (E24) DECOMMISSIONED
+    {25,0,0,E1B},    // GSAT0216 (E25) USABLE
+    {26,0,0,E1B},    // GSAT0203 (E26) USABLE
+    {27,0,0,E1B},    // GSAT0217 (E27) USABLE
+  //{28,0,0,E1B},    // GSAT0233 (E28) LAUNCHED 17-Dec-2025 05:01 UTC - UNDER COMMISSIONING (NAGU 2025061)
+    {29,0,0,E1B},    // GSAT0225 (E29) USABLE
+    {30,0,0,E1B},    // GSAT0206 (E30) USABLE
+    {31,0,0,E1B},    // GSAT0218 (E31) USABLE
+  //{32,0,0,E1B},    // GSAT0234 (E32) LAUNCHED 17-Dec-2025 05:01 UTC - UNDER COMMISSIONING (NAGU 2025061)
+    {33,0,0,E1B},    // GSAT0222 (E33) USABLE
+    {34,0,0,E1B},    // GSAT0223 (E34) USABLE
+  //{35,0,0,E1B},    // unused
+    {36,0,0,E1B},    // GSAT0219 (E36) USABLE
     
-    // E1B_plot_separately == true
-    #define MAP_WITHOUT_E1B 0   // green map pin
-    #define MAP_WITH_E1B 1      // red map pin
-    #define MAP_ONLY_E1B 2      // yellow map pin
-
-    #define GPS_NPOS 2
-    #define GPS_POS_SAMPS 64
-	gps_pos_t POS_data[GPS_NPOS][GPS_POS_SAMPS];
-	u4_t POS_seq, POS_next, POS_len, POS_seq_w, POS_seq_r;
-	
-    #define GPS_NMAP 3
-    #define GPS_MAP_SAMPS 16
-	gps_map_t MAP_data[GPS_NMAP][GPS_MAP_SAMPS];
-	u4_t MAP_data_seq[GPS_MAP_SAMPS];
-	u4_t MAP_next, MAP_len, MAP_seq_w, MAP_seq_r;
-	
-	int gps_gain, kick_lo_pll_ch;
-	char a[32];
-} gps_t;
-
-extern gps_t gps;
-
-extern const char *Week[];
-
-struct UMS {
-    int u, m;
-    double fm, s;
-    UMS(double x) {
-        u = trunc(x); x = (x-u)*60; fm = x;
-        m = trunc(x); s = (x-m)*60;
-    }
+    {-1}
 };
-
-void GPSstat(STAT st, double, int=0, int=0, int=0, int=0, double=0);
-
-unsigned bin(char *s, int n);
-void StatTask(void *param);
-void GPSstat_init();
