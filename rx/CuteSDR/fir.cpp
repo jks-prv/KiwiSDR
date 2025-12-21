@@ -120,7 +120,34 @@ TYPEREAL* HQptr;
 		}
 		if(--m_State < 0)
 			m_State += m_NumTaps;
-		OutBuf[i] = acc;
+        OutBuf[i] = acc;
+	}
+}
+
+void CFir::ProcessFilterDecimBy2(int InLength, TYPECPX* InBuf, TYPECPX* OutBuf)
+{
+TYPECPX acc;
+TYPECPX* Zptr;
+TYPEREAL* HIptr;
+TYPEREAL* HQptr;
+
+	for(int i=0, j=0; i<InLength; i++)
+	{
+		m_cZBuf[m_State] = InBuf[i];
+		HIptr = m_ICoef + m_NumTaps - m_State;
+		HQptr = m_QCoef + m_NumTaps - m_State;
+		Zptr = m_cZBuf;
+		acc.re = (*HIptr++ * (*Zptr).re);		//do the first MAC
+		acc.im = (*HQptr++ * (*Zptr++).im);
+		for(int j=1; j<m_NumTaps; j++)
+		{
+			acc.re += (*HIptr++ * (*Zptr).re);		//do the remaining MACs
+			acc.im += (*HQptr++ * (*Zptr++).im);
+		}
+		if(--m_State < 0)
+			m_State += m_NumTaps;
+		if ((i&1) == 0)
+		    OutBuf[j++] = acc;
 	}
 }
 
@@ -217,20 +244,26 @@ const TYPEREAL* Hptr;
 //  Initializes a pre-designed FIR filter with fixed coefficients
 //	Iniitalize FIR variables and clear out buffers.
 /////////////////////////////////////////////////////////////////////////////////
-void CFir::InitConstFir( int NumTaps, const TYPEREAL* pCoef, TYPEREAL Fsamprate)
+void CFir::InitConstFir( int NumTaps, const TYPEREAL* pCoef, TYPEREAL Fsamprate, bool symmetrical)
 {
 	m_SampleRate = Fsamprate;
 	if(NumTaps>MAX_NUMCOEF)
 		m_NumTaps = MAX_NUMCOEF;
 	else
 		m_NumTaps = NumTaps;
-	for(int i=0; i<m_NumTaps; i++)
-	{
-		m_Coef[i] = pCoef[i];
-		m_Coef[m_NumTaps+i] = pCoef[i];	//create duplicate for calculation efficiency
-	}
-	for(int i=0; i<m_NumTaps; i++)
-	{	//zero input buffers
+	check(m_NumTaps & 1);
+	
+	int i, j, ntaps = symmetrical? (m_NumTaps/2+1) : m_NumTaps;
+    for (i = 0; i < ntaps; i++) {
+        m_Coef[i] = pCoef[i];
+        m_Coef[m_NumTaps+i] = pCoef[i];	//create duplicate for calculation efficiency
+    }
+    for (j = i-2; i < m_NumTaps; i++, j--) {
+        m_Coef[i] = pCoef[j];
+        m_Coef[m_NumTaps+i] = pCoef[j];	//create duplicate for calculation efficiency
+    }
+    
+	for (int i = 0; i < m_NumTaps; i++) {	//zero input buffers
 		m_rZBuf[i] = 0.0;
 		m_cZBuf[i].re = 0.0;
 		m_cZBuf[i].im = 0.0;
@@ -242,22 +275,30 @@ void CFir::InitConstFir( int NumTaps, const TYPEREAL* pCoef, TYPEREAL Fsamprate)
 //  Initializes a pre-designed complex FIR filter with fixed coefficients
 //	Iniitalize FIR variables and clear out buffers.
 /////////////////////////////////////////////////////////////////////////////////
-void CFir::InitConstFir( int NumTaps, const TYPEREAL* pICoef, const TYPEREAL* pQCoef, TYPEREAL Fsamprate)
+void CFir::InitConstFir( int NumTaps, const TYPEREAL* pICoef, const TYPEREAL* pQCoef, TYPEREAL Fsamprate, bool symmetrical)
 {
 	m_SampleRate = Fsamprate;
 	if(NumTaps>MAX_NUMCOEF)
 		m_NumTaps = MAX_NUMCOEF;
 	else
 		m_NumTaps = NumTaps;
-	for(int i=0; i<m_NumTaps; i++)
-	{
-		m_ICoef[i] = pICoef[i];
-		m_ICoef[m_NumTaps+i] = pICoef[i];	//create duplicate for calculation efficiency
-		m_QCoef[i] = pQCoef[i];
-		m_QCoef[m_NumTaps+i] = pQCoef[i];	//create duplicate for calculation efficiency
-	}
-	for(int i=0; i<m_NumTaps; i++)
-	{	//zero input buffers
+	check(m_NumTaps & 1);
+	
+	int i, j, ntaps = symmetrical? (m_NumTaps/2+1) : m_NumTaps;
+    for (i = 0; i < ntaps; i++) {
+        m_ICoef[i] = pICoef[i];
+        m_ICoef[m_NumTaps+i] = pICoef[i];	//create duplicate for calculation efficiency
+        m_QCoef[i] = pQCoef[i];
+        m_QCoef[m_NumTaps+i] = pQCoef[i];	//create duplicate for calculation efficiency
+    }
+    for (j = i-2; i < m_NumTaps; i++, j--) {
+        m_ICoef[i] = pICoef[j];
+        m_ICoef[m_NumTaps+i] = pICoef[j];	//create duplicate for calculation efficiency
+        m_QCoef[i] = pQCoef[j];
+        m_QCoef[m_NumTaps+i] = pQCoef[j];	//create duplicate for calculation efficiency
+    }
+    
+	for (i = 0; i < m_NumTaps; i++) {	//zero input buffers
 		m_rZBuf[i] = 0.0;
 		m_cZBuf[i].re = 0.0;
 		m_cZBuf[i].im = 0.0;

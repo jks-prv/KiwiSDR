@@ -30,8 +30,9 @@ public:
 
 	int m_NumTaps;
 
-	void InitConstFir(int NumTaps, const TYPEREAL* pCoef, TYPEREAL Fsamprate);
-	void InitConstFir(int NumTaps, const TYPEREAL* pICoef, const TYPEREAL* pQCoef, TYPEREAL Fsamprate);
+    #define FIR_COEFF_SYMMETRICAL true
+	void InitConstFir(int NumTaps, const TYPEREAL* pCoef, TYPEREAL Fsamprate, bool symmetrical = false);
+	void InitConstFir(int NumTaps, const TYPEREAL* pICoef, const TYPEREAL* pQCoef, TYPEREAL Fsamprate, bool symmetrical = false);
 	int InitLPFilter(int NumTaps, TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate, bool dump = false);
 	int InitHPFilter(int NumTaps, TYPEREAL Scale, TYPEREAL Astop, TYPEREAL Fpass, TYPEREAL Fstop, TYPEREAL Fsamprate);
 	void GenerateHBFilter( TYPEREAL FreqOffset);
@@ -40,6 +41,7 @@ public:
 	void ProcessFilter(int InLength, TYPECPX* InBuf, TYPECPX* OutBuf);
 	void ProcessFilter(int InLength, TYPEREAL* InBuf, TYPEMONO16* OutBuf);
 	void ProcessFilter(int InLength, TYPEMONO16* InBuf, TYPEMONO16* OutBuf);
+	void ProcessFilterDecimBy2(int InLength, TYPECPX* InBuf, TYPECPX* OutBuf);
 
 private:
 	TYPEREAL Izero(TYPEREAL x);
