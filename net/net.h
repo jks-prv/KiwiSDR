@@ -127,7 +127,6 @@ typedef struct {
     
     int dom_sel;
     int proxy_status, DUC_status;
-    bool proxy_running;
 	
 	// IPv4
 	bool ip4_valid;

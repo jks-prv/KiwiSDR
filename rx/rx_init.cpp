@@ -257,7 +257,7 @@ void update_vars_from_config(bool called_at_init)
 	    cfg_rem_string("tdoa.server_url");
 	    update_cfg = cfg_gdb_break(true);
 	} else {
-        cfg_default_string("tdoa.server", "http://tdoa.kiwisdr.com", &update_admcfg);
+        cfg_default_string("tdoa.server", "http://tdoa.kiwisdr.com", &up_cfg);
     }
     
     

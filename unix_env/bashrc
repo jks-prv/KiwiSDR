@@ -252,6 +252,7 @@ alias md="make debug"
 alias mt="make test"
 alias me="make everything"
 alias ml="make log"
+alias ml2="make log2"
 alias msl="make slog"
 alias mtl="make tlog"
 alias ms="make status"
@@ -606,6 +607,7 @@ alias prlog="tail -n 100 -f /var/log/frpc.log"
 
 # networking
 alias nt="iptraf"
+alias nt2="iptraf-ng"
 # after iftop starts use "tTL": "t" one line display, "L" log plot, "T" dsp cum totals, "B" toggle 2/10/40s avg (default 10s)
 # -m params is in b/s, so must x8 to get B/s, e.g. "-m 4M" will display 512KB max in byte mode
 # -f filter: 5353 is mDNS on multicast
