@@ -12,7 +12,7 @@ var iframe = {
    std: [
       // must be first in list
       { src:0, url:'//spots.kiwisdr.com', menu:'DX spots', w:400, h:500, tune:1,
-         title:'<span style="color:cyan">Spots by <a href="//www.sk6aw.net/cluster" target="_blank">SK6AW.NET</a></span>',
+         title:'<span style="color:cyan">Spots by <a href="//kiwisdr.com" target="_blank">kiwisdr.com</a></span>',
          help:'Clicking on a spot frequency will tune the Kiwi.'
       },
          

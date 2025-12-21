@@ -160,7 +160,7 @@ void update_vars_from_config(bool called_at_init)
 	bool update_cfg = false;
 	bool up_cfg = false;
 	bool update_admcfg = false;
-	const char *s, *s2;
+	const char *s, *s2, *s3;
     bool err;
 
     // When called by client-side "SET save_cfg/save_adm=":
@@ -270,11 +270,18 @@ void update_vars_from_config(bool called_at_init)
     if (kiwi_emptyStr(s) && kiwi_emptyStr(s2) && enabled) {
         cfg_set_int("iframe.src", 0);
 	    cfg_set_string("iframe.url", "https://spots.kiwisdr.com");
-	    cfg_set_string("iframe.title", "<span style=\\\"color:cyan\\\">Spots by <a href=\\\"http://www.sk6aw.net/cluster\\\" target=\\\"_blank\\\">SK6AW.NET</a></span>");
+	    cfg_set_string("iframe.title", "<span style=\\\"color:cyan\\\">Spots by <a href=\\\"http://kiwisdr.com\\\" target=\\\"_blank\\\">kiwisdr.com</a></span>");
         cfg_set_string("iframe.menu", "DX spots");
         cfg_set_string("iframe.help", "Clicking on a spot frequency will tune the Kiwi.");
         cfg_set_bool("iframe.allow_tune", true);
 	    update_cfg = cfg_gdb_break(true);
+    } else {
+        s3 = cfg_string("iframe.title", NULL, CFG_OPTIONAL);
+        if (kiwi_nonEmptyStr(s3) && strstr(s3, "sk6aw")) {
+	        cfg_set_string("iframe.title", "<span style=\\\"color:cyan\\\">Spots by <a href=\\\"http://kiwisdr.com\\\" target=\\\"_blank\\\">kiwisdr.com</a></span>");
+	        update_cfg = cfg_gdb_break(true);
+        }
+        cfg_string_free(s3);
     }
     cfg_string_free(s);
     cfg_string_free(s2);
@@ -688,7 +695,7 @@ void update_vars_from_config(bool called_at_init)
 	}
 
     if (called_at_init) {
-        admcfg_default_string("hostname", "kiwisdr", &up_cfg);
+        admcfg_default_string("hostname", "kiwisdr", &update_admcfg);
         const char *hn = admcfg_string("hostname", NULL, CFG_REQUIRED);
         kiwi_strncpy(net.hostname, hn, N_HOSTNAME + SPACE_FOR_NULL);
         admcfg_string_free(hn);
