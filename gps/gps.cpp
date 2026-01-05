@@ -18,49 +18,27 @@
 // http://www.aholme.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#include "kiwi.h"
 #include "gps.h"
-#include "spi.h"
 #include "printf.h"
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+#include <math.h>
+#include <stdio.h>
 
-unsigned bin(char *s, int n) {
-	unsigned u = *s;
-	while (--n) u += u + *++s;
-	return u;
+GPS_UTC gps;
+
+unsigned bin(const char *s, int n) {
+    unsigned u = *s;
+    while (--n) u += u + *++s;
+    return u;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+int parity(u4_t word) {
+    u4_t par = word & ((1<<6)-1);
+    int p = 0;
+    for (int i=0; i<24; i++) p += (word >> (6+i)) & 1;
+    return (p & 1) == par;
+}
 
-void gps_main(int argc, char *argv[])
-{
-    // verilog limitations, see:
-    //      gps.v: "cmd_chan"
-    //      ipcore_bram_gps_4k_12b
-
-    assert(gps_chans <= GPS_MAX_CHANS);
-
-	printf("GPS starting..\n");
-    SearchParams(argc, argv);
-
-    // some configs (e.g. rx14wf0) only support a reduced number of GPS channels
-    // due to FPGA space limitations
-    spi_set(CmdSetChans, gps_chans-1);      // NB: -1 because of how to_loop[2] insn works
-	SearchInit();
-	ChanInit();
-
-    for(int i=0; i<gps_chans; i++) {
-    	char *tname;
-    	asprintf(&tname, "GPSchan-%02d", i+1);
-    	CreateTaskSF(ChanTask, tname, TO_VOID_PARAM(i), GPS_PRIORITY, CTF_TNAME_FREE, 0);
-    }
-
-    CreateTask(SolveTask, 0, GPS_PRIORITY);
-
-    if (!background_mode && (print_stats & (STATS_GPS | STATS_GPS_SOLN))) CreateTask(StatTask, 0, GPS_PRIORITY);
+int preamble(u4_t word) {
+    return (word >> 22) == PREAMBLE;
 }
