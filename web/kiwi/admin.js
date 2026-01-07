@@ -4825,7 +4825,7 @@ function admin_navkey_cb(ev) {
    var tabs = admin.tabs;
    var i = w3_array_el_seq(tabs, admin.current_tab_name, { toLower:1 }), j;
    var e = tabs.length - 1;
-   if (k.length == 1 && k >= 'a' && a <= 'z') {    // lcase/ucase char match next/prev
+   if (k.length == 1 && k >= 'a' && k <= 'z') {    // lcase/ucase char match next/prev
       dir = (ev.key == k.toUpperCase())? -1:1;
       i = w3_wrap(i, 0, e);
       j = w3_wrap(i + dir, 0, e);

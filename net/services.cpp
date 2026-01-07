@@ -264,11 +264,12 @@ void proxy_frpc_setup(const char *proxy_server, const char *user, const char *ho
 
     // criteria for using secondary proxy server(s)
     #define PROXY2_ENABLE
-    //#define PROXY2_TEST 1
+    //#define PROXY2_TEST
     #ifdef PROXY2_ENABLE
         // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
         //bool p2 = isdigit(host[0]);
         bool p2 = (strncmp(host, "210", 3) == 0);
+        //bool p2 = (strncmp(host, "21", 2) == 0);
         actual_proxy_server = p2? "proxy2.kiwisdr.com" : proxy_server;
     #elif PROXY2_TEST
         actual_proxy_server = strcmp(host, "jks")? proxy_server : "proxy2.kiwisdr.com";
