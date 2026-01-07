@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -566,11 +566,9 @@ int main(int argc, char *argv[])
         
         rf_attn_init();
         
-        if (do_gps) {
-            #ifdef USE_GPS
-                gps_main(argc, argv);
-            #endif
-        }
+        #ifdef USE_GPS
+            gps_main(argc, argv, do_gps);
+        #endif
     }
     
 	CreateTask(stat_task, NULL, MAIN_PRIORITY);
