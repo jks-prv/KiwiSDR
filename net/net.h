@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -121,6 +121,8 @@ typedef struct {
 	
 	u4_t serno;
     u64_t dna;
+    #define N_UNIQUE_ID_BYTES 4      // 4 bytes = 8 hex chars
+    char unique_id[N_UNIQUE_ID_BYTES*2 + SPACE_FOR_NULL];
     
     #define N_HOSTNAME 15
     char hostname[N_HOSTNAME + SPACE_FOR_NULL];
