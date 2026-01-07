@@ -1069,7 +1069,7 @@ function ale_2g_scan_t_cb(path, idx, first)
 
 function ale_2g_scan_t_custom_cb(path, val)
 {
-	var scan_t = w3_clamp(parseFloat(val), 0.75, 60, 1);
+	var scan_t = w3_clamp(parseFloat(val), 0.75, 600, 1);
    console.log('ale_2g_scan_t_custom_cb path='+ path +' val='+ val +' scan_t='+ scan_t);
 	w3_set_value(path, scan_t);
 	ale.scan_t_ms = scan_t * 1000;
@@ -1274,7 +1274,7 @@ function ALE_2G_help(show)
                'The <i>display</i> setting controls the ALE message detail shown. ' +
                'The <i>DX</i> setting limits the information displayed per ALE transaction. ' +
                'The <i>scan time</i> setting has preset entries and supports custom scan rates from ' +
-               ' 0.75 to 60 secs.' +
+               ' 0.75 to 600 secs.' +
                '<br><br>' +
                'The frequencies of a scan list can be limited by the <i>frequency limit</i> setting. ' +
                'This is useful when the scan list covers a wide range of HF frequencies but propagation ' +
