@@ -111,6 +111,11 @@ void sha256_update(SHA256_CTX *ctx, const BYTE data[], size_t len)
 	}
 }
 
+void sha256_update_str(SHA256_CTX *ctx, const char *str)
+{
+    sha256_update(ctx, (BYTE *) str, strlen(str));
+}
+
 void sha256_final(SHA256_CTX *ctx, BYTE hash[])
 {
 	WORD i;
