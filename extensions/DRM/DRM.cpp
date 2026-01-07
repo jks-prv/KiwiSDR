@@ -7,11 +7,18 @@
 #include "kiwi.h"
 #include "mem.h"
 #include "rx_util.h"
+#include "cfg.h"
 
 #ifdef DRM
     #include "DRM_main.h"
 #else
     static void DRM_loop(int rx_chan) {}
+#endif
+
+#ifdef DRM
+ #include "DRM.h"
+#else
+ #define DRM_NREG_CHANS_DEFAULT 3
 #endif
 
 #include <stdio.h>
@@ -449,6 +456,32 @@ static s2_t *drm_mmap(char *fn, int *words)
     }
     *words = st.st_size / sizeof(s2_t);
     return (s2_t *) file;
+}
+
+bool DRM_enable;
+
+bool DRM_vars() {
+    bool up_cfg = false;
+
+    // DRM extension related
+    cfg_default_object("DRM", "{}", &up_cfg);
+    DRM_enable = cfg_default_bool("DRM.enable", true, &up_cfg);
+    drm_nreg_chans = cfg_default_int("DRM.nreg_chans", DRM_NREG_CHANS_DEFAULT, &up_cfg);
+
+    const char *s = cfg_string("DRM.test_file1", NULL, CFG_OPTIONAL);
+	if (!s || strcmp(s, "Kuwait.15110.1.12k.iq.au") == 0) {
+	    cfg_set_string("DRM.test_file1", "DRM.BBC.Journaline.au");
+	    UPDATE_CFG_BREAK(up_cfg);
+    }
+    cfg_string_free(s);
+
+    s = cfg_string("DRM.test_file2", NULL, CFG_OPTIONAL);
+	if (!s || strcmp(s, "Delhi.828.1.12k.iq.au") == 0) {
+	    cfg_set_string("DRM.test_file2", "DRM.KTWR.slideshow.au");
+	    UPDATE_CFG_BREAK(up_cfg);
+    }
+    cfg_string_free(s);
+    return up_cfg;
 }
 
 void DRM_main();

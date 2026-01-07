@@ -44,6 +44,8 @@ void prefs_close(int rx_chan)
 
 }
 
+bool prefs_vars() { return false; }
+
 void prefs_main();
 
 ext_t prefs_ext = {

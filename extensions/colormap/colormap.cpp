@@ -44,6 +44,12 @@ bool colormap_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+bool colormap_vars() {
+    bool up_cfg = false;
+    cfg_default_int("init.colormap", 0, &up_cfg);
+    return up_cfg;
+}
+
 void colormap_main();
 
 ext_t colormap_ext = {

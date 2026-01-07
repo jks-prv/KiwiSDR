@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -196,7 +196,9 @@ extern cfg_t cfg_cfg, cfg_adm, cfg_dx, cfg_dxcfg, cfg_dxcomm, cfg_dxcomm_cfg;
 #define json_rem_string(cfg, name)			_cfg_set_string(cfg, name, NULL, CFG_REMOVE, 0)
 
 void cfg_reload();
+
 bool cfg_gdb_break(bool val);
+#define UPDATE_CFG_BREAK(up_cfg) up_cfg = cfg_gdb_break(true)
 
 bool _cfg_init(cfg_t *cfg, int flags, char *buf, const char *id = NULL);
 void _cfg_release(cfg_t *cfg);

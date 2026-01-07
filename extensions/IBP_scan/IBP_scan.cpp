@@ -32,6 +32,8 @@ bool ibp_scan_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+bool IBP_scan_vars() { return false; }
+
 void IBP_scan_main();
 
 ext_t ibp_scan_ext = {

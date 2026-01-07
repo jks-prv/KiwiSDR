@@ -304,6 +304,8 @@ bool loran_c_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+bool Loran_C_vars() { return false; }
+
 void Loran_C_main();
 
 ext_t loran_c_ext = {

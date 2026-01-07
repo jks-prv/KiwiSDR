@@ -98,6 +98,8 @@ void navtex_close(int rx_chan)
     ext_unregister_receive_real_samps(e->rx_chan);
 }
 
+bool NAVTEX_vars() { return false; }
+
 void NAVTEX_main();
 
 ext_t navtex_ext = {

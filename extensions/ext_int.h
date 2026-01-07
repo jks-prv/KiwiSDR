@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -61,6 +61,7 @@ extern ext_users_t ext_users[MAX_RX_CHANS];
 // internal use
 void extint_setup();
 void extint_init();
+bool extint_vars();
 void extint_send_extlist(conn_t *conn);
 char *extint_list_js();
 void extint_load_extension_configs(conn_t *conn);

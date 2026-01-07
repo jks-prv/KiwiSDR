@@ -542,6 +542,8 @@ void FT8_poll(int rx_chan)
     }
 }
 
+bool FT8_vars() { return false; }
+
 void FT8_main();
 
 ext_t ft8_ext = {

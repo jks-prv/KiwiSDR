@@ -3,6 +3,7 @@
 #include "ext.h"
 
 #ifndef EXT_S4285
+	bool s4285_vars() { return false; }
 	void s4285_main() {}
 #else
 

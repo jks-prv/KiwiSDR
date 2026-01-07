@@ -69,6 +69,7 @@ void example_close(int rx_chan)
     ext_unregister_receive_iq_samps(e->rx_chan);
 }
 
+bool example_vars() { return false; }
 
 // NB: To capitalize the name in the extension menu while using lowercase in program code
 // follow the capitalization used below, e.g. EXAMPLE_main()
