@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016-2021 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -223,7 +223,7 @@ static bool nbuf_enqueue(ndesc_t *nd, nbuf_t *nb)
 	return ovfl;
 }
 
-void nbuf_allocq(ndesc_t *nd, char *s, int sl)
+void nbuf_allocq(ndesc_t *nd, char *s, int sl, char *s2, int sl2)
 {
 	check_ndesc(nd);
 	nbuf_t *nb;
@@ -235,11 +235,13 @@ void nbuf_allocq(ndesc_t *nd, char *s, int sl)
 	nb = nbuf_malloc();
 	//assert(nd->mc);
 	nb->mc = nd->mc;
+	int tl = sl + sl2;
 	// +1 so buffers which are strings can be null terminated after the fact
 	// but don't reflect this extra byte in the nb->len count
-	nb->buf = (char*) kiwi_imalloc("nbuf:buf", sl+1);
+	nb->buf = (char*) kiwi_imalloc("nbuf:buf", tl+1);
     memcpy(nb->buf, s, sl);
-	nb->len = sl;
+    if (sl2) memcpy(nb->buf + sl, s2, sl2);
+	nb->len = tl;
 	nb->done = FALSE;
 	nb->dequeued = FALSE;
 	nb->ttl = nd->ttl;

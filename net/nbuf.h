@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016-2021 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -59,7 +59,7 @@ void ndesc_register(ndesc_t *nd);
 
 void nbuf_init();
 void nbuf_stat();
-void nbuf_allocq(ndesc_t *nd, char *s, int sl);
+void nbuf_allocq(ndesc_t *nd, char *s, int sl, char *s2 = NULL, int sl2 = 0);
 nbuf_t *nbuf_dequeue(ndesc_t *nd);
 int nbuf_queued(ndesc_t *nd);
 void nbuf_cleanup(ndesc_t *nd);
