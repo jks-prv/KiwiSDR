@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 // TODO
 //		input range validation
@@ -1694,8 +1694,8 @@ function dx_html_init()
 {
    // for search-wrap screen overlay flash icon
    var s =
-      w3_div('id-search-wrap-container class-overlay-container w3-hide',
-         w3_div('id-search-wrap', w3_icon('', 'fa-repeat', 192))
+      w3_div('id-dx-search-wrap-container class-overlay-container w3-hide',
+         w3_div('id-dx-search-wrap', w3_icon('', 'fa-repeat', 192))
       );
    w3_create_appendElement('id-kiwi-container', 'div', s);
 }
@@ -2174,7 +2174,7 @@ function dx_search_ident_cb(path, val, first, cb_a)
 {
    if (first) return;
    //console.log('dx_search_ident_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
-   if (kiwi_isFirefox() && cb_a[1] == 'ev') return;   // so we don't run twice
+   if (cb_a[1] == 'ev') return;   // so we don't run twice
    if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
@@ -2186,7 +2186,7 @@ function dx_search_notes_cb(path, val, first, cb_a)
 {
    if (first) return;
    //console.log('dx_search_notes_cb idx='+ dx.o.last_search_idx +' val='+ val +' from='+ cb_a[1]);
-   if (kiwi_isFirefox() && cb_a[1] == 'ev') return;   // so we don't run twice
+   if (cb_a[1] == 'ev') return;   // so we don't run twice
    if (val == '') return;
    var idx = dx.o.last_search_idx;
    if (idx >= dx.o.len) idx = 0;
@@ -2223,10 +2223,10 @@ function dx_search_check_wrap(result_idx)
    dx.o.last_search_idx = result_idx + 1;     
    if (rtn) return;
 
-   var el = w3_el('id-search-wrap-container');
+   var el = w3_el('id-dx-search-wrap-container');
    el.style.opacity = 0.8;
    w3_show(el);
-   var el2 = w3_el('id-search-wrap');
+   var el2 = w3_el('id-dx-search-wrap');
    el2.style.marginTop = px(w3_center_in_window(el2, 'SW'));
    setTimeout(function() {
       el.style.opacity = 0;      // CSS is setup so opacity fades

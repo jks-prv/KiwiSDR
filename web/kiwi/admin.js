@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 // TODO
 //		input range validation
@@ -39,8 +39,154 @@ var admin = {
    FRPC_UPDATE_HOST: 2,
    FRPC_PROXY_UPD:   3,
    
+   find_last_query: '',
+   find_skip: 0,
+   erase_find_field: false,
+   
    _last_: 0
 };
+
+
+////////////////////////////////
+// find
+////////////////////////////////
+
+// detect escape key and blur find field
+function admin_find_key_cb(ev, called_from_w3_input)
+{
+   called_from_w3_input = called_from_w3_input || false;
+   //console.log('admin_find_key_cb called_from_w3_input='+ called_from_w3_input);
+	//event_dump(ev, 'admin_find_key_cb', 1);
+   if (!ev || !ev.key) return;
+   var el = w3_el('id-admin.find');
+   if (ev.key == 'Escape') {
+      //console.log('admin_find_key_cb ESC');
+      el.value = '';
+      el.blur();
+
+       // a clear alone doesn't remove the last highlight
+      CSS.highlights.clear();
+      CSS.highlights.set('find-highlight', new Highlight());
+   }
+   
+   if (admin.erase_find_field) {
+      el.value = '';
+      admin.erase_find_field = false;
+   }
+}
+
+function admin_find_input_cb(path, val, first, cb_a, ev)
+{
+   // [2] because cb_a[] = [ "admin_find_input_cb", "admin_find_key_cb", "kd1" or "ev" ]
+   // due to admin_find_key_cb() above
+   if (cb_a[2] == 'ev') return;     // so we don't run twice
+   //console.log('ENTER '+ cb_a[2]);
+   //console.log(cb_a);
+   //kiwi_trace();
+
+   CSS.highlights.clear();
+   
+   var query = val.trim();
+   if (!query.trim()) return;
+   if (query != admin.find_last_query) admin.find_skip = 0;
+   //console.log('admin_find_input_cb: query='+ dq(query) +' find_last_query='+ dq(admin.find_last_query));
+   
+   var highlight = new Highlight();
+   var found = false, loop_safety = 0, matches = 0;
+   var start_tab = w3_array_el_seq(admin.tabs, admin.current_tab_name, { toLower:1 });
+   var cur_tab = start_tab;
+
+   // shift-rtn: find previous
+   admin.find_skip += (ev && ev.shiftKey)? -1 : 1;;
+   if (admin.find_skip < 0) admin.find_skip = 0;
+
+   do {
+      found = window.find(
+         query,
+         false,   // caseSensitive
+         false,  // backwards (false = forward)
+         true,   // wrapAround
+         false,  // wholeWord (set true if you want whole words only)
+         false,  // searchInFrames – deprecated, ignore
+         false   // showDialog
+      );
+      
+      loop_safety++;
+      if (loop_safety > 512) {
+         break;
+      }
+      
+      //console.log('found='+ found);
+      if (found) {
+         //console.log('matches='+ matches +' find_skip='+ admin.find_skip);
+         if (matches < admin.find_skip) {
+            matches++;
+            //console.log('skip');
+            continue;
+         }
+         matches++;
+         
+         selection = window.getSelection();
+         //console.log('rangeCount='+ selection.rangeCount);
+         if (selection.rangeCount > 0) {
+            //console.log(selection);
+            var range = selection.getRangeAt(0);
+            //console.log(range);
+            highlight.add(range);
+            
+            // clear selection to continue searching
+            selection.removeAllRanges();
+            admin.find_last_query = query;
+            found = false;
+            //console.log('have match');
+            break;
+         } else {
+            console.log('no range count?');
+            break;
+         }
+      } else {
+         admin.find_skip = 0;
+         
+         // no search match, select next tab
+         var i = w3_array_el_seq(admin.tabs, admin.current_tab_name, { toLower:1 });
+         var e = admin.tabs.length - 1;
+         var j = w3_wrap(i + 1, 0, e);
+         admin_nav_focus(admin.tabs[j]);
+         w3_scrollTop('id-admin-con2');
+         
+         if (0) {
+            // auto skip to next tab that has a match
+            // doesn't work yet
+            console.log('wrap to '+ j +'/'+ e +' start_tab='+ start_tab);
+            if (j == start_tab) {
+               console.log('WRAP DONE DONE');
+               return w3.RETAIN_FOCUS;
+            }
+            continue;
+         } else {
+            
+            // flash find-wrap to next tab icon
+            var el = w3_el('id-admin-find-wrap-container');
+            el.style.opacity = 0.8;
+            w3_show(el);
+            var el2 = w3_el('id-admin-find-wrap');
+            el2.style.marginTop = px(w3_center_in_window(el2, 'SW'));
+            setTimeout(function() {
+               el.style.opacity = 0;      // CSS is setup so opacity fades
+               setTimeout(function() { w3_hide(el); }, 500);
+            }, 300);
+   
+            return w3.RETAIN_FOCUS;
+         }
+      }
+   } while (found);
+
+   //console.log(highlight);
+   CSS.highlights.set('find-highlight', highlight);
+
+   //console.log('FOUND HIGHLIGHT DONE');
+   return w3.RETAIN_FOCUS;
+}
 
 
 ////////////////////////////////
@@ -2874,13 +3020,14 @@ function gps_SBAS_select_cb(path, cb_param, first, ev)
 
          // if menu icon click, take toggle state into account
          var close_keyup = (evt.type == 'keyup' && !kiwi.gps_sbas_menu_shown);
+         var close_esc = (evt.type == 'keyup' && evt.key == 'Escape');
          var tgt_isMenu = w3_contains(evt.target, 'w3-menu');
          var tgt_isMenuButton = w3_contains(evt.target, 'w3-menu-button');
          //console.log('gps_SBAS_menu CLOSE close_keyup='+ close_keyup +' tgt_isMenu='+ tgt_isMenu +' tgt_isMenuButton='+ tgt_isMenuButton);
          var menu_shown = kiwi.gps_sbas_menu_shown;
          var click = ((evt.type == 'click' || ((evt.type == 'mousedown' || evt.type == 'touchstart') && !tgt_isMenuButton) || evt.type == 'touchend'));
          var close_click = (click && !first && (!tgt_isMenu || !menu_shown));
-         var close = (close_keyup || close_click);
+         var close = (close_keyup || close_click || close_esc);
          //console.log('gps_SBAS_menu CLOSE menu_shown='+ menu_shown +' click='+ click +' close_click='+ close_click +' close='+ close);
          return close;
       },
@@ -4710,12 +4857,28 @@ function admin_draw(sdr_mode)
 
 	w3_innerHTML('id-kiwi-container',
 	   w3_div('id-admin w3-margin-L-16',
+
+      /*
 		   w3_inline_percent('id-admin-top/',
 			   w3_header('w3-container w3-teal/id-mdev-msg', 5,
 			      'Admin interface'+
 			      w3_text('w3-margin-L-32 w3-padding-B-2 w3-font-14px', "Type 'h' or '?' for help")
 			   ), 95,
 			   w3_button('w3-aqua w3-margin-left', 'User page', 'admin_user_page_cb')
+			),
+		*/
+
+		   w3_inline('id-admin-top/',
+			   w3_header('w3-container w3-teal/id-mdev-msg|width:950px', 5,
+			      'Admin interface'+
+			      w3_text('w3-margin-L-32 w3-padding-B-2 w3-font-14px', "Type 'h' or '?' for help")
+			   ),
+			   w3_inline('w3-ialign-right/',
+               w3_input('w3-margin-L-24/w3-label-inline w3-label-not-bold/w3-padding-tiny w3-input-any-change w3-input-any-key' +
+                  '||size=25 title="Find on page&slash;tabs. See help for more info."',
+                  'Find:', 'admin.find', admin.find, 'admin_find_input_cb|admin_find_key_cb'),
+               w3_button('w3-aqua w3-margin-L-24', 'User page', 'admin_user_page_cb')
+            )
 			),
 			
 			w3_div('id-admin-scr',
@@ -4726,6 +4889,21 @@ function admin_draw(sdr_mode)
          )
 	   )
 	);
+	
+	// find-related
+   if (!('CSS' in window) || !CSS.highlights) {
+      var el = w3_el('id-admin.find');
+      w3_placeholder(el, 'error: newer browser required');
+      w3_disable(el);
+      w3_color(el, 'red');
+   }
+   
+   // for find-wrap screen overlay flash icon
+   var s =
+      w3_div('id-admin-find-wrap-container class-overlay-container w3-hide',
+         w3_div('id-admin-find-wrap', w3_icon('', 'fa-arrow-right', 192))
+      );
+   w3_create_appendElement('id-kiwi-container', 'div', s);
 
    admin_resize();
    setTimeout(function() { admin_resize(); }, 500);
@@ -4799,6 +4977,7 @@ function admin_nav_blur(id, cb_arg)
    w3_call(id +'_blur');
 }
 
+// admin shortcut keys
 function admin_navkey_cb(ev) {
 	//event_dump(ev, 'admin_navkey_cb', 1);
    if (!isString(ev.key) || any_modifier_key_except_shift(ev)) return;
@@ -4810,6 +4989,12 @@ function admin_navkey_cb(ev) {
    }
    if (k == 'escape') {
       confirmation.close_cb();
+      return;
+   }
+   if (k == 'f') {
+      var el = w3_el('id-admin.find');
+	   w3_field_select(el, {focus_select:1});
+	   admin.erase_find_field = true;
       return;
    }
    if (k == '@') {
@@ -4881,6 +5066,15 @@ function admin_show_help()
                'e.g. "s" selects between <x1>Status</x1> and <x1>Security</x1>. ' +
                'Typing a capital letter cycles right-to-left. The left/right arrow keys also work. ' +
                'On the <x1>Extensions</x1> tab the up/down arrow keys cycle the extension menu on the left side.'
+            ),
+
+            w3_inline('w3-padding-tiny w3-bold w3-text-aqua  w3-margin-T-8', 'Find field'),
+            w3_inline('w3-padding-tiny',
+               'Begins searching at the current tab. Matches are highlighted in green. Case insensitive. ' +
+               'Return key alone jumps to next match. Shift-return to previous. Escape key stops search. ' +
+               'Wraps to the next tab when no further matches. Use "f" shortcut key to select. ' +
+               'Does not match on configuration parameter fields. ' +
+               'But will match on text output panels like the log and console tabs, blacklist, users list etc.'
             ),
 
             w3_inline('w3-padding-tiny w3-bold w3-text-aqua w3-margin-T-8', 'Console tab'),               
