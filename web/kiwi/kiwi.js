@@ -202,8 +202,6 @@ var timestamp;
 var dbgUs = false;
 var dbgUsFirst = true;
 
-var gmap;
-
 // see document.onreadystatechange for how this is called
 function kiwi_bodyonload(error)
 {

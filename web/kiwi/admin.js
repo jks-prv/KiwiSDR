@@ -2898,7 +2898,6 @@ var _gps = {
    leaflet: true,
    gps_map_loaded: false,
    pkgs_maps_js: [ 'pkgs_maps/pkgs_maps.js', 'pkgs_maps/pkgs_maps.css' ],
-   gmap_js: ['http://maps.googleapis.com/maps/api/js?key='],
 
    RSSI:0, AZEL:1, POS:2, MAP:3, IQ:4,
    IQ_data: null,
@@ -3219,7 +3218,7 @@ function gps_focus(id)
 {
    _gps.focus = true;
    if (!_gps.gps_map_loaded) {
-      kiwi_load_js(_gps.leaflet? _gps.pkgs_maps_js : _gps.gmap_js, 'gps_focus2');
+      kiwi_load_js(_gps.pkgs_maps_js, 'gps_focus2');
       _gps.gps_map_loaded = true;
    } else {
       gps_focus2(id);
