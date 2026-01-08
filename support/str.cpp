@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2017 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -682,14 +682,15 @@ char *kiwi_str_encode(char *src, const char *from, int flags)
 static char dst_static[N_DST_STATIC][N_DST_STATIC_BUF];
 
 // for use with e.g. an immediate printf argument
-char *kiwi_str_ASCII_static(char *src, int which)
+char *kiwi_str_ASCII_static(char *src, int which, int len)
 {
 	if (src == NULL) return NULL;
 	check(which < N_DST_STATIC);
-	int i, sl = strlen(src), dl = 0;
-	char *dp = dst_static[which];
+	int i;
+	if (len == 0) len = strlen(src);
+	char *sp, *dp = dst_static[which];
 	*dp = '\0';
-	for (char *sp = src; *sp; sp++) {
+	for (sp = src, i = 0; i < len; i++, sp++) {
         kiwi_strncat(dp, ASCII[*sp], N_DST_STATIC_BUF);
         dp += strlen(ASCII[*sp]);
 	}
