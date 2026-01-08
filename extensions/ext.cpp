@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016 - 2022 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "kiwi.h"
@@ -454,6 +454,7 @@ void extint_c2s(void *param)
                 continue;
             }
 
+            // forward msg to extension's receive_msgs() routine
             rx_channel = conn_ext->rx_channel;
             if (rx_channel == -1) {
                 printf("### extint_c2s: %s CONN%d(%p) rx_channel == -1?\n", conn_ext->ext? conn_ext->ext->name:"?", conn_ext->self_idx, conn_ext);

@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -29,6 +29,7 @@ Boston, MA  02110-1301, USA.
 typedef void (*ext_main_t)();
 typedef void (*ext_close_conn_t)(int rx_chan);
 typedef bool (*ext_receive_msgs_t)(char *msg, int rx_chan);
+#define CMD_NO_KEY 0xffff
 typedef bool (*ext_receive_cmds_t)(u2_t key, char *cmd, int rx_chan);
 typedef bool (*ext_receive_FFT_samps_t)(int rx_chan, int instance, int flags, int ratio, int ns_out, TYPECPX *samps);
 typedef void (*ext_receive_iq_samps_t)(int rx_chan, int instance, int ns_out, TYPECPX *samps);
@@ -80,7 +81,10 @@ void ext_unregister_receive_real_samps_task(int rx_chan);
 void ext_register_receive_S_meter(ext_receive_S_meter_t func, int rx_chan);
 void ext_unregister_receive_S_meter(int rx_chan);
 
-// call to start/stop receiving cmds
+// call to start/stop receiving sound, waterfall and monitor cmds
+// NB: even after ext_receive_cmds_t::key matches cmd string compare still has to be done
+// because key::CMD_* space overlaps between sound, waterfall and monitor cmds.
+// key is just a hash to speed things up by reducing the number of string compares.
 void ext_register_receive_cmds(ext_receive_cmds_t func, int rx_chan);
 void ext_unregister_receive_cmds(int rx_chan);
 

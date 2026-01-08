@@ -651,7 +651,7 @@ function FT8_help(show)
          'reporter callsign of the Kiwi preset.<br><br>' +
          
          'URL parameters:<br>' +
-         'The first parameters can select one of the entries in the <i>freq</i> menu<br>' +
+         'The first parameter can select one of the entries in the <i>freq</i> menu<br>' +
          'e.g. <i>my_kiwi:8073/?ext=ft8,10136</i>' +
          '';
       confirmation_show_content(s, 610, 325);
