@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -751,6 +751,10 @@ retry:
 		    c->isMaster = true;
 		}
 
+		if (st->type == STREAM_MONITOR) {
+		    c->isMaster = true;
+        }
+        
         // only the first web socket connection sees "nolocal" URL param, so propagate force_notLocal
 		if (snd_or_wf && c->rx_channel != -1 && cother && cother->force_notLocal) {
             c->isLocal = false;
