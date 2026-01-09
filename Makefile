@@ -237,13 +237,13 @@ _DIRS_O3 += . $(PKGS_O3) platform platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) 
     $(RX) $(GPS) dev ui cfg dx support net web arch/$(ARCH)
 
 ifeq ($(OPT),0)
-    DIRS = $(_DIRS) $(_DIRS_O3)
+    DIRS = $(_DIRS_O3)
     DIRS_O3 =
 else ifeq ($(OPT),1)
-    DIRS = $(_DIRS) $(_DIRS_O3)
+    DIRS = $(_DIRS_O3)
     DIRS_O3 =
 else
-    DIRS = $(_DIRS)
+    DIRS =
     DIRS_O3 = $(_DIRS_O3)
 endif
 
