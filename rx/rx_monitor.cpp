@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2021 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2021-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "kiwi.h"
@@ -43,7 +43,7 @@ void c2s_mon(void *param)
 	int n, i, j;
 	conn_t *conn_mon = (conn_t *) param;
 	bool init = false;
-	int camped_rx = -1;
+	conn_mon->camped_rx = -1;
 	rx_common_init(conn_mon);
 	
 	nbuf_t *nb = NULL;
@@ -60,6 +60,11 @@ void c2s_mon(void *param)
             if (rx_common_cmd(STREAM_MONITOR, conn_mon, cmd)) {
                 if (!init) {
                     if (kiwi_str_begins_with(cmd, "SET auth")) {
+                    
+                        // STREAM_SOUND converted into a STREAM_MONITOR
+                        // because SND URL contained "/?camp"
+                        // So let STREAM_MONITOR know to proceed by sending us "MON_CAMP={rx}"
+                        // We then respond with "camp={ok},{rx_channel}" to confirm ready to recv msgs
                         send_msg(conn_mon, false, "MSG monitor");
                         init = true;
                     }
@@ -90,7 +95,7 @@ void c2s_mon(void *param)
                 }
             
                 if (rx == -1 || stop) send_msg(conn_mon, false, "MSG audio_camp=1,0");      // audio disconnect
-                camped_rx = -1;
+                conn_mon->camped_rx = -1;
                 if (rx == -1) continue;
 
                 int okay = 0;
@@ -103,7 +108,7 @@ void c2s_mon(void *param)
                         rxc->camp_id[i] = conn_mon->remote_port;
                         //cprintf(conn_mon, "CAMP: add rx%d id=%d slot=%d/%d\n", rx, rxc->camp_id[i], i+1, n_camp);
                         okay = 1;
-                        camped_rx = rx;
+                        conn_mon->camped_rx = rx;
                         break;
                     }
                     rxc->n_camp++;
@@ -180,20 +185,20 @@ void c2s_mon(void *param)
         }
 		
         // detect camped connection has gone away
-		if (camped_rx != -1) {
-            rx_chan_t *rxc = &rx_channels[camped_rx];
+		if (conn_mon->camped_rx != -1) {
+            rx_chan_t *rxc = &rx_channels[conn_mon->camped_rx];
             conn_t *c = rxc->conn;
             if (c == NULL || !c->valid || c->type != STREAM_SOUND) {
                 /*
                 if (c == NULL)
                     cprintf(conn_mon, "CAMP: channel gone rx%d c=NULL id=?/%d slot=%d/%d\n",
-                        camped_rx, rxc->camp_id[i], i+1, n_camp);
+                        conn_mon->camped_rx, rxc->camp_id[i], i+1, n_camp);
                 else
                     cprintf(conn_mon, "CAMP: channel gone rx%d type=%d id=%d/%d slot=%d/%d\n",
-                        camped_rx, c->type, c->remote_port, rxc->camp_id[i], i+1, n_camp);
+                        conn_mon->camped_rx, c->type, c->remote_port, rxc->camp_id[i], i+1, n_camp);
                 */
                 send_msg(conn_mon, false, "MSG camp_disconnect");
-                camped_rx = -1;
+                conn_mon->camped_rx = -1;
                 conn_mon->camp_init = false;
             }
 		}

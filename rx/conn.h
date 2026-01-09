@@ -52,6 +52,7 @@ typedef struct conn_st {
 	int remote_port;
 	u64_t tstamp;       // msec since 1970
 	ndesc_t s2c, c2s;
+	nbuf_t *nb;
 	funcP_t task_func;
 	char *tname;
 
@@ -107,6 +108,7 @@ typedef struct conn_st {
 	bool isMaster;
 	
 	// set only in STREAM_MONITOR
+	int camped_rx;
 	bool queued;
 	bool camp_init, camp_passband;
     bool isMasked;

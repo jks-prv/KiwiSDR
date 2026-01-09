@@ -118,7 +118,7 @@ int web_to_app(conn_t *c, nbuf_t **nbp, bool internal_connection)
 {
 	nbuf_t *nb;
 	
-    *nbp = NULL;
+    *nbp = c->nb = NULL;
 	if (c->stop_data) return 0;
     ndesc_t *ndesc = internal_connection? &c->s2c : &c->c2s;
     if (ndesc->mc == NULL) return -1;
@@ -126,7 +126,7 @@ int web_to_app(conn_t *c, nbuf_t **nbp, bool internal_connection)
 	if (!nb) return 0;
 	assert(!nb->done && !nb->expecting_done && nb->buf && nb->len);
 	nb->expecting_done = TRUE;
-	*nbp = nb;
+	*nbp = c->nb = nb;
 
     if (cmd_debug) {
         char *cmd = nb->buf;
