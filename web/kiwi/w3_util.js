@@ -4063,6 +4063,14 @@ function w3_string_cb(path, val)
 	setVarFromString(path, val.toString());
 }
 
+function w3_select_cb(path, val)
+{
+	val = +val;
+	//console.log('w3_select_cb: path='+ path +' val='+ val);
+	setVarFromString(path, val);
+}
+
+
 
 ////////////////////////////////
 // standard callbacks -- set cfg and var
