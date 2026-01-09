@@ -8290,6 +8290,9 @@ var dx = {
    db_short_s: [ 'stored', 'EiBi', 'community' ],
    ignore_dx_update: false,
    last_community_download: '',
+   
+   import_option: 0,
+   import_option_s: [ 'none', 'keep masked', 'merge files' ],
 
    INIT_BANDS_NO: 0,
    INIT_BANDS_YES: 1,

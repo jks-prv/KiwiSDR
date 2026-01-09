@@ -114,7 +114,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 	case AJAX_PHOTO: {
 		char *vname, *fname;
 		const char *data = NULL;
-		int data_len = 0, rc = 0;
+		int key_cmp, data_len = 0, rc = 0;
 		
 		printf("PHOTO UPLOAD REQUESTED from %s\n", ip_unforwarded);
 		//printf("PHOTO UPLOAD REQUESTED key=%s ckey=%s\n", mc->query, current_authkey);
@@ -194,22 +194,40 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 	// Using AJAX to upload a file to the server is required because browser javascript doesn't have access to the
 	// filesystem of the client. But a FormData() object passed to kiwi_ajax_send() can specify a file.
 	case AJAX_DX: {
-		char *vname, *fname;
+		char *vname, *fname, *key_cmp2 = NULL;
 		const char *data = NULL;
-		int type, idx, rc = 0, line = 0, status, key_cmp, data_len;
+		int type, idx, rc = 0, line = 0, status, data_len;
+		bool keep_masked = false, merge_files = false;
         char **s_a = NULL;
         int s_size = 0;
 		char *r_buf = NULL;
 		n = 0;
 		
-		key_cmp = -1;
-		if (kiwi_nonEmptyStr(mc->query) && current_authkey) {
-			key_cmp = strcmp(mc->query, current_authkey);
-            //printf("DX UPLOAD: AUTH key=%s ckey=%s %s\n", mc->query, current_authkey, key_cmp? "FAIL" : "OK");
-		}
+        #define NQS1 4
+        char *q_buf;
+        str_split_t qs[NQS1+1];
+        n = kiwi_split((char *) mc->query, &r_buf, "&", qs, NQS1);
+        for (i=0; i < n; i++) {
+            printf("DX UPLOAD: query(%d) <%s>\n", i, qs[i].str);
+            if (i == 0) {
+			    key_cmp2 = strstr(mc->query, current_authkey);
+            } else
+            if (strcmp(qs[i].str, "keep_masked") == 0) {
+                keep_masked = true;
+                printf("DX UPLOAD: keep_masked\n");
+            } else
+            if (strcmp(qs[i].str, "merge_files") == 0) {
+                merge_files = true;
+                printf("DX UPLOAD: merge_files\n");
+            }
+        }
+        //printf("DX UPLOAD: AUTH key=%s ckey=%s %s\n", mc->query, current_authkey, key_cmp2? "OK" : "FAIL");
+        printf("DX UPLOAD: keep_masked=%d merge_files=%d\n", keep_masked, merge_files);
+        kiwi_ifree(r_buf, "AJAX DX r_buf");
         kiwi_asfree(current_authkey);
         current_authkey = NULL;
-		if (key_cmp) {
+
+		if (!key_cmp2) {
 		    asprintf(&sb, "{\"rc\":1}");
 		    break;
 		}
@@ -265,19 +283,20 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
                     continue;
                 }
 
-                #define NQS 15
-                str_split_t qs[NQS+1];
+                #define NQS2 15
+                str_split_t qs[NQS2+1];
                 
                 sb2 = strchr(sb, '\n');
                 *sb2 = '\0';
-                n = kiwi_split(sb, &r_buf, delim, qs, NQS,
+		        r_buf = NULL;
+                n = kiwi_split(sb, &r_buf, delim, qs, NQS2,
                     KSPLIT_NO_SKIP_EMPTY_FIELDS | KSPLIT_HANDLE_EMBEDDED_DELIMITERS);
                 
                 #define N_CSV_FIELDS 12
                 #define N_CSV_FIELDS_SIG_BW 13
                 if ((n != N_CSV_FIELDS && n != N_CSV_FIELDS_SIG_BW) && line == 0 && delim[0] == ';') {
                     delim = (char *) ",";
-                    n = kiwi_split(sb, &r_buf, delim, qs, NQS,
+                    n = kiwi_split(sb, &r_buf, delim, qs, NQS2,
                         KSPLIT_NO_SKIP_EMPTY_FIELDS | KSPLIT_HANDLE_EMBEDDED_DELIMITERS);
                     //printf("DX_UPLOAD CSV: trying delim comma, n=%d\n", n);
                 }
@@ -390,12 +409,30 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 		dxp.data_len = data_len;
 		dxp.s_a = s_a;
 		dxp.idx = idx;
+		// writes file "upload.dx.json"
         status = child_task("kiwi.dx", _dx_write_file, POLL_MSEC(250), TO_VOID_PARAM(&dxp));
         rc = WEXITSTATUS(status);
         if (rc) goto fail;
+        
+        // merge masked entries (T15) from dx.json into upload.dx.json, then => dx.json
+        if (keep_masked) {
+            status = non_blocking_cmd_system_child("kiwi.dx", "cd " DIR_CFG "; grep \\\"T15\\\": dx.json >msk.json", POLL_MSEC(250));
+            rc = WEXITSTATUS(status);
+            printf("DX UPLOAD: keep_masked rc=%d\n", rc);
+            if (rc == 0) {      // masked entries found
+                system("cd " DIR_CFG "; { head -n 1 upload.dx.json; cat msk.json; tail -n +2 upload.dx.json | head -n -1; tail -n 1 upload.dx.json; } >tmp.json");
+                system("cd " DIR_CFG "; { head -n 1 tmp.json; tail -n +2 tmp.json | head -n -1 | sort -s -t '[' -k 2,2n; tail -n 1 tmp.json; } >upload.dx.json; rm tmp.json");
+            }
+        } else
+
+        if (merge_files) {
+            system("cd " DIR_CFG "; tail -n +2 upload.dx.json | head -n -1 >merge.json");
+            system("cd " DIR_CFG "; { head -n 1 dx.json; cat merge.json; tail -n +2 dx.json | head -n -1; tail -n 1 dx.json; } >tmp.json");
+            system("cd " DIR_CFG "; { head -n 1 tmp.json; tail -n +2 tmp.json | head -n -1 | sort -s -t '[' -k 2,2n; tail -n 1 tmp.json; } >upload.dx.json; rm merge.json tmp.json");
+        }
 
         // commit to using new file
-        system("mv " DIR_CFG "/upload.dx.json " DIR_CFG "/dx.json");
+        system("cp " DIR_CFG "/upload.dx.json " DIR_CFG "/dx.json");
 
 fail:
         if (type == TYPE_CSV) {

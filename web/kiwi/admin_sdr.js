@@ -1574,9 +1574,14 @@ function dx_html()
       );
 
    dx.export_label = 'Export: '+ w3_icon('id-dx-export-info w3-link-darker-color w3-help' +
-      '||title="Export (download) DX labels from Kiwi\nto a file on this computer.\nFiles can be in JSON or CSV format."', 'fa-info-circle', 20);
+      '||title="Export (download) DX labels from Kiwi to a file on this computer.\nFiles can be in JSON or CSV format."', 'fa-info-circle', 20);
    dx.import_label = 'Import: '+ w3_icon('id-dx-import-info w3-link-darker-color w3-help' +
-      '||title="Import (upload) DX labels from a file\non this computer to Kiwi.\nFiles can be in JSON or CSV format."', 'fa-info-circle', 20);
+      '||title="Import (upload) DX labels from a file on this computer to Kiwi.\n' +
+      'Files can be in JSON or CSV format.\nOption menu:\n' +
+      'none: Uploaded file completely OVERWRITES current file.\n' +
+      'keep masked: Masked entries from current file are RETAINED.\n' +
+      'merge files: Current and uploaded file are MERGED.\n' +
+      'Use these options with care."', 'fa-info-circle', 20);
    
    // freq offset conversion
    var s1 =
@@ -1610,11 +1615,14 @@ function dx_html()
                w3_button('w3-blue w3-font-12px w3-padding-tiny||title="export to CSV file"', 'CSV', 'dx_export_cb', dx.DX_CSV)
             ),
             w3_text('id-dx-import-label w3-padding-medium w3-padding-R-0 w3-text-teal w3-bold', dx.import_label),
-            w3_inline('w3-margin-between-8',
-               w3_button('w3-red w3-font-12px w3-padding-tiny||title="import from JSON file"', 'JSON', 'dx_import_cb', dx.DX_JSON),
-               w3_button('w3-red w3-font-12px w3-padding-tiny||title="import from CSV file"', 'CSV', 'dx_import_cb', dx.DX_CSV),
-               w3_input('//w3-hide w3-no-styling||type="file"', '', 'id-dx-import-form', '', 'dx_file_upload_cb')
-            ),
+            w3_div('',
+               w3_inline('w3-margin-between-8',
+                  w3_button('w3-red w3-font-12px w3-padding-tiny||title="import from JSON file"', 'JSON', 'dx_import_cb', dx.DX_JSON),
+                  w3_button('w3-red w3-font-12px w3-padding-tiny||title="import from CSV file"', 'CSV', 'dx_import_cb', dx.DX_CSV),
+                  w3_input('//w3-hide w3-no-styling||type="file"', '', 'id-dx-import-form', '', 'dx_file_upload_cb')
+               ),
+				   w3_select('w3-text-red w3-margin-T-8', '', 'option', 'dx.import_option', 0, dx.import_option_s, 'w3_select_cb')
+				),
             w3_text('w3-padding-medium w3-padding-R-0 w3-text-teal w3-bold', 'Search:'),
             w3_input('w3-text-black/w3-label-inline/w3-padding-small|width:75px|title="finds nearest freq"',
                'Freq', 'dx.o.search_f', '', 'dx_search_freq_cb'),
@@ -2467,16 +2475,17 @@ function dx_file_upload2(key)
 	//console.log(file);
 	var fdata = new FormData();
 	fdata.append((dx.current_import == dx.DX_JSON)? 'json' : 'csv', file, file.name);
-	kiwi_ajax_send(fdata, '/DX?'+ key, 'dx_file_uploaded');
+	var option = [ '', '&keep_masked', '&merge_files' ][dx.import_option];
+	kiwi_ajax_send(fdata, '/DX?'+ key + option, 'dx_file_uploaded_cb');
 }
 
-function dx_file_uploaded(o)
+function dx_file_uploaded_cb(o)
 {
 	var e;
 	var rc = isDefined(o.AJAX_error)? -1 : o.rc;
 	var csv_line = 'CSV line '+ o.line +': ';
 	
-	//console.log('## dx_file_uploaded rc='+ rc);
+	//console.log('## dx_file_uploaded_cb rc='+ rc);
 	
 	switch (rc) {
       case -1:
