@@ -10396,6 +10396,8 @@ function ident_keyup(el, evt, which)
 var shortcut = {
    nav_off: 0,
    keys: null,
+   ext_key: [],
+   
    NO_MODIFIER: 0,
    SHIFT: 1,
    CTL_ALT: 2,
@@ -10544,6 +10546,12 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
       if (id == 'id-freq-menu') inFreqMenu = true;
       else
       if (id == 'id-dx-container') inDX = true;
+   }
+   
+   if (shortcut.ext_key[key]) {
+      w3_call(shortcut.ext_key[key]);
+      ignore_next_keyup_event = true;     // don't trigger e.g. freqset_keyup()/freqset_complete()
+      return false;
    }
 
    switch (key) {
