@@ -157,6 +157,7 @@ void rx_server_init()
 		c++;
 	}
 	
+	rx_server_init_exp();
 	debug_init();
 	rx_modes_init();
 	
@@ -752,6 +753,7 @@ retry:
 		}
 
 		if (st->type == STREAM_MONITOR) {
+		    rx_channels[c->rx_channel].conn = c;
 		    c->isMaster = true;
         }
         

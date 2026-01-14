@@ -116,24 +116,24 @@ void c2s_waterfall_init()
 	for (int winf = 0; winf < N_WF_WINF; winf++) {
         float *window = WF_SHMEM->window_function[winf];
 
-        for (i=0; i < WF_NFFT; i++) {
+        for (i=0; i < WF_NBUF; i++) {
             window[i] = adc_scale_decim * WINDOW_GAIN;
         
             switch (winf) {
         
             case WINF_WF_HANNING:
-                window[i] *= (0.5 - 0.5 * cos( (K_2PI*i)/(float)(WF_NFFT-1) ));
+                window[i] *= (0.5 - 0.5 * cos( (K_2PI*i)/(float)(WF_NBUF-1) ));
                 break;
             
             case WINF_WF_HAMMING:
-                window[i] *= (0.54 - 0.46 * cos( (K_2PI*i)/(float)(WF_NFFT-1) ));
+                window[i] *= (0.54 - 0.46 * cos( (K_2PI*i)/(float)(WF_NBUF-1) ));
                 break;
 
             case WINF_WF_BLACKMAN_HARRIS:
                 window[i] *= (0.35875
-                    - 0.48829 * cos( (K_2PI*i)/(float)(WF_NFFT-1) )
-                    + 0.14128 * cos( (2.0*K_2PI*i)/(float)(WF_NFFT-1) )
-                    - 0.01168 * cos( (3.0*K_2PI*i)/(float)(WF_NFFT-1) ));
+                    - 0.48829 * cos( (K_2PI*i)/(float)(WF_NBUF-1) )
+                    + 0.14128 * cos( (2.0*K_2PI*i)/(float)(WF_NBUF-1) )
+                    - 0.01168 * cos( (3.0*K_2PI*i)/(float)(WF_NBUF-1) ));
                 break;
 
             case WINF_WF_NONE:
@@ -387,7 +387,7 @@ void c2s_waterfall(void *param)
             wf->aper_pan_timer = 0;
         }
         
-		wf->fft_used = WF_NFFT / WF_USING_HALF_FFT;		// the result is contained in the first half of a complex FFT
+		wf->fft_used = wf->nfft / WF_USING_HALF_FFT;		// the result is contained in the first half of a complex FFT
 		
 		// If any CIC is used (z > 1) only look at half of it to avoid the aliased images.
 		// For z == 1 no CIC is used but only half the FFT is needed.
@@ -438,8 +438,8 @@ void c2s_waterfall(void *param)
                 }
 			}
 			
-            wf_printf("WF NEW_MAP z%d i%d cic%d fft_used %d/%d span %.1f disp_fs %.1f plot_width %d/%d FFT %s plot\n",
-                wf->zoom, wf->interp, wf->cic_comp, wf->fft_used, WF_NFFT, span/kHz, disp_fs/kHz, wf->plot_width_clamped, wf->plot_width,
+            wf_printf("WF NEW_MAP z%d i%d cic%d fft_used=%d nfft=%d span=%.1f disp_fs=%.1f plot_width(clamped)=%d(%d) FFT %s plot\n",
+                wf->zoom, wf->interp, wf->cic_comp, wf->fft_used, wf->nfft, span/kHz, disp_fs/kHz, wf->plot_width, wf->plot_width_clamped,
                 (wf->plot_width_clamped < wf->fft_used)? ">=":"<");
 			
 			wf->new_map = FALSE;
@@ -544,20 +544,19 @@ void sample_wf(int rx_chan)
     // desired frame rate greater than what full sampling can deliver, so start overlapped sampling
     if (wf->check_overlapped_sampling) {
         wf->check_overlapped_sampling = false;
-
         if (wf->samp_wait_ms >= desired_scaled) {
             wf->overlapped_sampling = true;
             
-            wf_printf("---- WF%d OLAP z%d samp_wait %d >= %d(%d) desired\n",
-                rx_chan, wf->zoom, wf->samp_wait_ms, desired_scaled , desired);
+            wf_printf("---- WF OLAP z%d samp_wait %d >= %d(%d) desired\n",
+                wf->zoom, wf->samp_wait_ms, desired_scaled , desired);
             
             evWFC(EC_TRIG1, EV_WF, -1, "WF", "OVERLAPPED CmdWFReset");
             spi_set(CmdWFReset, rx_chan, WF_SAMP_RD_RST | WF_SAMP_WR_RST | WF_SAMP_CONTIN);
             WFSleepReasonMsec("fill pipe", wf->samp_wait_ms+1);		// fill pipeline
         } else {
             wf->overlapped_sampling = false;
-            wf_printf("---- WF%d NON-OLAP z%d samp_wait %d < %d(%d) desired\n",
-                rx_chan, wf->zoom, wf->samp_wait_ms, desired_scaled, desired);
+            wf_printf("---- WF NON-OLAP z%d samp_wait %d < %d(%d) desired\n",
+                wf->zoom, wf->samp_wait_ms, desired_scaled, desired);
         }
     }
     
@@ -590,7 +589,7 @@ void sample_wf(int rx_chan)
     float *window = WF_SHMEM->window_function[wf->window_func];
     fft_t *fft = &WF_SHMEM->fft_inst[rx_chan];
 
-    for (chunk=0, sn=0; sn < WF_NFFT; chunk++) {
+    for (chunk=0, sn=0; sn < WF_NBUF; chunk++) {
         miso = &SPI_SHMEM->wf_miso[rx_chan];
         assert(chunk < n_chunks);
 
@@ -631,7 +630,7 @@ void sample_wf(int rx_chan)
         iqp = (iq_t*) &(miso->word[0]);
         
         for (k=0; k < nwf_samps; k++) {
-            if (sn >= WF_NFFT) break;
+            if (sn >= WF_NBUF) break;
             ii = (s4_t) (s2_t) iqp->i;
             qq = (s4_t) (s2_t) iqp->q;
             iqp++;
@@ -679,7 +678,7 @@ void sample_wf(int rx_chan)
     if (wf->nb_enable[NB_BLANKER] && wf->nb_enable[NB_WF]) {
         if (wf->nb_param_change[NB_BLANKER]) {
             //u4_t srate = round(conn->adc_clock_corrected) / (1 << (wf->zoom+1));
-            u4_t srate = WF_NFFT;
+            u4_t srate = wf->nfft;
             //printf("NB WF sr=%d usec=%.0f th=%.0f\n", srate, wf->nb_param[NB_BLANKER][0], wf->nb_param[NB_BLANKER][1]);
             m_NoiseProc_wf[rx_chan].SetupBlanker("WF", srate, wf->nb_param[NB_BLANKER]);
             wf->nb_param_change[NB_BLANKER] = false;
@@ -687,7 +686,7 @@ void sample_wf(int rx_chan)
         }
 
         if (wf->nb_setup)
-            m_NoiseProc_wf[rx_chan].ProcessBlankerOneShot(WF_NFFT, (TYPECPX*) fft->hw_c_samps, (TYPECPX*) fft->hw_c_samps);
+            m_NoiseProc_wf[rx_chan].ProcessBlankerOneShot(wf->nfft, (TYPECPX*) fft->hw_c_samps, (TYPECPX*) fft->hw_c_samps);
     }
 
     void compute_frame(int rx_chan);
@@ -770,6 +769,7 @@ void compute_frame(int rx_chan)
     bool use_compression = (wf->compression && wf->zoom != 0);
 		
 	evWF(EC_EVENT, EV_WF, -1, "WF", "compute_frame: FFT start");
+	
     #ifdef OPTION_WF_FFT_MEAS
         static u4_t loopct;
         bool meas = ((loopct++ & 0xf) == 0);
@@ -790,7 +790,7 @@ void compute_frame(int rx_chan)
 	// zero-out the DC component in lowest bins (around -90 dBFS)
 	// otherwise when scrolling wf it will move but then not continue at the new location
 	// Blackman-Harris window DC component is a little wider for z=0
-	int bin_dc_offset = (wf->zoom == 0 && wf->window_func == WINF_WF_BLACKMAN_HARRIS)? 4:2;    
+	int bin_dc_offset = (wf->zoom <= 1 && wf->window_func == WINF_WF_BLACKMAN_HARRIS)? 4:2;    
 	for (i = 0; i < bin_dc_offset; i++) pwr[i] = 0;
 	
     if (wf->zoom <= 1) {    // don't apply compensation when CIC not in use
@@ -860,8 +860,8 @@ void compute_frame(int rx_chan)
                 bin = wf->fft2wf_map[i];
                 if (bin >= WF_WIDTH || bin < 0) {
                     if (wf->new_map2) {
-                        wf_printf(">= FFT: Z%d WF_NFFT %d i %d fft_used %d plot_width %d pix_per_dB %.3f range %.0f:%.0f\n",
-                            wf->zoom, WF_NFFT, i, wf->fft_used, wf->plot_width, pix_per_dB, max_dB, min_dB);
+                        wf_printf(">= FFT: Z%d nfft %d i %d fft_used %d plot_width %d pix_per_dB %.3f range %.0f:%.0f\n",
+                            wf->zoom, wf->nfft, i, wf->fft_used, wf->plot_width, pix_per_dB, max_dB, min_dB);
                         wf->new_map2 = FALSE;
                     }
                     
@@ -918,8 +918,8 @@ void compute_frame(int rx_chan)
 	} else {
 		// FFT < plot
 		if (wf->new_map2) {
-			//printf("< FFT: Z%d WF_NFFT %d fft_used %d plot_width_clamped %d pix_per_dB %.3f range %.0f:%.0f\n",
-			//	wf->zoom, WF_NFFT, wf->fft_used, wf->plot_width_clamped, pix_per_dB, max_dB, min_dB);
+			//printf("< FFT: Z%d nfft %d fft_used %d plot_width_clamped %d pix_per_dB %.3f range %.0f:%.0f\n",
+			//	wf->zoom, wf->nfft, wf->fft_used, wf->plot_width_clamped, pix_per_dB, max_dB, min_dB);
 			wf->new_map2 = FALSE;
 		}
 
@@ -955,6 +955,8 @@ void compute_frame(int rx_chan)
 
 	// sync this waterfall line to audio packet currently going out
 	out->seq = wf->snd_seq;
+	
+	wf_compute_frame_exp(rx_chan);
 }
 
 void c2s_waterfall_shutdown(void *param)

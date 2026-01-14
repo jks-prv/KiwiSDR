@@ -65,13 +65,14 @@ Boston, MA  02110-1301, USA.
 #define	MAX_START(z)	((WF_WIDTH << MAX_ZOOM) - (WF_WIDTH << (MAX_ZOOM - z)))
 
 struct fft_t {
-	fftwf_complex hw_c_samps[WF_NFFT];
+	fftwf_complex hw_c_samps[WF_NBUF];
 	fftwf_complex hw_fft[WF_NFFT];
 };
 
 struct wf_pkt_t {
 	char id4[4];
 	u4_t x_bin_server;
+	#define WF_ZOOM                 0x0000ffff
 	#define WF_FLAGS                0xffff0000
 	#define WF_FLAGS_COMPRESSION    0x00010000
 	#define WF_FLAGS_NO_SYNC        0x00020000
@@ -121,7 +122,7 @@ static const char *interp_s[] = { "max", "min", "last", "drop", "cma" };
 struct wf_inst_t {
 	conn_t *conn;
 	int rx_chan;
-	int fft_used, plot_width, plot_width_clamped;
+	int nfft, fft_used, plot_width, plot_width_clamped;
 	int maxdb, mindb, send_dB;
 	float fft_scale[WF_WIDTH], fft_scale_div2[WF_WIDTH], fft_offset;
 	u2_t fft2wf_map[WF_NFFT / WF_USING_HALF_FFT];		// map is 1:1 with fft
@@ -175,6 +176,8 @@ struct wf_inst_t {
     float avg_pwr[APER_PWR_LEN];
     u4_t report_sec;
     int last_noise, last_signal;
+    
+    wf_inst_exp_t exp;
 };
 
 #define WINF_WF_HANNING         0
@@ -187,7 +190,7 @@ struct wf_shmem_t {
     wf_inst_t wf_inst[MAX_RX_CHANS];        // NB: MAX_RX_CHANS even though there may be fewer MAX_WF_DDC
     fft_t fft_inst[MAX_RX_CHANS];
 	fftwf_plan hw_dft_plan;
-    float window_function[N_WF_WINF][WF_NFFT];
+    float window_function[N_WF_WINF][WF_NBUF];
     float CIC_comp[WF_NFFT];
     int n_chunks;
     int chunk_wait_scale;

@@ -177,6 +177,9 @@ void c2s_mon(void *param)
                 send_msg(conn_mon, false, "MSG qpos=%d,%d,%d", pos, waiters, reload);
                 continue;
             }
+            
+            if (c2s_mon_exp(conn_mon))
+                continue;
 
             //cprintf(conn_mon, "c2s_mon: unknown command: sl=%d %d|%d|%d [%s] ip=%s ==================================\n",
             //    strlen(cmd), cmd[0], cmd[1], cmd[2], cmd, conn_mon->remote_ip);

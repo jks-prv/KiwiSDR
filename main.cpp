@@ -496,9 +496,9 @@ int main(int argc, char *argv[])
         check(nrx_samps < FASTFIR_OUTBUF_SIZE);    // see data_pump.h
         check(nrx_samps_wb < MAX_WB_SAMPS);        // see data_pump.h
 
-        nwf_nxfer = (WF_NFFT * NIQ / SPIBUF_W) + 1;
-        nwf_samps = (WF_NFFT / nwf_nxfer) + 1;
-        lprintf("firmware: WF nfft=%d xfer=%d samps=%d\n", WF_NFFT, nwf_nxfer, nwf_samps);
+        nwf_nxfer = (WF_NBUF * NIQ / SPIBUF_W) + 1;
+        nwf_samps = (WF_NBUF / nwf_nxfer) + 1;
+        lprintf("firmware: WF nbuf=%d nfft=%d xfer=%d samps=%d\n", WF_NBUF, WF_NFFT, nwf_nxfer, nwf_samps);
 
         monitors_max = (rx_chans * N_CAMP) + N_QUEUERS;
     }
