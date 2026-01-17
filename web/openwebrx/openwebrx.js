@@ -319,23 +319,27 @@ function kiwi_main_ready()
       w3_innerHTML(el, 'Keyboard modifier test');
 	   if (1) window.addEventListener("keydown",
 	      function(ev) {
-	         event_dump(ev, 'KD', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'KD', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
 	   if (1) window.addEventListener("keypress",
 	      function(ev) {
-	         event_dump(ev, 'KP', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'KP', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
 	   if (1) window.addEventListener("keyup",
 	      function(ev) {
-	         event_dump(ev, 'KU', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'KU', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
 	   if (1) window.addEventListener("click",
 	      function(ev) {
-	         event_dump(ev, 'click', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'click', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
       return;
    */
@@ -699,13 +703,13 @@ function init_panel_toggle(type, panel, scrollable, timeo, color)
 	divPanel.init = true;
 }
 
-function toggle_panel(panel, set)
+function toggle_panel(panel, set_val)
 {
 	var divPanel = w3_el(panel);
 	var divVis = w3_el(panel +'-vis');
 	//console.log('toggle_panel '+ panel +' ptype='+ divPanel.ptype +' panelShown='+ divPanel.panelShown);
 	
-	if (isDefined(set)) divPanel.panelShown = set ^ 1;    // ^1 because of inverted logic below
+	if (isDefined(set_val)) divPanel.panelShown = set_val ^ 1;    // ^1 because of inverted logic below
 
 	if (divPanel.ptype == ptype.POPUP) {
 		divPanel.style.visibility = divPanel.panelShown? 'hidden' : 'visible';
@@ -10732,10 +10736,20 @@ function keyboard_shortcut_event(evt)
    
    var k = evt.key;
    
-   // ignore esc and Fnn function keys
-   if (k == 'Escape' || k.match(/F[1-9][12]?/)) {
+   // ignore esc key
+   if (k == 'Escape') {
       //event_dump(evt, 'Escape-shortcut');
       //console.log('KEY PASS Esc');
+      
+      // let esc close open readme panel
+	   var el = w3_el('id-readme');
+	   if (el.panelShown) toggle_panel(/* must be string */ 'id-readme', 0);
+      return;
+   }
+   
+   // ignore Fnn function keys
+   if (k == 'Escape' || k.match(/F[1-9][12]?/)) {
+      console.log('KEY PASS Fnn');
       return;
    }
    
@@ -11526,17 +11540,6 @@ function panels_setup()
 	el = w3_el('id-readme');
 	el.style.backgroundColor = readme_color;
 
-   // Allow a click anywhere in panel to toggle it.
-	// Use a capturing click listener, then cancel propagation of the click
-	// so vis handler doesn't call toggle_panel() twice.
-	/*
-	el.addEventListener("click", function(ev) {
-	   //console.log('id-readme ev='+ ev);
-	   cancelEvent(ev);
-	   toggle_panel('id-readme');
-	}, w3.CAPTURING);
-	*/
-	
 	//console.log('README='+ cfg.panel_readme);
 	var readme = cfg.panel_readme || '';
 	if (readme != '') readme = w3_json_to_html('readme', readme);
