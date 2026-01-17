@@ -167,12 +167,12 @@ document.onreadystatechange = function() {
 
 function kiwi_load2()
 {
-   if (typeof(kiwi_check_js_version) !== 'undefined') {
+   if (isDefined(kiwi_check_js_version)) {
       // done as an AJAX because needed long before any websocket available
       kiwi_ajax("/VER", 'kiwi_version_cb');
    } else {
 		kiwi.conn_tstamp = (new Date()).getTime();   // fallback
-      if (typeof(kiwi_bodyonload) !== 'undefined')
+      if (isDefined(kiwi_bodyonload))
          kiwi_bodyonload('');
    }
 }
@@ -207,30 +207,49 @@ function kiwi_isChrome() { return (kiwi_chrome? kiwi_chrome[1] : NaN); }
 
 function kiwi_isOpera() { return (kiwi_opera? kiwi_opera[1] : NaN); }
 
-var kiwi_version_fail = false;
-
 function kiwi_version_cb(response_obj)
 {
+   // Guard against multiple AJAX replies to /VER request that have been seen when using
+   // MacOS "private relay" mode with Safari.
+   if (kiwi.kiwi_version_check_done) {
+      console.log('CAUTION: /VER multiple callback?');
+      return;
+   }
+   kiwi.kiwi_version_check_done = true;
+   
+   if (!isArg(response_obj) || !isNumber(response_obj.maj) || !isNumber(response_obj.min)) {
+      console.log('CAUTION: /VER bad response?');
+      if (isArg(response_obj))
+         console.log(response_obj);
+      else
+         console.log('typeof response_obj = '+ typeof(response_obj));
+      // version_{maj,min} set later from a received send_msg()
+		kiwi.conn_tstamp = (new Date()).getTime();   // fallback
+	   kiwi_bodyonload('');
+	   return;
+   }
+   
 	version_maj = response_obj.maj; version_min = response_obj.min;
 	kiwi.admin_save_pwd = response_obj.sp;
 	//console.log('v'+ version_maj +'.'+ version_min +': KiwiSDR server asp='+ kiwi.admin_save_pwd);
+	//console.log(response_obj);
 	var s='';
 	
 	kiwi_check_js_version.forEach(function(el) {
 		if (el.VERSION_MAJ != version_maj || el.VERSION_MIN != version_min) {
-			if (kiwi_version_fail == false) {
+			if (kiwi.kiwi_version_fail == false) {
 				s = 'Your browser is trying to use incorrect versions of the KiwiSDR Javascript files.<br>' +
 					'Please clear your browser cache and try again.<br>' +
 					'Or click the button below to continue anyway.<br><br>' +
 					'v'+ version_maj +'.'+ version_min +': KiwiSDR server<br>';
-				kiwi_version_fail = true;
+				kiwi.kiwi_version_fail = true;
 			}
 			s += 'v'+ el.VERSION_MAJ +'.'+ el.VERSION_MIN +': '+ el.file +'<br>';
 		}
 		//console.log('v'+ el.VERSION_MAJ +'.'+ el.VERSION_MIN +': '+ el.file);
 	});
 	
-	if (kiwi_version_fail)
+	if (kiwi.kiwi_version_fail)
 	   s += '<br>'+ w3_button('w3-css-yellow', 'Continue anyway', 'kiwi_version_continue_cb');
 	
 	kiwi.conn_tstamp = isDefined(response_obj.ts)? response_obj.ts : (new Date()).getTime();
@@ -1625,6 +1644,23 @@ function kiwi_clean_url(url)
       if (isNumber(n)) port = n;
    }
    return w3_sbc(':', h, port);
+}
+
+// only handles IPv4-mapped IPv6
+function kiwi_isPublic_url(host) {
+   var isPublic_url = true;
+   host = host.replace(/^::ffff:/, '');   // IPv4-mapped IPv6
+   var dotted = host.split('.').length;
+   if (dotted <= 1)
+      isPublic_url = false;   // simple hostname
+   if (isPublic_url && (dotted == 4) && kiwi_inet4_d2h(host)) {
+      if (!kiwi_inet4_d2h(host, { no_local_ip:1 })) {
+         isPublic_url = false;   // local IPv4 address
+      }
+   }
+   if (isPublic_url && host.endsWith('.local'))
+      isPublic_url = false;   // ending in .local
+   return isPublic_url;
 }
 
 function kiwi_open_or_reload_page(obj)   // { url, hp, path, qs, tab, delay }
