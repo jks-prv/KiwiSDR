@@ -114,6 +114,7 @@ void c2s_mon(void *param)
                     rxc->n_camp++;
                 }
             
+                cprintf(conn_mon, "MON camp=%d rx=%d\n", okay, rx);
                 send_msg(conn_mon, false, "MSG camp=%d,%d", okay, rx);
                 continue;
             }

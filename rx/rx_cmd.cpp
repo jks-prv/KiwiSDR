@@ -442,7 +442,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             }
             
             if (conn->isMaster || type_admin)
-                clprintf(conn, "--- new %s connection --------------------------------------------------------\n", stream_name);
+                clprintf(conn, "--- %s new connection --------------------------------------------------------\n", stream_name);
         
             if (conn->internal_connection) {
                 is_local_e = IS_LOCAL;
