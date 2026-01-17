@@ -262,21 +262,27 @@ function kiwi_map_graticule_visible(kmap, vis)
 
 function kiwi_map_markers_visible(id, vis)
 {
-	w3_iterate_children('leaflet-marker-pane',
-	   function(el, i) {
-	      if (el.className.includes(id)) {
-	         w3_hide2(el, !vis);
-	      }
-	   }
-	);
+   var isFunc = isFunction(vis);
 
-	w3_iterate_children('leaflet-tooltip-pane',
-	   function(el, i) {
-	      if (el.className.includes(id)) {
-	         w3_hide2(el, !vis);
-	      }
-	   }
-	);
+   if (!isFunc)
+      w3_iterate_children('leaflet-marker-pane',
+         function(el, i) {
+            if (el.className.includes(id)) {
+                  w3_hide2(el, !vis);
+            }
+         }
+      );
+
+   w3_iterate_children('leaflet-tooltip-pane',
+      function(el, i) {
+         if (el.className.includes(id)) {
+            if (isFunc)
+               vis(el);
+            else
+               w3_hide2(el, !vis);
+         }
+      }
+   );
 }
 
 function kiwi_map_int_pan_zoom(map, latlon, zoom)
@@ -305,7 +311,7 @@ function kiwi_map_set_icon(km, name, field_idx, icon, size, color, title, cb, cb
    var isContainer = (field_idx > kmap.NO_CONTAINER);
    var el_tag = kiwi_map_id(km, name +'-icon');
    var el_cont = el_tag +'-c'+ (isContainer? field_idx : '');
-   //console.log('kiwi_map_set_icon field_idx='+ field_idx +' el_tag='+ el_tag +' el_cont='+ el_cont);
+   //console.log('kiwi_map_set_icon: icon='+ icon +' color='+ color +' field_idx='+ field_idx +' el_tag='+ el_tag +' el_cont='+ el_cont);
    
    w3_innerHTML(el_cont,   // icon container
       (icon == '')? '' :
