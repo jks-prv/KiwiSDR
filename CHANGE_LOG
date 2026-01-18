@@ -3,6 +3,30 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.827  January 18, 2026
+    Admin page: Added search field to top bar. See help popup for details (press 'h' or '?').
+    
+    Admin DX tab: Added import option menu. Use these options with care. (thanks Mauno WRTH)
+        "none": Usual behavior where uploaded file completely replaces all DX labels.
+        "keep masked": Current masked label entries are RETAINED and merged with uploaded file.
+            Useful if you've added masked entries you want to keep in a new uploaded file.
+        "merge files": Current and uploaded file are MERGED together.
+            Useful if you want to add a "supplement" label file to the existing labels set.
+
+    TDoA: Kiwi hosts can be filtered by minimum SNR. Corresponding URL parameter. See help.
+    
+    Updated GPS sats table. (thanks F4FPR)
+    
+    ALE: Increased scan dwell time maximum from 1 to 10 minutes. (thanks DK9FI)
+
+    Change DX spots extension text from sk6aw.net to kiwisdr.com
+
+    Github fix from AK6DS (thanks) "Fix spi_dev_mode when using SPI_PIO #39"
+    
+    Possible workaround for the MacOS "private relay" problem when using Safari.
+    
+    The escape key will now close the blue-violet "readme" panel.
+
 v1.825,826  November 28, 2025
     Enable test of proxy load balancing.
 
