@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 var extint = {
    ws: null,
@@ -536,7 +536,7 @@ function ext_get_optbar()
 
 function ext_set_optbar(optbar, cb_param)
 {
-   if (extint.optbars[optbar]) {
+   if (isNumber(extint.optbars[optbar])) {
       kiwi_storeWrite('last_optbar', optbar);
       w3_click_nav('id-navbar-optbar', optbar, 'optbar', cb_param);
    }
@@ -1124,18 +1124,32 @@ function extint_msg_cb(param, ws)
 	return true;
 }
 
+function ext_deferred_disconnect()
+{
+	if (extint.deferred_disconnect) {
+	   console.log('### ext_deferred_disconnect ##########################################');
+      recv_websocket(extint.ws, null);		// ignore further server ext messages
+      if (extint.ws) ext_send('SET ext_blur='+ rx_chan);
+      extint.deferred_disconnect = false;
+	}
+}
+
 function extint_blur_prev(restore)
 {
 	if (extint.current_ext_name != null) {
-		w3_call(extint.current_ext_name +'_blur');
-		recv_websocket(extint.ws, null);		// ignore further server ext messages
+		var rv = w3_call(extint.current_ext_name +'_blur');
+		extint.deferred_disconnect = (isObject(rv) && rv.defer);
+	   console.log('### extint_blur_prev deferred_disconnect='+ extint.deferred_disconnect +' ##########################################');
+      if (!extint.deferred_disconnect)
+		   recv_websocket(extint.ws, null);		// ignore further server ext messages
 		if (restore) ext_set_controls_width_height();		// restore width/height
 		extint.current_ext_name = null;
 		time_display_setup('id-topbar-R-container');
 	}
 	
-	if (extint.ws)
+	if (extint.ws && !extint.deferred_disconnect) {
 		ext_send('SET ext_blur='+ rx_chan);
+	}
 }
 
 function extint_focus(is_locked)

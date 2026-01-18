@@ -159,6 +159,8 @@ bool CW_skimmer_msgs(char *msg, int rx_chan) {
     return false;
 }
 
+bool CW_skimmer_vars() { return false; }
+
 void CW_skimmer_main();
 
 ext_t cw_skimmer_ext = {

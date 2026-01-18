@@ -106,6 +106,7 @@ typedef struct {
     snd_pkt_iq_t   out_pkt_iq;
 
     u4_t firewall[32];
+    conn_t *conn;
 	u4_t seq;
 	bool isSAM;
 	float norm_locut, norm_hicut, norm_pbc;

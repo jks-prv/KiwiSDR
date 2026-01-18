@@ -44,6 +44,29 @@ bool tdoa_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+bool TDoA_vars()
+{
+    bool up_cfg = false;
+
+    cfg_default_object("tdoa", "{}", &up_cfg);
+    // FIXME: switch to using new SSL version of TDoA service at some point: https://tdoa2.kiwisdr.com
+    // workaround to prevent collision with 1st-level "server_url" until we can fix cfg code
+    const char *s;
+	if ((s = cfg_string("tdoa.server_url", NULL, CFG_OPTIONAL)) != NULL) {
+		cfg_set_string("tdoa.server", s);
+	    cfg_string_free(s);
+	    cfg_rem_string("tdoa.server_url");
+	    UPDATE_CFG_BREAK(up_cfg);
+	} else {
+        cfg_default_string("tdoa.server", "http://tdoa.kiwisdr.com", &up_cfg);
+    }
+
+    cfg_default_string("tdoa_id", "", &up_cfg);
+    cfg_default_int("tdoa_nchans", -1, &up_cfg);
+
+    return up_cfg;
+}
+
 void TDoA_main();
 
 ext_t tdoa_ext = {

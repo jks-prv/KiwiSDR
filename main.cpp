@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -496,9 +496,9 @@ int main(int argc, char *argv[])
         check(nrx_samps < FASTFIR_OUTBUF_SIZE);    // see data_pump.h
         check(nrx_samps_wb < MAX_WB_SAMPS);        // see data_pump.h
 
-        nwf_nxfer = (WF_NFFT * NIQ / SPIBUF_W) + 1;
-        nwf_samps = (WF_NFFT / nwf_nxfer) + 1;
-        lprintf("firmware: WF nfft=%d xfer=%d samps=%d\n", WF_NFFT, nwf_nxfer, nwf_samps);
+        nwf_nxfer = (WF_NBUF * NIQ / SPIBUF_W) + 1;
+        nwf_samps = (WF_NBUF / nwf_nxfer) + 1;
+        lprintf("firmware: WF nbuf=%d nfft=%d xfer=%d samps=%d\n", WF_NBUF, WF_NFFT, nwf_nxfer, nwf_samps);
 
         monitors_max = (rx_chans * N_CAMP) + N_QUEUERS;
     }
@@ -566,11 +566,9 @@ int main(int argc, char *argv[])
         
         rf_attn_init();
         
-        if (do_gps) {
-            #ifdef USE_GPS
-                gps_main(argc, argv);
-            #endif
-        }
+        #ifdef USE_GPS
+            gps_main(argc, argv, do_gps);
+        #endif
     }
     
 	CreateTask(stat_task, NULL, MAIN_PRIORITY);

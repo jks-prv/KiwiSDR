@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 /*
 
@@ -422,6 +422,8 @@ function w3_obj_num(o)
    return o;
 }
 
+function w3_obj_key_count(obj) { return Object.keys(obj).length; }
+
 // given a sequential position in an object's keys, return the corresponding object element for that key
 function w3_obj_seq_el(obj, idx)
 {
@@ -480,6 +482,16 @@ function w3_enum_obj_or_array_of_objs(obj_arr, func)
    if (isObject(obj_arr)) {
       func(obj_arr);
    }
+}
+
+// merge the object fields of osrc into odst
+function w3_obj_mix(odst, osrc)
+{
+   if (isArg(osrc))
+      w3_obj_enum(osrc, function(key, i, o) {
+         odst[key] = o;
+      });
+   return odst;
 }
 
 // arr:     [] string vals to iterate over
@@ -542,8 +554,10 @@ function w3_ext_param(s, param)
       if (pl.length > 1) {
          rv.has_value = true;
          rv.num = parseFloat(pl[1]);
-         rv.string = pl[1];
-         rv.string_case = pu[1];
+         
+         // allow string value to contain ':'
+         rv.string = pl.slice(1).join(':');
+         rv.string_case = pu.slice(1).join(':');
          rv.items = pu;
       } else {
          rv.num = 0;
@@ -1231,21 +1245,25 @@ function w3_show_hide_inline(el, show, n_parents_up, props, cond)
 function w3_disable(el_id, disable, prop)
 {
    if (!isArg(disable)) disable = true;
-   if (!isString(prop)) prop = 'w3-disabled';
    
    el = w3_el(el_id);
    if (!el) return null;
-   //console.log('w3_disable disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
+   //console.log('w3_disable disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName +' type='+ el.type);
    //console.log(el);
+   var input = (el.nodeName == 'INPUT');
+   var slider = (input && el.type == 'range');
+   var field = (input && el.type == 'text');
+   if (!isString(prop)) prop = slider? 'w3-disabled' : 'w3-disabled-field';
    w3_set_props(el, prop, disable);
 	
 	// for disabling menu popup and sliders
-	if (isDefined(el.nodeName) && (el.nodeName == 'SELECT' || el.nodeName == 'INPUT')) {
+	var attr = field? 'readonly' : 'disabled';
+	if (isDefined(el.nodeName) && (el.nodeName == 'SELECT' || input)) {
 	   try {
          if (disable)
-            el.setAttribute('disabled', '');
+            el.setAttribute(attr, '');
          else
-            el.removeAttribute('disabled');
+            el.removeAttribute(attr);
       } catch(ex) {
          console.log('w3_disable:Attribute');
          console.log(ex);
@@ -1257,27 +1275,9 @@ function w3_disable(el_id, disable, prop)
 
 function w3_disable_multi(el_id, disable, prop)
 {
-   if (!isArg(disable)) disable = true;
-   if (!isString(prop)) prop = 'w3-disabled';
-   
    w3_els(el_id,
       function(el, i) {
-         //console.log('w3_disable_multi disable='+ disable +' t/o(el)='+ typeof(el) +' nodeName='+ el.nodeName);
-         //console.log(el);
-         w3_set_props(el, prop, disable);
-   
-         // for disabling menu popup and sliders
-         if (isDefined(el.nodeName) && (el.nodeName == 'SELECT' || el.nodeName == 'INPUT')) {
-            try {
-               if (disable)
-                  el.setAttribute('disabled', '');
-               else
-                  el.removeAttribute('disabled');
-            } catch(ex) {
-               console.log('w3_disable:Attribute');
-               console.log(ex);
-            }
-         }
+         w3_disable(el, disable, prop);
       }
    );
 }
@@ -1390,8 +1390,16 @@ function w3_color(el_id, color, bkgColor, cond)
 	var prev_fg = el.style.color;
 	var prev_bg = el.style.backgroundColor;
 	
+	// allow w3_color(el_id, [color, bkgColor], cond)
+	if (isArray(color)) {
+	   var a = color;
+	   color = a[0];
+	   cond = bkgColor;
+	   bkgColor = a[1];
+	}
+	
 	// remember that setting colors to '' restores default
-	cond = (isUndefined(cond) || cond);
+   cond = (isUndefined(cond) || cond);
    if (isArg(color)) el.style.color = cond? color:'';
    if (isArg(bkgColor)) el.style.backgroundColor = cond? bkgColor:'';
 	return { color: prev_fg, backgroundColor: prev_bg };
@@ -1649,6 +1657,20 @@ function w3_psa3(psa3)
 {
    //if (psa3.includes('w3-dump')) console.log('w3_psa3 in=['+ psa3 +']');
    psa3 = psa3 || '';
+
+	var a = psa3.split('||');
+	if (a.length == 2) {
+	   if (a[1].includes('/')) {
+	      var s = a[1].replace(/\//g, '&slash;');
+	      // e.g. ...||... title="foo/bar instead of foo&slash;bar"
+	      console.log('w3_psa3 psa='+ sq(psa3));
+	      console.log('w3_psa3 DANGER: psa attribute part after "||" contained "/", replaced with "&slash;"');
+	      console.log("w3_psa3 before: '||"+ a[1] +"'");
+	      console.log("w3_psa3  after: '||"+ s +"'");
+	      psa3 = a[0] +'||'+ s;
+	   }
+	}
+
    a = psa3.split('/');
    var a0 = (a[0] || '').replace(/&slash;/g, '/');
    var a1 = (a[1] || '').replace(/&slash;/g, '/');
@@ -1667,30 +1689,30 @@ function w3_psa3(psa3)
       return { left:'', middle:'', right:'' };
 }
 
-// add space between string arguments
-// empty strings ignored (join() won't do this)
-function w3_sb()
-{
-   var a = [];
-   for (var i = 0; i < arguments.length; i++) {
-      var s = arguments[i];
-      s = isString(s)? s.trim() : (isNumber(s)? s.toString() : '');
-      if (s != '') a.push(s);
-   }
-	return a.length? a.join(' ') : '';
-}
-
 // add 'c' between string arguments
 function w3_sbc(c)
 {
    var a = [];
-   for (var i = 1; i < arguments.length; i++) {
-      var s = arguments[i];
+   var strnum = function(s) {
       s = isString(s)? s.trim() : (isNumber(s)? s.toString() : '');
       if (s != '') a.push(s);
+   };
+   for (var i = 1; i < arguments.length; i++) {
+      var s = arguments[i];
+      if (isObject(s)) {   // e.g. from w3_sb(), w3_cat() below
+         w3_obj_enum(s, function(k,i,o) {
+            strnum(o);
+         });
+      } else {
+         strnum(s);
+      }
    }
 	return a.length? a.join(c) : '';
 }
+
+function w3_sb() { return w3_sbc(' ', arguments); }
+
+function w3_cat() { return w3_sbc('', arguments); }
 
 // "space between ending with"
 function w3_sbew(ew)
@@ -2794,6 +2816,8 @@ function w3int_input_keydown(ev, path, cb)
    }
    
    if (input_any_key && cb_a[1]) {
+      //console.log('input_any_key');
+      //console.log(cb_a);
       //console.log('w3int_input_keydown: input_any_key '+ k +' cb_a[1]='+ cb_a[1]);
       //event_dump(ev, "input_any_change", true);
       w3_call(cb_a[1], ev, true);
@@ -2839,7 +2863,7 @@ function w3int_input_keydown(ev, path, cb)
                console.log('el.value='+ JSON.stringify(el.value));
                console.log(el);
             }
-            w3_input_change(path, cb, 'kd1');
+            w3_input_change(path, cb, 'kd1', ev);
             if (trace) {
                console.log('w3_input_change '+ path +'(2)...');
                console.log('el.value='+ JSON.stringify(el.value));
@@ -2851,7 +2875,7 @@ function w3int_input_keydown(ev, path, cb)
 	   if (el.value == '') {
          // cause empty input lines followed by Enter to send empty command to shell
          if (trace) console.log('w3int_input_keydown: empty line + Enter');
-         w3_input_change(path, cb, 'kd2');
+         w3_input_change(path, cb, 'kd2', ev);
          w3_dismiss_keyboard(el);
       }
 	}
@@ -2860,7 +2884,7 @@ function w3int_input_keydown(ev, path, cb)
 	if (ev.key == 'Backspace' && input_any_change && el.selectionStart == 0 && el.selectionEnd == el.value.length) {
       if (trace) console.log('w3int_input_keydown Delete: len='+ el.value.length +' ss='+ el.selectionStart +' se='+ el.selectionEnd);
       el.value = '';
-      w3_input_change(path, cb, 'kd3');
+      w3_input_change(path, cb, 'kd3', ev);
       w3_dismiss_keyboard(el);
 	}
 
@@ -2885,13 +2909,23 @@ function w3int_input_keyup(ev, path, cb)
 
    /*
       if (ev.key == 'Backspace' && el.value == '')
-         w3_input_change(path, cb, 'ku');
+         w3_input_change(path, cb, 'ku', ev);
    */
 
    var disabled = w3_parent_with(el, 'w3-disabled');
    var trace = w3_contains(el, 'w3-trace');
    if (trace) console.log('w3int_input_keyup CE k='+ k + (ctrl? ' CTRL ':'') +' path='+ path +' val=<'+ el.value +'> cb='+ cb +' disabled='+ disabled);
 	
+   var input_any_key = w3_contains(el, 'w3-input-any-key');
+   var cb_a = cb.split('|');
+   if (input_any_key && cb_a[1]) {
+      //console.log('input_any_key');
+      //console.log(cb_a);
+      //console.log('w3int_input_keyup: input_any_key '+ k +' cb_a[1]='+ cb_a[1]);
+      //event_dump(ev, "input_any_change", true);
+      w3_call(cb_a[1], ev, true);
+   }
+
 	// prevent dom parents from seeing bubbling event
 	// Don't call cancelEvent() because that does a stopImmediatePropagation() which prevents the
 	// subsequent keyup & change/input events from occurring.
@@ -2913,9 +2947,9 @@ function w3int_input_process(ev)
    }
 }
 
-function w3_input_change(path, cb, from)
+function w3_input_change(path, cb, from, ev)
 {
-   w3int_input_change(null, path, cb, from);
+   w3int_input_change(ev, path, cb, from);
 }
 
 // 'from' arg (that is appended to w3_call() cb_a[] arg) is:
@@ -2930,14 +2964,16 @@ function w3int_input_change(ev, path, cb, from)
 	var el = w3_el(path);
 	if (el) {
       trace = w3_contains(el, 'w3-trace');
-      if (trace) console.log('w3int_input_change path='+ path +' from='+ from);
+      if (trace) console.log('w3int_input_change START path='+ path +' from='+ from);
       
       // cb is a string because can't pass an object to onclick
       if (cb) {
          var cb_a = cb.split('|');
          if (isArg(from)) cb_a.push(from);
          //el.select();
-         retain = w3_call(cb_a[0], path, el.value, /* first */ false, cb_a);
+         if (trace) console.log(cb_a);
+         if (trace) console.log('w3int_input_change CALL '+ cb_a[0] +'('+ sq(path) +', '+ sq(el.value) +', false, cb_a[])');
+         retain = w3_call(cb_a[0], path, el.value, /* first */ false, cb_a, ev);
          if (from == 'in') return;
       }
 
@@ -2956,7 +2992,7 @@ function w3int_input_change(ev, path, cb, from)
    }
 	
    w3_dismiss_keyboard(el);
-   if (trace) console.log('w3int_input_change path='+ path +' val='+ val +' retain='+ retain +' ev='+ ev);
+   if (trace) console.log('w3int_input_change END path='+ path +' val='+ val +' retain='+ retain +' ev='+ ev);
    if (retain === true) {
       w3_field_select(el, {mobile:1});    // retain field selection
    } else {
@@ -3007,14 +3043,24 @@ function w3_input(psa, label, path, val, cb, placeholder)
 	val = ' value='+ dq(w3_esc_dq(val) || '');
 	var inline = psa.includes('w3-label-inline');
 	var bold = !psa.includes('w3-label-not-bold');
+	
+	var label_right = '';
+	if (isArray(label)) {
+	   var a = label;
+	   label = a[0] || '';
+	   label_right = a[1] || '';
+	}
 	label = label || '';
 	var label_spacing = (label != '' && inline)? 'w3int-margin-input' : '';
 
 	// type="password" is no good because it forces the submit to be https which we don't support
 	//var type = 'type='+ (psa.includes('w3-password')? '"password"' : '"text"');
-
+	
    var psa3 = w3_psa3(psa);
-   if (dump) console.log(psa3);
+   if (dump) {
+      console.log(psa);
+      console.log(psa3);
+   }
    var psa_outer = w3_psa(psa3.left, inline? 'w3-show-inline-new':'');
    var psa_label = w3_psa_mix(psa3.middle, (label != '' && bold)? 'w3-bold':'');
    var style = psa.includes('w3-no-styling')? '' : 'w3-input w3-border w3-hover-shadow';
@@ -3040,6 +3086,7 @@ function w3_input(psa, label, path, val, cb, placeholder)
 	   '<div '+ psa_outer +'>' +
          w3int_label(psa_label, label, path) +
          in_s +
+         label_right +
       '</div>';
 	if (dump) console.log(s);
 	//w3int_input_set_id(id);
@@ -4015,6 +4062,14 @@ function w3_string_cb(path, val)
 	//console.log('w3_string_cb: path='+ path +' val='+ val);
 	setVarFromString(path, val.toString());
 }
+
+function w3_select_cb(path, val)
+{
+	val = +val;
+	//console.log('w3_select_cb: path='+ path +' val='+ val);
+	setVarFromString(path, val);
+}
+
 
 
 ////////////////////////////////

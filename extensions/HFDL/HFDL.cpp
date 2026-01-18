@@ -149,6 +149,7 @@ void hfdl_close(int rx_chan)
     ext_unregister_receive_cmds(e->rx_chan);
 }
 
+// NB: this is being called in the context of the snd, wf or mon thread
 bool hfdl_receive_cmds(u2_t key, char *cmd, int rx_chan)
 {
     int i, n;
@@ -297,6 +298,8 @@ bool hfdl_msgs(char *msg, int rx_chan)
 	
 	return false;
 }
+
+bool HFDL_vars() { return false; }
 
 void HFDL_main();
 

@@ -259,6 +259,8 @@ bool fft_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+bool FFT_vars() { return false; }
+
 void FFT_main();
 
 ext_t fft_ext = {

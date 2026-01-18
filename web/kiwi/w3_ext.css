@@ -390,6 +390,10 @@ input[type=range]::-moz-range-thumb {
 .w3-disabled-field
 {
     cursor: not-allowed !important;
+    opacity: 0.8;
+    user-select: none;
+    outline:none;
+    caret-color: transparent;   /* make caret of contenteditable elements invisible */
 }
 
 .w3-cursor-not-allowed

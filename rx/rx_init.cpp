@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -43,12 +43,6 @@ Boston, MA  02110-1301, USA.
 #include "security.h"
 #include "options.h"
 #include "ant_switch.h"
-
-#ifdef DRM
- #include "DRM.h"
-#else
- #define DRM_NREG_CHANS_DEFAULT 3
-#endif
 
 #include <string.h>
 #include <stdio.h>
@@ -131,7 +125,7 @@ double ui_srate_Hz, ui_srate_kHz;
 int kiwi_reg_lo_kHz, kiwi_reg_hi_kHz;
 float max_thr;
 int n_camp;
-bool log_local_ip, DRM_enable, admin_keepalive, any_preempt_autorun;
+bool log_local_ip, admin_keepalive, any_preempt_autorun;
 int current_mtu;
 
 #define DC_OFFSET_DEFAULT -0.02F
@@ -157,10 +151,9 @@ void update_freqs(bool *update_cfg)
 void update_vars_from_config(bool called_at_init)
 {
     int n;
-	bool update_cfg = false;
 	bool up_cfg = false;
 	bool update_admcfg = false;
-	const char *s, *s2;
+	const char *s, *s2, *s3;
     bool err;
 
     // When called by client-side "SET save_cfg/save_adm=":
@@ -170,9 +163,48 @@ void update_vars_from_config(bool called_at_init)
 	//  Makes C copies of vars that must be updated when configuration loaded from cfg files.
 	//  Creates configuration parameters with default values that must exist for client connections.
 
+    cfg_default_object("init", "{}", &up_cfg);
+    cfg_default_int("init.cw_offset", 500, &up_cfg);
+    cfg_default_int("init.aperture", 1, &up_cfg);
+    cfg_default_int("init.comp", 0, &up_cfg);
+    cfg_default_int("init.setup", 0, &up_cfg);
+    cfg_default_int("init.tab", 0, &up_cfg);
+    cfg_default_float("init.rf_attn", 0, &up_cfg);
+
+    // enforce waterfall min_dB < max_dB
+    int min_dB = cfg_default_int("init.min_dB", -110, &up_cfg);
+    int max_dB = cfg_default_int("init.max_dB", -10, &up_cfg);
+    if (min_dB >= max_dB) {
+        cfg_set_int("init.min_dB", -110);
+        cfg_set_int("init.max_dB", -10);
+        UPDATE_CFG_BREAK(up_cfg);
+    }
+    cfg_default_int("init.floor_dB", 0, &up_cfg);
+    cfg_default_int("init.ceil_dB", 5, &up_cfg);
+
+    // change init.mode from mode menu idx to a mode string
+	n = cfg_int("init.mode", &err, CFG_OPTIONAL);
+	if (err) {
+	    s = cfg_string("init.mode", &err, CFG_OPTIONAL);
+	    if (err) {
+	        cfg_set_string("init.mode", "lsb");     // init.mode never existed?
+	        UPDATE_CFG_BREAK(up_cfg);
+	    }
+        cfg_string_free(s);
+	} else {
+	    cfg_rem_int("init.mode");
+	    cfg_set_string("init.mode", modes[n].lc);
+	    UPDATE_CFG_BREAK(up_cfg);
+	}
+
+    // extensions
+    up_cfg = up_cfg | cfg_gdb_break(extint_vars());
+
+
     inactivity_timeout_mins = cfg_default_int("inactivity_timeout_mins", 0, &up_cfg);
     ip_limit_mins = cfg_default_int("ip_limit_mins", 0, &up_cfg);
     
+    // setup freq offset
 	double prev_freq_offset_kHz = freq.offset_kHz;
     update_freqs(&up_cfg);
 	if (freq.offset_kHz != prev_freq_offset_kHz) {
@@ -192,7 +224,7 @@ void update_vars_from_config(bool called_at_init)
         Ioff = DC_OFFSET_DEFAULT;
         cfg_set_float("DC_offset_I", Ioff);
         lprintf("DC_offset_I: no cfg or prev default, setting to default value\n");
-        update_cfg = cfg_gdb_break(true);
+        UPDATE_CFG_BREAK(up_cfg);
     }
 
     Qoff = cfg_float("DC_offset_Q", &err, CFG_OPTIONAL);
@@ -200,7 +232,7 @@ void update_vars_from_config(bool called_at_init)
         Qoff = DC_OFFSET_DEFAULT;
         cfg_set_float("DC_offset_Q", Ioff);
         lprintf("DC_offset_Q: no cfg or prev default, setting to default value\n");
-        update_cfg = cfg_gdb_break(true);
+        UPDATE_CFG_BREAK(up_cfg);
     }
 
     Ioff_20kHz = cfg_float("DC_offset_20kHz_I", &err, CFG_OPTIONAL);
@@ -208,7 +240,7 @@ void update_vars_from_config(bool called_at_init)
         Ioff_20kHz = DC_OFFSET_DEFAULT_20kHz;
         cfg_set_float("DC_offset_20kHz_I", Ioff_20kHz);
         lprintf("DC_offset_20kHz_I: no cfg or prev default, setting to default value\n");
-        update_cfg = cfg_gdb_break(true);
+        UPDATE_CFG_BREAK(up_cfg);
     }
 
     Qoff_20kHz = cfg_float("DC_offset_20kHz_Q", &err, CFG_OPTIONAL);
@@ -216,7 +248,7 @@ void update_vars_from_config(bool called_at_init)
         Qoff_20kHz = DC_OFFSET_DEFAULT_20kHz;
         cfg_set_float("DC_offset_20kHz_Q", Qoff_20kHz);
         lprintf("DC_offset_20kHz_Q: no cfg or prev default, setting to default value\n");
-        update_cfg = cfg_gdb_break(true);
+        UPDATE_CFG_BREAK(up_cfg);
     }
 
     DC_offset_I = mode_20kHz? Ioff_20kHz : Ioff;
@@ -226,60 +258,29 @@ void update_vars_from_config(bool called_at_init)
         lprintf("using DC_offsets: I %.6f Q %.6f\n", DC_offset_I, DC_offset_Q);
         dc_off_msg = true;
     }
-
-    // DRM extension related
-    cfg_default_object("DRM", "{}", &up_cfg);
-    DRM_enable = cfg_default_bool("DRM.enable", true, &up_cfg);
-    drm_nreg_chans = cfg_default_int("DRM.nreg_chans", DRM_NREG_CHANS_DEFAULT, &up_cfg);
-
-    s = cfg_string("DRM.test_file1", NULL, CFG_OPTIONAL);
-	if (!s || strcmp(s, "Kuwait.15110.1.12k.iq.au") == 0) {
-	    cfg_set_string("DRM.test_file1", "DRM.BBC.Journaline.au");
-	    update_cfg = cfg_gdb_break(true);
-    }
-    cfg_string_free(s);
-
-    s = cfg_string("DRM.test_file2", NULL, CFG_OPTIONAL);
-	if (!s || strcmp(s, "Delhi.828.1.12k.iq.au") == 0) {
-	    cfg_set_string("DRM.test_file2", "DRM.KTWR.slideshow.au");
-	    update_cfg = cfg_gdb_break(true);
-    }
-    cfg_string_free(s);
+        
+    cfg_default_string("status_msg", "", &up_cfg);
+    cfg_default_string("rx_name", "", &up_cfg);
+    cfg_default_string("rx_device", "", &up_cfg);
+    cfg_default_string("rx_location", "", &up_cfg);
+    cfg_default_string("rx_antenna", "", &up_cfg);
+    cfg_default_string("owner_info", "", &up_cfg);
+    cfg_default_string("reason_disabled", "", &up_cfg);
+    cfg_default_string("panel_readme", "", &up_cfg);
     
-    
-    // TDoA extension related
-    cfg_default_object("tdoa", "{}", &up_cfg);
-    // FIXME: switch to using new SSL version of TDoA service at some point: https://tdoa2.kiwisdr.com
-    // workaround to prevent collision with 1st-level "server_url" until we can fix cfg code
-	if ((s = cfg_string("tdoa.server_url", NULL, CFG_OPTIONAL)) != NULL) {
-		cfg_set_string("tdoa.server", s);
+    // remove development GPS coords
+	if ((s = cfg_string("rx_gps", NULL, CFG_OPTIONAL)) != NULL) {
+	    if (
+            strcmp(s, "(-37.631120, 176.172210)") == 0 ||
+            strcmp(s, "(-37.631016, 176.172019)") == 0
+	        ) {
+		    cfg_set_string("rx_gps", "(0.000000, 0.000000)");
+	        UPDATE_CFG_BREAK(up_cfg);
+	    }
 	    cfg_string_free(s);
-	    cfg_rem_string("tdoa.server_url");
-	    update_cfg = cfg_gdb_break(true);
-	} else {
-        cfg_default_string("tdoa.server", "http://tdoa.kiwisdr.com", &update_admcfg);
-    }
-    
-    
-    // iframe extension related
-    // enable sk6aw dx spots if no prior configuration
-    cfg_default_object("iframe", "{}", &up_cfg);
-    s = cfg_string("iframe.url", NULL, CFG_OPTIONAL);
-    s2 = cfg_string("iframe.html", NULL, CFG_OPTIONAL);
-    bool enabled = cfg_default_bool("iframe.enable", true, &up_cfg);
-    if (kiwi_emptyStr(s) && kiwi_emptyStr(s2) && enabled) {
-        cfg_set_int("iframe.src", 0);
-	    cfg_set_string("iframe.url", "https://spots.kiwisdr.com");
-	    cfg_set_string("iframe.title", "<span style=\\\"color:cyan\\\">Spots by <a href=\\\"http://www.sk6aw.net/cluster\\\" target=\\\"_blank\\\">SK6AW.NET</a></span>");
-        cfg_set_string("iframe.menu", "DX spots");
-        cfg_set_string("iframe.help", "Clicking on a spot frequency will tune the Kiwi.");
-        cfg_set_bool("iframe.allow_tune", true);
-	    update_cfg = cfg_gdb_break(true);
-    }
-    cfg_string_free(s);
-    cfg_string_free(s2);
+	}
 
-
+    
     // fix any broken UTF-8 sequences via cfg_default_string()
     cfg_default_object("index_html_params", "{}", &up_cfg);
     cfg_default_string("index_html_params.HTML_HEAD", "", &up_cfg);
@@ -292,49 +293,29 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_bool("index_html_params.RX_PHOTO_LEFT_MARGIN", true, &up_cfg);
     cfg_default_bool("index_html_params.RX_PHOTO_CENTERED", false, &up_cfg);
 
-    cfg_default_string("status_msg", "", &up_cfg);
-    cfg_default_string("rx_name", "", &up_cfg);
-    cfg_default_string("rx_device", "", &up_cfg);
-    cfg_default_string("rx_location", "", &up_cfg);
-    cfg_default_string("rx_antenna", "", &up_cfg);
-    cfg_default_string("owner_info", "", &up_cfg);
-    cfg_default_string("reason_disabled", "", &up_cfg);
-    cfg_default_string("panel_readme", "", &up_cfg);
-    
     // move index_html_params.RX_QRA to rx_grid
 	if ((s = cfg_string("index_html_params.RX_QRA", NULL, CFG_OPTIONAL)) != NULL) {
         cfg_set_string("rx_grid", s);
-        update_cfg = cfg_gdb_break(true);
+        UPDATE_CFG_BREAK(up_cfg);
 	    cfg_string_free(s);
 	    cfg_rem_string("index_html_params.RX_QRA");
 	} else {
         cfg_default_string("rx_grid", "", &up_cfg);
 	}
 
-    // replaced by rx_location
+    // remove index_html_params.RX_GMAP -- replaced by rx_location
 	if ((s = cfg_string("index_html_params.RX_GMAP", NULL, CFG_OPTIONAL)) != NULL) {
-        update_cfg = cfg_gdb_break(true);
+        UPDATE_CFG_BREAK(up_cfg);
 	    cfg_string_free(s);
         cfg_rem_string("index_html_params.RX_GMAP");
     }
-
-	if ((s = cfg_string("rx_gps", NULL, CFG_OPTIONAL)) != NULL) {
-	    if (
-            strcmp(s, "(-37.631120, 176.172210)") == 0 ||
-            strcmp(s, "(-37.631016, 176.172019)") == 0
-	        ) {
-		    cfg_set_string("rx_gps", "(0.000000, 0.000000)");
-	        update_cfg = cfg_gdb_break(true);
-	    }
-	    cfg_string_free(s);
-	}
 
     // pcb.jpg => pcb.png since new pcb photo has alpha channel that only .png supports.
     // Won't disturb an RX_PHOTO_FILE set to kiwi.config/photo.upload by admin photo upload process.
 	if ((s = cfg_string("index_html_params.RX_PHOTO_FILE", NULL, CFG_OPTIONAL)) != NULL) {
 	    if (strcmp(s, "kiwi/pcb.jpg") == 0) {
 		    cfg_set_string("index_html_params.RX_PHOTO_FILE", "kiwi/pcb.png");
-	        update_cfg = cfg_gdb_break(true);
+	        UPDATE_CFG_BREAK(up_cfg);
 	    }
 	    cfg_string_free(s);
 	}
@@ -342,10 +323,11 @@ void update_vars_from_config(bool called_at_init)
 	if ((s = cfg_string("index_html_params.RX_PHOTO_DESC", NULL, CFG_OPTIONAL)) != NULL) {
 	    if (strcmp(s, "First production PCB") == 0) {
 		    cfg_set_string("index_html_params.RX_PHOTO_DESC", "");
-	        update_cfg = cfg_gdb_break(true);
+	        UPDATE_CFG_BREAK(up_cfg);
 	    }
 	    cfg_string_free(s);
 	}
+
 
     S_meter_cal = cfg_default_int("S_meter_cal", SMETER_CALIBRATION_DEFAULT, &up_cfg);
     waterfall_cal = cfg_default_int("waterfall_cal", WATERFALL_CALIBRATION_DEFAULT, &up_cfg);
@@ -367,8 +349,6 @@ void update_vars_from_config(bool called_at_init)
         cfg_default_int("ADC_clk2_corr", ADC_CLK_CORR_CONTINUOUS, &up_cfg);
     }
 
-    cfg_default_string("tdoa_id", "", &up_cfg);
-    cfg_default_int("tdoa_nchans", -1, &up_cfg);
     cfg_default_int("ext_api_nchans", -1, &up_cfg);
     cfg_default_bool("no_wf", false, &up_cfg);
     cfg_default_bool("test_webserver_prio", false, &up_cfg);
@@ -403,21 +383,12 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("spec_min_range", 50, &up_cfg);
     cfg_default_bool("all_fonts_bold", false, &up_cfg);
 
-    cfg_default_object("init", "{}", &up_cfg);
-    cfg_default_int("init.cw_offset", 500, &up_cfg);
-    cfg_default_int("init.colormap", 0, &up_cfg);
-    cfg_default_int("init.aperture", 1, &up_cfg);
-    cfg_default_int("init.comp", 0, &up_cfg);
-    cfg_default_int("init.setup", 0, &up_cfg);
-    cfg_default_int("init.tab", 0, &up_cfg);
-    cfg_default_float("init.rf_attn", 0, &up_cfg);
-
     cfg_default_int("rf_attn_allow", 1, &up_cfg);
     cfg_default_bool("rf_attn_alt", false, &up_cfg);
     cfg_default_string("rf_attn_cmd", "", &up_cfg);
 
     cfg_default_object("ant_switch", "{}", &up_cfg);
-    if (ant_switch_cfg(called_at_init)) update_cfg = cfg_gdb_break(true);
+    if (ant_switch_cfg(called_at_init)) UPDATE_CFG_BREAK(up_cfg);
 
     cfg_default_int("nb_algo", 0, &up_cfg);
     cfg_default_int("nb_wf", 1, &up_cfg);
@@ -490,7 +461,7 @@ void update_vars_from_config(bool called_at_init)
     }
     
     #ifdef USE_SDR
-        if (wspr_update_vars_from_config(called_at_init)) update_cfg = cfg_gdb_break(true);
+        if (wspr_update_vars_from_config(called_at_init)) UPDATE_CFG_BREAK(up_cfg);
 
         // fix corruption left by v1.131 dotdot bug
         // i.e. "WSPR.autorun": N instead of "WSPR": { "autorun": N ... }"
@@ -499,23 +470,12 @@ void update_vars_from_config(bool called_at_init)
             _cfg_set_int(&cfg_cfg, "WSPR.autorun", 0, CFG_REMOVE|CFG_NO_DOT, 0);
             _cfg_set_bool(&cfg_cfg, "index_html_params.RX_PHOTO_LEFT_MARGIN", 0, CFG_REMOVE|CFG_NO_DOT, 0);
             printf("removed v1.131 dotdot bug corruption\n");
-            update_cfg = cfg_gdb_break(true);
+            UPDATE_CFG_BREAK(up_cfg);
         }
 
-        if (ft8_update_vars_from_config(called_at_init)) update_cfg = cfg_gdb_break(true);
+        if (ft8_update_vars_from_config(called_at_init)) UPDATE_CFG_BREAK(up_cfg);
     #endif
     
-    // enforce waterfall min_dB < max_dB
-    int min_dB = cfg_default_int("init.min_dB", -110, &up_cfg);
-    int max_dB = cfg_default_int("init.max_dB", -10, &up_cfg);
-    if (min_dB >= max_dB) {
-        cfg_set_int("init.min_dB", -110);
-        cfg_set_int("init.max_dB", -10);
-        update_cfg = cfg_gdb_break(true);
-    }
-    cfg_default_int("init.floor_dB", 0, &up_cfg);
-    cfg_default_int("init.ceil_dB", 5, &up_cfg);
-
     net.dom_sel = cfg_default_int("sdr_hu_dom_sel", DOM_SEL_NAM, &up_cfg);
     //printf("rx_init: dom_sel=%d\n", net.dom_sel);
 
@@ -524,7 +484,7 @@ void update_vars_from_config(bool called_at_init)
         //printf("serno=%d dom_sel=%d\n", serial_number, net.dom_sel);
 	    if (serial_number == 1006 && _dom_sel == DOM_SEL_NAM) {
             cfg_set_int("sdr_hu_dom_sel", DOM_SEL_REV);
-            update_cfg = cfg_gdb_break(true);
+            UPDATE_CFG_BREAK(up_cfg);
             lprintf("######## FORCE DOM_SEL_REV serno=%d ########\n", serial_number);
 	    }
     #endif
@@ -534,7 +494,7 @@ void update_vars_from_config(bool called_at_init)
     const char *server_url = cfg_string("server_url", NULL, CFG_REQUIRED);
 	if (strcmp(server_url, "kiwisdr.example.com") == 0) {
 	    cfg_set_string("server_url", "");
-	    update_cfg = cfg_gdb_break(true);
+	    UPDATE_CFG_BREAK(up_cfg);
 	}
     
     // not sure I want to do this yet..
@@ -548,7 +508,7 @@ void update_vars_from_config(bool called_at_init)
             lprintf("### DOM_SEL check: forcing change to DOM_SEL_PUB\n");
             cfg_set_int("sdr_hu_dom_sel", DOM_SEL_PUB);
             // FIXME: but then server_url needs to be set when pub ip is detected
-            update_cfg = cfg_gdb_break(true);
+            UPDATE_CFG_BREAK(up_cfg);
         }
 	#endif
     cfg_string_free(server_url); server_url = NULL;
@@ -558,7 +518,8 @@ void update_vars_from_config(bool called_at_init)
 		admcfg_set_string("tlimit_exempt_pwd", s);
 	    cfg_string_free(s);
 	    cfg_rem_string("tlimit_exempt_pwd");
-	    update_cfg = update_admcfg = true;
+	    UPDATE_CFG_BREAK(up_cfg);
+	    update_admcfg = true;
 	} else {
         admcfg_default_string("tlimit_exempt_pwd", "", &update_admcfg);
     }
@@ -571,12 +532,12 @@ void update_vars_from_config(bool called_at_init)
 	    nsm = kiwi_str_replace(nsm, "/?top=kiwi", "");  // shrinking, so nsm same memory space
 	    cfg_set_string("status_msg", nsm);
 	    if (caller_must_free) kiwi_ifree(nsm, "update_vars_from_config nsm");
-	    update_cfg = cfg_gdb_break(true);
+	    UPDATE_CFG_BREAK(up_cfg);
     } else {
         // convert from old URL
         if (strcmp(status_msg, "Try other KiwiSDRs world-wide at <a href='http://kiwisdr.com/public/' target='_blank'>http://kiwisdr.com/public/</a>") == 0) {
             cfg_set_string("status_msg", "Try other KiwiSDRs world-wide at <a href='http://rx.kiwisdr.com' target='_blank'>rx.kiwisdr.com</a>");
-            update_cfg = cfg_gdb_break(true);
+            UPDATE_CFG_BREAK(up_cfg);
         }
     }
     cfg_string_free(status_msg); status_msg = NULL;
@@ -586,7 +547,7 @@ void update_vars_from_config(bool called_at_init)
 	nsm = kiwi_str_replace(rx_name, ", ZL/KF6VO, New Zealand", "");
 	if (nsm) {
         cfg_set_string("rx_name", nsm);
-        update_cfg = cfg_gdb_break(true);
+        UPDATE_CFG_BREAK(up_cfg);
     }
     cfg_string_free(rx_name); rx_name = NULL;
 
@@ -596,28 +557,12 @@ void update_vars_from_config(bool called_at_init)
         nsm = kiwi_str_replace(rx_title, " at <a href='http://kiwisdr.com' target='_blank' onclick='dont_toggle_rx_photo()'>ZL/KF6VO</a>", "");
         if (nsm) {
             cfg_set_string("index_html_params.RX_TITLE", nsm);
-            update_cfg = cfg_gdb_break(true);
+            UPDATE_CFG_BREAK(up_cfg);
         }
         cfg_string_free(rx_title); rx_title = NULL;
     }
 
-    // change init.mode from mode menu idx to a mode string
-	n = cfg_int("init.mode", &err, CFG_OPTIONAL);
-	if (err) {
-	    s = cfg_string("init.mode", &err, CFG_OPTIONAL);
-	    if (err) {
-	        cfg_set_string("init.mode", "lsb");     // init.mode never existed?
-	        update_cfg = cfg_gdb_break(true);
-	    }
-        cfg_string_free(s);
-	} else {
-	    cfg_rem_int("init.mode");
-	    cfg_set_string("init.mode", modes[n].lc);
-	    update_cfg = cfg_gdb_break(true);
-	}
-
-    if (up_cfg) update_cfg = cfg_gdb_break(true);
-	if (update_cfg) {
+	if (up_cfg) {
         //printf("_cfg_save_json update_cfg\n");
 		cfg_save();     // during init doesn't conflict with admin cfg
 	}
@@ -688,7 +633,7 @@ void update_vars_from_config(bool called_at_init)
 	}
 
     if (called_at_init) {
-        admcfg_default_string("hostname", "kiwisdr", &up_cfg);
+        admcfg_default_string("hostname", "kiwisdr", &update_admcfg);
         const char *hn = admcfg_string("hostname", NULL, CFG_REQUIRED);
         kiwi_strncpy(net.hostname, hn, N_HOSTNAME + SPACE_FOR_NULL);
         admcfg_string_free(hn);

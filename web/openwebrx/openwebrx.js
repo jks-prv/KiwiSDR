@@ -319,23 +319,27 @@ function kiwi_main_ready()
       w3_innerHTML(el, 'Keyboard modifier test');
 	   if (1) window.addEventListener("keydown",
 	      function(ev) {
-	         event_dump(ev, 'KD', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'KD', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
 	   if (1) window.addEventListener("keypress",
 	      function(ev) {
-	         event_dump(ev, 'KP', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'KP', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
 	   if (1) window.addEventListener("keyup",
 	      function(ev) {
-	         event_dump(ev, 'KU', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'KU', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
 	   if (1) window.addEventListener("click",
 	      function(ev) {
-	         event_dump(ev, 'click', w3.CAPTURING);
-	      }
+	         event_dump(ev, 'click', true);
+	      }, w3.CAPTURING
+	      //}, w3.BUBBLING
 	   );
       return;
    */
@@ -699,13 +703,13 @@ function init_panel_toggle(type, panel, scrollable, timeo, color)
 	divPanel.init = true;
 }
 
-function toggle_panel(panel, set)
+function toggle_panel(panel, set_val)
 {
 	var divPanel = w3_el(panel);
 	var divVis = w3_el(panel +'-vis');
 	//console.log('toggle_panel '+ panel +' ptype='+ divPanel.ptype +' panelShown='+ divPanel.panelShown);
 	
-	if (isDefined(set)) divPanel.panelShown = set ^ 1;    // ^1 because of inverted logic below
+	if (isDefined(set_val)) divPanel.panelShown = set_val ^ 1;    // ^1 because of inverted logic below
 
 	if (divPanel.ptype == ptype.POPUP) {
 		divPanel.style.visibility = divPanel.panelShown? 'hidden' : 'visible';
@@ -3450,7 +3454,7 @@ function wheel_dev_cb(path, idx, first)
    w3_set_value('id-wheel-poll', owrx.wheel_poll);
    w3_set_value('id-wheel-fast', owrx.wheel_fast);
    w3_set_value('id-wheel-unlock', owrx.wheel_unlock);
-   w3_disable_multi('id-wheel-field', idx != owrx.WHEEL_CUSTOM, 'w3-disabled-field');
+   w3_disable_multi('id-wheel-field', idx != owrx.WHEEL_CUSTOM);
    
    canvas_mousewheel_rlimit_tune = kiwi_rateLimit(canvas_mousewheel_cb, /* msec */ owrx.wheel_poll);
    //console.log('wheel_dev_cb: wheel_poll='+ owrx.wheel_poll +' wheel_fast='+ owrx.wheel_fast +' wheel_unlock='+ owrx.wheel_unlock);
@@ -8290,6 +8294,9 @@ var dx = {
    db_short_s: [ 'stored', 'EiBi', 'community' ],
    ignore_dx_update: false,
    last_community_download: '',
+   
+   import_option: 0,
+   import_option_s: [ 'none', 'keep masked', 'merge files' ],
 
    INIT_BANDS_NO: 0,
    INIT_BANDS_YES: 1,
@@ -10393,6 +10400,8 @@ function ident_keyup(el, evt, which)
 var shortcut = {
    nav_off: 0,
    keys: null,
+   ext_key: [],
+   
    NO_MODIFIER: 0,
    SHIFT: 1,
    CTL_ALT: 2,
@@ -10541,6 +10550,12 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
       if (id == 'id-freq-menu') inFreqMenu = true;
       else
       if (id == 'id-dx-container') inDX = true;
+   }
+   
+   if (shortcut.ext_key[key]) {
+      w3_call(shortcut.ext_key[key]);
+      ignore_next_keyup_event = true;     // don't trigger e.g. freqset_keyup()/freqset_complete()
+      return false;
    }
 
    switch (key) {
@@ -10721,10 +10736,20 @@ function keyboard_shortcut_event(evt)
    
    var k = evt.key;
    
-   // ignore esc and Fnn function keys
-   if (k == 'Escape' || k.match(/F[1-9][12]?/)) {
+   // ignore esc key
+   if (k == 'Escape') {
       //event_dump(evt, 'Escape-shortcut');
       //console.log('KEY PASS Esc');
+      
+      // let esc close open readme panel
+	   var el = w3_el('id-readme');
+	   if (el.panelShown) toggle_panel(/* must be string */ 'id-readme', 0);
+      return;
+   }
+   
+   // ignore Fnn function keys
+   if (k == 'Escape' || k.match(/F[1-9][12]?/)) {
+      console.log('KEY PASS Fnn');
       return;
    }
    
@@ -11515,17 +11540,6 @@ function panels_setup()
 	el = w3_el('id-readme');
 	el.style.backgroundColor = readme_color;
 
-   // Allow a click anywhere in panel to toggle it.
-	// Use a capturing click listener, then cancel propagation of the click
-	// so vis handler doesn't call toggle_panel() twice.
-	/*
-	el.addEventListener("click", function(ev) {
-	   //console.log('id-readme ev='+ ev);
-	   cancelEvent(ev);
-	   toggle_panel('id-readme');
-	}, w3.CAPTURING);
-	*/
-	
 	//console.log('README='+ cfg.panel_readme);
 	var readme = cfg.panel_readme || '';
 	if (readme != '') readme = w3_json_to_html('readme', readme);
@@ -13101,9 +13115,9 @@ function users_setup()
             w3_button('w3-green w3-small w3-padding-small w3-margin-R-4 w3-btn-right', 'help', 'wheel_help')
          ),
          w3_inline('w3-margin-T-8 w3-margin-B-8 w3-margin-R-8/w3-margin-between-8',
-            w3_input('id-wheel-field id-wheel-poll w3-padding-tiny', 'Poll (msec)', 'wheel_poll', 0, 'wheel_param_cb|0'),
-            w3_input('id-wheel-field id-wheel-fast w3-padding-tiny', 'Fast threshold', 'wheel_fast', 0, 'wheel_param_cb|1'),
-            w3_input('id-wheel-field id-wheel-unlock w3-padding-tiny', 'Unlock (msec)', 'wheel_unlock', 0, 'wheel_param_cb|2')
+            w3_input('//id-wheel-field id-wheel-poll w3-padding-tiny w3-white', 'Poll (msec)', 'wheel_poll', 0, 'wheel_param_cb|0'),
+            w3_input('//id-wheel-field id-wheel-fast w3-padding-tiny w3-white', 'Fast threshold', 'wheel_fast', 0, 'wheel_param_cb|1'),
+            w3_input('//id-wheel-field id-wheel-unlock w3-padding-tiny w3-white', 'Unlock (msec)', 'wheel_unlock', 0, 'wheel_param_cb|2')
          )
       );
 

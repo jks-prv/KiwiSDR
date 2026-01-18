@@ -113,7 +113,7 @@ Note FT8 pileup 3 kHz below working YJ0TT Vanuatu.
 
 [![](http://www.kiwisdr.com/README/FT8.30m.780px.png)](http://www.kiwisdr.com/README/FT8.30m.png)
 
-#### Digital Radio Mondial (DRM), including image slideshow and Journaline text decoding.
+#### Digital Radio Mondiale (DRM), including image slideshow and Journaline text decoding.
 
 [![](http://www.kiwisdr.com/README/DRM.780px.png)](http://www.kiwisdr.com/README/DRM.png)
 

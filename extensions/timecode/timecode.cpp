@@ -301,6 +301,8 @@ bool timecode_msgs(char *msg, int rx_chan)
     return false;
 }
 
+bool timecode_vars() { return false; }
+
 void timecode_main();
 
 ext_t timecode_ext = {

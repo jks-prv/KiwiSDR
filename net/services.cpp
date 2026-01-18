@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "kiwi.h"
 #include "types.h"
@@ -264,11 +264,12 @@ void proxy_frpc_setup(const char *proxy_server, const char *user, const char *ho
 
     // criteria for using secondary proxy server(s)
     #define PROXY2_ENABLE
-    //#define PROXY2_TEST 1
+    //#define PROXY2_TEST
     #ifdef PROXY2_ENABLE
         // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
         //bool p2 = isdigit(host[0]);
         bool p2 = (strncmp(host, "210", 3) == 0);
+        //bool p2 = (strncmp(host, "21", 2) == 0);
         actual_proxy_server = p2? "proxy2.kiwisdr.com" : proxy_server;
     #elif PROXY2_TEST
         actual_proxy_server = strcmp(host, "jks")? proxy_server : "proxy2.kiwisdr.com";
@@ -791,6 +792,15 @@ static void pvt_NET(void *param)
                     &net.mac[0], &net.mac[3], &net.mac[6], &net.mac[9], &net.mac[12], &net.mac[15]);
                 printf("NET: eth0 MAC %s (%s)\n", net.mac, net.mac_no_delim);
                 net.mac_valid = true;
+                
+                SHA256_CTX ctx;
+                sha256_init(&ctx);
+                sha256_update_str(&ctx, net.mac_no_delim);
+                sha256_update_str(&ctx, stprintf("%d", net.serno));
+                BYTE hash[SHA256_BLOCK_SIZE];
+                sha256_final(&ctx, hash);
+                mg_bin2str(net.unique_id, hash, N_UNIQUE_ID_BYTES);
+                printf("NET: unique_id=%s\n", net.unique_id);
             }
         }
 		

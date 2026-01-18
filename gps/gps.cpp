@@ -37,13 +37,20 @@ unsigned bin(char *s, int n) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-void gps_main(int argc, char *argv[])
+void gps_main(int argc, char *argv[], bool run)
 {
     // verilog limitations, see:
     //      gps.v: "cmd_chan"
     //      ipcore_bram_gps_4k_12b
 
     assert(gps_chans <= GPS_MAX_CHANS);
+    
+    if (!run) {
+        for (int i=0; i<gps_chans; i++) {
+            GPSstat(STAT_SAT, 0, i, -1, 0, 0);
+        }
+        return;
+    }
 
 	printf("GPS starting..\n");
     SearchParams(argc, argv);
@@ -54,7 +61,7 @@ void gps_main(int argc, char *argv[])
 	SearchInit();
 	ChanInit();
 
-    for(int i=0; i<gps_chans; i++) {
+    for (int i=0; i<gps_chans; i++) {
     	char *tname;
     	asprintf(&tname, "GPSchan-%02d", i+1);
     	CreateTaskSF(ChanTask, tname, TO_VOID_PARAM(i), GPS_PRIORITY, CTF_TNAME_FREE, 0);

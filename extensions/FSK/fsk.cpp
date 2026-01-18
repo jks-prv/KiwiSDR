@@ -98,6 +98,8 @@ void fsk_close(int rx_chan)
     ext_unregister_receive_real_samps(e->rx_chan);
 }
 
+bool FSK_vars() { return false; }
+
 void FSK_main();
 
 ext_t fsk_ext = {

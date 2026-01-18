@@ -1,4 +1,5 @@
-// Copyright (c) 2017 John Seamons, ZL4VO/KF6VO
+
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 var nt = {
    ext_name: 'NAVTEX',     // NB: must match navtex.c:navtex_ext.name
@@ -737,7 +738,7 @@ function navtex_show_cb(path, idx, first)
 	if (idx == nt.SHOW_SPLIT)
 	   w3_scrollDown('id-navtex-console-msg');
 	if (idx != nt.SHOW_MSGS)
-      navtex_output("\nMap only displays Selcall beacon locations (e.g. not DSC)");
+      navtex_output("\nMap only displays Selcall beacon locations (e.g. not DSC)\n");
 }
 
 function navtex_day_night_visible_cb(path, checked, first)
@@ -786,15 +787,14 @@ function navtex_location_update(loc_name, lat, lon, url, color)
    if (!nt.locations[loc_name]) {
       console.log('LOC-NEW '+ loc_name +' '+ lat.toFixed(2) +' '+ lon.toFixed(2));
 
-      marker = kiwi_map_add_marker_div(nt.kmap, kmap.NO_ADD_TO_MAP,
-         [lat, lon], '', [12, 12], [0, 0], 1.0);
+      marker = kiwi_map_add_marker_div(nt.kmap, kmap.NO_ADD_TO_MAP, [lat, lon]);
       loc_o = { loc_name: loc_name, mkr: marker, upd: Date.now(), pos: [] };
       if (nt.test_location && loc_name.startsWith('ABC'))
          loc_o.upd -= (nt.too_old_min+10)*60*1000;
       loc_o.pos.push([lat, lon]);
       nt.locations[loc_name] = loc_o;
       
-      kiwi_style_marker(nt.kmap, kmap.ADD_TO_MAP, marker, loc_name,
+      kiwi_style_marker(nt.kmap, kmap.ADD_TO_MAP, marker, loc_name, /* useTooltip */ true, 
          'id-navtex-location id-navtex-location-'+ loc_name + (nt.locations_visible? '' : ' w3-hide'),
          kmap.DIR_RIGHT,
          function(ev) {

@@ -225,6 +225,7 @@ void ale_2g_close(int rx_chan)
     ext_unregister_receive_cmds(e->rx_chan);
 }
 
+// NB: this is being called in the context of the snd, wf or mon thread
 bool ale_2g_receive_cmds(u2_t key, char *cmd, int rx_chan)
 {
     int i, n;
@@ -361,6 +362,8 @@ bool ale_2g_msgs(char *msg, int rx_chan)
 	
 	return false;
 }
+
+bool ALE_2G_vars() { return false; }
 
 void ALE_2G_main();
 

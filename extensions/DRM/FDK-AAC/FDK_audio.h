@@ -145,7 +145,7 @@ typedef enum {
 
   TT_MP4_LOAS = 10, /**< Audio Sync Stream.         */
 
-  TT_DRM = 12 /**< Digital Radio Mondial (DRM30/DRM+) bitstream format. */
+  TT_DRM = 12 /**< Digital Radio Mondiale (DRM30/DRM+) bitstream format. */
 
 } TRANSPORT_TYPE;
 

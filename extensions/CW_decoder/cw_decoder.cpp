@@ -216,6 +216,8 @@ bool cw_decoder_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+bool CW_decoder_vars() { return false; }
+
 void CW_decoder_main();
 
 ext_t cw_decoder_ext = {

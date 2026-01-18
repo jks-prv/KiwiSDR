@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -250,7 +250,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
     if (keep_alive) *keep_alive = false;
 	
 	if (mc == NULL) {
-	    cprintf(conn, "### cmd but connection closed? <%s>\n", cmd);
+	    //cprintf(conn, "### cmd but connection closed? <%s>\n", cmd);
 	    return true;    // fake that we accepted command so it won't be further processed
 	}
 	
@@ -442,7 +442,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             }
             
             if (conn->isMaster || type_admin)
-                clprintf(conn, "--- new connection --------------------------------------------------------\n");
+                clprintf(conn, "--- %s new connection --------------------------------------------------------\n", stream_name);
         
             if (conn->internal_connection) {
                 is_local_e = IS_LOCAL;

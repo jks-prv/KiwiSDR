@@ -1,6 +1,6 @@
 // KiwiSDR utilities
 //
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 
 // isUndeclared(v) => use inline "if (window.v) ..." (i.e. can't pass undeclared v as func arg)
@@ -167,12 +167,12 @@ document.onreadystatechange = function() {
 
 function kiwi_load2()
 {
-   if (typeof(kiwi_check_js_version) !== 'undefined') {
+   if (isDefined(kiwi_check_js_version)) {
       // done as an AJAX because needed long before any websocket available
       kiwi_ajax("/VER", 'kiwi_version_cb');
    } else {
 		kiwi.conn_tstamp = (new Date()).getTime();   // fallback
-      if (typeof(kiwi_bodyonload) !== 'undefined')
+      if (isDefined(kiwi_bodyonload))
          kiwi_bodyonload('');
    }
 }
@@ -207,30 +207,49 @@ function kiwi_isChrome() { return (kiwi_chrome? kiwi_chrome[1] : NaN); }
 
 function kiwi_isOpera() { return (kiwi_opera? kiwi_opera[1] : NaN); }
 
-var kiwi_version_fail = false;
-
 function kiwi_version_cb(response_obj)
 {
+   // Guard against multiple AJAX replies to /VER request that have been seen when using
+   // MacOS "private relay" mode with Safari.
+   if (kiwi.kiwi_version_check_done) {
+      console.log('CAUTION: /VER multiple callback?');
+      return;
+   }
+   kiwi.kiwi_version_check_done = true;
+   
+   if (!isArg(response_obj) || !isNumber(response_obj.maj) || !isNumber(response_obj.min)) {
+      console.log('CAUTION: /VER bad response?');
+      if (isArg(response_obj))
+         console.log(response_obj);
+      else
+         console.log('typeof response_obj = '+ typeof(response_obj));
+      // version_{maj,min} set later from a received send_msg()
+		kiwi.conn_tstamp = (new Date()).getTime();   // fallback
+	   kiwi_bodyonload('');
+	   return;
+   }
+   
 	version_maj = response_obj.maj; version_min = response_obj.min;
 	kiwi.admin_save_pwd = response_obj.sp;
 	//console.log('v'+ version_maj +'.'+ version_min +': KiwiSDR server asp='+ kiwi.admin_save_pwd);
+	//console.log(response_obj);
 	var s='';
 	
 	kiwi_check_js_version.forEach(function(el) {
 		if (el.VERSION_MAJ != version_maj || el.VERSION_MIN != version_min) {
-			if (kiwi_version_fail == false) {
+			if (kiwi.kiwi_version_fail == false) {
 				s = 'Your browser is trying to use incorrect versions of the KiwiSDR Javascript files.<br>' +
 					'Please clear your browser cache and try again.<br>' +
 					'Or click the button below to continue anyway.<br><br>' +
 					'v'+ version_maj +'.'+ version_min +': KiwiSDR server<br>';
-				kiwi_version_fail = true;
+				kiwi.kiwi_version_fail = true;
 			}
 			s += 'v'+ el.VERSION_MAJ +'.'+ el.VERSION_MIN +': '+ el.file +'<br>';
 		}
 		//console.log('v'+ el.VERSION_MAJ +'.'+ el.VERSION_MIN +': '+ el.file);
 	});
 	
-	if (kiwi_version_fail)
+	if (kiwi.kiwi_version_fail)
 	   s += '<br>'+ w3_button('w3-css-yellow', 'Continue anyway', 'kiwi_version_continue_cb');
 	
 	kiwi.conn_tstamp = isDefined(response_obj.ts)? response_obj.ts : (new Date()).getTime();
@@ -1426,6 +1445,144 @@ function kiwi_timestamp_filename(pre, post)
 
 
 ////////////////////////////////
+// lat/lon/grid
+////////////////////////////////
+
+// field square subsquare (extended square)
+//   A-R    0-9       a-x              0-9
+//   #18    #10       #24              #10
+
+var grid_sq = {
+   SQ_LON_DEG: 2,
+   SQ_LAT_DEG: 1,
+   SUBSQ_PER_SQ: 24,
+   SQ_PER_FLD: 10,
+   
+   field: "ABCDEFGHIJKLMNOPQR",
+   square: "0123456789",
+   subsquare: "abcdefghijklmnopqrstuvwx"
+};
+
+grid_sq.SUBSQ_LON_DEG = grid_sq.SQ_LON_DEG / grid_sq.SUBSQ_PER_SQ;
+grid_sq.SUBSQ_LAT_DEG = grid_sq.SQ_LAT_DEG / grid_sq.SUBSQ_PER_SQ;
+grid_sq.FLD_DEG_LON = grid_sq.SQ_PER_FLD * grid_sq.SQ_LON_DEG;
+grid_sq.FLD_DEG_LAT = grid_sq.SQ_PER_FLD * grid_sq.SQ_LAT_DEG;
+
+function grid_to_latLon(grid)
+{
+	var lat, lon;
+	var c, _a = ord('a'), _0 = ord('0');
+	var _a = function(c) { return ord(c) - ord('a'); };
+	var _0 = function(c) { return ord(c) - ord('0'); };
+	
+	if (isEmptyString(grid)) return false;
+	var slen = grid.length;
+	if (slen < 4) return false;
+	
+	c = grid[0].toLowerCase();
+	if (c < 'a' || c > 'r') return false;
+	lon = _a(c)*20 - 180;
+
+	c = grid[1].toLowerCase();
+	if (c < 'a' || c > 'r') return false;
+	lat = _a(c)*10 - 90;
+
+	c = grid[2];
+	if (c < '0' || c > '9') return false;
+	lon += _0(c) * grid_sq.SQ_LON_DEG;
+
+	c = grid[3];
+	if (c < '0' || c > '9') return false;
+	lat += _0(c) * grid_sq.SQ_LAT_DEG;
+
+	if (slen != 6) {	// assume center of square (i.e. "....ll")
+		lon += grid_sq.SQ_LON_DEG /2.0;
+		lat += grid_sq.SQ_LAT_DEG /2.0;
+	} else {
+	   c = grid[4].toLowerCase();
+		if (c < 'a' || c > 'x') return false;
+		lon += _a(c) * grid_sq.SUBSQ_LON_DEG;
+
+	   c = grid[5].toLowerCase();
+		if (c < 'a' || c > 'x') return false;
+		lat += _a(c) * grid_sq.SUBSQ_LAT_DEG;
+
+		lon += grid_sq.SUBSQ_LON_DEG /2.0;	// assume center of sub-square (i.e. "......44")
+		lat += grid_sq.SUBSQ_LAT_DEG /2.0;
+	}
+
+	//console.log(sprintf("GRID %s%s = (%f, %f)\n", grid, (slen != 6)? "[ll]":"", lat, lon));
+	return { lat:lat, lon:lon };
+}
+
+
+function latLon_to_grid6(lat, lon)
+{
+	var i, r, lat, lon, grid6 = [];
+	//console.log(sprintf("latLon_to_grid6: lat=%f lon=%f\n", lat, lon));
+	
+	// longitude
+	lon += 180.0;
+	if (lon < 0 || lon >= 360.0) lon = 0;
+	i = Math.floor(lon / grid_sq.FLD_DEG_LON);
+	grid6[0] = grid_sq.field[i];
+	r = lon - (i * grid_sq.FLD_DEG_LON);
+	
+	i = Math.floor(r / grid_sq.SQ_LON_DEG);
+	grid6[2] = grid_sq.square[i];
+	r = r - (i * grid_sq.SQ_LON_DEG);
+	
+	i = Math.floor(r * (grid_sq.SUBSQ_PER_SQ / grid_sq.SQ_LON_DEG));
+	grid6[4] = grid_sq.subsquare[i];
+	
+	// latitude
+	lat += 90.0;
+	if (lat < 0 || lat >= 180.0) lat = 0;
+	i = Math.floor(lat / grid_sq.FLD_DEG_LAT);
+	grid6[1] = grid_sq.field[i];
+	r = lat - (i * grid_sq.FLD_DEG_LAT);
+	
+	i = Math.floor(r / grid_sq.SQ_LAT_DEG);
+	grid6[3] = grid_sq.square[i];
+	r = r - (i * grid_sq.SQ_LAT_DEG);
+	
+	i = Math.floor(r * (grid_sq.SUBSQ_PER_SQ / grid_sq.SQ_LAT_DEG));
+	grid6[5] = grid_sq.subsquare[i];
+	
+	//console.log(sprintf("latLon_to_grid6: grid6=%s\n", grid6.join('')));
+	return grid6.join('');
+}
+
+function deg_2_rad(deg) { return deg * Math.PI / 180.0; }
+
+function latLon_deg_to_rad(loc) {
+   return { lat: deg_2_rad(loc.lat), lon: deg_2_rad(loc.lon) };
+}
+
+function grid_to_distance_km(r_lat, r_lon, grid)
+{
+	var loc = grid_to_latLon(grid);
+	if (loc == false) return 0;
+	//console.log(sprintf("grid_to_distance_km: from(%f,%f) to(%s,%f,%f)\n", r_lat, r_lon, grid, loc.lat, loc.lon));
+	loc = latLon_deg_to_rad(loc);
+	
+	var delta_lat = loc.lat - r_lat;
+	delta_lat /= 2.0;
+	delta_lat = Math.sin(delta_lat);
+	delta_lat *= delta_lat;
+	var delta_lon = loc.lon - r_lon;
+	delta_lon /= 2.0;
+	delta_lon = Math.sin(delta_lon);
+	delta_lon *= delta_lon;
+
+	var t = delta_lat + (delta_lon * Math.cos(loc.lat) * Math.cos(r_lat));
+	var km = Math.ceil(/* EARTH_RADIUS_KM */ 6371.0 * 2.0 * Math.atan2(Math.sqrt(t), Math.sqrt(1.0-t)));
+	//console.log(sprintf("grid_to_distance_km: km=%d\n", km));
+	return km;
+}
+
+
+////////////////////////////////
 // HTML helpers
 ////////////////////////////////
 
@@ -1472,6 +1629,38 @@ function kiwi_host()
 function kiwi_remove_protocol(url)
 {
    return url.replace(/^http:\/\//, '').replace(/^https:\/\//, '');
+}
+
+function kiwi_clean_url(url)
+{
+   url = kiwi_remove_protocol(url).split(':');
+   var h = url[0], p = url[1];
+   if (isEmptyString(h)) return '';
+   var isProxy = (h.includes('proxy') && h.includes('kiwisdr.com'));
+   if (isProxy) p = '';    // don't include ':8073' in proxy URLs
+   var port = '';    // allow for Kiwi's on port 80
+   if (url.length >= 2) {
+      var n = parseInt(p);
+      if (isNumber(n)) port = n;
+   }
+   return w3_sbc(':', h, port);
+}
+
+// only handles IPv4-mapped IPv6
+function kiwi_isPublic_url(host) {
+   var isPublic_url = true;
+   host = host.replace(/^::ffff:/, '');   // IPv4-mapped IPv6
+   var dotted = host.split('.').length;
+   if (dotted <= 1)
+      isPublic_url = false;   // simple hostname
+   if (isPublic_url && (dotted == 4) && kiwi_inet4_d2h(host)) {
+      if (!kiwi_inet4_d2h(host, { no_local_ip:1 })) {
+         isPublic_url = false;   // local IPv4 address
+      }
+   }
+   if (isPublic_url && host.endsWith('.local'))
+      isPublic_url = false;   // ending in .local
+   return isPublic_url;
 }
 
 function kiwi_open_or_reload_page(obj)   // { url, hp, path, qs, tab, delay }
@@ -2457,6 +2646,8 @@ function open_websocket(stream, open_cb, open_cb_param, msg_cb, recv_cb, error_c
 	ws.recv_cb = recv_cb;
 	ws.error_cb = error_cb;
 	ws.close_cb = close_cb;
+	ws.gen_cb_param = w3_opt(opt, 'gen_cb_param', null);
+	ws.trace = w3_opt(opt, 'trace', 0);
 
 	// There is a delay between a "new WebSocket()" and it being able to perform a ws.send(),
 	// so must wait for the ws.onopen() to occur before sending any init commands.
@@ -2542,7 +2733,8 @@ function on_ws_recv(evt, ws)
 		params = stringData.substring(4).split(" ");    // "foo=arg bar=arg"
 	
 		//if (ws.stream == 'EXT')
-		//console.log('>>> '+ ws.stream +': msg_cb='+ typeof(ws.msg_cb) +' '+ params.length +' '+ stringData);
+		if (ws.trace)
+		   console.log('>>> '+ ws.stream +': MSG msg_cb='+ typeof(ws.msg_cb) +' all_msg_cb='+ typeof(ws.all_msg_cb) +' #params='+ params.length +' '+ dq(stringData));
 		for (var i=0; i < params.length; i++) {
 			var msg_a = params[i].split("=");
 			
@@ -2558,7 +2750,8 @@ function on_ws_recv(evt, ws)
             if (claimed == false) {
                if (ws.msg_cb) {
                   //if (ws.stream == 'EXT')
-                  //console.log('>>> '+ ws.stream + ': not kiwi_msg: msg_cb='+ typeof(ws.msg_cb) +' '+ params[i]);
+		            if (ws.trace)
+                     console.log('>>> '+ ws.stream + ': not kiwi_msg: msg_cb='+ typeof(ws.msg_cb) +' '+ dq(params[i]));
                   claimed = ws.msg_cb(msg_a, ws);
                }
             }
@@ -2574,6 +2767,12 @@ function on_ws_recv(evt, ws)
 			console.log('>>> FLUSH '+ ws.stream + ': recv_cb='+ typeof(ws.recv_cb) +' '+ s);
 		}
 		*/
+		/*
+		if (ws.trace) {
+		   var stringData = arrayBufferToString(data);
+         console.log('>>> '+ ws.stream + ': not MSG: firstChars='+ firstChars +' recv_cb='+ typeof(ws.msg_cb) +' '+ dq(stringData));
+      }
+      */
 		if (ws.recv_cb && (ws.stream != 'EXT' || kiwi_flush_recv_input == false)) {
 			ws.recv_cb(data, ws, firstChars);
 			if (isDefined(kiwi_gc_recv) && kiwi_gc_recv) data = null;	// gc

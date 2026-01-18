@@ -227,6 +227,7 @@ void c2s_sound(void *param)
 	int j, k, n;
 
 	memset(s, 0, sizeof(snd_t));
+	s->conn = conn;
 	s->freq_kHz = s->squelch_on_seq = -1;
 	s->mode = MODE_AM;
 	s->agc = 1; s->thresh = -90; s->decay = 50;
@@ -1361,17 +1362,18 @@ void c2s_sound(void *param)
                 }
                 const int bytes = sizeof(s->out_pkt_iq.h) + bc;
                 //real_printf("stereo: hdr %d data %d\n", sizeof(s->out_pkt_iq.h), bc); fflush(stdout);
-                app_to_web(conn, (char*) &s->out_pkt_iq, bytes);
                 aud_bytes = sizeof(s->out_pkt_iq.h.smeter) + bc;
                 if (rxc->n_camp)
                     aud_bytes += c2s_sound_camp(rxc, conn, *flags, (char*) &s->out_pkt_iq, bytes, aud_bytes, masked_area);
+                app_to_web(conn, (char*) &s->out_pkt_iq, bytes);
             } else {
                 const int bytes = sizeof(s->out_pkt_real.h) + bc;
                 //real_printf("mono: hdr %d data %d\n", sizeof(s->out_pkt_real.h), bc); fflush(stdout);
-                app_to_web(conn, (char*) &s->out_pkt_real, bytes);
                 aud_bytes = sizeof(s->out_pkt_real.h.smeter) + bc;
                 if (rxc->n_camp)
                     aud_bytes += c2s_sound_camp(rxc, conn, *flags, (char*) &s->out_pkt_real, bytes, aud_bytes, masked_area);
+                if (!c2s_sound_exp(rx_chan))
+                    app_to_web(conn, (char*) &s->out_pkt_real, bytes);
             }
             evSnd(EC_EVENT, EV_SND, -1, "rx_snd", "..app_to_web");
     

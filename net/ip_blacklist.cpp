@@ -40,9 +40,9 @@ static void ip_blacklist_ipset_open()
         (net.ip_blacklist_port_only != BL_PORT_NO)? ",port" : "");
 }
 
-static void ip_blacklist_ipset_close()
+static void ip_blacklist_ipset_load()
 {
-    ipbl_prf("ip_blacklist_ipset_close\n");
+    ipbl_prf("ip_blacklist_ipset_load\n");
     if (net.isf != NULL) {
         fclose(net.isf);
         net.isf = NULL;
@@ -64,7 +64,7 @@ void ip_blacklist_disable()
 void ip_blacklist_enable()
 {
     #ifdef USE_IPSET
-        ip_blacklist_ipset_close();
+        ip_blacklist_ipset_load();
     #endif
     ip_blacklist_system("iptables -A KIWI -j RETURN");
     #ifdef USE_IPSET
@@ -374,7 +374,7 @@ bool ip_blacklist_get(bool download_diff_restart)
             ip_blacklist_init_list("ip_blacklist_local");
             
             #ifdef USE_IPSET
-                ip_blacklist_ipset_close();
+                ip_blacklist_ipset_load();
             #endif
             ip_blacklist_system("iptables -A KIWI -j RETURN");
             #ifdef USE_IPSET

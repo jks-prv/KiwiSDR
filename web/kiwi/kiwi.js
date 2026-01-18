@@ -5,6 +5,8 @@
 var kiwi = {
    d: {},      // debug
    init_cfg: false,
+   kiwi_version_check_done: false,
+   kiwi_version_fail: false,
    
    KiwiSDR_1: 1,
    KiwiSDR_2: 2,
@@ -202,11 +204,10 @@ var timestamp;
 var dbgUs = false;
 var dbgUsFirst = true;
 
-var gmap;
-
 // see document.onreadystatechange for how this is called
 function kiwi_bodyonload(error)
 {
+   console.log('### kiwi_bodyonload error='+ error);
    var s;
    
 	if (error != '') {

@@ -609,7 +609,7 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
                     // -20 dB @ 4 kHz
                     //cprintf(conn, "DEEMP: NFM %d %s\n", (snd_rate == SND_RATE_4CH)? 12000:20250, (_de_emp == 1)? "-LF":"+LF");
                     const TYPEREAL *pCoef = nfm_deemp[snd_rate_i][_de_emp-1];
-                    m_nfm_deemp_FIR[rx_chan].InitConstFir(N_DEEMP_TAPS, pCoef, frate);
+                    m_nfm_deemp_FIR[rx_chan].InitConstFir(N_DEEMP_TAPS, pCoef, frate, FIR_COEFF_SYMMETRICAL);
                 } else {
                     //#define TEST_AM_SSB_BIQUAD
                     #ifdef TEST_AM_SSB_BIQUAD
@@ -630,7 +630,7 @@ void rx_sound_cmd(conn_t *conn, double frate, int n, char *cmd)
                     #else
                         //cprintf(conn, "DEEMP: AM/SSB %d %d uS\n", (snd_rate == SND_RATE_4CH)? 12000:20250, (_de_emp == 1)? 75:50);
                         const TYPEREAL *pCoef = am_ssb_deemp[snd_rate_i][_de_emp-1];
-                        m_am_ssb_deemp_FIR[rx_chan].InitConstFir(N_DEEMP_TAPS, pCoef, frate);
+                        m_am_ssb_deemp_FIR[rx_chan].InitConstFir(N_DEEMP_TAPS, pCoef, frate, FIR_COEFF_SYMMETRICAL);
                     #endif
                 }
             }

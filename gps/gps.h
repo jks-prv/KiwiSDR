@@ -31,7 +31,7 @@
 //#define TEST_VECTOR
 #define	QUIET
 
-void gps_main(int argc, char *argv[]);
+void gps_main(int argc, char *argv[], bool run);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Frequencies

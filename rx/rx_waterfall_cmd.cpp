@@ -178,6 +178,7 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
             
             // NB: because we only use half of the FFT with CIC can zoom one level less
             int zm1 = (WF_USING_HALF_CIC == 2)? (wf->zoom? (wf->zoom-1) : 0) : wf->zoom;
+            wf->nfft = WF_NFFT;
 
             // currently 15-levels of zoom: z0-z14, MAX_ZOOM == 14
             if (zm1 == 0) {
@@ -203,11 +204,11 @@ void rx_waterfall_cmd(conn_t *conn, int n, char *cmd)
                 WF_SHMEM->chunk_wait_scale = ((wf->zoom >= WF_CHUNK_WAIT_ADJ_Z)? WF_CHUNK_WAIT_ADJ : 0);
             #endif
 
-            float samp_wait_us =  WF_NFFT * (1 << zm1) / conn->adc_clock_corrected * 1000000.0;
+            float samp_wait_us = wf->nfft * (1 << zm1) / conn->adc_clock_corrected * 1000000.0;
             wf->chunk_wait_us = (int) ceilf(samp_wait_us / (n_chunks - WF_SHMEM->chunk_wait_scale));
             wf->samp_wait_ms = (int) ceilf(samp_wait_us / 1000);
-            wf_printf("---- WF%d Z%d zm1 %d/%d R%04x n_chunks %d samp_wait_us %.1f samp_wait_ms %d chunk_wait_us %d(%d)\n",
-                rx_chan, wf->zoom, zm1, 1<<zm1, decim, n_chunks,
+            wf_printf("---- WF z%d zm1 %d/%d R%04x n_chunks %d samp_wait_us %.1f samp_wait_ms %d chunk_wait_us %d(%d)\n",
+                wf->zoom, zm1, 1<<zm1, decim, n_chunks,
                 samp_wait_us, wf->samp_wait_ms, wf->chunk_wait_us, WF_SHMEM->chunk_wait_scale);
         
             wf->new_map = wf->new_map2 = wf->new_map3 = TRUE;

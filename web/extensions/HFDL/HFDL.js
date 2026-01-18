@@ -1,5 +1,5 @@
 
-// Copyright (c) 2021 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2021-2026 John Seamons, ZL4VO/KF6VO
 
 var hfdl = {
    ext_name: 'HFDL',    // NB: must match HFDL.cpp:hfdl_ext.name
@@ -104,7 +104,7 @@ function hfdl_recv(data)
 			   var latlon = kiwi_decodeURIComponent('', param[1]);
 			   if (dbgUs) console.log('lowres_latlon='+ latlon);
 			   latlon = JSON.parse(latlon);
-			   kiwi_map_add_marker_icon(hfdl.kmap, kmap.ADD_TO_MAP,
+			   kiwi_map_add_marker_url(hfdl.kmap, kmap.ADD_TO_MAP,
 			      'kiwi/gfx/kiwi-with-headphones.51x67.png', latlon, [25, 33], 1.0,
 			      function(el) {
                   w3_add(el, 'id-hfdl-kiwi-icon w3-hide');
@@ -158,6 +158,7 @@ function hfdl_recv(data)
             }
 
             if (x[3].startsWith('Squitter')) {
+               //console.log('Squitter');
                x.forEach(function(a, i) {
                   if (a.startsWith('ID:')) {
                      id = a.split(': ')[1];
@@ -166,6 +167,7 @@ function hfdl_recv(data)
                      a = a.split(': ')[1];
                      if (hfdl.dsp == hfdl.SQUITTER) s += id +': '+ a +'\n';
                      var f = a.split(', ');
+                     //console.log('hfdl_update_AFT: '+ id.split(', ')[1] +' '+ f);
                      hfdl_update_AFT(id.split(', ')[1], f);
                   }
                });
@@ -525,21 +527,21 @@ function hfdl_place_gs_marker(gs_n)
    r.title = r.name;
    
    hfdl.bf_gs[r.id] = gs_n;
-   var marker = kiwi_map_add_marker_div(hfdl.kmap, kmap.NO_ADD_TO_MAP, [r.lat, r.lon], '', [12, 12], [0, 0], 1.0);
+   var marker = kiwi_map_add_marker_div(hfdl.kmap, kmap.NO_ADD_TO_MAP, [r.lat, r.lon]);
 
    // when not using MarkerCluster add marker to map here
    if (hfdl.kmap.map) {
       //console.log(r);
       var left = (r.id == 'New Zealand');
-      kiwi_style_marker(hfdl.kmap, kmap.ADD_TO_MAP, marker, r.id, 'id-hfdl-gs', left);
+      kiwi_style_marker(hfdl.kmap, kmap.ADD_TO_MAP, marker, r.id, /* useTooltip */ true, 'id-hfdl-gs', left);
    
       // band icons
       var sign = left? 1:-1;
       for (i = 0; i < hfdl.bf.length; i++) {
          var xo = sign*19*i;
          kiwi_map_add_marker_div(hfdl.kmap, kmap.ADD_TO_MAP, [r.lat, r.lon],
-            'id-hfdl-AFT id-hfdl-AFT-'+ gs_n +'-'+ i +' w3-hide',
-            [sign* (left? 26:6) + xo, left? 33 : -13], [0, 0], 1.0);
+            { className: 'id-hfdl-AFT id-hfdl-AFT-'+ gs_n +'-'+ i +' w3-hide',
+               iconAnchor: [sign* (left? 26:6) + xo, left? 33 : -13] });
 
          var el = w3_el('id-hfdl-AFT-'+ gs_n +'-'+ i);
          el.addEventListener('mouseenter', function(ev) {
@@ -591,8 +593,7 @@ function hfdl_flight_update(flight_name, lat, lon)
    if (!hfdl.flights[flight_name]) {
       console.log('FL-NEW '+ flight_name +' '+ lat.toFixed(4) +' '+ lon.toFixed(4));
 
-      marker = kiwi_map_add_marker_div(hfdl.kmap, kmap.NO_ADD_TO_MAP,
-         [lat, lon], '', [12, 12], [0, 0], 1.0);
+      marker = kiwi_map_add_marker_div(hfdl.kmap, kmap.NO_ADD_TO_MAP, [lat, lon]);
       flight_o = { flight: flight_name, mkr: marker, upd: Date.now(), pos: [] };
       if (hfdl.test_flight && flight_name.startsWith('ABC')) {
          console.log('HFDL accelerate age: '+ flight_name);
@@ -602,7 +603,7 @@ function hfdl_flight_update(flight_name, lat, lon)
       flight_o.pos.push([lat, lon]);
       hfdl.flights[flight_name] = flight_o;
       
-      kiwi_style_marker(hfdl.kmap, kmap.ADD_TO_MAP, marker, flight_name,
+      kiwi_style_marker(hfdl.kmap, kmap.ADD_TO_MAP, marker, flight_name, /* useTooltip */ true,
          'id-hfdl-flight id-hfdl-flight-'+ flight_name + (hfdl.flights_visible? '' : ' w3-hide'),
          kmap.DIR_RIGHT,
          function(ev) {

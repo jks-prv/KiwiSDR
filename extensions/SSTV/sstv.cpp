@@ -278,6 +278,8 @@ bool sstv_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+bool SSTV_vars() { return false; }
+
 void SSTV_main();
 
 ext_t sstv_ext = {

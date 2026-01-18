@@ -984,7 +984,7 @@ function drm_get_stations_done_cb(stations)
       console.log('drm_get_stations_done_cb: using default station list '+ url);
       drm.using_default = true;
       drm.double_fault = true;
-      kiwi_ajax_progress(url, 'drm_get_stations_done_cb', 0, /* timeout */ 10000);
+      kiwi_ajax(url, 'drm_get_stations_done_cb', 0, /* timeout */ 10000);
       return;
    }
    
@@ -1739,7 +1739,7 @@ function drm_database_cb(path, idx, first)
       timeout = 10000;
    }
 
-   kiwi_ajax_progress(url, 'drm_get_stations_done_cb', 0, timeout);
+   kiwi_ajax(url, 'drm_get_stations_done_cb', 0, timeout);
 }
 
 function drm_display_cb(path, idx, first)

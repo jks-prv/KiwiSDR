@@ -1231,6 +1231,8 @@ void wspr_poll(int rx_chan)
     }
 }
 
+bool wspr_vars() { return false; }
+
 void wspr_main();
 
 ext_t wspr_ext = {
