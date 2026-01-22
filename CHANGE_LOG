@@ -3,6 +3,9 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.828  January 22, 2026
+    Safari 26.2 blank page problem fix. Private Relay must be off. (thanks Philippe!)
+
 v1.827  January 18, 2026
     Admin page: Added search field to top bar. See help popup for details (press 'h' or '?').
     
