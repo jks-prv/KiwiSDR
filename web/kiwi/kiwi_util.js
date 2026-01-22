@@ -167,13 +167,14 @@ document.onreadystatechange = function() {
 
 function kiwi_load2()
 {
-   if (isDefined(kiwi_check_js_version)) {
+   if (typeof(kiwi_check_js_version) !== 'undefined' /* declared */) {
       // done as an AJAX because needed long before any websocket available
       kiwi_ajax("/VER", 'kiwi_version_cb');
    } else {
 		kiwi.conn_tstamp = (new Date()).getTime();   // fallback
-      if (isDefined(kiwi_bodyonload))
+      if (typeof(kiwi_bodyonload) !== 'undefined' /* declared */) {
          kiwi_bodyonload('');
+      }
    }
 }
 
@@ -257,6 +258,18 @@ function kiwi_version_cb(response_obj)
 	//console.log('conn_tstamp='+ kiwi.conn_tstamp);
 	
 	kiwi_bodyonload(s);
+	
+	// Workaround for Safari 26.2 SND web socket hang problem.
+	// Doing this /status XHR transaction clears the web socket hang.
+	// However things still do not work in Private Relay mode.
+	// Discovered by Philippe (Tremolat) on the Kiwi Forum.
+	if (kiwi_isSafari()) {
+      setTimeout(function() {
+         kiwi_ajax("/status", function(o) {
+            console.log(o);
+         });
+      }, 100);
+   }
 }
 
 function kiwi_version_continue_cb()
@@ -1676,13 +1689,15 @@ function kiwi_open_or_reload_page(obj)   // { url, hp, path, qs, tab, delay }
       url = kiwi_SSL() + host_port + pathname + query;
    }
    var delay = w3_opt(obj, 'delay', 0);
-   console.log('kiwi_open_or_reload_page: '+ url +' delay='+ delay);
+   //console.log('kiwi_open_or_reload_page: '+ url +' delay='+ delay);
    
    var reload = function() {
       var rv;
       if (w3_opt(obj, 'tab', false)) {
+         //console.log('kiwi_open_or_reload_page: NEW TAB url='+ url);
          rv = window.open(url, '_blank');
       } else {
+         //console.log('kiwi_open_or_reload_page: NEW WIN url='+ url);
          window.location.href = url;
          rv = true;
       }
