@@ -608,18 +608,24 @@ alias prlog="tail -n 100 -f /var/log/frpc.log"
 # networking
 alias nt="iptraf"
 alias nt2="iptraf-ng"
+
+# iptop
 # after iftop starts use "tTL": "t" one line display, "L" log plot, "T" dsp cum totals, "B" toggle 2/10/40s avg (default 10s)
 # -m params is in b/s, so must x8 to get B/s, e.g. "-m 4M" will display 512KB max in byte mode
 # -f filter: 5353 is mDNS on multicast
-alias ift="iftop -nNBP -m 1G -f 'not port 22 and not port 80 and not port 5353 and not port 53 and not port 137'"
+alias ift="iftop -nNBP -m 1G -f '!port 22 and !port 80 and !port 5353 and !port 53 and !port 137'"
 # for linear display (without "L")
-alias iftl="iftop -nNBP -m 4M -f 'not port 22 and not port 80 and not port 5353 and not port 53 and not port 137'"
+alias iftl="iftop -nNBP -m 4M -f '!port 22 and !port 80 and !port 5353 and !port 53 and !port 137'"
+alias ift80="iftop -nNBP -m 4M -f '!port 22 and !port 5353 and !port 53 and !port 137 and !port 8073 and !port 7000'"
+
 alias ipt="function _ipt () { iptables -n -v -L \$* ; } ; _ipt"
 alias ips="ipset list"
 alias ipti="ipt INPUT"
 alias iptio="ipt INPUT; ipt OUTPUT"
-alias iptz="iptables -L -n -v -Z"
-alias iptc="iptables -L -n -v -Z"
+# argument is rul # in INPUT chain
+alias iptz="iptables -n -v -Z -L INPUT"
+# arguments are chain name and rule number in chain
+alias iptc="iptables -n -v -Z -L"
 alias iptadd="iptables -N KIWI; iptables -F KIWI; iptables -A KIWI -j RETURN; iptables -A INPUT -j KIWI"
 alias iptrm="iptables -D KIWI -m set --match-set ipset-kiwi src,dst -j DROP; iptables -D INPUT -j KIWI; iptables -F KIWI; iptables -X KIWI"
 alias ipban="function _iptban () { iptables -I INPUT -s \$1 -j DROP ; } ; _iptban"
