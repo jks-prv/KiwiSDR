@@ -51,9 +51,23 @@ var admin = {
 // find
 ////////////////////////////////
 
+function admin_find_okay()
+{
+   if (!('CSS' in window) || !CSS.highlights) {
+      var el = w3_el('id-admin.find');
+      w3_placeholder(el, 'error: newer browser required');
+      w3_disable(el);
+      w3_color(el, 'red');
+      return false;
+   }
+   return true;
+}
+
 // detect escape key and blur find field
 function admin_find_key_cb(ev, called_from_w3_input)
 {
+   if (!admin_find_okay()) return;
+   
    called_from_w3_input = called_from_w3_input || false;
    //console.log('admin_find_key_cb called_from_w3_input='+ called_from_w3_input);
 	//event_dump(ev, 'admin_find_key_cb', 1);
@@ -77,6 +91,8 @@ function admin_find_key_cb(ev, called_from_w3_input)
 
 function admin_find_input_cb(path, val, first, cb_a, ev)
 {
+   if (!admin_find_okay()) return;
+   
    // [2] because cb_a[] = [ "admin_find_input_cb", "admin_find_key_cb", "kd1" or "ev" ]
    // due to admin_find_key_cb() above
    if (cb_a[2] == 'ev') return;     // so we don't run twice
@@ -4889,14 +4905,6 @@ function admin_draw(sdr_mode)
 	   )
 	);
 	
-	// find-related
-   if (!('CSS' in window) || !CSS.highlights) {
-      var el = w3_el('id-admin.find');
-      w3_placeholder(el, 'error: newer browser required');
-      w3_disable(el);
-      w3_color(el, 'red');
-   }
-   
    // for find-wrap screen overlay flash icon
    var s =
       w3_div('id-admin-find-wrap-container class-overlay-container w3-hide',
