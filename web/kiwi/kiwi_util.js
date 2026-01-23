@@ -1483,8 +1483,7 @@ grid_sq.FLD_DEG_LAT = grid_sq.SQ_PER_FLD * grid_sq.SQ_LAT_DEG;
 
 function grid_to_latLon(grid)
 {
-	var lat, lon;
-	var c, _a = ord('a'), _0 = ord('0');
+	var lat, lon, c;
 	var _a = function(c) { return ord(c) - ord('a'); };
 	var _0 = function(c) { return ord(c) - ord('0'); };
 	
@@ -1531,7 +1530,7 @@ function grid_to_latLon(grid)
 
 function latLon_to_grid6(lat, lon)
 {
-	var i, r, lat, lon, grid6 = [];
+	var i, r, grid6 = [];
 	//console.log(sprintf("latLon_to_grid6: lat=%f lon=%f\n", lat, lon));
 	
 	// longitude

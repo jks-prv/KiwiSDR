@@ -380,7 +380,12 @@ function kiwi_map_all_msg_cb(msg_a, ws)
    var kmap = ws.gen_cb_param;
    var cmd = msg_a[0];
    var param = isString(msg_a[1])? msg_a[1] : '';
-   console.log('kiwi_map_all_msg_cb: cmd='+ cmd +' param='+ param);
+   if (0) {
+      if (cmd.startsWith('load_'))
+         console.log('kiwi_map_all_msg_cb: cmd='+ cmd +' param=(skipped)');
+      else
+         console.log('kiwi_map_all_msg_cb: cmd='+ cmd +' param='+ param);
+   }
    var reason = 'Connection failed';
    
    switch (cmd) {
@@ -544,7 +549,7 @@ function kiwi_map_wf_preview(kmap, h)
       kiwi_map_wf_preview_error_cb, // error_cb
       kiwi_map_waterfall_close,     // close_cb
       // opt
-      { url: kmap.wf_url_full, new_ts: true, qs: '', all_msg_cb: kiwi_map_all_msg_cb, gen_cb_param: kmap, trace:1 }
+      { url: kmap.wf_url_full, new_ts: true, qs: '', all_msg_cb: kiwi_map_all_msg_cb, gen_cb_param: kmap, trace:0 }
    );
 
    kmap.wf_conn_bad = false;

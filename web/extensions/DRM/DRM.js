@@ -162,7 +162,7 @@ function DRM_main()
 
 function drm_recv(data)
 {
-   var i, s;
+   var i, s, x, y, o;
 	var firstChars = arrayBufferToStringLen(data, 3);
 	
 	// process data sent from server/C by ext_send_msg_data()
@@ -205,7 +205,7 @@ function drm_recv(data)
 		   var n_msc_hi = d[3];
 		   var n_msc = (n_msc_hi << 8) + n_msc_lo;
 		   //console_nv('drm', {n_fac}, {n_sdc}, {n_msc}, {n_msc_hi}, {n_msc_lo});
-		   var o = 4;
+		   o = 4;
 		   
          ct.fillStyle = 'white';
          ct.fillRect(0,0, w,h);
@@ -216,8 +216,8 @@ function drm_recv(data)
          if (drm.display == drm.IQ_ALL || drm.display == drm.FAC) {
             ct.fillStyle = 'green';
             for (i = 0; i < n_fac; i++) {
-               var x = d[o+i*2]   / 255.0 * w;
-               var y = d[o+i*2+1] / 255.0 * h;
+               x = d[o+i*2]   / 255.0 * w;
+               y = d[o+i*2+1] / 255.0 * h;
                ct.fillRect(x,y, 2,2);
             }
          }
@@ -226,8 +226,8 @@ function drm_recv(data)
          if (drm.display == drm.IQ_ALL || drm.display == drm.SDC) {
             ct.fillStyle = 'red';
             for (i = 0; i < n_sdc; i++) {
-               var x = d[o+i*2]   / 255.0 * w;
-               var y = d[o+i*2+1] / 255.0 * h;
+               x = d[o+i*2]   / 255.0 * w;
+               y = d[o+i*2+1] / 255.0 * h;
                ct.fillRect(x,y, 2,2);
             }
          }
@@ -236,8 +236,8 @@ function drm_recv(data)
          if (drm.display == drm.IQ_ALL || drm.display == drm.MSC) {
             ct.fillStyle = 'blue';
             for (i = 0; i < n_msc; i++) {
-               var x = d[o+i*2]   / 255.0 * w;
-               var y = d[o+i*2+1] / 255.0 * h;
+               x = d[o+i*2]   / 255.0 * w;
+               y = d[o+i*2+1] / 255.0 * h;
                ct.fillRect(x,y, 2,2);
             }
          }
@@ -303,7 +303,7 @@ function drm_recv(data)
 			   var deco = kiwi_decodeURIComponent('DRM', param[1]);
             if (!deco) break;
 
-            var o = kiwi_JSON_parse('drm_status_cb', deco);
+            o = kiwi_JSON_parse('drm_status_cb', deco);
             if (!o) break;
 
             drm_all_status(o.io, o.time, o.frame, o.FAC, o.SDC, o.MSC);
@@ -430,16 +430,16 @@ function drm_recv(data)
 			   break;
 			
 			case "drm_journaline_cb":
-			   var s = kiwi_decodeURIComponent('DRM', param[1]);
+			   s = kiwi_decodeURIComponent('DRM', param[1]);
 			   //console.log(s);
-            var o = kiwi_JSON_parse('drm_journaline_cb', s);
+            o = kiwi_JSON_parse('drm_journaline_cb', s);
             if (isNull(o)) {
                s = w3_icon('w3-link-darker-color w3-margin-LR-4', 'fa-backward', 24, '', 'drm_journaline_back') +
                   '&nbsp;(data error, see browser console log)';
                drm_status('journaline', drm.ST_YEL);
             } else {
                //console.log(o);
-               var link = +o.l
+               var link = +o.l;
                s = link? w3_icon('w3-link-darker-color w3-margin-LR-4', 'fa-backward', 24, '', 'drm_journaline_back') : '';
                s += '&nbsp;NewsService Journaline&reg; &#8209; ';
                drm.journaline_objID = link;
@@ -525,7 +525,7 @@ function drm_journaline_select()
 function drm_journaline_reset_cb(path, idx, first)
 {
    if (first) return;
-   if (!(+idx)) return;
+   if ((+idx) == 0) return;
    console.log('drm_journaline_reset_cb');
    ext_send('SET journaline_objID=-1');
 }
@@ -846,6 +846,7 @@ function drm_schedule_svc()
 
 function drm_schedule_time_freq(sort_by_freq)
 {
+   var o;
    if (!drm.stations) return '';
 
    var i, j;
@@ -854,7 +855,7 @@ function drm_schedule_time_freq(sort_by_freq)
    drm.stations_freq = [];
    
    for (i = j = 0; i < drm.stations.length; i++) {
-      var o = drm.stations[i];
+      o = drm.stations[i];
       if (o.t != drm.SINGLE && o.t != drm.MULTI) continue;
       drm.stations_freq[j++] = o;
    }
@@ -877,7 +878,7 @@ function drm_schedule_time_freq(sort_by_freq)
    var last_band = '';
    
    for (i = 0; i < drm.stations_freq.length; i++) {
-      var o = drm.stations_freq[i];
+      o = drm.stations_freq[i];
       var station = o.s;
       var freq = o.f;
       var url = o.u;
@@ -950,6 +951,7 @@ function drm_schedule_time_freq(sort_by_freq)
 
 function drm_get_stations_done_cb(stations)
 {
+   var url;
    var fault = false;
    
    if (!stations) {
@@ -980,7 +982,7 @@ function drm_get_stations_done_cb(stations)
       console.log(stations);
       
       // load the default station list from a file embedded with the extension
-      var url = kiwi_url_origin() +'/extensions/DRM/stations.cjson';
+      url = kiwi_url_origin() +'/extensions/DRM/stations.cjson';
       console.log('drm_get_stations_done_cb: using default station list '+ url);
       drm.using_default = true;
       drm.double_fault = true;
@@ -993,7 +995,7 @@ function drm_get_stations_done_cb(stations)
    try {
       drm.stations = [];
       var idx = 0;
-      var region, station, freq, begin, end, wrap, prefix, verified, url, mw, br, hrs;
+      var region, station, freq, begin, end, wrap, prefix, verified, mw, br, hrs;
       var is_India_MW = false;
       stations.forEach(function(obj, i) {    // each object of outer array
          prefix = '';
@@ -1111,7 +1113,7 @@ function drm_mobile_controls_setup(mobile)
             w3_div('id-drm-panel-by-svc-static', drm_schedule_static()),
             w3_div('id-drm-panel-by-svc w3-iphone-scroll w3-absolute|width:100%; height:100%;', drm.loading_msg)
          )
-      )
+      );
 
 	ext_panel_show(controls_html, null, null);
 	ext_set_controls_width_height(drm.w_sched + drm.cpanel_margin, drm.h_sched + drm.cpanel_margin);
@@ -1496,7 +1498,7 @@ function drm_controls_setup()
    }
 
    // URL params that need to be setup after controls instantiated
-	var p = drm.url_params;
+	p = drm.url_params;
 	if (p) {
       p = p.split(',');
       p.forEach(function(a, i) {
