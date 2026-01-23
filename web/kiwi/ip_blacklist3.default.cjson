@@ -111,6 +111,8 @@
     "3.0.0.0/9",
 // VK1HF using Amazon EC2 as VM (see email)
     "+3.105.157.51",
+// gredgwin.barec.net.au:8074 using AWS VPN
+    "+3.24.124.3",
     "5.62.16.0/20",
     "5.62.32.0/19",
     "5.253.115.0/25",
