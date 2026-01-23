@@ -210,7 +210,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
         for (i=0; i < n; i++) {
             printf("DX UPLOAD: query(%d) <%s>\n", i, qs[i].str);
             if (i == 0) {
-			    key_cmp2 = strstr(mc->query, current_authkey);
+			    key_cmp2 = (char *) strstr(mc->query, current_authkey);
             } else
             if (strcmp(qs[i].str, "keep_masked") == 0) {
                 keep_masked = true;
