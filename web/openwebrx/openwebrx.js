@@ -7309,15 +7309,17 @@ function freq_memory_at(idx)
    return { freq:as[0], mode:as[1] };
 }
 
-function freq_memory_add(f, clear)
+function freq_memory_add(f, opt)
 {
-   //console.log('freq_memory_add f='+ f);
+   var mode = (opt && opt.mode)? opt.mode : cur_mode;
+   //console.log('freq_memory_add f='+ f +' mode='+ mode +' fmem_mode_save='+ kiwi.fmem_mode_save);
+   //console.log(opt);
    //console.log(kiwi.freq_memory);
    //kiwi_trace();
    if (!isNumber(+f)) return;
    if (+f < 1) f = '1';
-   if (kiwi.fmem_mode_save) f += ' '+ cur_mode;
-   if (clear == true) {
+   if (kiwi.fmem_mode_save) f += ' '+ mode;
+   if (opt && opt.clear) {
       kiwi.freq_memory = [f];
    } else
 	if (f != kiwi.freq_memory[0]) {
@@ -7371,7 +7373,7 @@ function freq_memory_menu_item_cb(idx, x, cb_param, ev)
             //canvas_log('idx='+ idx +' M='+ kiwi.freq_memory);
             f_m = freq_memory_at(idx - TOP);
             //canvas_log('sel='+ f);
-            if (f_m) freq_memory_add(f_m.freq);
+            if (f_m) freq_memory_add(f_m.freq, {mode: f_m.mode});
          break;
       
       case BOT:   // <hr>
@@ -7379,7 +7381,7 @@ function freq_memory_menu_item_cb(idx, x, cb_param, ev)
       
       case BOT+1:
          //console.log('CLEAR ALL');
-         freq_memory_add(freq_displayed_kHz_str_with_freq_offset, true);
+         freq_memory_add(freq_displayed_kHz_str_with_freq_offset, {clear:1});
          break;
       
       case BOT+2:
