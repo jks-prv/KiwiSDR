@@ -232,7 +232,7 @@ function kiwi_version_cb(response_obj)
    
 	version_maj = response_obj.maj; version_min = response_obj.min;
 	kiwi.admin_save_pwd = response_obj.sp;
-	//console.log('v'+ version_maj +'.'+ version_min +': KiwiSDR server asp='+ kiwi.admin_save_pwd);
+	console.log('---- KiwiSDR server v'+ version_maj +'.'+ version_min);
 	//console.log(response_obj);
 	var s='';
 	
