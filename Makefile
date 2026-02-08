@@ -2024,7 +2024,7 @@ clean_deprecated:
 	-rm -rf obj obj_O3 obj_keep kiwi.bin kiwid.bin *.dSYM web/edata*
 	-rm -rf *.dSYM pas extensions/ext_init.cpp kiwi.gen.h kiwid kiwid.aout kiwid_realtime.bin .comp_ctr
 
-clean: clean_ext clean_deprecated $(DEP_LFTP)
+clean: $(KEYRING) clean_ext clean_deprecated $(DEP_LFTP)
 	(cd $(REPO_DIR)/e_cpu; make clean)
 	(cd $(REPO_DIR)/verilog/rx; make clean)
 	(cd $(REPO_DIR)/tools; make clean)
