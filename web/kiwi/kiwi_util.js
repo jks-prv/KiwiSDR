@@ -23,6 +23,15 @@ function kiwi_typeof(v) { return isNull(v)? 'null' : (isArray(v)? 'array' : type
 
 function ifString(s, alt) { return (isString(s)? s : alt); }
 
+function isalnum(c) { return c.length === 1 && /[a-zA-Z0-9]/.test(c); }
+function isalpha(c) { return c.length === 1 && /[a-zA-Z]/.test(c); }
+function iscntrl(c) { return c.length === 1 && ord(c) < 32; }
+function isdigit(c) { return c.length === 1 && c >= '0' && c <= '9'; }
+function isspace(c) { return c.length === 1 && /\s/.test(c); }
+function islower(c) { return c.length === 1 && c >= 'a' && c <= 'z'; }
+function isupper(c) { return c.length === 1 && c >= 'A' && c <= 'Z'; }
+function isxdigit(c) { return c.length === 1 && /[0-9a-fA-F]/.test(c); }
+
 // browsers have added includes() only relatively recently
 try {
 	if (!String.prototype.includes) {
