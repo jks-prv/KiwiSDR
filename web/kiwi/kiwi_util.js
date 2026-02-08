@@ -681,8 +681,6 @@ String.prototype.positiveWithSign = function()
 	return (n <= 0)? s : ('+'+ s);
 };
 
-function isHexDigit(c) { return ('0123456789ABCDEFabcdef'.indexOf(c) > -1); }
-
 // pad with left zeros to 'digits' length
 // +digits: add leading '0x'
 // -digits: no leading '0x'
@@ -1294,7 +1292,7 @@ function kiwi_decodeURIComponent(id, uri)
             if (uri.charAt(i) == '%') {
                var c1 = uri.charAt(i+1);
                var c2 = uri.charAt(i+2);
-               if (isHexDigit(c1) && isHexDigit(c2)) {
+               if (isxdigit(c1) && isxdigit(c2)) {
                   //console.log(c1 +' '+ TF(c1 >= '8'));
                   if (c1 >= '8') {
                      //var x0 = uri.charAt(i-1);
@@ -1509,11 +1507,11 @@ function grid_to_latLon(grid)
 	lat = _a(c)*10 - 90;
 
 	c = grid[2];
-	if (c < '0' || c > '9') return false;
+	if (!isdigit(c)) return false;
 	lon += _0(c) * grid_sq.SQ_LON_DEG;
 
 	c = grid[3];
-	if (c < '0' || c > '9') return false;
+	if (!isdigit(c)) return false;
 	lat += _0(c) * grid_sq.SQ_LAT_DEG;
 
 	if (slen != 6) {	// assume center of square (i.e. "....ll")
@@ -2371,7 +2369,7 @@ function kiwi_ajax_prim(method, data, url, callback, cb_param, timeout, progress
             } else {
                var firstChar = response.charAt(0);
          
-               if (firstChar != '{' && firstChar != '[' && firstChar != '"' && !(firstChar >= '0' && firstChar <= '9')) {
+               if (firstChar != '{' && firstChar != '[' && firstChar != '"' && !isdigit(firstChar)) {
                   dbug("AJAX: response didn't begin with JSON '{' '[' '\"' or digit? "+ response);
                   obj = { AJAX_error:'JSON prefix', response:response };
                } else {

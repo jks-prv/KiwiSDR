@@ -5682,10 +5682,13 @@ var waterfall_last_add = 0;
 
 function waterfall_add_queue(what, ws, firstChars)
 {
-   if (!kiwi.wf_preview_mode)
+   if (!kiwi.wf_preview_mode) {
       waterfall_add_queue2(what, ws, firstChars);
-   else
+      //console.log('WF reg');
+   } else {
 	   if (kiwi_gc_wf) what = null;  // gc
+      //console.log('WF preview');
+	}
 }
 
 function waterfall_add_queue2(what, ws, firstChars)
@@ -10781,7 +10784,7 @@ function keyboard_shortcut_event(evt)
    var key_mod = shortcut_key_mod(evt);
 
    var field_input_key = (
-         (k >= '0' && k <= '9' && !ctl) ||
+         (isdigit(k) && !ctl) ||
          k == '.' || k == ',' ||                // ',' is alternate decimal point to '.' and used in passband spec
          k == '/' || k == ':' || k == '-' ||    // for passband spec, have to allow for negative passbands (e.g. lsb)
          k == '#' ||                            // for waterfall tuning
