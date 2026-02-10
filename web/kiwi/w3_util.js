@@ -2171,7 +2171,7 @@ function w3int_label(psa, text, path, extension)
    // don't emit empty label div
    //if (psa == '' && text == '' && extension == '') return '';
    if (text == '' && ((psa != '' && psa != '||') || extension != '')) {
-      console_nv('$w3int_label', {text}, {psa}, {extension});
+      console.log('$w3int_label', {text, psa, extension});
       //kiwi_trace();
    }
    if (text == '') {
@@ -2938,7 +2938,7 @@ function w3int_input_process(ev)
    var a = ev.detail.split('|');
    var path = a[0];
    var cb = a[1];
-   //console_nv('w3int_input_process', {ev}, {a}, {path}, {cb});
+   //console.log('w3int_input_process', {ev, a, path, cb});
 	var el = w3_el(path);
 	if (el) {
       var trace = w3_contains(el, 'w3-trace');
@@ -3014,7 +3014,7 @@ function w3int_input_up_down_cb(path, cb_param, first, ev)
    var id_s = cb_a[1];
    var cb_s = cb_a[2];
    var val = +w3_el(id_s).value + delta;
-   //console_nv('w3int_input_up_down_cb', {cb_param}, {ev});
+   //console.log('w3int_input_up_down_cb', {cb_param, ev});
    w3_input_force(id_s, cb_s, val.toFixed(0));
 }
 
@@ -3095,7 +3095,7 @@ function w3_input(psa, label, path, val, cb, placeholder)
 
 function w3_input_force(path, cb, input)
 {
-   //console_nv('w3_input_force', {path}, {cb}, {input});
+   //console.log('w3_input_force', {path, cb, input});
    var el = w3_el(path);
    if (!el) return;
    el.addEventListener('input', w3int_input_process, w3.CAPTURING);

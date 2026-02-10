@@ -1318,14 +1318,14 @@ function webpage_blur()
 
 function webpage_string_cb(path, val)
 {
-   //console_nv('webpage_string_cb', {path}, {val});
+   //console.log('webpage_string_cb', {path, val});
 	w3_string_set_cfg_cb(path, val);
 	ext_send_after_cfg_save('SET reload_index_params');
 }
 
 function webpage_html_cb(path, val)
 {
-   //console_nv('webpage_html_cb', {path}, {val});
+   //console.log('webpage_html_cb', {path, val});
 	w3_json_set_cfg_cb(path, val);
 	ext_send_after_cfg_save('SET reload_index_params');
 }

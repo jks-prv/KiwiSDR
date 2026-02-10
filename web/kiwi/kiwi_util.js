@@ -819,66 +819,84 @@ function _change(v)
    return (!_nochange(v) && !_default(v));
 }
 
-// usage: console_log('id', arg0, arg1 ...)
-// prints: "<id>: 'arg0'=<arg0_value> 'arg1'=<arg1_value> ..."
-// i.e. the string 'argN', not the name of the argN parameter (unfortunately)
-// see console_nv() below for partial solution to this problem
-function console_log()
-{
-   //console.log('console_log: '+ typeof(arguments));
-   //console.log(arguments);
-   var s;
-   for (var i = 0; i < arguments.length; i++) {
-      var arg = arguments[i];
-      if (i == 0) {
-         s = arg +': ';
-      } else {
-         s += 'arg'+ (i-1) +'='+ arg +' ';
-      }
-   }
-   console.log('CONSOLE_LOG '+ s);
-}
 
-// usage: console_nv('id', {arg0}, {arg1}, 'a.b.c' (i.e. FQN) ...)
+// NB: Have come to understand that console.log() can essentially do all of what console_nv() does.
+
+/*
+var console_nv_help =
+`
+// usage: console_nv(
+//    'id',                   leading identifier to print
+//
+//    local vars wrapped in an object:
+//       {arg0},                 simple local arg types
+//       {'arg1':arg1},          more complex local args
+//          {'arr[i]', arr[i]},     array ref
+//          {'o.el', o.el},         object ref
+//
+//    global vars ref by name wrapped in a string:
+//       's',                    global simple vars
+//       'a.b.c',                global object el FQN
+// )
+//
 // prints: "<id>: 'actual_arg0_name'=<arg0_value> 'actual_arg1_name'=<arg1_value> ..."
 //
-// So this works for:
-// local/global simple vars (incl obj): YES
-// local obj deref: NO
-// global deref (but FQN only): YES (specify FQN as a string)
-//
 // e.g. console_nv('screen_char', {r}, {c}, 'kiwi.d.p.nrows')
+`;
+
 function console_nv()
 {
-   var s;
+   if (arguments.length == 0) {
+      console.log(console_nv_help);
+      return;
+   }
+   
+   var s, name, val, val2, object = null;
+   
    for (var i = 0; i < arguments.length; i++) {
       var arg = arguments[i];
       if (i == 0) {
          s = arg +': ';
       } else {
-         var name, val;
-         if (isObject(arg)) {
+         if (isObject(arg)) {    // local variables
             name = Object.keys(arg)[0];
             val = arg[name];
-            s += name +'='+ JSON.stringify(val) +' ';
+            val2 = JSON.stringify(val);
+            //console.log(val2);
+            
+            // if JSON.stringify() gives undecoded object use console.log(obj) trick to get full object decoding
+            if (val2 == '[object Object]') object = val;
+            s += name +'='+ (object? '[see next]' : val2) +' ';
          } else
-         if (isString(arg)) {
+         if (isString(arg)) {    // global variables
             try {
-               val = getVarFromString(arg);
+               //val = getVarFromString(arg);
+               val = eval(arg);
+
+            // if eval() gives undecoded object use console.log(obj) trick to get full object decoding
+               if (val == '[object Object]') object = val;
+               val = JSON.stringify(val);
             } catch(ex) {
+               //console.log('$'+ arg +': '+ ex);
                val = '[not defined]';
             }
             //var lio = arg.lastIndexOf('.');
             //name = (lio == -1)? arg : arg.substr(lio+1);
             name = arg;
-            s += name +'='+ val +' ';
+            s += name +'='+ (object? '[see next]' : val) +' ';
          } else {
-            s += '[arg'+ (i-1) +' unknown] ';
+            s += '[arg'+ (i-1) +' '+ dq(arg) +' invalid type '+ dq(typeof(arg)) +'] ';
          }
       }
    }
-   console.log('CONSOLE_NV '+ s);
+   
+   //console.log('CONSOLE_NV');
+   var caller = kiwi_caller();
+   //console.log(caller);
+   console.log(s +' ('+ caller.file +':'+ caller.line +')');
+   if (object) console.log(object);
 }
+*/
 
 function console_log_dbgUs()
 {
@@ -2654,7 +2672,7 @@ function open_websocket(stream, open_cb, open_cb_param, msg_cb, recv_cb, error_c
 	}
 	if (no_wf) wf.no_wf = true;
 	
-	console.log('$$open_websocket '+ ws_url);
+	console.log('open_websocket '+ ws_url);
 	var ws = new WebSocket(ws_url);
 	wsockets.push( { 'ws':ws, 'name':stream } );
 	ws.up = false;

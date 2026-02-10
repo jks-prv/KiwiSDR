@@ -865,7 +865,7 @@ function update_web_grid(init)
 {
    var rx_grid = w3_json_to_string('rx_grid', cfg.rx_grid);
    var grid = isNonEmptyString(kiwi.GPS_auto_grid)? kiwi.GPS_auto_grid : rx_grid;
-   //console_nv('update_web_grid', {init}, {grid}, 'cfg.GPS_update_web_grid');
+   //console.log('update_web_grid', {init, grid, 'GPS_update_web_grid':cfg.GPS_update_web_grid});
    if (init != true && !cfg.GPS_update_web_grid) return;
    w3_innerHTML('id-web-grid',
       w3_link('', 'https://www.levinecentral.com/ham/grid_square.php?Grid='+ grid, grid, '', 'dont_toggle_rx_photo')
@@ -877,7 +877,7 @@ function update_web_map(init)
 {
    var rx_gps = w3_json_to_string('rx_gps', cfg.rx_gps);
    rx_gps = isNonEmptyString(kiwi.GPS_auto_latlon)? kiwi.GPS_auto_latlon : rx_gps;
-   //console_nv('update_web_map', {init}, {rx_gps}, 'cfg.GPS_update_web_lores', 'cfg.GPS_update_web_hires');
+   //console.log('update_web_map', {init, rx_gps, 'GPS_update_web_lores':cfg.GPS_update_web_lores, 'GPS_update_web_hires':cfg.GPS_update_web_hires});
    if (init != true && !cfg.GPS_update_web_lores && !cfg.GPS_update_web_hires) return;
    w3_link_set('id-rx-gps', 'https://www.google.com/maps/place/'+ rx_gps);
    position_top_bar();
@@ -1610,7 +1610,7 @@ function demodulator_default_analog(offset_frequency, subtype, locut, hicut)
 		mkenvelopes(this.visible_range);
 		freqset_car_Hz(this.parent.offset_frequency + center_freq);
 		this.parent.set();
-		//console_nv('drag_move', {do_lo}, {do_hi});
+		//console.log('drag_move', {do_lo, do_hi});
 		var fset = (do_lo || do_hi)? owrx.FSET_PB_CHANGE : owrx.FSET_SCALE_DRAG;
 		freqset_update_ui(fset);
 		//kiwi_trace();
@@ -3405,7 +3405,7 @@ function canvas_mousewheel_cb(evt)
          var zoom_to_pb_pinch = evt.ctrlKey;
          var two_finger_swipe_LR = (x != 0);
          var to_passband = ((zoom_to_pb_pinch || two_finger_swipe_LR) && !flip_sense);
-         //console_nv('canvas_mousewheel_cb', {zoom_to_pb_pinch}, {two_finger_swipe_LR}, {flip_sense}, {to_passband});
+         //console.log('canvas_mousewheel_cb', {zoom_to_pb_pinch, two_finger_swipe_LR, flip_sense, to_passband});
          zoom_step(fwd_bak? ext_zoom.IN : ext_zoom.OUT, to_passband? ext_zoom.TO_PASSBAND : evt.pageX);
          
          // need to keep canvas drag click mouseup code from changing freq
@@ -6975,7 +6975,7 @@ function freq_step_amount(b)
 		s = ' NDB';
 	} else
 	if (b && (b.name == 'LW' || b.name == 'MW')) {
-		//console_log('special step', kmode.str, kmode.AM_SAx_IQ_DRM);
+		//console.log('special step', {'kmode':kmode.str, 'AM_SAx_IQ_DRM':kmode.AM_SAx_IQ_DRM});
 		if (kmode.AM_SAx_IQ_DRM) {
 			step_Hz = step_9_10? 9000 : 10000;
 		}

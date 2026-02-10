@@ -204,7 +204,7 @@ function drm_recv(data)
 		   var n_msc_lo = d[2];
 		   var n_msc_hi = d[3];
 		   var n_msc = (n_msc_hi << 8) + n_msc_lo;
-		   //console_nv('drm', {n_fac}, {n_sdc}, {n_msc}, {n_msc_hi}, {n_msc_lo});
+		   //console.log('drm', {n_fac, n_sdc, n_msc, n_msc_hi, n_msc_lo});
 		   o = 4;
 		   
          ct.fillStyle = 'white';
@@ -1210,7 +1210,7 @@ function drm_desktop_controls_setup(w_multi)
       } else {
          // DRM_config_html() will have set cfg.DRM.nreg_chans before use here
          var drm_nreg_chans = cfg.DRM.nreg_chans;
-         console_log('drm_nreg_chans', drm_nreg_chans);
+         console.log('DRM', {drm_nreg_chans});
          if (drm_nreg_chans == 0)
             s = 'Requires exclusive use of the Kiwi. <br> There can be no other connections.';
          else {
@@ -1563,11 +1563,11 @@ function drm_stop(from_stop_button)
       drm_set_mode('iq');
    } else {
       if (isDefined(drm.saved_passband)) {
-         console_nv('drm_stop RESTORE', 'drm.saved_passband.low', 'drm.saved_passband.high');
+         console.log('drm_stop RESTORE', {'saved_passband.low':drm.saved_passband.low, 'saved_passband.high':drm.saved_passband.high});
          ext_set_passband(drm.saved_passband.low, drm.saved_passband.high);
       }
       if (isDefined(drm.saved_mode)) {
-         console_nv('drm_stop RESTORE', 'drm.saved_mode');
+         console.log('drm_stop RESTORE', {'saved_mode':drm.saved_mode});
          drm_set_mode(drm.saved_mode);
       }
    }
@@ -1622,7 +1622,7 @@ function drm_set_passband()
       console.log('drm_set_passband pb_lo,hi='+ drm.pb_lo +','+ drm.pb_hi +' override_pb='+ extint.override_pb);
    } else
    if (drm.special_passband) {   // can't simply clear on first use because special pb needs to get set several times
-      console_nv('drm_set_passband SPECIAL PB', 'drm.special_passband.low', 'drm.special_passband.high');
+      console.log('drm_set_passband SPECIAL PB', {'special_passband.low':drm.special_passband.low, 'special_passband.high':drm.special_passband.high});
       ext_set_passband(drm.special_passband.low, drm.special_passband.high);
    } else {
       console.log('drm_set_passband DEFAULT PB');
@@ -1632,7 +1632,7 @@ function drm_set_passband()
 
 function drm_set_mode(mode)
 {
-   console_log('drm_set_mode', mode);
+   console.log('DRM', {'drm_set_mode':mode});
    //kiwi_trace();
    ext_set_mode(mode, null, { no_drm_proc:true });
    if (mode == 'drm') drm_set_passband();
@@ -1892,7 +1892,7 @@ function DRM_config_html()
    var default_nreg_chans = 3;      // FIXME: should be config param?
 	var nreg_chans = ext_get_cfg_param('DRM.nreg_chans', default_nreg_chans);
 	if (nreg_chans == -1) nreg_chans = default_nreg_chans;   // has never been set
-	//console_log('nreg_chans/rx_chans', nreg_chans, rx_chans);
+	//console.log('DRM', {nreg_chans, rx_chans});
 	drm.nreg_chans = Math.min(nreg_chans, rx_chans-1);
 	var max_chans = Math.max(4, rx_chans);    // FIXME: "4" should be config param?
    drm.nreg_chans_u = { 0:'none' };

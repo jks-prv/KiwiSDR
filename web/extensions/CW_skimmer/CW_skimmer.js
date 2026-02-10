@@ -276,7 +276,7 @@ function cws_log_cb()
 
 function cws_test_cb()
 {
-   //console_nv('cws_test_cb', 'cws.test');
+   //console.log('cws_test_cb', {'test':cws.test'});
 	if (ext_nom_sample_rate() != 12000) return;
    cws.test = cws.test? 0:1;    // if already running stop if clicked again
    w3_colors('id-cw-test', '', 'w3-red', cws.test);
