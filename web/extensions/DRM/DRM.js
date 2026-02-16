@@ -187,12 +187,14 @@ function drm_recv(data)
          ct.fillRect(0,h/2, w,1);
          ct.fillRect(w/2,0, 1,h);
          color.push('green');
-         // fall through
+         /* fall through */
 
+      /*
 		case drm.DRM_DAT_SDC:
          color.push('red');
-         // fall through
+         /* fall through */
 
+      /*
 		case drm.DRM_DAT_MSC:
          color.push('blue');
          ct.fillStyle = color.shift();
