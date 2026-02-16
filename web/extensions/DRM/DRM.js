@@ -162,7 +162,7 @@ function DRM_main()
 
 function drm_recv(data)
 {
-   var i, s;
+   var i, s, x, y, o;
 	var firstChars = arrayBufferToStringLen(data, 3);
 	
 	// process data sent from server/C by ext_send_msg_data()
@@ -187,12 +187,14 @@ function drm_recv(data)
          ct.fillRect(0,h/2, w,1);
          ct.fillRect(w/2,0, 1,h);
          color.push('green');
-         // fall through
+         /* fall through */
 
+      /*
 		case drm.DRM_DAT_SDC:
          color.push('red');
-         // fall through
+         /* fall through */
 
+      /*
 		case drm.DRM_DAT_MSC:
          color.push('blue');
          ct.fillStyle = color.shift();
@@ -204,8 +206,8 @@ function drm_recv(data)
 		   var n_msc_lo = d[2];
 		   var n_msc_hi = d[3];
 		   var n_msc = (n_msc_hi << 8) + n_msc_lo;
-		   //console_nv('drm', {n_fac}, {n_sdc}, {n_msc}, {n_msc_hi}, {n_msc_lo});
-		   var o = 4;
+		   //console.log('drm', {n_fac, n_sdc, n_msc, n_msc_hi, n_msc_lo});
+		   o = 4;
 		   
          ct.fillStyle = 'white';
          ct.fillRect(0,0, w,h);
@@ -216,8 +218,8 @@ function drm_recv(data)
          if (drm.display == drm.IQ_ALL || drm.display == drm.FAC) {
             ct.fillStyle = 'green';
             for (i = 0; i < n_fac; i++) {
-               var x = d[o+i*2]   / 255.0 * w;
-               var y = d[o+i*2+1] / 255.0 * h;
+               x = d[o+i*2]   / 255.0 * w;
+               y = d[o+i*2+1] / 255.0 * h;
                ct.fillRect(x,y, 2,2);
             }
          }
@@ -226,8 +228,8 @@ function drm_recv(data)
          if (drm.display == drm.IQ_ALL || drm.display == drm.SDC) {
             ct.fillStyle = 'red';
             for (i = 0; i < n_sdc; i++) {
-               var x = d[o+i*2]   / 255.0 * w;
-               var y = d[o+i*2+1] / 255.0 * h;
+               x = d[o+i*2]   / 255.0 * w;
+               y = d[o+i*2+1] / 255.0 * h;
                ct.fillRect(x,y, 2,2);
             }
          }
@@ -236,8 +238,8 @@ function drm_recv(data)
          if (drm.display == drm.IQ_ALL || drm.display == drm.MSC) {
             ct.fillStyle = 'blue';
             for (i = 0; i < n_msc; i++) {
-               var x = d[o+i*2]   / 255.0 * w;
-               var y = d[o+i*2+1] / 255.0 * h;
+               x = d[o+i*2]   / 255.0 * w;
+               y = d[o+i*2+1] / 255.0 * h;
                ct.fillRect(x,y, 2,2);
             }
          }
@@ -303,7 +305,7 @@ function drm_recv(data)
 			   var deco = kiwi_decodeURIComponent('DRM', param[1]);
             if (!deco) break;
 
-            var o = kiwi_JSON_parse('drm_status_cb', deco);
+            o = kiwi_JSON_parse('drm_status_cb', deco);
             if (!o) break;
 
             drm_all_status(o.io, o.time, o.frame, o.FAC, o.SDC, o.MSC);
@@ -430,16 +432,16 @@ function drm_recv(data)
 			   break;
 			
 			case "drm_journaline_cb":
-			   var s = kiwi_decodeURIComponent('DRM', param[1]);
+			   s = kiwi_decodeURIComponent('DRM', param[1]);
 			   //console.log(s);
-            var o = kiwi_JSON_parse('drm_journaline_cb', s);
+            o = kiwi_JSON_parse('drm_journaline_cb', s);
             if (isNull(o)) {
                s = w3_icon('w3-link-darker-color w3-margin-LR-4', 'fa-backward', 24, '', 'drm_journaline_back') +
                   '&nbsp;(data error, see browser console log)';
                drm_status('journaline', drm.ST_YEL);
             } else {
                //console.log(o);
-               var link = +o.l
+               var link = +o.l;
                s = link? w3_icon('w3-link-darker-color w3-margin-LR-4', 'fa-backward', 24, '', 'drm_journaline_back') : '';
                s += '&nbsp;NewsService Journaline&reg; &#8209; ';
                drm.journaline_objID = link;
@@ -525,7 +527,7 @@ function drm_journaline_select()
 function drm_journaline_reset_cb(path, idx, first)
 {
    if (first) return;
-   if (!(+idx)) return;
+   if ((+idx) == 0) return;
    console.log('drm_journaline_reset_cb');
    ext_send('SET journaline_objID=-1');
 }
@@ -846,6 +848,7 @@ function drm_schedule_svc()
 
 function drm_schedule_time_freq(sort_by_freq)
 {
+   var o;
    if (!drm.stations) return '';
 
    var i, j;
@@ -854,7 +857,7 @@ function drm_schedule_time_freq(sort_by_freq)
    drm.stations_freq = [];
    
    for (i = j = 0; i < drm.stations.length; i++) {
-      var o = drm.stations[i];
+      o = drm.stations[i];
       if (o.t != drm.SINGLE && o.t != drm.MULTI) continue;
       drm.stations_freq[j++] = o;
    }
@@ -877,7 +880,7 @@ function drm_schedule_time_freq(sort_by_freq)
    var last_band = '';
    
    for (i = 0; i < drm.stations_freq.length; i++) {
-      var o = drm.stations_freq[i];
+      o = drm.stations_freq[i];
       var station = o.s;
       var freq = o.f;
       var url = o.u;
@@ -950,6 +953,7 @@ function drm_schedule_time_freq(sort_by_freq)
 
 function drm_get_stations_done_cb(stations)
 {
+   var url;
    var fault = false;
    
    if (!stations) {
@@ -980,7 +984,7 @@ function drm_get_stations_done_cb(stations)
       console.log(stations);
       
       // load the default station list from a file embedded with the extension
-      var url = kiwi_url_origin() +'/extensions/DRM/stations.cjson';
+      url = kiwi_url_origin() +'/extensions/DRM/stations.cjson';
       console.log('drm_get_stations_done_cb: using default station list '+ url);
       drm.using_default = true;
       drm.double_fault = true;
@@ -993,7 +997,7 @@ function drm_get_stations_done_cb(stations)
    try {
       drm.stations = [];
       var idx = 0;
-      var region, station, freq, begin, end, wrap, prefix, verified, url, mw, br, hrs;
+      var region, station, freq, begin, end, wrap, prefix, verified, mw, br, hrs;
       var is_India_MW = false;
       stations.forEach(function(obj, i) {    // each object of outer array
          prefix = '';
@@ -1111,7 +1115,7 @@ function drm_mobile_controls_setup(mobile)
             w3_div('id-drm-panel-by-svc-static', drm_schedule_static()),
             w3_div('id-drm-panel-by-svc w3-iphone-scroll w3-absolute|width:100%; height:100%;', drm.loading_msg)
          )
-      )
+      );
 
 	ext_panel_show(controls_html, null, null);
 	ext_set_controls_width_height(drm.w_sched + drm.cpanel_margin, drm.h_sched + drm.cpanel_margin);
@@ -1208,7 +1212,7 @@ function drm_desktop_controls_setup(w_multi)
       } else {
          // DRM_config_html() will have set cfg.DRM.nreg_chans before use here
          var drm_nreg_chans = cfg.DRM.nreg_chans;
-         console_log('drm_nreg_chans', drm_nreg_chans);
+         console.log('DRM', {drm_nreg_chans});
          if (drm_nreg_chans == 0)
             s = 'Requires exclusive use of the Kiwi. <br> There can be no other connections.';
          else {
@@ -1496,7 +1500,7 @@ function drm_controls_setup()
    }
 
    // URL params that need to be setup after controls instantiated
-	var p = drm.url_params;
+	p = drm.url_params;
 	if (p) {
       p = p.split(',');
       p.forEach(function(a, i) {
@@ -1561,11 +1565,11 @@ function drm_stop(from_stop_button)
       drm_set_mode('iq');
    } else {
       if (isDefined(drm.saved_passband)) {
-         console_nv('drm_stop RESTORE', 'drm.saved_passband.low', 'drm.saved_passband.high');
+         console.log('drm_stop RESTORE', {'saved_passband.low':drm.saved_passband.low, 'saved_passband.high':drm.saved_passband.high});
          ext_set_passband(drm.saved_passband.low, drm.saved_passband.high);
       }
       if (isDefined(drm.saved_mode)) {
-         console_nv('drm_stop RESTORE', 'drm.saved_mode');
+         console.log('drm_stop RESTORE', {'saved_mode':drm.saved_mode});
          drm_set_mode(drm.saved_mode);
       }
    }
@@ -1620,7 +1624,7 @@ function drm_set_passband()
       console.log('drm_set_passband pb_lo,hi='+ drm.pb_lo +','+ drm.pb_hi +' override_pb='+ extint.override_pb);
    } else
    if (drm.special_passband) {   // can't simply clear on first use because special pb needs to get set several times
-      console_nv('drm_set_passband SPECIAL PB', 'drm.special_passband.low', 'drm.special_passband.high');
+      console.log('drm_set_passband SPECIAL PB', {'special_passband.low':drm.special_passband.low, 'special_passband.high':drm.special_passband.high});
       ext_set_passband(drm.special_passband.low, drm.special_passband.high);
    } else {
       console.log('drm_set_passband DEFAULT PB');
@@ -1630,7 +1634,7 @@ function drm_set_passband()
 
 function drm_set_mode(mode)
 {
-   console_log('drm_set_mode', mode);
+   console.log('DRM', {'drm_set_mode':mode});
    //kiwi_trace();
    ext_set_mode(mode, null, { no_drm_proc:true });
    if (mode == 'drm') drm_set_passband();
@@ -1890,7 +1894,7 @@ function DRM_config_html()
    var default_nreg_chans = 3;      // FIXME: should be config param?
 	var nreg_chans = ext_get_cfg_param('DRM.nreg_chans', default_nreg_chans);
 	if (nreg_chans == -1) nreg_chans = default_nreg_chans;   // has never been set
-	//console_log('nreg_chans/rx_chans', nreg_chans, rx_chans);
+	//console.log('DRM', {nreg_chans, rx_chans});
 	drm.nreg_chans = Math.min(nreg_chans, rx_chans-1);
 	var max_chans = Math.max(4, rx_chans);    // FIXME: "4" should be config param?
    drm.nreg_chans_u = { 0:'none' };

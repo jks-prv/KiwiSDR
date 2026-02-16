@@ -596,12 +596,22 @@ void update_vars_from_config(bool called_at_init)
     admcfg_default_bool("my_kiwi", true, &update_admcfg);
     admcfg_default_bool("onetime_password_check", false, &update_admcfg);
     admcfg_default_bool("dx_labels_converted", false, &update_admcfg);
-    admcfg_default_string("proxy_server", PROXY_SERVER_HOST, &update_admcfg);
     admin_keepalive = admcfg_default_bool("admin_keepalive", true, &update_admcfg);
     log_local_ip = admcfg_default_bool("log_local_ip", true, &update_admcfg);
     admcfg_default_bool("dx_comm_auto_download", true, &update_admcfg);
     kiwi.restart_delay = admcfg_default_int("restart_delay", RESTART_DELAY_30_SEC, &update_admcfg);
     
+    // safety net
+    admcfg_default_string("proxy_server", PROXY_SERVER_HOST, &update_admcfg);
+    const char *proxy = admcfg_string("proxy_server", NULL, CFG_REQUIRED);
+    if (kiwi_str_ends_with((char *) proxy, "kiwisdr.com")) {
+        if (strcmp(proxy, "proxy.kiwisdr.com") != 0) {
+            admcfg_set_string("proxy_server", PROXY_SERVER_HOST);
+            lprintf("CAUTION: reset proxy_server from %s to %s\n", proxy, PROXY_SERVER_HOST);
+        }
+    }
+    admcfg_string_free(proxy);
+
     // convert daily_restart switch bool => menu int
     bool daily_restart_bool = admcfg_bool("daily_restart", &err, CFG_OPTIONAL);
     daily_restart_e daily_restart;

@@ -88,6 +88,7 @@ var owrx = {
    SETUP_WF: 2,
    SETUP_DX: 3,
    SETUP_TOPBAR: 4,
+   SETUP_RF_SPEC: 5,
    
    COMP_LAST: 0,
    COMP_ON: 1,
@@ -865,7 +866,7 @@ function update_web_grid(init)
 {
    var rx_grid = w3_json_to_string('rx_grid', cfg.rx_grid);
    var grid = isNonEmptyString(kiwi.GPS_auto_grid)? kiwi.GPS_auto_grid : rx_grid;
-   //console_nv('update_web_grid', {init}, {grid}, 'cfg.GPS_update_web_grid');
+   //console.log('update_web_grid', {init, grid, 'GPS_update_web_grid':cfg.GPS_update_web_grid});
    if (init != true && !cfg.GPS_update_web_grid) return;
    w3_innerHTML('id-web-grid',
       w3_link('', 'https://www.levinecentral.com/ham/grid_square.php?Grid='+ grid, grid, '', 'dont_toggle_rx_photo')
@@ -877,7 +878,7 @@ function update_web_map(init)
 {
    var rx_gps = w3_json_to_string('rx_gps', cfg.rx_gps);
    rx_gps = isNonEmptyString(kiwi.GPS_auto_latlon)? kiwi.GPS_auto_latlon : rx_gps;
-   //console_nv('update_web_map', {init}, {rx_gps}, 'cfg.GPS_update_web_lores', 'cfg.GPS_update_web_hires');
+   //console.log('update_web_map', {init, rx_gps, 'GPS_update_web_lores':cfg.GPS_update_web_lores, 'GPS_update_web_hires':cfg.GPS_update_web_hires});
    if (init != true && !cfg.GPS_update_web_lores && !cfg.GPS_update_web_hires) return;
    w3_link_set('id-rx-gps', 'https://www.google.com/maps/place/'+ rx_gps);
    position_top_bar();
@@ -1610,7 +1611,7 @@ function demodulator_default_analog(offset_frequency, subtype, locut, hicut)
 		mkenvelopes(this.visible_range);
 		freqset_car_Hz(this.parent.offset_frequency + center_freq);
 		this.parent.set();
-		//console_nv('drag_move', {do_lo}, {do_hi});
+		//console.log('drag_move', {do_lo, do_hi});
 		var fset = (do_lo || do_hi)? owrx.FSET_PB_CHANGE : owrx.FSET_SCALE_DRAG;
 		freqset_update_ui(fset);
 		//kiwi_trace();
@@ -3405,7 +3406,7 @@ function canvas_mousewheel_cb(evt)
          var zoom_to_pb_pinch = evt.ctrlKey;
          var two_finger_swipe_LR = (x != 0);
          var to_passband = ((zoom_to_pb_pinch || two_finger_swipe_LR) && !flip_sense);
-         //console_nv('canvas_mousewheel_cb', {zoom_to_pb_pinch}, {two_finger_swipe_LR}, {flip_sense}, {to_passband});
+         //console.log('canvas_mousewheel_cb', {zoom_to_pb_pinch, two_finger_swipe_LR, flip_sense, to_passband});
          zoom_step(fwd_bak? ext_zoom.IN : ext_zoom.OUT, to_passband? ext_zoom.TO_PASSBAND : evt.pageX);
          
          // need to keep canvas drag click mouseup code from changing freq
@@ -3649,7 +3650,7 @@ function right_click_menu_cb(idx, x, cbp)
    
    case owrx.rcm_db2:
       dx.db = (dx.db + 1) % dx.DB_N;
-      // fall through...
+      /* falls through */
       
    case owrx.rcm_db1:
       dx.db = (dx.db + 1) % dx.DB_N;
@@ -4896,6 +4897,9 @@ function wf_init_ready()
    } else
    if (cfg.init.setup == owrx.SETUP_TOPBAR) {
       toggle_or_set_hide_bars(owrx.HIDE_BANDBAR);
+   } else
+   if (cfg.init.setup == owrx.SETUP_RF_SPEC) {
+      toggle_or_set_spec(toggle_e.SET, spec.RF);
    }
 
    if (cfg.init.tab) keyboard_shortcut_nav(kiwi.tab_s[cfg.init.tab]);
@@ -5682,10 +5686,13 @@ var waterfall_last_add = 0;
 
 function waterfall_add_queue(what, ws, firstChars)
 {
-   if (!kiwi.wf_preview_mode)
+   if (!kiwi.wf_preview_mode) {
       waterfall_add_queue2(what, ws, firstChars);
-   else
+      //console.log('WF reg');
+   } else {
 	   if (kiwi_gc_wf) what = null;  // gc
+      //console.log('WF preview');
+	}
 }
 
 function waterfall_add_queue2(what, ws, firstChars)
@@ -6972,7 +6979,7 @@ function freq_step_amount(b)
 		s = ' NDB';
 	} else
 	if (b && (b.name == 'LW' || b.name == 'MW')) {
-		//console_log('special step', kmode.str, kmode.AM_SAx_IQ_DRM);
+		//console.log('special step', {'kmode':kmode.str, 'AM_SAx_IQ_DRM':kmode.AM_SAx_IQ_DRM});
 		if (kmode.AM_SAx_IQ_DRM) {
 			step_Hz = step_9_10? 9000 : 10000;
 		}
@@ -7309,15 +7316,17 @@ function freq_memory_at(idx)
    return { freq:as[0], mode:as[1] };
 }
 
-function freq_memory_add(f, clear)
+function freq_memory_add(f, opt)
 {
-   //console.log('freq_memory_add f='+ f);
+   var mode = (opt && opt.mode)? opt.mode : cur_mode;
+   //console.log('freq_memory_add f='+ f +' mode='+ mode +' fmem_mode_save='+ kiwi.fmem_mode_save);
+   //console.log(opt);
    //console.log(kiwi.freq_memory);
    //kiwi_trace();
    if (!isNumber(+f)) return;
    if (+f < 1) f = '1';
-   if (kiwi.fmem_mode_save) f += ' '+ cur_mode;
-   if (clear == true) {
+   if (kiwi.fmem_mode_save) f += ' '+ mode;
+   if (opt && opt.clear) {
       kiwi.freq_memory = [f];
    } else
 	if (f != kiwi.freq_memory[0]) {
@@ -7371,7 +7380,7 @@ function freq_memory_menu_item_cb(idx, x, cb_param, ev)
             //canvas_log('idx='+ idx +' M='+ kiwi.freq_memory);
             f_m = freq_memory_at(idx - TOP);
             //canvas_log('sel='+ f);
-            if (f_m) freq_memory_add(f_m.freq);
+            if (f_m) freq_memory_add(f_m.freq, {mode: f_m.mode});
          break;
       
       case BOT:   // <hr>
@@ -7379,7 +7388,7 @@ function freq_memory_menu_item_cb(idx, x, cb_param, ev)
       
       case BOT+1:
          //console.log('CLEAR ALL');
-         freq_memory_add(freq_displayed_kHz_str_with_freq_offset, true);
+         freq_memory_add(freq_displayed_kHz_str_with_freq_offset, {clear:1});
          break;
       
       case BOT+2:
@@ -10574,7 +10583,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    // 0: -large, 1: -med, 2: -small || 3: +small, 4: +med, 5: +large
    case 'ArrowLeft':    // if cursor in freq entry box let arrow key move cursor
       if (inFreqIn) return true;    // don't cancel event
-      // fall through...
+      /* falls through */
 
    case 'j': case 'J':
       if (key_mod != shortcut.SHIFT_PLUS_CTL_ALT)
@@ -10585,7 +10594,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
 
    case 'ArrowRight':    // if cursor in freq entry box let arrow key move cursor
       if (inFreqIn) return true;    // don't cancel event
-      // fall through...
+      /* falls through */
 
    case 'i': case 'I':
       if (key_mod != shortcut.SHIFT_PLUS_CTL_ALT)
@@ -10693,7 +10702,8 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    // dx labels
    case '|':
       if (!ext_panel_displayed('dx')) no_step = true;
-      // fall through...
+      /* falls through */
+
    case '\\':
       if (key_mod == shortcut.CTL_ALT || key_mod == shortcut.SHIFT_PLUS_CTL_ALT) no_step = true;
       if (!no_step) dx.db = (dx.db + 1) % dx.DB_N;
@@ -10779,7 +10789,7 @@ function keyboard_shortcut_event(evt)
    var key_mod = shortcut_key_mod(evt);
 
    var field_input_key = (
-         (k >= '0' && k <= '9' && !ctl) ||
+         (isdigit(k) && !ctl) ||
          k == '.' || k == ',' ||                // ',' is alternate decimal point to '.' and used in passband spec
          k == '/' || k == ':' || k == '-' ||    // for passband spec, have to allow for negative passbands (e.g. lsb)
          k == '#' ||                            // for waterfall tuning

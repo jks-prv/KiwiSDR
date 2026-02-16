@@ -614,20 +614,20 @@ void c2s_admin(void *param)
                     // FIXME: validate unencoded user & host for allowed characters
                     asprintf(&cmd_p, "curl -Ls --ipv4 --connect-timeout 15 \"%s/?u=%s&h=%s&a=%d\"", proxy_server, user_m, host_m, rev_auto);
                     reply = non_blocking_cmd(cmd_p, &status);
-                    printf("proxy register: %s\n", cmd_p);
+                    printf("PROXY register: %s\n", cmd_p);
                     kiwi_asfree(cmd_p);
                     if (reply == NULL || status < 0 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-                        printf("proxy register: ERROR %p 0x%x\n", reply, status);
+                        printf("PROXY register: ERROR %p 0x%x\n", reply, status);
                         status = 900;
                     } else {
                         char *rp = kstr_sp(reply);
-                        printf("proxy register: reply: %s\n", rp);
+                        printf("PROXY register: reply: %s\n", rp);
                         status = 901;
                         n = sscanf(rp, "status=%d", &status);
-                        if (n != 1) printf("proxy register: n=%d status=%d\n", n, status);
+                        if (n != 1) printf("PROXY register: n=%d status=%d\n", n, status);
                     }
                     kstr_free(reply);
-                    lprintf("PROXY: reg=%d(FRPC_PROXY_UPD) status=%d\n", FRPC_PROXY_UPD, status);
+                    lprintf("PROXY register: reg=%d(FRPC_PROXY_UPD) status=%d\n", FRPC_PROXY_UPD, status);
 
                     send_msg(conn, SM_NO_DEBUG, "ADM rev_status=%d", status);
                     net.proxy_status = status;
@@ -639,17 +639,12 @@ void c2s_admin(void *param)
                     reply = non_blocking_cmd("pgrep frpc", &status);
                     kstr_free(reply);
                     bool frpc_running = (status == 0);
-                    lprintf("PROXY: reg=%d status=%d frpc_running=%d\n", reg, status, frpc_running);
+                    const char *reg_s[] = { "EXISTING", "NEW", "UPDATE_HOST" };
+                    lprintf("PROXY register: reg=%d(FRPC_%s) status=%d frpc_running=%d\n", reg, reg_s[reg], status, frpc_running);
 
                     if ((reg == FRPC_EXISTING && !frpc_running) || reg != FRPC_EXISTING) {
                         proxy_frpc_setup(proxy_server, user_m, host_m, net.port_ext);
-
-                        // NB: can't use e.g. non_blocking_cmd() here to get the authorization status
-                        // because frpc doesn't fork and return on authorization success.
-                        // So the non_blocking_cmd() will hang.
-                        // That also means two separate system()s must be used below because the
-                        // second one detaches with a "&".
-                        lprintf("PROXY: (re)starting frpc\n");
+                        lprintf("PROXY register: (re)starting frpc\n");
                         proxy_frpc_restart();
                     }
                 }

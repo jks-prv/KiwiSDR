@@ -382,7 +382,7 @@ function ext_mode(mode)
    o.SSB       = fail? false : (o.USB || o.LSB);
    o.SSB_CW    = fail? false : (o.SSB || o.CW);
    o.STEREO    = fail? false : (o.IQ || o.DRM || mode == 'sas' || mode == 'qam');
-   o.AM_SAx_IQ_DRM = fail? false : (o.AM || o.SAx || o.SSB || o.DRM);
+   o.AM_SAx_IQ_DRM = fail? false : (o.AM || o.SAx || o.SSB || o.IQ || o.DRM);
 
    //console.log(o);
    //kiwi_trace('ext_mode');
@@ -1049,7 +1049,7 @@ function extint_environment_changed(changed)
    
    setTimeout(
       function() {
-         //console_nv('extint_environment_changed', 'extint.current_ext_name');
+         //console.log('extint_environment_changed', {'current_ext_name':extint.current_ext_name});
          //console.log(changed);
          if (extint.current_ext_name) {
             w3_call(extint.current_ext_name +'_environment_changed', changed);

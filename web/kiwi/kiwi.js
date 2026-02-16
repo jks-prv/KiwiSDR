@@ -1028,14 +1028,14 @@ function kiwi_output_sgr(p)
       } else
       
       // foreground color
-      if (sgr >= 30 && sgr <= 37) {
+      if (sgr.inRange(30, 37)) {
          if (dbg_sgr) console.log('SGR='+ sgr +' bright='+ p.sgr.bright);
          p.sgr.fg = ansi.colors[sgr-30 + p.sgr.bright];
          msg += ', fg color'; 
          saw_color = 1;
       } else
 
-      if (sgr >= 90 && sgr <= 97) {    // force bright
+      if (sgr.inRange(90, 97)) {    // force bright
          p.sgr.fg = ansi.colors[sgr-90 + ansi.BRIGHT];
          msg += ', fg color bright'; 
          saw_color = 1;
@@ -1048,13 +1048,13 @@ function kiwi_output_sgr(p)
       } else
 
       // background color
-      if (sgr >= 40 && sgr <= 47) {
+      if (sgr.inRange(40, 47)) {
          p.sgr.bg = ansi.colors[sgr-40 + p.sgr.bright];
          msg += ', bg color'; 
          saw_color = 1;
       } else
 
-      if (sgr >= 100 && sgr <= 107) {     // force bright
+      if (sgr.inRange(100, 107)) {     // force bright
          p.sgr.bg = ansi.colors[sgr-100 + ansi.BRIGHT];
          msg += ', bg color bright'; 
          saw_color = 1;
@@ -1194,7 +1194,7 @@ function kiwi_output_msg(id, id_scroll, p)
          for (var c = 1; c <= p.cols; c++) {
             var color = p.color[r][c];
             if (isUndefined(color)) {
-               console_nv('color undef', {r}, {c});
+               console.log('color undef', {r, c});
             }
             if (color.fg != fg || color.bg != bg) {
                if (span) s += '</span>';
@@ -1304,7 +1304,7 @@ function kiwi_output_msg(id, id_scroll, p)
 	   
       if (isUndefined(p.screen[r])) {
          if (dbg) {
-            console_nv('screen_char', {r}, {c}, 'kiwi.d.p.nrows');
+            console.log('screen_char', {r, c, 'nrows':kiwi.d.p.nrows});
             console.log(p);
             //kiwi_trace();
          }
@@ -1325,7 +1325,7 @@ function kiwi_output_msg(id, id_scroll, p)
 	};
 
 	var move_in_display = function(dr_start, sr_start, sr_end, step) {
-      //if (dbg) console_nv('move_in_display', {dr_start}, {sr_start}, {sr_end}, {step}, 'kiwi.d.p.nrows');
+      //if (dbg) console.log('move_in_display', {dr_start, sr_start, sr_end, step, 'nrows':kiwi.d.p.nrows});
       dr_start = w3_clamp(dr_start, 0, p.nrows);
       sr_start = w3_clamp(sr_start, 0, p.nrows);
       sr_end = w3_clamp(sr_end, 0, p.nrows);
@@ -1334,7 +1334,7 @@ function kiwi_output_msg(id, id_scroll, p)
       for (var ri = sr_start; (down && ri <= sr_end) || (!down && ri >= sr_end); ri += step) {
          p.r = row; row += step;
          p.c = 1;
-         //if (dbg) console_nv('move_in_display', 'kiwi.d.p.r', {ri});
+         //if (dbg) console.log('move_in_display', {'r':kiwi.d.p.r, ri});
          for (var ci = 1; ci <= p.cols; ci++) {
             screen_char(p.screen[ri][ci], p.color[ri][ci]);
          }
@@ -1354,7 +1354,7 @@ function kiwi_output_msg(id, id_scroll, p)
       for (var r = r_start; r_start && r <= r_end; r++) {
          for (var c = c_start; c <= ((r == p.r)? c_end : p.cols); c++) {
             if (isUndefined(p.screen[r])) {
-               console_nv('erase_in_display', {r}, {c}, 'kiwi.d.p.nrows', 'kiwi.d.p.ncols');
+               console.log('erase_in_display', {r, c, 'nrows':kiwi.d.p.nrows, 'ncols':kiwi.d.p.ncols});
                console.log(p);
             }
             p.screen[r][c] = ' ';
@@ -1408,7 +1408,7 @@ function kiwi_output_msg(id, id_scroll, p)
    
    var init_common = function(init) {
       var r, c;
-      if (dbg2) console_nv('init_common', {init}, 'kiwi.d.p.nrows');
+      if (dbg2) console.log('init_common', {init, 'nrows':kiwi.d.p.nrows});
 
       if (init == p.INIT_ONCE || init == p.INIT_RESIZE) {
          p.screen = [];
@@ -1882,7 +1882,7 @@ function kiwi_output_msg(id, id_scroll, p)
                   aa = as.split(';');
                   n1 = parseInt(aa[0]);
                   n2 = parseInt(aa[1]);
-                  if (dbg) console_nv(as, {n1}, {n2});
+                  if (dbg) console.log(as, {n1, n2});
 
                   if (second == '?') {
                      result = (enable? 'SET':'RESET') +' ';
@@ -1927,7 +1927,9 @@ function kiwi_output_msg(id, id_scroll, p)
                      // ?12 = make cursor very visible(h) / normal(l)
                      case 12: result += 'cursor bold ';
                               if (n2 != 25) break;
-                              // "12;25" fall through ...
+                              // "12;25"
+                              /* fall through */
+                              
                      case 25: result += 'cursor visible';
                               p.show_cursor = enable? true:false;
                               if (!enable && !p.isAltBuf) {
@@ -2646,6 +2648,7 @@ function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm,
 		config_net.mac = mac;
 		config_net.serno = serno;
 		
+		//console.log('$config_cb: CALLING connect_update_url');
 		w3_call('connect_update_url');
 	}
 }
@@ -2868,7 +2871,7 @@ function user_cb(obj)
       //if (i == rx_chan) console.log('$obj.fo='+ obj.fo +' freq.offset_kHz='+ kiwi.freq_offset_kHz);
       if (isNumber(obj.fo) && obj.fo != kiwi.freq_offset_kHz) {
          if (kiwi.called_from_admin || kiwi.called_from_monitor) {
-            console.log('$$$ ADMIN kiwi_set_freq_offset '+ obj.fo);
+            console.log('ADMIN kiwi_set_freq_offset '+ obj.fo);
             kiwi_set_freq_offset(obj.fo);
          } else
          if (i == rx_chan && !confirmation.displayed) {
@@ -3616,7 +3619,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 
 		case "freq_offset":     // also for benefit of kiwirecorder
 		   var foff_kHz = +param[1];
-		   console.log('$$$ MSG freq_offset='+ foff_kHz +' cfg.freq_offset='+ cfg.freq_offset);
+		   console.log('MSG freq_offset='+ foff_kHz +' cfg.freq_offset='+ cfg.freq_offset);
          kiwi_set_freq_offset(foff_kHz);
 			break;
 		
@@ -3690,6 +3693,41 @@ function kiwi_trace(msg)
 function kiwi_trace_mobile(msg)
 {
    alert(msg +' '+ Error().stack);
+}
+
+function kiwi_caller() {
+   var stack = (new Error()).stack.split('\n');
+   
+   // stack[0] = current function (kiwi_caller)
+   // stack[1] = caller of kiwi_caller
+   // stack[2] = caller of caller of kiwi_caller
+   //console.log(stack);
+   var callerLine = (stack[2]? stack[2].trim() : null) || (stack[1]? stack[1].trim() : null);
+   
+   // Typical formats:
+   // Chrome/Edge: "    at myFunction (file:///path/to/script.js:42:15)"
+   // Firefox:     "myFunction@http://example.com/script.js:42:15"
+   // Safari:      "myFunction@file:///path/to/script.js:42:15"
+   // Node.js:     "    at myFunction (/path/to/file.js:42:15)"
+   
+   // Simple regex that works in almost all engines
+   var match = callerLine.match(/(?:at\s+)?(?:async\s+)?(?:(\S+)\s+)?(?:\()?(.+?):(\d+)(?::(\d+))?\)?$/);
+   
+   if (match) {
+      var fnName  = match[1];
+      var file    = match[2];
+      var line    = match[3];
+      var column  = match[4];
+      return {
+         callerFunction: fnName || '(anonymous)',
+         file: file.trim().replace(/^.*\/|\?.*$/g, ''),     // just filename
+         fullPath: file.trim(),
+         line: parseInt(line, 10),
+         column: column? parseInt(column, 10) : undefined
+      };
+   }
+   
+   return null;
 }
 
 function mdev_init()

@@ -23,6 +23,15 @@ function kiwi_typeof(v) { return isNull(v)? 'null' : (isArray(v)? 'array' : type
 
 function ifString(s, alt) { return (isString(s)? s : alt); }
 
+function isalnum(c) { return c.length === 1 && /[a-zA-Z0-9]/.test(c); }
+function isalpha(c) { return c.length === 1 && /[a-zA-Z]/.test(c); }
+function iscntrl(c) { return c.length === 1 && ord(c) < 32; }
+function isdigit(c) { return c.length === 1 && c >= '0' && c <= '9'; }
+function isspace(c) { return c.length === 1 && /\s/.test(c); }
+function islower(c) { return c.length === 1 && c >= 'a' && c <= 'z'; }
+function isupper(c) { return c.length === 1 && c >= 'A' && c <= 'Z'; }
+function isxdigit(c) { return c.length === 1 && /[0-9a-fA-F]/.test(c); }
+
 // browsers have added includes() only relatively recently
 try {
 	if (!String.prototype.includes) {
@@ -232,7 +241,7 @@ function kiwi_version_cb(response_obj)
    
 	version_maj = response_obj.maj; version_min = response_obj.min;
 	kiwi.admin_save_pwd = response_obj.sp;
-	//console.log('v'+ version_maj +'.'+ version_min +': KiwiSDR server asp='+ kiwi.admin_save_pwd);
+	console.log('---- KiwiSDR server v'+ version_maj +'.'+ version_min);
 	//console.log(response_obj);
 	var s='';
 	
@@ -672,8 +681,6 @@ String.prototype.positiveWithSign = function()
 	return (n <= 0)? s : ('+'+ s);
 };
 
-function isHexDigit(c) { return ('0123456789ABCDEFabcdef'.indexOf(c) > -1); }
-
 // pad with left zeros to 'digits' length
 // +digits: add leading '0x'
 // -digits: no leading '0x'
@@ -745,6 +752,12 @@ Number.prototype.withSign = function()
 	return (n < 0)? s : ('+'+ s);
 };
 
+Number.prototype.inRange = function(min, max)
+{
+	var n = Number(this);
+	return (n >= min && n <= max);
+};
+
 var kHz_s = function(Hz) { return (Hz / 1e3).toFixed(3) +'k'; };
 
 // need symmetry for negative f in passband calcs
@@ -812,66 +825,84 @@ function _change(v)
    return (!_nochange(v) && !_default(v));
 }
 
-// usage: console_log('id', arg0, arg1 ...)
-// prints: "<id>: 'arg0'=<arg0_value> 'arg1'=<arg1_value> ..."
-// i.e. the string 'argN', not the name of the argN parameter (unfortunately)
-// see console_nv() below for partial solution to this problem
-function console_log()
-{
-   //console.log('console_log: '+ typeof(arguments));
-   //console.log(arguments);
-   var s;
-   for (var i = 0; i < arguments.length; i++) {
-      var arg = arguments[i];
-      if (i == 0) {
-         s = arg +': ';
-      } else {
-         s += 'arg'+ (i-1) +'='+ arg +' ';
-      }
-   }
-   console.log('CONSOLE_LOG '+ s);
-}
 
-// usage: console_nv('id', {arg0}, {arg1}, 'a.b.c' (i.e. FQN) ...)
+// NB: Have come to understand that console.log() can essentially do all of what console_nv() does.
+
+/*
+var console_nv_help =
+`
+// usage: console_nv(
+//    'id',                   leading identifier to print
+//
+//    local vars wrapped in an object:
+//       {arg0},                 simple local arg types
+//       {'arg1':arg1},          more complex local args
+//          {'arr[i]', arr[i]},     array ref
+//          {'o.el', o.el},         object ref
+//
+//    global vars ref by name wrapped in a string:
+//       's',                    global simple vars
+//       'a.b.c',                global object el FQN
+// )
+//
 // prints: "<id>: 'actual_arg0_name'=<arg0_value> 'actual_arg1_name'=<arg1_value> ..."
 //
-// So this works for:
-// local/global simple vars (incl obj): YES
-// local obj deref: NO
-// global deref (but FQN only): YES (specify FQN as a string)
-//
 // e.g. console_nv('screen_char', {r}, {c}, 'kiwi.d.p.nrows')
+`;
+
 function console_nv()
 {
-   var s;
+   if (arguments.length == 0) {
+      console.log(console_nv_help);
+      return;
+   }
+   
+   var s, name, val, val2, object = null;
+   
    for (var i = 0; i < arguments.length; i++) {
       var arg = arguments[i];
       if (i == 0) {
          s = arg +': ';
       } else {
-         var name, val;
-         if (isObject(arg)) {
+         if (isObject(arg)) {    // local variables
             name = Object.keys(arg)[0];
             val = arg[name];
-            s += name +'='+ JSON.stringify(val) +' ';
+            val2 = JSON.stringify(val);
+            //console.log(val2);
+            
+            // if JSON.stringify() gives undecoded object use console.log(obj) trick to get full object decoding
+            if (val2 == '[object Object]') object = val;
+            s += name +'='+ (object? '[see next]' : val2) +' ';
          } else
-         if (isString(arg)) {
+         if (isString(arg)) {    // global variables
             try {
-               val = getVarFromString(arg);
+               //val = getVarFromString(arg);
+               val = eval(arg);
+
+            // if eval() gives undecoded object use console.log(obj) trick to get full object decoding
+               if (val == '[object Object]') object = val;
+               val = JSON.stringify(val);
             } catch(ex) {
+               //console.log('$'+ arg +': '+ ex);
                val = '[not defined]';
             }
             //var lio = arg.lastIndexOf('.');
             //name = (lio == -1)? arg : arg.substr(lio+1);
             name = arg;
-            s += name +'='+ val +' ';
+            s += name +'='+ (object? '[see next]' : val) +' ';
          } else {
-            s += '[arg'+ (i-1) +' unknown] ';
+            s += '[arg'+ (i-1) +' '+ dq(arg) +' invalid type '+ dq(typeof(arg)) +'] ';
          }
       }
    }
-   console.log('CONSOLE_NV '+ s);
+   
+   //console.log('CONSOLE_NV');
+   var caller = kiwi_caller();
+   //console.log(caller);
+   console.log(s +' ('+ caller.file +':'+ caller.line +')');
+   if (object) console.log(object);
 }
+*/
 
 function console_log_dbgUs()
 {
@@ -1285,7 +1316,7 @@ function kiwi_decodeURIComponent(id, uri)
             if (uri.charAt(i) == '%') {
                var c1 = uri.charAt(i+1);
                var c2 = uri.charAt(i+2);
-               if (isHexDigit(c1) && isHexDigit(c2)) {
+               if (isxdigit(c1) && isxdigit(c2)) {
                   //console.log(c1 +' '+ TF(c1 >= '8'));
                   if (c1 >= '8') {
                      //var x0 = uri.charAt(i-1);
@@ -1483,8 +1514,7 @@ grid_sq.FLD_DEG_LAT = grid_sq.SQ_PER_FLD * grid_sq.SQ_LAT_DEG;
 
 function grid_to_latLon(grid)
 {
-	var lat, lon;
-	var c, _a = ord('a'), _0 = ord('0');
+	var lat, lon, c;
 	var _a = function(c) { return ord(c) - ord('a'); };
 	var _0 = function(c) { return ord(c) - ord('0'); };
 	
@@ -1501,11 +1531,11 @@ function grid_to_latLon(grid)
 	lat = _a(c)*10 - 90;
 
 	c = grid[2];
-	if (c < '0' || c > '9') return false;
+	if (!isdigit(c)) return false;
 	lon += _0(c) * grid_sq.SQ_LON_DEG;
 
 	c = grid[3];
-	if (c < '0' || c > '9') return false;
+	if (!isdigit(c)) return false;
 	lat += _0(c) * grid_sq.SQ_LAT_DEG;
 
 	if (slen != 6) {	// assume center of square (i.e. "....ll")
@@ -1531,7 +1561,7 @@ function grid_to_latLon(grid)
 
 function latLon_to_grid6(lat, lon)
 {
-	var i, r, lat, lon, grid6 = [];
+	var i, r, grid6 = [];
 	//console.log(sprintf("latLon_to_grid6: lat=%f lon=%f\n", lat, lon));
 	
 	// longitude
@@ -2363,7 +2393,7 @@ function kiwi_ajax_prim(method, data, url, callback, cb_param, timeout, progress
             } else {
                var firstChar = response.charAt(0);
          
-               if (firstChar != '{' && firstChar != '[' && firstChar != '"' && !(firstChar >= '0' && firstChar <= '9')) {
+               if (firstChar != '{' && firstChar != '[' && firstChar != '"' && !isdigit(firstChar)) {
                   dbug("AJAX: response didn't begin with JSON '{' '[' '\"' or digit? "+ response);
                   obj = { AJAX_error:'JSON prefix', response:response };
                } else {
@@ -2648,7 +2678,7 @@ function open_websocket(stream, open_cb, open_cb_param, msg_cb, recv_cb, error_c
 	}
 	if (no_wf) wf.no_wf = true;
 	
-	console.log('$$open_websocket '+ ws_url);
+	console.log('open_websocket '+ ws_url);
 	var ws = new WebSocket(ws_url);
 	wsockets.push( { 'ws':ws, 'name':stream } );
 	ws.up = false;

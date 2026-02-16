@@ -1581,7 +1581,7 @@ function tdoa_host_click_status_cb(obj, field_idx)
             a2 = new RegExp('\(([-0-9.]*), ([-0-9.]*)\)').exec(a.split('=')[1]);
             //console.log(a2);
             lat = a2[2]; lon = a2[3];
-            //console_nv('tdoa_host_click_status_cb', {lat}, {lon});
+            //console.log('tdoa_host_click_status_cb', {lat, lon});
          }
       }
 

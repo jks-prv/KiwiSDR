@@ -431,12 +431,12 @@ function cw_training_interval_cb(path, idx, first)
 {
    if (first) return;
    cw.training_interval = cw.training_interval_s[+idx];
-   console_nv('cw_training_interval_cb', {path}, {idx}, 'cw.training_interval');
+   //console.log('cw_training_interval_cb', {path, idx, 'training_interval':cw.training_interval});
 }
 
 function cw_test_cb()
 {
-   console_nv('cw_test_cb', 'cw.test');
+   //console.log('cw_test_cb', {'test':cw.test});
 	if (ext_nom_sample_rate() != 12000) return;
    cw.test = cw.test? 0:1;    // if already running stop if clicked again
    w3_colors('id-cw-test', '', 'w3-red', cw.test);

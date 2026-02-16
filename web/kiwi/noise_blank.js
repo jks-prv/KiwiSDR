@@ -44,7 +44,7 @@ function noise_blank_view()
    var test = w3_el('id-ntest-more').clientHeight;
    var Hnb = total - (audio + hr);
    pct = w3_clamp(kiwi_round(1 - (Hnb - Hopt) / (total - Hopt), 2), 0, 1);
-   //console_nv('noise_blank view', {total}, {audio}, {nb}, {nf}, {test}, {Hnb}, {pct});
+   //console.log('noise_blank view', {total, audio, nb, nf, test, Hnb, pct});
    w3_scrollTo('id-optbar-content', pct);
 }
 

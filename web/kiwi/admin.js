@@ -40,7 +40,7 @@ var admin = {
    FRPC_PROXY_UPD:   3,
    
    find_last_query: '',
-   find_skip: 0,
+   find_skip: -1,
    erase_find_field: false,
    
    _last_: 0
@@ -51,9 +51,23 @@ var admin = {
 // find
 ////////////////////////////////
 
+function admin_find_okay()
+{
+   if (!('CSS' in window) || !CSS.highlights) {
+      var el = w3_el('id-admin.find');
+      w3_placeholder(el, 'error: newer browser required');
+      w3_disable(el);
+      w3_color(el, 'red');
+      return false;
+   }
+   return true;
+}
+
 // detect escape key and blur find field
 function admin_find_key_cb(ev, called_from_w3_input)
 {
+   if (!admin_find_okay()) return;
+   
    called_from_w3_input = called_from_w3_input || false;
    //console.log('admin_find_key_cb called_from_w3_input='+ called_from_w3_input);
 	//event_dump(ev, 'admin_find_key_cb', 1);
@@ -77,6 +91,8 @@ function admin_find_key_cb(ev, called_from_w3_input)
 
 function admin_find_input_cb(path, val, first, cb_a, ev)
 {
+   if (!admin_find_okay()) return;
+   
    // [2] because cb_a[] = [ "admin_find_input_cb", "admin_find_key_cb", "kd1" or "ev" ]
    // due to admin_find_key_cb() above
    if (cb_a[2] == 'ev') return;     // so we don't run twice
@@ -88,8 +104,8 @@ function admin_find_input_cb(path, val, first, cb_a, ev)
    
    var query = val.trim();
    if (!query.trim()) return;
-   if (query != admin.find_last_query) admin.find_skip = 0;
-   //console.log('admin_find_input_cb: query='+ dq(query) +' find_last_query='+ dq(admin.find_last_query));
+   if (query != admin.find_last_query) admin.find_skip = -1;
+   //console.log('admin_find_input_cb:', {query, 'find_last_query':admin.find_last_query, 'find_skip':admin.find_skip});
    
    var highlight = new Highlight();
    var found = false, loop_safety = 0, matches = 0;
@@ -97,37 +113,39 @@ function admin_find_input_cb(path, val, first, cb_a, ev)
    var cur_tab = start_tab;
 
    // shift-rtn: find previous
-   admin.find_skip += (ev && ev.shiftKey)? -1 : 1;;
+   admin.find_skip += (ev && ev.shiftKey)? -1 : 1;
    if (admin.find_skip < 0) admin.find_skip = 0;
 
    do {
       found = window.find(
          query,
          false,   // caseSensitive
-         false,  // backwards (false = forward)
-         true,   // wrapAround
-         false,  // wholeWord (set true if you want whole words only)
-         false,  // searchInFrames – deprecated, ignore
-         false   // showDialog
+         false,   // backwards (false = forward)
+         true,    // wrapAround
+         false,   // wholeWord (set true if you want whole words only)
+         false,   // searchInFrames – deprecated, ignore
+         false    // showDialog
       );
       
       loop_safety++;
       if (loop_safety > 512) {
+         //console.log('find: LOOP SAFETY');
          break;
       }
       
       //console.log('found='+ found);
       if (found) {
-         //console.log('matches='+ matches +' find_skip='+ admin.find_skip);
+         //console.log({matches, 'find_skip':admin.find_skip});
          if (matches < admin.find_skip) {
             matches++;
-            //console.log('skip');
+            //console.log('SKIP', {matches});
             continue;
          }
          matches++;
+         //console.log('NO-SKIP', {matches});
          
          selection = window.getSelection();
-         //console.log('rangeCount='+ selection.rangeCount);
+         //console.log({'rangeCount':selection.rangeCount});
          if (selection.rangeCount > 0) {
             //console.log(selection);
             var range = selection.getRangeAt(0);
@@ -141,11 +159,11 @@ function admin_find_input_cb(path, val, first, cb_a, ev)
             //console.log('have match');
             break;
          } else {
-            console.log('no range count?');
+            //console.log('no range count?');
             break;
          }
       } else {
-         admin.find_skip = 0;
+         admin.find_skip = -1;      // reset skipping when moving to next tab
          
          // no search match, select next tab
          var i = w3_array_el_seq(admin.tabs, admin.current_tab_name, { toLower:1 });
@@ -157,9 +175,9 @@ function admin_find_input_cb(path, val, first, cb_a, ev)
          if (0) {
             // auto skip to next tab that has a match
             // doesn't work yet
-            console.log('wrap to '+ j +'/'+ e +' start_tab='+ start_tab);
+            //console.log('wrap to '+ j +'/'+ e +' start_tab='+ start_tab);
             if (j == start_tab) {
-               console.log('WRAP DONE DONE');
+               //console.log('WRAP DONE DONE');
                return w3.RETAIN_FOCUS;
             }
             continue;
@@ -176,6 +194,7 @@ function admin_find_input_cb(path, val, first, cb_a, ev)
                setTimeout(function() { w3_hide(el); }, 500);
             }, 300);
    
+            //console.log('find: NEXT TAB');
             return w3.RETAIN_FOCUS;
          }
       }
@@ -787,7 +806,8 @@ var connect = {
    focus_seen: 0,
    focus_query: false,
    NOT_IP:0, IS_IP:1, LOCAL_IP:-1, 
-   timeout: null
+   timeout: null,
+   last_rev_status: -1
 };
 
 // REMEMBER: cfg.server_url is what's used in kiwisdr.com registration
@@ -800,7 +820,24 @@ var duc_update_i = { 0:'5 min', 1:'10 min', 2:'15 min', 3:'30 min', 4:'60 min' }
 var duc_update_v = { 0:5, 1:10, 2:15, 3:30, 4:60 };
 
 function connect_rev_user() { return (adm.rev_auto? adm.rev_auto_user : adm.rev_user); }
-function connect_rev_host() { return (adm.rev_auto? adm.rev_auto_host : adm.rev_host); }
+
+function connect_rev_host()
+{
+   var err = 0;
+   var rh = adm.rev_auto? adm.rev_auto_host : adm.rev_host;
+   rh.split('').forEach(
+      function(c,i) {
+         if (i == 0) {
+            if (!adm.rev_auto && isdigit(c) || c == '-') err = 1;
+         } else {
+            if (!isalnum(c) && c != '-') err = 1;
+         }
+         if (isalpha(c) && !islower(c)) err = 1;
+      }
+   );
+   if (err) console.error('$connect_rev_host ERR', {rh});
+   return err? '' : rh;
+}
 
 function connect_html()
 {
@@ -815,7 +852,7 @@ function connect_html()
    if (cfg.sdr_hu_dom_sel == kiwi.REV && (s == '' || s == '103.156.230.194')) {
       var server_url = connect_rev_host();
       if (server_url != '') server_url += '.'+ adm.proxy_server;
-      console.log('connect_html REV RESET server_url='+ server_url);
+      //console.log('$connect_html REV RESET server_url='+ server_url);
       ext_set_cfg_param('cfg.server_url', server_url, EXT_SAVE);
    }
    
@@ -1055,13 +1092,17 @@ function connect_html()
 function connect_focus()
 {
    connect.focus_seen = 1;
+   //console.log('$connect_focus: CALLING connect_update_url');
    connect_update_url();
    w3_el('id-proxy-hdr').innerHTML = 'Proxy information for '+ adm.proxy_server;
-   ext_send('SET DUC_status_query');
+
+	if (cfg.sdr_hu_dom_sel == kiwi.DUC) {
+      ext_send('SET DUC_status_query');
+   }
 	
    w3_hide('id-proxy-menu');
 	if (cfg.sdr_hu_dom_sel == kiwi.REV) {
-	   console.log('connect_focus rev_status_query');
+	   //console.log('$connect_focus: SET rev_status_query');
 	   connect.focus_query = true;
 	   ext_send('SET rev_status_query');
 	}
@@ -1077,10 +1118,10 @@ function connect_blur()
 function connect_auto_proxy_cb(path, idx, first, cb_param)
 {
 	var enabled = (+idx == w3_SWITCH_YES_IDX);
-	console.log('connect_auto_proxy_cb: path='+ path +' first='+ first +' enabled='+ enabled);
+	//console.log('connect_auto_proxy_cb: path='+ path +' first='+ first +' enabled='+ enabled);
 	admin.last_rev_user = connect_rev_user();
 	admin.last_rev_host = connect_rev_host();
-	console.log('connect_auto_proxy_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
+	//console.log('connect_auto_proxy_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
 	admin_bool_cb(path, enabled, first);
 	
 	w3_hide2('id-proxy-user', enabled);
@@ -1094,30 +1135,51 @@ function connect_auto_proxy_cb(path, idx, first, cb_param)
    }
 }
 
+function connect_last_rev_status_ok(allow_uninit)
+{
+   var rs = connect.last_rev_status;
+   return (rs.inRange(0, 99) || rs.inRange(200, 299) || (allow_uninit == true && rs == -1));
+}
+
 function connect_update_url()
 {
-   var ok, ok_color = [ 'w3-override-yellow', 'w3-background-pale-aqua' ];
+   var s, ok, ok_color = [ 'w3-override-yellow', 'w3-background-pale-aqua' ];
    
+   // DUC
    ok = (adm.duc_host && adm.duc_host != '')? 1:0;
 	w3_innerHTML('id-connect-duc-dom', 'Use domain name from DUC configuration below: ' +
 	   w3_div('w3-show-inline-block w3-text-black '+ ok_color[ok], ok? adm.duc_host : '(none currently set)'));
 
-   var rev_host = connect_rev_host();
-   ok = (rev_host != '')? 1:0;
-   var rev_host_fqdn = ok? (rev_host +'.'+ adm.proxy_server) : '(none currently set)';
-	w3_innerHTML('id-connect-rev-dom', 'Use domain name from reverse proxy configuration below: ' +
-	   w3_div('w3-show-inline-block w3-text-black '+ ok_color[ok], rev_host_fqdn));
-	w3_el('id-connect-proxy_server').innerHTML = '.'+ adm.proxy_server;
-	w3_el('id-connect-proxy_server2').innerHTML = '.'+ adm.proxy_server;
-
+   // PUB
    ok = config_net.pub_ip? 1:0;
 	w3_innerHTML('id-connect-pub-ip', 'Public IP address detected by Kiwi: ' +
 	   w3_div('w3-show-inline-block w3-text-black '+ ok_color[ok], ok? config_net.pub_ip : '(no public IP address detected)'));
 
+   // REV
+   var rev_host = connect_rev_host();
+   var no_rev_host = isEmptyString(rev_host);
+   var last_rev_ok = connect_last_rev_status_ok();
+   //console.log('$connect_update_url: BEGIN', {'last_rev_status':connect.last_rev_status, last_rev_ok, rev_host});
+   if (!last_rev_ok) {
+      s = (connect.last_rev_status == -1)? '(proxy info pending)' : '(proxy configuration error)';
+      ok = 0;
+   } else
+   if (no_rev_host) {
+      s = '(none currently set)';
+      ok = 0;
+   } else {
+      s = rev_host +'.'+ adm.proxy_server;
+      ok = 1;
+   }
+	w3_innerHTML('id-connect-rev-dom', 'Use domain name from reverse proxy configuration below: ' +
+	   w3_div('w3-show-inline-block w3-text-black '+ ok_color[ok], s));
+	w3_el('id-connect-proxy_server').innerHTML = '.'+ adm.proxy_server;
+	w3_el('id-connect-proxy_server2').innerHTML = '.'+ adm.proxy_server;
+
    var host = decodeURIComponent(cfg.server_url);
    var host_and_port = host;
    
-   //console.log('connect_update_url: sdr_hu_dom_sel='+ cfg.sdr_hu_dom_sel +' REV='+ kiwi.REV +' host='+ host_and_port +' port_ext='+ adm.port_ext);
+   //console.log('$connect_update_url: sdr_hu_dom_sel='+ cfg.sdr_hu_dom_sel +' REV='+ kiwi.REV +' host='+ host +' port_ext='+ adm.port_ext);
 
    if (cfg.sdr_hu_dom_sel != kiwi.REV) {
       host_and_port += ':'+ adm.port_ext;
@@ -1136,11 +1198,13 @@ function connect_update_url()
    }
    
    ok = (host != '');
+   //console.log('$connect_update_url: END ok='+ ok);
    w3_flag_cond('id-connect-url', !ok, ok? host_and_port : '(incomplete information, fill-in field above)');
 }
 
 function connect_restart_proxy()
 {
+   //console.error('$connect_restart_proxy: SET restart_proxy');
    ext_send('SET restart_proxy');
 }
 
@@ -1150,57 +1214,79 @@ function connect_my_kiwi_register()
    setTimeout(function() { ext_send('SET my_kiwi_register'); }, 3000);
 }
 
-function connect_update_connect_mode(server_url, check_restart)
+// only called from connect_dom_*_focus() routines, so connection mode is changing and
+// show restart should be displayed unless new connection mode is invalid
+function connect_update_connect_mode(server_url, no_change)
 {
+   //console.error('$connect_update_connect_mode: BEGIN', {no_change});
+   //console.log('$connect_update_connect_mode: CALLING connect_update_url');
 	connect_update_url();
-	connect_restart_proxy();
+	if (no_change != true) connect_restart_proxy();
 	connect_my_kiwi_register();
-	if ((!isArg(check_restart) || check_restart) && server_url != '') w3_restart_cb();
+	
+	// only show restart button if connection mode valid
+	var show_restart = (no_change != true && server_url != '' && cfg.server_url != '');
+   //console.log('$connect_update_connect_mode SHOW_RESTART', {show_restart, server_url, 'cfg.server_url':cfg.server_url, no_change});
+	if (show_restart)
+	   w3_restart_cb();
+	else
+	   admin_restart_cancel_cb();
 }
 
-function connect_dom_nam_focus(ok)
+
+// connect menu callbacks (also called directly)
+
+function connect_set_cfg(server_url, dom_sel)
+{
+   //console.warn('$connect_set_cfg', {server_url, dom_sel});
+	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
+	ext_set_cfg_param('cfg.sdr_hu_dom_sel', dom_sel, EXT_SAVE);
+}
+
+function connect_dom_nam_focus(id, ok)    // NB: id is a string passed from nav menu code
 {
    var server_url = (ok == false)? '' : cfg.sdr_hu_dom_name;
-   console.log('connect_dom_nam_focus ok='+ ok +' server_url='+ server_url);
-	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
-	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.NAM, EXT_SAVE);
+   //console.log('connect_dom_nam_focus ok='+ ok +' server_url='+ server_url);
+	connect_set_cfg(server_url, kiwi.NAM);
 	connect_update_connect_mode(server_url);
 }
 
 function connect_dom_duc_focus()
 {
    var server_url = adm.duc_host;
-   console.log('connect_dom_duc_focus server_url='+ server_url);
-	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
-	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.DUC, EXT_SAVE);
+   //console.log('connect_dom_duc_focus server_url='+ server_url);
+	connect_set_cfg(server_url, kiwi.DUC);
 	connect_update_connect_mode(server_url);
 }
 
-function connect_dom_rev_focus(check_restart)
+function connect_dom_rev_focus(id, no_change)   // NB: id is a string passed from nav menu code
 {
-   var server_url = connect_rev_host();
+   var server_url = connect_last_rev_status_ok(true)? connect_rev_host() : '';
    if (server_url != '') server_url += '.'+ adm.proxy_server;
-   console.log('connect_dom_rev_focus server_url='+ server_url);
-	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
-	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.REV, EXT_SAVE);
-	connect_update_connect_mode(server_url, check_restart);
+   //console.log('$connect_dom_rev_focus', {server_url, 'last_rev_status':connect.last_rev_status});
+	connect_set_cfg(server_url, kiwi.REV);
+	//console.log('$connect_dom_rev_focus CALLING connect_update_connect_mode', {server_url, no_change});
+	connect_update_connect_mode(server_url, no_change);
+
+   if (no_change != true) {
+	   //console.info('$connect_dom_rev_focus SET rev_status_query', {no_change});
+      ext_send('SET rev_status_query');
+   }
 }
 
 function connect_dom_pub_focus()
 {
    var server_url = config_net.pub_ip;
-   console.log('connect_dom_pub_focus server_url='+ server_url);
-	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
-	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.PUB, EXT_SAVE);
+   //console.log('connect_dom_pub_focus server_url='+ server_url);
+	connect_set_cfg(server_url, kiwi.PUB);
 	connect_update_connect_mode(server_url);
 }
 
-function connect_dom_sip_focus(ok)
+function connect_dom_sip_focus(id, ok)    // NB: id is a string passed from nav menu code
 {
    var server_url = (ok == false)? '' : cfg.sdr_hu_dom_ip;
-   console.log('connect_dom_sip_focus ok='+ ok +' server_url='+ server_url);
-	ext_set_cfg_param('cfg.server_url', server_url, EXT_NO_SAVE);
-	ext_set_cfg_param('cfg.sdr_hu_dom_sel', kiwi.SIP, EXT_SAVE);
+   //console.log('connect_dom_sip_focus ok='+ ok +' server_url='+ server_url);
+	connect_set_cfg(server_url, kiwi.SIP);
 	connect_update_connect_mode(server_url);
 }
 
@@ -1229,7 +1315,7 @@ function connect_dom_name_cb(path, val, first)
    }
 
    if (cfg.sdr_hu_dom_sel == kiwi.NAM) {     // if currently selected option update the value
-      connect_dom_nam_focus(ok);
+      connect_dom_nam_focus(null, ok);
    }
 }
 
@@ -1256,7 +1342,7 @@ function connect_domain_check_cb(found)
    }
 
    if (cfg.sdr_hu_dom_sel == kiwi.NAM) {     // if currently selected option update the value
-      connect_dom_nam_focus(ok);
+      connect_dom_nam_focus(null, ok);
    }
 }
 
@@ -1285,7 +1371,7 @@ function connect_dom_ip_cb(path, val, first)
    }
 
    if (cfg.sdr_hu_dom_sel == kiwi.SIP)     // if currently selected option update the value
-      connect_dom_sip_focus(ok);
+      connect_dom_sip_focus(null, ok);
 }
 
 function connect_ip_check_cb(status)
@@ -1318,7 +1404,7 @@ function connect_remove_port_and_local_ip(el, s, first, check_ip)
 	
 	for (var i = sl-1; i >= 0; i--) {
 		var c = s.charAt(i);
-		if (c >= '0' && c <= '9') {
+		if (isdigit(c)) {
 			st = state.number;
 			continue;
 		}
@@ -1379,10 +1465,12 @@ function connect_DUC_host_cb(path, val, first)
 {
 	var rem_port = connect_remove_port_and_local_ip(path, val, first);
    w3_string_set_cfg_cb(path, rem_port, first);
-   if (cfg.sdr_hu_dom_sel == kiwi.DUC)     // if currently selected option update the value
+   if (cfg.sdr_hu_dom_sel == kiwi.DUC) {     // if currently selected option update the value
       connect_dom_duc_focus();
-   else
+   } else {
+      //console.log('$connect_DUC_host_cb: CALLING connect_update_url');
       connect_update_url();
+   }
 }
 
 function connect_DUC_status_cb(status)
@@ -1414,6 +1502,7 @@ function connect_rev_usage()
    //w3_scrollDown('id-kiwi-container');
 }
 
+// register button
 function connect_rev_register_cb(id, idx)
 {
    var auto = adm.rev_auto? 1:0;
@@ -1428,11 +1517,12 @@ function connect_rev_register_cb(id, idx)
 	w3_innerHTML('id-connect-rev-status', w3_icon('', 'fa-refresh fa-spin', 24) + '&nbsp; Getting status from proxy server...');
 
    // update info on proxy server
-	var s = 'user='+ user +' host='+ host +' auto='+ auto;
-	console.log('rev register: '+ s);
-	ext_send('SET rev_register reg='+ admin.FRPC_PROXY_UPD +' '+ s);
+   var s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', admin.FRPC_PROXY_UPD, user, host, auto);
+   //console.log(s);
+   ext_send(s);
 }
 
+// user field
 function connect_rev_user_cb(path, val, first)
 {
 	admin.last_rev_user = connect_rev_user();
@@ -1443,53 +1533,66 @@ function connect_rev_user_cb(path, val, first)
    connect_rev_usage();
 }
 
+// host field
 function connect_rev_host_cb(path, val, first)
 {
 	console.log('connect_rev_host_cb: path='+ path +' val=<'+ val +'>');
 	admin.last_rev_host = connect_rev_host();
 	console.log('connect_rev_host_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
-	var check_restart = true;
+	var no_change = false;
    connect_rev_usage();
-   if (val[0] >= '0' && val[0] <= '9') {
-      w3_innerHTML('id-connect-rev-status', 'First host name character cannot be a digit');
+   if (isdigit(val[0]) || val[0] == '-') {
+      w3_innerHTML('id-connect-rev-status', 'First host name character cannot be a digit or -');
       val = admin_set_decoded_value('adm.rev_host');     // restore previous value
-      check_restart = false;
+      no_change = true;
    } else {
       w3_clearInnerHTML('id-connect-rev-status');
    }
    w3_string_set_cfg_cb(path, val, first);
    if (cfg.sdr_hu_dom_sel == kiwi.REV) {     // if currently selected option update the value
-      connect_dom_rev_focus(check_restart);
+      //console.log('$connect_rev_host_cb CALLING connect_dom_rev_focus', {first});
+      connect_dom_rev_focus(null, no_change);
       connect_rev_register_cb();
    } else {
+      //console.log('$connect_rev_host_cb: CALLING connect_update_url');
       connect_update_url();
    }
 }
 
+// status cb
 function connect_rev_status_cb(status)
 {
-   if (!connect.focus_seen) return;
+   if (!connect.focus_seen) {
+      //console.info('$connect_rev_status_cb FOCUS_SEEN=0 RETURNING');
+      return;
+   }
+   kiwi_clearTimeout(connect.timeout);
 	status = +status;
-	console.log('rev_status='+ status);
 	var s, error = false;
 	
 	var auto = adm.rev_auto? 1:0;
    var user = connect_rev_user();
    var host = connect_rev_host();
-   console_nv('$connect_rev_status_cb', {status}, {auto}, {user}, {host});
+   //console.error('$connect_rev_status_cb BEGIN', {status, 'last_rev_status':connect.last_rev_status, auto, user, host});
    if (!auto && (status == 200 || status == 201) && (user == '' || host == '')) {
       status = 100;
    }
 	
-	if (status >= 0 && status <= 99) {     // okay
-	   console.log('$okay');
-      if (cfg.sdr_hu_dom_sel == kiwi.REV) connect_dom_rev_focus(true);
+	if (status.inRange(0, 99)) {     // okay
+	   //console.log('$connect_rev_status_cb: status is OK');
+      if (cfg.sdr_hu_dom_sel == kiwi.REV) {
+	      //console.log('$connect_rev_status_cb: CALLING connect_dom_rev_focus no_change=true');
+         connect_dom_rev_focus(null, /* no_change */ true);
+         //connect_dom_rev_focus(null, /* no_change */ false);
+      }
    } else
    
-	if (!(status >= 200 && status <= 299)) {     // error
+	if (!status.inRange(200, 299)) {     // error
 	   error = true;
-	   console.log('$error');
-      ext_set_cfg_param('cfg.server_url', '', EXT_SAVE);
+	   //console.log('$connect_rev_status_cb ERROR status='+ status +" cfg.server_url => ''");
+	   if (cfg.sdr_hu_dom_sel == kiwi.REV) {
+         ext_set_cfg_param('cfg.server_url', '', EXT_SAVE);
+      }
    }
    
 	switch (status) {
@@ -1497,10 +1600,10 @@ function connect_rev_status_cb(status)
 		case   1: s = 'New account, registration successful'; break;            // FRPC_NEW
 		case   2: s = 'Updating host name, registration successful'; break;     // FRPC_UPDATE_HOST
 
-		case 100: s = 'User key or host name field blank'; break;
+		case 100: s = 'User key or host name field blank; or host name has an illegal character'; break;
 		case 101: s = 'User key invalid. Did you request a user key from support@kiwisdr.com as per the instructions?'; break;
 		case 102: s = 'Host name already in use; please choose another and retry'; break;
-		case 103: s = 'Invalid characters in user key or host name field (use a-z, 0-9, -, _)'; break;
+		case 103: s = 'Invalid characters in user key or host name field (use only: a-z 0-9 -)'; break;
 
 		case 150: s = 'No auto account user key. Please contact support@kiwisdr.com'; break;
 		case 151: s = 'No auto account host name. Please contact support@kiwisdr.com'; break;
@@ -1515,41 +1618,48 @@ function connect_rev_status_cb(status)
 	}
 	
 	w3_innerHTML('id-connect-rev-status', s);
+	connect.last_rev_status = status;
+   //console.log('$connect_rev_status_cb: CALLING connect_update_url');
 	connect_update_url();
+	//console.log('$connect_rev_status_cb: BACK');
 	
 	// if pending keep checking
-	if (status == 201) {
+	if (cfg.sdr_hu_dom_sel == kiwi.REV && status == 201) {
+	   //console.log('$KEEP CHECKING status=201');
 	   connect.timeout = setTimeout(
 	      function() {
+	         //console.info('$connect_rev_status_cb T/O 5s SET rev_status_query');
 	         ext_send('SET rev_status_query');
-	         //console.log('setTimeout 5000: SET rev_status_query');
 	      }, 5000
 	   );
 	}
 	
 	// If this admin connection is on a proxy connection then it needs to be reconnected
 	// because frpc will be restarted using the new user and/or host value.
-   var cur_hp = kiwi_remove_protocol(kiwi_host_port()).split('.');
-	var admin_is_proxy_conn = kiwi_host().includes('proxy.kiwisdr.com');    // FIXME: alt proxy servers?
+   var host2 = kiwi_remove_protocol(kiwi_host_port()).split('.')[0];
+	var admin_is_proxy_conn = kiwi_host().match(/proxy\d*.kiwisdr.com/)? true:false;    // includes alt proxy servers
 	var focus_query = connect.focus_query;
    
    // these are only valid if admin_is_proxy_conn since kiwi_host_port() could be a local IP otherwise
-   var host_changed = (cur_hp[0] != host);
-	var reload_auto = ( auto && host_changed &&  status == 0);
-	var reload_man  = (!auto && host_changed && (status >= 0 && status <= 2));
+   var host_changed = (host2 != host);
+	var reload_auto = ( auto && host_changed && status == 0);
+	var reload_man  = (!auto && host_changed && status.inRange(0, 2));
 
-   console.log('connect_rev_status_cb: auto='+ auto +' user='+ user +' host='+ host +'|'+ cur_hp[0] +
-      ' reload_auto|man='+ reload_auto +'|'+ reload_man +' focus_query='+ focus_query +' error='+ error +' admin_is_proxy_conn='+ admin_is_proxy_conn);
+   //console.log('$connect_rev_status_cb: auto='+ auto +' user='+ user +' host='+ host +'|'+ host2 +
+   //   ' reload_auto|man='+ reload_auto +'|'+ reload_man +' focus_query='+ focus_query +' error='+ error +' admin_is_proxy_conn='+ admin_is_proxy_conn);
 
    if (admin_is_proxy_conn) {
       if (reload_auto || reload_man) {
          // update host name while proxy connected
 
-         console_nv('$connect_rev_status_cb RELOAD ADMIN CONN', {reload_auto}, {reload_man});
-         cur_hp[0] = host;
-         kiwi.reload_url = kiwi_SSL() + cur_hp.join('.') +'/admin';
+         //console.log('$connect_rev_status_cb RELOAD ADMIN CONN', {reload_auto, reload_man});
+         host2 = host;
+         
+         // NB: ":8073" is important here.
+         // Otherwise Firefox goes into a loop trying to load (non-numeric).proxy.kiwisdr.com/admin for some unknown reason.
+         kiwi.reload_url = kiwi_SSL() + host2 +'.proxy.kiwisdr.com:8073/admin';
          s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', admin.FRPC_UPDATE_HOST, user, host, auto);
-         console.log(s);
+         //console.log('$ '+ s);
          
          // wait long enough for in-flight save_config() to finish before doing the rev_register
          // which will close the admin connection immediately by having stopped frpc
@@ -1557,7 +1667,7 @@ function connect_rev_status_cb(status)
          //ext_send_after_cfg_save(s);      // doesn't work in this case
          setTimeout(function() { ext_send(s); }, 3000);
 
-         wait_then_reload_page(10, 'You changed the Kiwi\'s host name. <br>' +
+         wait_then_reload_page(30, 'You changed the Kiwi\'s host name. <br>' +
             'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
       }
 	} else {
@@ -1565,23 +1675,32 @@ function connect_rev_status_cb(status)
 	   
       // setup frpc.ini and restart frpc if new account or host name updated
       var user_or_host_changed = (user != admin.last_rev_user || host != admin.last_rev_host);
+      //console.log('$', {user_or_host_changed});
       if (status == admin.FRPC_EXISTING && user_or_host_changed) {
-         console.log('status => FRPC_UPDATE_HOST(2) because user_or_host_changed');
-	      console.log('user|host='+ user +'|'+ host +' last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
+      //if (user_or_host_changed) {
+         //console.log('$ status => FRPC_UPDATE_HOST(2) because user_or_host_changed');
+	      ////console.log('$ user|host='+ user +'|'+ host +' last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
+         //console.log('$connect_rev_status_cb', {user, host, 'admin.last_rev_user':admin.last_rev_user, 'admin.last_rev_host':admin.last_rev_host});
          status = admin.FRPC_UPDATE_HOST;
       }
-      var proxy_setup = (status >= admin.FRPC_EXISTING && status <= admin.FRPC_UPDATE_HOST);
+      
+      // turn enable/pending (201) into FRPC_PROXY_UPD to catch any unresolved errors
+      var enable_or_pending = (status == 200 || status == 201);
+      var proxy_setup = status.inRange(admin.FRPC_EXISTING, admin.FRPC_UPDATE_HOST);
       var isProxy = (cfg.sdr_hu_dom_sel == kiwi.REV);
-      console.log('!admin_is_proxy_conn: status='+ status +' rev='+ TF(isProxy) +' focus_query='+ TF(focus_query) +' proxy_setup='+ TF(proxy_setup));
-      if (isProxy && !focus_query && proxy_setup) {
-         s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', status, user, host, auto);
-         console.log(s);
+      //console.log('$connect_rev_status_cb: !admin_is_proxy_conn: status='+ status +' rev='+ TF(isProxy) +' focus_query='+ TF(focus_query) +' enable_or_pending='+ TF(enable_or_pending) +' proxy_setup='+ TF(proxy_setup));
+
+      if (isProxy && ((focus_query && enable_or_pending) || (!focus_query && proxy_setup))) {
+         var reg = enable_or_pending? admin.FRPC_PROXY_UPD : status;
+         s = sprintf('SET rev_register reg=%d user=%s host=%s auto=%d', reg, user, host, auto);
+         //console.log('$connect_rev_status_cb: RESULT '+ s);
          ext_send(s);
       } else {
-         console.log('did NOT send a rev_register');
+         //console.log('$connect_rev_status_cb: RESULT did NOT send a rev_register');
       }
    }
    
+   //console.log('$connect_rev_status_cb: END');
    connect.focus_query = false;
 }
 
@@ -4333,7 +4452,7 @@ function console_calc_rows_cols(init)
          'w_msgs='+ w_msgs +' cols: '+ w_ratio.toFixed(2) +' <x1>'+ cols +'</x1>');
 
    if (init || rows != admin.console.rows || cols != admin.console.cols) {
-      //console_nv('$console_calc_rows_cols', {init}, {rows}, {cols});
+      //console.log('$console_calc_rows_cols', {init, rows, cols});
       //kiwi_trace('$');
       kiwi_clearTimeout(admin.resize_timeout);
       admin.resize_timeout = setTimeout(
@@ -4889,16 +5008,8 @@ function admin_draw(sdr_mode)
 	   )
 	);
 	
-	// find-related
-   if (!('CSS' in window) || !CSS.highlights) {
-      var el = w3_el('id-admin.find');
-      w3_placeholder(el, 'error: newer browser required');
-      w3_disable(el);
-      w3_color(el, 'red');
-   }
-   
    // for find-wrap screen overlay flash icon
-   var s =
+   s =
       w3_div('id-admin-find-wrap-container class-overlay-container w3-hide',
          w3_div('id-admin-find-wrap', w3_icon('', 'fa-arrow-right', 192))
       );
@@ -5009,13 +5120,13 @@ function admin_navkey_cb(ev) {
    var tabs = admin.tabs;
    var i = w3_array_el_seq(tabs, admin.current_tab_name, { toLower:1 }), j;
    var e = tabs.length - 1;
-   if (k.length == 1 && k >= 'a' && k <= 'z') {    // lcase/ucase char match next/prev
+   if (k.length == 1 && islower(k)) {     // lcase/ucase char match next/prev
       dir = (ev.key == k.toUpperCase())? -1:1;
       i = w3_wrap(i, 0, e);
       j = w3_wrap(i + dir, 0, e);
       var looping = 0;
       while (j != i) {
-         //console_nv('kd', {dir}, {e}, {j}, {i});
+         //console.log('kd', {dir, e, j, i});
          if (tabs[j].toLowerCase()[0] == k) {
             admin_nav_focus(tabs[j]);
             break;

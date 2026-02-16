@@ -412,6 +412,8 @@ function fsk_output_char(s)
       s = 'EFR '+ fsk.menu_sel + s;
    }
    
+   //if (s.length != 1) console.log('fsk_output_char', {'slen':s.length});
+   //if (iscntrl(s)) console.log('fsk_output_char '+ kiwi_string_to_hex(s));
    fsk_console_status_msg_p.s = encodeURIComponent(s);
    fsk.log_txt += kiwi_remove_escape_sequences(kiwi_decodeURIComponent('FSK', s));
 

@@ -200,7 +200,7 @@ function ale_2g_recv(data)
 
 			case "call_est_test":
 			   if (!dbgUs) break;
-			   // fall through ...
+			   /* fall through */
 			   
 			case "call_est":
 			   var rtime = ale.record_secs;
