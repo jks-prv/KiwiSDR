@@ -3,6 +3,22 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.829  February 17, 2026
+    Admin connect tab:
+        More UI improvements intended to reduce configuration errors and subsequent support time.
+
+    Admin config tab "display setup" menu: Added choice "RF spec on" which will show the RF spec,
+        DX labels and waterfall. (thanks F5LFE)
+
+    Admin find field:
+        Won't show the error "newer browser required" until an older
+        browser actually tries to use it.
+        Fixed a bug causing it to miss some matches.
+    
+    Frequency memory menu: Fixed bug that sometimes stored the wrong mode. (thanks ZL2P)
+    
+    Serial numbers 21xxx are now served by the second proxy server (previously 210xx).
+
 v1.828  January 22, 2026
     Safari 26.2 blank page problem fix. Private Relay must be off. (thanks Philippe!)
 
