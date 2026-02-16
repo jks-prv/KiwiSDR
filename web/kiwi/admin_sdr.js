@@ -10,7 +10,7 @@ var admin_sdr = {
    ext_nav: [],
    
    comp_s: [ 'last', 'on', 'off' ],
-   setup_s: [ 'show all', 'RF spec + WF', 'WF only', 'DX labels only', 'top bar only' ],
+   setup_s: [ 'show all', 'RF spec + WF', 'WF only', 'DX labels only', 'top bar only', 'RF spec on' ],
 
    pmi: 0,
    pbm: 'am',
@@ -754,7 +754,7 @@ function config_wfmax_cb(path, val, first)
 function config_zoom_cb(path, val, first)
 {
    val = +val;
-   var ok = (val >= 0 && val <= 14);
+   var ok = val.inRange(0, 14);
    if (ok) admin_int_cb(path, val, first);
    w3_show_hide('id-zoom-error', !ok);
 }
@@ -815,7 +815,7 @@ function config_clone_status_cb(status)
 {
    var msg;
    
-   if (status >= 0 && status <= 0xff) {
+   if (status.inRange(0, 0xff)) {
       var restart = true;
       switch (status) {
          case 0: msg = 'Full configuration cloned.'; break;
