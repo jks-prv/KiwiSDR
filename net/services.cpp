@@ -219,7 +219,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
     printf("my_kiwi_register dom=%d dom_%s dom_stat=%d\n", net.dom_sel, dom_type_s[net.dom_sel], dom_stat);
 
     const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
-    if (kiwi_emptyStr(server_url)) server_url = strdup("UNSET");
+    if (kiwi_emptyStr(server_url)) server_url = strdup("ERROR");
     int add_nat = admcfg_true("auto_add_nat")? 1:0;
     int dhcp = admcfg_true("use_static")? 0:1;
     bool kiwisdr_com_reg = admcfg_true("kiwisdr_com_register");
@@ -268,8 +268,8 @@ void proxy_frpc_setup(const char *proxy_server, const char *user, const char *ho
     #ifdef PROXY2_ENABLE
         // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
         //bool p2 = isdigit(host[0]);
-        bool p2 = (strncmp(host, "210", 3) == 0);
-        //bool p2 = (strncmp(host, "21", 2) == 0);
+        //bool p2 = (strncmp(host, "210", 3) == 0);
+        bool p2 = (strncmp(host, "21", 2) == 0);
         actual_proxy_server = p2? "proxy2.kiwisdr.com" : proxy_server;
     #elif PROXY2_TEST
         actual_proxy_server = strcmp(host, "jks")? proxy_server : "proxy2.kiwisdr.com";
@@ -278,7 +278,7 @@ void proxy_frpc_setup(const char *proxy_server, const char *user, const char *ho
         actual_proxy_server = proxy_server;
     #endif
 
-    lprintf("PROXY init frpc.ini: actual_proxy_server=%s\n", actual_proxy_server);
+    lprintf("PROXY: init frpc.ini: actual_proxy_server=%s\n", actual_proxy_server);
     char *cmd_p;
     asprintf(&cmd_p, "sed -e s/SERVER/%s/ -e s/USER/%s/ -e s/HOST/%s/ -e s/PORT/%d/ %s >%s",
         actual_proxy_server, user, host, port, DIR_CFG "/frpc.template.ini", DIR_CFG "/frpc.ini");
@@ -529,13 +529,16 @@ static void proxy_task(void *param)
         rv = WEXITSTATUS(rv);
         if (rv == 42) {
             // no point in continuing if there is no valid client authorization (i.e. user key invalid)
-            lprintf("PROXY: proxy_task EXIT client authorization failed\n", rv);
+            lprintf("PROXY: proxy_task EXIT client authorization failed\n");
             net.proxy_status = PR_BAD_USER_KEY;     // for benefit of my.kiwisdr.com
             break;
+        } else
+        if (rv == 143) {
+            lprintf("PROXY: proxy_task RESTART\n");
         } else {
             lprintf("PROXY: proxy_task RETRY rv=%d see /var/log/frpc.log for possible error messages\n", rv);
         }
-        TaskSleepReasonSec("restart", 20);
+        TaskSleepReasonSec("restart", 15);
     };
 }
 
@@ -991,7 +994,7 @@ static void reg_public(void *param)
 
 	while (1) {
         const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
-        if (kiwi_emptyStr(server_url)) server_url = strdup("UNSET");
+        if (kiwi_emptyStr(server_url)) server_url = strdup("ERROR");
         //char *server_enc = kiwi_str_encode((char *) server_url);
 
         const char *admin_email = cfg_string("admin_email", NULL, CFG_OPTIONAL);
