@@ -1028,14 +1028,14 @@ function kiwi_output_sgr(p)
       } else
       
       // foreground color
-      if (sgr >= 30 && sgr <= 37) {
+      if (sgr.inRange(30, 37)) {
          if (dbg_sgr) console.log('SGR='+ sgr +' bright='+ p.sgr.bright);
          p.sgr.fg = ansi.colors[sgr-30 + p.sgr.bright];
          msg += ', fg color'; 
          saw_color = 1;
       } else
 
-      if (sgr >= 90 && sgr <= 97) {    // force bright
+      if (sgr.inRange(90, 97)) {    // force bright
          p.sgr.fg = ansi.colors[sgr-90 + ansi.BRIGHT];
          msg += ', fg color bright'; 
          saw_color = 1;
@@ -1048,13 +1048,13 @@ function kiwi_output_sgr(p)
       } else
 
       // background color
-      if (sgr >= 40 && sgr <= 47) {
+      if (sgr.inRange(40, 47)) {
          p.sgr.bg = ansi.colors[sgr-40 + p.sgr.bright];
          msg += ', bg color'; 
          saw_color = 1;
       } else
 
-      if (sgr >= 100 && sgr <= 107) {     // force bright
+      if (sgr.inRange(100, 107)) {     // force bright
          p.sgr.bg = ansi.colors[sgr-100 + ansi.BRIGHT];
          msg += ', bg color bright'; 
          saw_color = 1;
@@ -1927,7 +1927,9 @@ function kiwi_output_msg(id, id_scroll, p)
                      // ?12 = make cursor very visible(h) / normal(l)
                      case 12: result += 'cursor bold ';
                               if (n2 != 25) break;
-                              // "12;25" fall through ...
+                              // "12;25"
+                              /* fall through */
+                              
                      case 25: result += 'cursor visible';
                               p.show_cursor = enable? true:false;
                               if (!enable && !p.isAltBuf) {
@@ -2646,6 +2648,7 @@ function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm,
 		config_net.mac = mac;
 		config_net.serno = serno;
 		
+		//console.log('$config_cb: CALLING connect_update_url');
 		w3_call('connect_update_url');
 	}
 }

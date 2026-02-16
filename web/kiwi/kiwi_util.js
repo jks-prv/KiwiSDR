@@ -752,6 +752,12 @@ Number.prototype.withSign = function()
 	return (n < 0)? s : ('+'+ s);
 };
 
+Number.prototype.inRange = function(min, max)
+{
+	var n = Number(this);
+	return (n >= min && n <= max);
+};
+
 var kHz_s = function(Hz) { return (Hz / 1e3).toFixed(3) +'k'; };
 
 // need symmetry for negative f in passband calcs
