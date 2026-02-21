@@ -3650,7 +3650,7 @@ function right_click_menu_cb(idx, x, cbp)
    
    case owrx.rcm_db2:
       dx.db = (dx.db + 1) % dx.DB_N;
-      /* falls through */
+      /* fall through */
       
    case owrx.rcm_db1:
       dx.db = (dx.db + 1) % dx.DB_N;
@@ -10583,7 +10583,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    // 0: -large, 1: -med, 2: -small || 3: +small, 4: +med, 5: +large
    case 'ArrowLeft':    // if cursor in freq entry box let arrow key move cursor
       if (inFreqIn) return true;    // don't cancel event
-      /* falls through */
+      /* fall through */
 
    case 'j': case 'J':
       if (key_mod != shortcut.SHIFT_PLUS_CTL_ALT)
@@ -10594,7 +10594,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
 
    case 'ArrowRight':    // if cursor in freq entry box let arrow key move cursor
       if (inFreqIn) return true;    // don't cancel event
-      /* falls through */
+      /* fall through */
 
    case 'i': case 'I':
       if (key_mod != shortcut.SHIFT_PLUS_CTL_ALT)
@@ -10702,7 +10702,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    // dx labels
    case '|':
       if (!ext_panel_displayed('dx')) no_step = true;
-      /* falls through */
+      /* fall through */
 
    case '\\':
       if (key_mod == shortcut.CTL_ALT || key_mod == shortcut.SHIFT_PLUS_CTL_ALT) no_step = true;
