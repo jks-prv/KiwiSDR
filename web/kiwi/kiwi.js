@@ -2722,7 +2722,7 @@ function users_init(called_from)
    
       for (var i=0; i < rx_chans; i++) {
          if (kiwi.called_from_admin) {
-            s1 = w3_button('id-user-kick-'+ i +' w3-hide w3-small w3-white w3-border w3-border-red w3-round-large w3-padding-0 w3-padding-LR-8',
+            s1 = w3_button('id-user-kick-'+ i +' w3-margin-L-8 w3-hide w3-small w3-white w3-border w3-border-red w3-round-large w3-padding-0 w3-padding-LR-8',
                'Kick', 'status_user_kick_cb', i);
             /*
             s1 += w3_button('id-user-bl32-'+ i +' w3-hide w3-margin-L-8 w3-small w3-white w3-border w3-border-red w3-round-large w3-padding-0 w3-padding-LR-8',
@@ -2731,8 +2731,12 @@ function users_init(called_from)
                'IP blacklist /24', 'network_user_blacklist_cb', i+100);
             */
          }
-         s2 = w3_div('id-campers-'+ i +' w3-css-orange w3-padding-LR-4');
-         w3_el('id-users-list').innerHTML += w3_inline('/w3-hspace-8', w3_div('id-user-'+ i + pad, 'RX'+ i), w3_div(id_prefix + i), s1, s2);
+         s2 = w3_div('id-campers-'+ i +' w3-margin-L-8 w3-css-orange w3-padding-LR-4');
+         
+         // Done this way with "w3-span" and "&nbsp;" for the benefit of browser copy/paste of users-list
+         // such that is pastes to a text file as a single line.
+         w3_el('id-users-list').innerHTML +=
+            w3_inline('w3-span', w3_span('id-user-'+ i + pad +' w3-span', 'RX'+ i), '&nbsp', w3_span(id_prefix + i +' w3-span'), s1, s2);
       }
    }
 	
