@@ -4355,6 +4355,7 @@ function w3_inline(psa, attr)
 {
 	var narg = arguments.length;
    var dump = psa.includes('w3-dump');
+   var div_or_span = psa.includes('w3-span')? 'span' : 'div';
    
    if (psa == '' && attr == '' && narg > 2) {
       console.log('### w3_inline OLD API DEPRECATED');
@@ -4366,7 +4367,7 @@ function w3_inline(psa, attr)
       var psa_outer = w3_psa(psa3.middle, 'w3-show-inline-new');
       var psa_inner = w3_psa(psa3.right);
       if (dump) console.log('w3_inline psa_outer='+ psa_outer +' psa_inner='+ psa_inner);
-      var s = '<div w3d-inlo '+ psa_outer +'>';
+      var s = '<'+ div_or_span +' w3d-inlo '+ psa_outer +'>';
       for (var i = 1; i < narg; i++) {
          var a = arguments[i];
          if (!a) continue;
@@ -4411,9 +4412,9 @@ function w3_inline(psa, attr)
          if (psa3.right == '' && !psa_merge && a.startsWith('<div '))
             s += a;
          else
-            s += '<div w3d-inli-'+ w3_sb(i-1, psa) +'>'+ a + '</div>';
+            s += '<'+ div_or_span +' w3d-inli-'+ w3_sb(i-1, psa) +'>'+ a + '</'+ div_or_span +'>';
       }
-      s += '</div>';
+      s += '</'+ div_or_span +'>';
       if (dump) console.log(s);
       return s;
    }
@@ -4536,13 +4537,14 @@ function w3_div(psa)
 
 function w3_span(psa)
 {
+   var div_or_span = psa.includes('w3-span')? 'span' : 'div';
    var p = w3_psa(psa, 'w3-show-span');
-	var s = '<div w3d-span '+ p +'>';
+	var s = '<'+ div_or_span +' w3d-span '+ p +'>';
 	var narg = arguments.length;
 		for (var i=1; i < narg; i++) {
 			s += arguments[i];
 		}
-	s += '</div>';
+	s += '</'+ div_or_span +'>';
 	//console.log(s);
 	return s;
 }
