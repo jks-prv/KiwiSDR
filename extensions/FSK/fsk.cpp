@@ -5,6 +5,7 @@
 #include "kiwi.h"
 #include "misc.h"
 #include "mem.h"
+#include "web.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -19,6 +20,8 @@
 typedef struct {
     s2_t *s2p_start, *s2p_end;
     int tsamps;
+    char *udp_url;
+	void *udp;
 } fsk_t;
 
 static fsk_t fsk;
@@ -76,6 +79,22 @@ bool fsk_msgs(char *msg, int rx_chan)
 	//printf("### fsk_msgs RX%d <%s>\n", rx_chan, msg);
 	
 	if (strcmp(msg, "SET ext_server_init") == 0) {
+        #ifdef MG_VERSION_OLD
+            #warning FSK: no UDP support for older Mongoose versions
+            printf("FSK: no UDP support\n");
+        #else
+            if (fsk.udp == NULL && ext_auth(rx_chan) == AUTH_LOCAL) {
+                const char *fn = cfg_string("fsk.udp", NULL, CFG_OPTIONAL);
+                if (kiwi_nonEmptyStr(fn)) {
+                    asprintf(&fsk.udp_url, "udp://%s", fn);
+                    fsk.udp = udp_connect(fsk.udp_url);
+                    printf("FSK: UDP connect %s\n", fsk.udp_url);
+                    kiwi_asfree(fsk.udp_url);
+                }
+                cfg_string_free(fn);
+            }
+        #endif
+
 		ext_send_msg(rx_chan, DEBUG_MSG, "EXT ready");
 		return true;
 	}
@@ -89,6 +108,18 @@ bool fsk_msgs(char *msg, int rx_chan)
 		return true;
 	}
 	
+	char *udp_text_m;
+    n = sscanf(msg, "SET udp_text=%256m[^\n]", &udp_text_m);
+    if (n == 1) {
+        if (fsk.udp) {
+            size_t sl = strlen(udp_text_m);
+            //printf("FSK: UDP send (%d) %s\\n\n", sl, kiwi_str_ASCII_static(udp_text_m));
+            udp_send(fsk.udp, stprintf("%s\n", udp_text_m), sl + 1);
+        }
+        kiwi_asfree(udp_text_m);
+        return true;
+    }
+
 	return false;
 }
 
