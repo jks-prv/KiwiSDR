@@ -635,7 +635,10 @@ function init_panels()
 	if (readme_firsttime) kiwi_storeWrite('readme', 'seen2');
 	
 	if (kiwi_isMobile()) readme_firsttime = false;     // don't show readme panel at all on mobile devices
-	init_panel_toggle(ptype.TOGGLE, 'id-readme', false, readme_firsttime? popt.PERSIST : popt.CLOSE, readme_color);
+	
+	// don't persist readme panel first time if extension specified in URL
+	var anim = (!readme_firsttime || kiwi_url().includes('ext='))? popt.CLOSE : popt.PERSIST;
+	init_panel_toggle(ptype.TOGGLE, 'id-readme', false, anim, readme_color);
 
 	//init_panel_toggle(ptype.TOGGLE, 'id-msgs', true, kiwi_isMobile()? popt.CLOSE : popt.PERSIST);
 	//init_panel_toggle(ptype.POPUP, 'id-msgs', true, popt.CLOSE);
@@ -8103,10 +8106,14 @@ function confirmation_panel_init()
 	);
 }
 
-function confirmation_panel_set_close_func(close_cb)
+function confirmation_panel_set_close_func(close_cb_func)
 {
-	w3_el('id-confirmation-close').onclick = close_cb;    // hook the close icon
-	confirmation.close_cb = close_cb;
+   if (!isFunction(close_cb_func)) {
+      console.error('confirmation_panel_set_close_func', {close_cb_func});
+   } else {
+      w3_el('id-confirmation-close').onclick = close_cb_func;     // hook the close icon
+      confirmation.close_cb = close_cb_func;
+   }
 }
 
 function confirmation_panel_init2()
@@ -8115,7 +8122,7 @@ function confirmation_panel_init2()
 	w3_el('id-kiwi-body').addEventListener('keyup',
 	   function(evt) {
 	      if (evt.key == 'Escape') {
-	         confirmation.close_cb();
+	         w3_call(confirmation.close_cb);
             toggle_or_set_hide_panels(0);    // cancel panel hide mode
 	      }
 	   }, w3.CAPTURING);
