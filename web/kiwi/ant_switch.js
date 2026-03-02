@@ -755,7 +755,7 @@ function ant_switch_config_html2(n_ch)
 
          w3_inline_percent('w3-margin-T-16 w3-valign-center/',
             '&nbsp;', 53,
-            w3_input_get('w3-defer//', 'cURL command arguments', 'ant_switch.ant'+ i +'cmd', 'ant_switch_cmd_cb', '')
+            w3_input_get('w3-defer//', 'curl command arguments', 'ant_switch.ant'+ i +'cmd', 'ant_switch_cmd_cb', '')
          );
    }
    w3_innerHTML('id-antsw-list', s);
@@ -843,8 +843,8 @@ function ant_switch_config_html()
                ),
 
                w3_half('', '',
-                  w3_input_get('w3-defer//', 'Ground antenna cURL command arguments', 'ant_switch.antgcmd', 'ant_switch_cmd_cb', ''),
-                  w3_text('w3-margin-left w3-text-teal', 'cURL command to run when antenna switched to ground.')
+                  w3_input_get('w3-defer//', 'Ground antenna curl command arguments', 'ant_switch.antgcmd', 'ant_switch_cmd_cb', ''),
+                  w3_text('w3-margin-left w3-text-teal', 'curl command to run when antenna switched to ground.')
                ),
 
                '<hr>',
@@ -859,7 +859,7 @@ function ant_switch_config_html()
                
                   w3_link('w3-link-darker-color', 'http://kiwisdr.com/info/#id-antsw', 'Click here') +
                   ' for info about <br>' +
-                  'the cURL command field.', 20,
+                  'the curl command field.', 20,
                   '&nbsp;', 1,
 
                   'Overrides frequency scale offset value on<br>' +

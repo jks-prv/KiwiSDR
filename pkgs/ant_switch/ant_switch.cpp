@@ -428,6 +428,14 @@ void ant_switch_notify_users()
     }
 }
 
+static int _ant_switch_curl_func(void *param)
+{
+	nbcmd_args_t *args = (nbcmd_args_t *) param;
+	char *reply = kstr_sp_less_trailing_nl(args->kstr);
+    printf("ant_switch_curl_cmd: REPLY %s\n", reply);
+    return 0;
+}
+
 void ant_switch_curl_cmd(char *antenna, int rx_chan)
 {
     int i, n;
@@ -435,10 +443,12 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
 
     char *which = (antenna[0] == '\t')? &antenna[1] : antenna;
     const char *ant_cmd = cfg_string(stprintf("ant_switch.ant%scmd", which), NULL, CFG_OPTIONAL | CFG_NO_URL_DECO);
-    rcprintf(rx_chan, "ant_switch_curl_cmd: ant=<%s> which=<%s> cmd=<%s>\n", antenna, which, ant_cmd);
+    rcprintf(rx_chan, "ant_switch_curl_cmd: ant=<%s> which=<%s>\n", antenna, which);
+    rcprintf(rx_chan, "ant_switch_curl_cmd: CFG %s\n", ant_cmd);
     if (kiwi_emptyStr(ant_cmd)) return;
     char *ccmd = strdup(ant_cmd);
     cfg_string_free(ant_cmd);
+    kiwi_str_replace(ccmd, "\\\"", "");   // shrinking, so same mem space
     antsw_printf("ant_switch: ccmd <%s>\n", ccmd);
 
     #define NKWDS 8
@@ -446,13 +456,23 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
     str_split_t kwds[NKWDS];
     n = kiwi_split((char *) ccmd, &r_ccmd, " ", kwds, NKWDS);
     antsw_printf("ant_switch: n=%d\n", n);
+    bool echo_mode = false, debug_mode = false;
 
     for (i = 0; i < n; i++) {
         s = kwds[i].str;
         antsw_printf("ant_switch KW%d: <%s> '%s' %d\n", i, s, ASCII[kwds[i].delim], kwds[i].delim);
-        kiwi_str_clean(s, KCLEAN_DELETE);     // enforce limited curl char set
-        bool must_free1, must_free2, must_free3;
-        char *curl_arg1, *curl_arg2, *curl_arg3;
+        if (i == 0 && strcmp(s, "echo") == 0) {
+            echo_mode = true;
+            continue;
+        }
+        if (i == 0 && strcmp(s, "debug") == 0) {
+            debug_mode = true;
+            continue;
+        }
+        
+        kiwi_str_clean(s, KCLEAN_DELETE2);      // enforce limited curl char set
+        bool must_free1, must_free2, must_free3, must_free4;
+        char *curl_arg1, *curl_arg2, *curl_arg3, *curl_arg4;
 
         // "\+" in curl field appears as "\\+" in cfg hence use of "\\\\+" below.
         // Use \x01 intermediate value to accomodate existing "+" => "%20" compatibility.
@@ -465,25 +485,38 @@ void ant_switch_curl_cmd(char *antenna, int rx_chan)
         curl_arg3 = kiwi_str_replace(curl_arg2, "\x01", "+", &must_free3);
         if (!curl_arg3) curl_arg3 = curl_arg2;
 
-        #if 0
-            asprintf(&cmd, "echo '%s'", curl_arg3);
-            antsw_printf("ant_switch: <%s>\n", cmd);
+        // curl interprets '#' as a multi-file fetch filename match specifier, so must be URL escaped
+        curl_arg4 = kiwi_str_replace(curl_arg3, "#", "%23", &must_free4);
+        if (!curl_arg4) curl_arg4 = curl_arg3;
+
+        if (echo_mode) {
+            asprintf(&cmd, "echo '%s'", curl_arg4);
+            rcprintf(rx_chan, "ant_switch_curl_cmd: ECHO %s\n", cmd);
+            //non_blocking_cmd_system_child("antsw.curl", cmd, NO_WAIT);
+            non_blocking_cmd_func_forall("antsw.curl", cmd, _ant_switch_curl_func, 0, POLL_MSEC(100));
+            kiwi_asfree(cmd);
+        } else
+        if (debug_mode) {
+            // -g prevents curl globbing of "[]{}"
+            asprintf(&cmd, "curl -gkL --no-progress-meter '%s'", curl_arg4);
+            rcprintf(rx_chan, "ant_switch_curl_cmd: DEBUG %s\n", cmd);
+            non_blocking_cmd_func_forall("antsw.curl", cmd, _ant_switch_curl_func, 0, POLL_MSEC(100));
+            kiwi_asfree(cmd);
+        } else {
+            // -g prevents curl globbing of "[]{}"
+            asprintf(&cmd, "curl -sgkL '%s' >/dev/null", curl_arg4);
+            rcprintf(rx_chan, "ant_switch_curl_cmd: RUN %s\n", cmd);
+            NextTask("curl START");
             non_blocking_cmd_system_child("antsw.curl", cmd, NO_WAIT);
             kiwi_asfree(cmd);
-        #endif
-
-        asprintf(&cmd, "curl -skL '%s' >/dev/null", curl_arg3);
-        //asprintf(&cmd, "curl -kL '%s'", curl_arg3);
-        rcprintf(rx_chan, "ant_switch_curl_cmd: ant=%s <%s>\n", antenna, cmd);
-        NextTask("curl START");
-        non_blocking_cmd_system_child("antsw.curl", cmd, NO_WAIT);
-        kiwi_asfree(cmd);
-        NextTask("curl DONE");
+            NextTask("curl DONE");
+        }
 
         if (i < n-1) TaskSleepMsec(500);
         if (must_free1) kiwi_asfree(curl_arg1);
         if (must_free2) kiwi_asfree(curl_arg2);
         if (must_free3) kiwi_asfree(curl_arg3);
+        if (must_free4) kiwi_asfree(curl_arg4);
     }
     kiwi_asfree(ccmd); kiwi_ifree(r_ccmd, "antsw_curl_cmd");
 }
@@ -496,7 +529,7 @@ void ant_switch(void *param)    // task
             asprintf(&cmd, "%s %s", FRONTEND, cmd_q[q_rd]);
             antsw_printf("ant_switch TASK START q_rd=%d q_wr=%d seq=%d cmd=<%s>\n", q_rd, q_wr, ANTSW_SHMEM_SEQ, cmd);
             ANTSW_SHMEM_STATUS = SHMEM_STATUS_START;
-            non_blocking_cmd_func_forall("ant_switch", cmd, _GetAntenna_shmem_func, 0, 100);
+            non_blocking_cmd_func_forall("ant_switch", cmd, _GetAntenna_shmem_func, 0, POLL_MSEC(100));
             kiwi_asfree(cmd);
             antsw_printf("ant_switch TASK DONE q_rd=%d q_wr=%d seq=%d status=%s\n", q_rd, q_wr, ANTSW_SHMEM_SEQ, shmem_status_s[ANTSW_SHMEM_STATUS]);
             q_rd = (q_rd+1) & (N_CMD_Q-1);
