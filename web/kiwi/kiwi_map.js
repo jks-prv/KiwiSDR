@@ -488,7 +488,7 @@ function kiwi_map_waterfall_close(kmap_or_ws)
       if (isArg(kmap.mindb_un_save)) wf.save_mindb_un = mindb_un = kmap.mindb_un_save;
       if (isArg(kmap.aper_save)) wf_aper_cb('wf.aper', kmap.aper_save);
 
-      if (!kmap.wf_conn_bad) {
+      if (!kmap.wf_conn_bad && !kmap.wf_ws_bad) {
          w3_clearInnerHTML(kmap.submit_status);
       }
 
@@ -553,15 +553,19 @@ function kiwi_map_wf_preview(kmap, h)
    );
 
    kmap.wf_conn_bad = false;
+   kmap.wf_ws_bad = false;
    kiwi.wf_preview_mode = true;
 }
 
 function kiwi_map_wf_preview_error_cb(ev, ws)
 {
-   console.log('kiwi_map_wf_preview_error_cb..');
-   console.log(ev);
-   console.log(ws);
-   console.log('..kiwi_map_wf_preview_error_cb');
+   var kmap = ws.open_cb_param;
+   kmap.wf_ws_bad = true;
+   w3_innerHTML(kmap.submit_status, 'Waterfall preview error: '+ kmap.wf_id2);
+   //console.log('kiwi_map_wf_preview_error_cb..');
+   //console.log(ev);
+   //console.log(ws);
+   //console.log('..kiwi_map_wf_preview_error_cb');
 }
 
 
