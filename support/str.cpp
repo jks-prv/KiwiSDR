@@ -877,28 +877,34 @@ char *kiwi_URL_enc_to_C_hex_esc_enc(char *src)
 
 static u1_t clean_table[128] = {
 //  (ctrl)
-    3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
 
 //  (ctrl)
-    3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
 
-//    ! " # $ % & ' ( ) * + , - . /     not !"#$'()*    yes (space) %&+,-./
-    0,1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,
+//    ! " # $ % & ' ( ) * + , - . /
+    0,1,3,1,1,0,0,3,1,1,1,0,0,0,0,0,    // KCLEAN_DELETE1   not !"#$'()*    yes (space) %&+,-./
+                                        // KCLEAN_DELETE2   not "'          yes (space) !#$%&()*+,-./
 
-//  0 1 2 3 4 5 6 7 8 9 : ; < = > ?     not ;<>         yes :=?
-    0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,
+//  0 1 2 3 4 5 6 7 8 9 : ; < = > ?
+    0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,    // KCLEAN_DELETE1   not ;<>         yes :=?
+                                        // KCLEAN_DELETE2                   yes :;<=>?
 
-//  @ (alpha)                           not @
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+//  @ (alpha)
+    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,    // KCLEAN_DELETE1   not @
+                                        // KCLEAN_DELETE2
 
-//  (alpha)               [ \ ] ^ _     not []^_        yes (backslash)
-    0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,
+//  (alpha)               [ \ ] ^ _
+    0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,    // KCLEAN_DELETE1   not []^_        yes (backslash)
+                                        // KCLEAN_DELETE2                   yes []^_
 
-//  ` (alpha)                           not `
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+//  ` (alpha)
+    3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,    // KCLEAN_DELETE1   not `
+                                        // KCLEAN_DELETE2   not `
 
-//  (alpha)               { | } ~ del   not {|}~ del
-    0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,
+//  (alpha)               { | } ~ del
+    0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,3,    // KCLEAN_DELETE1   not {|}~ del
+                                        // KCLEAN_DELETE2   not del         yes {|}~
 };
 
 char *kiwi_str_clean(char *str, int type)
@@ -906,13 +912,19 @@ char *kiwi_str_clean(char *str, int type)
     u1_t *s = (u1_t *) str;
 
     for (int i = 0; *s != '\0'; s++, i++) {
-        if (*s >= 0x80 || ((type & KCLEAN_DELETE) && (clean_table[*s] & KCLEAN_DELETE))) {
+        if (*s >= 0x80 || ((type & KCLEAN_DELETE1) && (clean_table[*s] & KCLEAN_DELETE1))) {
             //real_printf("kiwi_str_clean %d PU1 %d <%c>\n", i, clean_table[*s], *s);
             kiwi_overlap_memcpy(s, s+1, strlen((char *) s+1) + SPACE_FOR_NULL);
             s--;
             //real_printf("kiwi_str_clean %d PU2 <%c>\n", i, *s);
         } else
-        if ((type & KCLEAN_REPL_SPACE) && (clean_table[*s] & KCLEAN_REPL_SPACE)) {
+        if (*s >= 0x80 || ((type & KCLEAN_DELETE2) && (clean_table[*s] & KCLEAN_DELETE2))) {
+            //real_printf("kiwi_str_clean %d PU1 %d <%c>\n", i, clean_table[*s], *s);
+            kiwi_overlap_memcpy(s, s+1, strlen((char *) s+1) + SPACE_FOR_NULL);
+            s--;
+            //real_printf("kiwi_str_clean %d PU2 <%c>\n", i, *s);
+        } else
+        if (*s >= 0x80 || ((type & KCLEAN_REPL_SPACE) && (clean_table[*s] & KCLEAN_REPL_SPACE))) {
             //real_printf("kiwi_str_clean %d %d SP <%c>\n", i, clean_table[*s], *s);
             *s = ' ';
         }

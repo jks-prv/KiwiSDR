@@ -88,7 +88,7 @@ typedef struct {
 enum { KSPLIT_NO_SKIP_EMPTY_FIELDS = 0x1, KSPLIT_HANDLE_EMBEDDED_DELIMITERS = 0x2, KSPLIT_PARSE_NUMERIC = 0x4 };
 int kiwi_split(char *ocp, char **mbuf, const char *delims, str_split_t argv[], int nargs, int flags DEF_0);
 
-enum { KCLEAN_DELETE = 1, KCLEAN_REPL_SPACE = 2 };
+enum { KCLEAN_DELETE1 = 1, KCLEAN_DELETE2 = 2, KCLEAN_REPL_SPACE = 4 };
 char *kiwi_str_clean(char *s, int type);
 
 // caller must kiwi_asfree() result
