@@ -1437,7 +1437,7 @@ function kiwi_JSON_parse(tag, json, func)
    try {
       obj = JSON.parse(json);
    } catch(ex) {
-      console.log('kiwi_JSON_parse('+ tag +'): JSON parse fail');
+      console.log('kiwi_JSON_parse('+ tag +'): JSON parse fail, len='+ json.length);
       console.log(json);
       console.log(ex);
       w3_call(func, ex);

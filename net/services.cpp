@@ -533,7 +533,7 @@ static void proxy_task(void *param)
             net.proxy_status = PR_BAD_USER_KEY;     // for benefit of my.kiwisdr.com
             break;
         } else
-        if (rv == 143) {
+        if (rv == 143) {    // 128 + 15(SIGTERM)
             lprintf("PROXY: proxy_task RESTART\n");
         } else {
             lprintf("PROXY: proxy_task RETRY rv=%d see /var/log/frpc.log for possible error messages\n", rv);
