@@ -306,15 +306,73 @@ void update_masked_freqs(dx_t *_dx_list, int _dx_list_len)
     }
 }
 
+//#define DX_QSORT_DEBUG
+#ifdef DX_QSORT_DEBUG
+	#define dx_qsort_prf(fmt, ...) \
+		if (trace) printf(fmt, ## __VA_ARGS__)
+#else
+	#define dx_qsort_prf(fmt, ...)
+#endif
+
+int dx_qsort_comp(const void *elem1, const void *elem2)
+{
+	const dx_t *e1 = (const dx_t*) elem1, *e2 = (const dx_t*) elem2;
+	#ifdef DX_QSORT_DEBUG
+	    bool trace = (e1->freq == 3585 || e1->freq == 3588 || e2->freq == 3585 || e2->freq == 3588);
+	#endif
+	
+	int r;
+	if (e1->freq < e2->freq) {
+	    r = -1;
+	    dx_qsort_prf("%.2f(#%d) < %.2f(#%d) r=-1\n", e1->freq, e1->idx, e2->freq, e2->idx);
+	} else
+	if (e1->freq > e2->freq) {
+	    r = 1;
+	    dx_qsort_prf("%.2f(#%d) > %.2f(#%d) r=1\n", e1->freq, e1->idx, e2->freq, e2->idx);
+	} else {    // same freq
+        #ifdef DX_QSORT_DEBUG
+            char *m1 = modes[DX_DECODE_MODE(e1->flags)].lc;
+            char *m2 = modes[DX_DECODE_MODE(e2->flags)].lc;
+        #endif
+	    u2_t mf1 = modes[DX_DECODE_MODE(e1->flags)].flags;
+	    u2_t mf2 = modes[DX_DECODE_MODE(e2->flags)].flags;
+
+	    if ((mf1 & IS_LSB) && !(mf2 & IS_LSB)) {
+	        r = -1;     // lsb < !lsb
+	    } else
+	    if (!(mf1 & IS_LSB) && (mf2 & IS_LSB)) {
+	        r = 1;      // !lsb > lsb
+	    } else
+	    if (!(mf1 & (IS_USB|IS_CW)) && (mf2 & (IS_USB|IS_CW))) {
+	        r = -1;     // !(usb|cw) < (usb|cw)
+	    } else
+	    if ((mf1 & (IS_USB|IS_CW)) && !(mf2 & (IS_USB|IS_CW))) {
+	        r = 1;      // (usb|cw) > !(usb|cw)
+	    } else {
+	        r = 0;
+	    }
+        dx_qsort_prf("%.2f %s(%04x,#%d) r=%d %s(%04x,#%d)\n",
+            e1->freq, m1, mf1, e1->idx, r, m2, mf2, e2->idx);
+	}
+	return r;
+}
+
 // prepare dx list by conditionally sorting, initializing self indexes and constructing new masked freq list
 void dx_prep_list(dx_db_t *dx_db, bool need_sort, dx_t *_dx_list, int _dx_list_len_prev, int _dx_list_len_new)
 {
     int i;
     dx_t *dxp;
     
+	#ifdef DX_QSORT_DEBUG
+        // for benefit of tracing inside dx_qsort_comp()
+        for (i = 0, dxp = _dx_list; i < _dx_list_len_new; i++, dxp++) {
+            dxp->idx = i;   // init self index
+        }
+    #endif
+
     // have to sort first before rebuilding masked list in case an entry is being deleted
 	if (dx_db->db == DB_STORED && need_sort)
-	    qsort(_dx_list, _dx_list_len_prev, sizeof(dx_t), qsort_doublecomp);
+	    qsort(_dx_list, _dx_list_len_prev, sizeof(dx_t), dx_qsort_comp);
 
     for (i = 0, dxp = _dx_list; i < _dx_list_len_new; i++, dxp++) {
         dxp->idx = i;   // init self index
