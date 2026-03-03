@@ -31,10 +31,10 @@ var ft8 = {
           0: [ 'regular use' ],  // NB: using a numeric key (zero) suppresses the disabled menu entry
       'FT8': [ '1840', '3573', '5357', '7074', '10136', '14074', '18100', '21074', '24915', '28074',
                '40680', '50313', '50323', '70154', '70190', '144174', '222065','432174',
-               '1296174', '10489540'
+               '1296174', '10489540', 'custom'
              ],
       'FT4': [ '3575.5', '7047.5', '10140', '14080', '18104', '21140', '24919', '28180',
-               '50318', '144150'
+               '50318', '144150', 'custom'
              ]
    },
 
@@ -68,6 +68,7 @@ var ft8 = {
       26,   // 18 440  70cm
       27,   // 19 1296 23cm
       30,   // 20 10G   3cm QO-100
+      31,   // 21 FT8 custom
       
       -1,   // 21 FT4 label
       11,   // 22 80m
@@ -81,6 +82,7 @@ var ft8 = {
       
       28,   // 30 6m
       29,   // 31 2m
+      32,   // 32 FT4 custom
    ],
 
    PREEMPT_NO: 0,
@@ -464,7 +466,9 @@ function FT8_config_html()
 	      //console.log('ft8.autorun'+ i +'='+ cfg.ft8['autorun'+ i] +' arun='+ arun);
 	      s2 +=
 	         w3_div('',
-	            w3_select_hier(f1, '', 'freq', 'ft8.autorun'+ i, arun, ft8.autorun_u, 'ft8_autorun_select_cb'),
+	            w3_select_hier(f1, 'Autorun '+ i, 'freq', 'ft8.autorun'+ i, arun, ft8.autorun_u, 'ft8_autorun_select_cb'),
+               w3_input_get('id-ft8-custom'+ i +' w3-margin-T-4/w3-label-not-bold/|padding:0;width:auto|size=8',
+                  'custom freq', 'ft8.custom'+ i, 'w3_float_set_cfg_cb|2', 0),
 	            w3_select_get_param(f2, '', 'preemptable?', 'ft8.preempt'+ i, ft8.preempt_u, 'ft8_preempt_select_cb')
 	            //w3_select_get_param(f2, '', 'start UTC', 'ft8.start'+ i, ft8.sched_u, 'ft8_autorun_sched_cb', 0, 0),
 	            //w3_select_get_param(f2, '', 'stop UTC', 'ft8.stop'+ i, ft8.sched_u, 'ft8_autorun_sched_cb', 0, 1)
