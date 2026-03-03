@@ -8792,7 +8792,7 @@ function dx_label_render_cb(arr)
 	var gid, flags, top;
 	var ident, notes, freq;
 
-	var optimize_label_layout = function(x, z, f) {
+	var optimize_eibi_label_layout = function(x, z, f) {
 	   var i, j, k;
 	   var spacing = 6;
 	   var n = Math.ceil(gap / spacing);
@@ -8900,13 +8900,19 @@ function dx_label_render_cb(arr)
 		   if (lock_z == 0) lock_z = dx_z;
 		} else {
 		   if (eibi) {
-            if (dx.f_same.length > 2) optimize_label_layout(same_x, lock_z, dx.last_f_base/1e3);
+            if (dx.f_same.length > 2) optimize_eibi_label_layout(same_x, lock_z, dx.last_f_base/1e3);
             dx.f_same = [];
             dx.f_same.push(dx_idx);
             lock_z = 0;
          }
 		}
-		top = dx_label_top + (gap * (dx_idx & 1));    // stagger the labels vertically
+		
+		// stagger the labels vertically
+		if (!eibi && cfg.dx_three_high) {
+		   top = 3 + (25 * (dx_idx % 3));
+		} else {
+		   top = dx_label_top + (gap * (dx_idx & 1));
+		}
       dx.post_render[dx_idx] = { top: top, ltop: top, x: x /* , f: f_base_label_Hz/1e3, ident: ident */ };
 		dx.last_f_base = f_base_label_Hz;
 
@@ -8948,7 +8954,7 @@ function dx_label_render_cb(arr)
 		
 		dx_z++;
 	}
-   if (eibi && dx.f_same.length > 2) optimize_label_layout(same_x, lock_z, -1);
+   if (eibi && dx.f_same.length > 2) optimize_eibi_label_layout(same_x, lock_z, -1);
 	console_log_lbl(dx.list);
 	console_log_lbl(dx.displayed);
 	

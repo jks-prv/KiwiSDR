@@ -235,6 +235,7 @@ function config_html()
             w3_checkbox_get_param('w3-margin-T-8//w3-label-inline', 'Show user names to user connections', 'show_user', 'admin_bool_cb', true),
             w3_checkbox_get_param('w3-margin-T-8//w3-label-inline', 'Show geolocation info to users', 'show_geo', 'admin_bool_cb', true),
             w3_checkbox_get_param('w3-margin-T-8//w3-label-inline', 'Show geolocation city', 'show_geo_city', 'admin_bool_cb', true),
+            w3_checkbox_get_param('w3-margin-T-8//w3-label-inline', 'Show DX labels 3-high', 'dx_three_high', 'admin_bool_cb', true),
             w3_checkbox_get_param('id-config-spec-inv w3-margin-T-8//w3-label-inline', 'Downconverter high-side injection', 'spectral_inversion', 'config_spec_inv_cb', false)
          )
 		) +
