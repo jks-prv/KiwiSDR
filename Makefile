@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 829
+VERSION_MIN = 830
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -226,7 +226,7 @@ EXTS = $(INT_EXTS) $(PVT_EXTS)
 
 ifeq ($(OTHER_DIR),)
     GPS = gps gps/ka9q-fec gps/GNSS-SDRLIB
--include rx/Makefile
+    -include rx/Makefile
 else
     GPS =
     RX = rx
@@ -268,8 +268,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 #           USE_SSL isn't compatible with gdb. So for now we revert to USE_CRYPT
             INT_FLAGS += -DUSE_CRYPT
             LIBS += -lcrypt
-#            INT_FLAGS += -DUSE_SSL
-#            LIBS += -lssl
+#           INT_FLAGS += -DUSE_SSL
+#           LIBS += -lssl
         else
             INT_FLAGS += -DUSE_CRYPT
             LIBS += -lcrypt
@@ -1059,7 +1059,7 @@ endif
 $(BUILD_DIR)/kiwid.bin: $(FOPTIM_DEP) $(OTHER_DEP) $(OBJ_DIR) $(OBJ_DIR_O3) $(KEEP_DIR) $(ALL_OBJECTS) $(BIN_DEPS) $(EMBED_DEPS) $(EXTS_DEPS)
 ifneq ($(SAN),1)
     ifeq ($(KIWI_SKIP_LINK),true)
-	    @echo "DEVSYS: SKIP OF KIWID.BIN LINK STEP"
+	    @echo "DEVSYS: SKIP OF kiwid.bin LINK STEP"
 	    touch $@
     else
 	    @echo $(CPP) $(LDFLAGS) "..." $(EMBED_DEPS) $(EXTS_DEPS) $(LIBS) -o $@
@@ -1072,6 +1072,7 @@ endif
 # auto generation of dependency info, see:
 #	http://scottmcpeak.com/autodepend/autodepend.html
 #	http://make.mad-scientist.net/papers/advanced-auto-dependency-generation
+# NB: do not use ":=" here
 df = $(basename $@)
 POST_PROCESS_DEPS = \
 	@mv -f $(df).d $(df).d.tmp; \

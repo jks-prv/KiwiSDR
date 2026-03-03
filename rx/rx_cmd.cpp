@@ -1071,12 +1071,18 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                         need_sort = true;
                     } else {
                         // modify entry
-                        dx_print_upd("DX_UPD %s modify entry #%d, freq=%.2f\n", conn->remote_ip, gid, f_kHz);
+                        u2_t mode_new = DX_DECODE_MODE(flags);
+                        dx_print_upd("DX_UPD %s modify entry #%d, freq=%.2f mode=%s\n", conn->remote_ip, gid, f_kHz, modes[mode_new].lc);
                         dxp = &dx_db->list[gid];
+                        u2_t mode_old = DX_DECODE_MODE(dxp->flags);
                         new_len = dx_db->actual_len;
                         if (dxp->freq != f_kHz) {
                             need_sort = true;
                             dx_print_upd("DX_UPD modify, freq change, sort required (old freq=%.2f)\n", dxp->freq);
+                        } else
+                        if (mode_new != mode_old) {
+                            need_sort = true;
+                            dx_print_upd("DX_UPD modify, mode change, sort required (old mode=%s)\n", modes[mode_old].lc);
                         } else {
                             dx_print_upd("DX_UPD modify no freq change, no sort required\n");
                         }

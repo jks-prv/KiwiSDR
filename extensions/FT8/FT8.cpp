@@ -23,17 +23,20 @@
 
 // order matches "cfg value order" FT8.js::ft8.menu_i_to_cfg_i (NOT "menu order" ft8.autorun_u)
 // only add new entries to the end so as not to disturb existing values stored in config
-#define N_FREQ 30
+#define N_FREQ 32
+#define CUSTOM_FREQ -1
+
 static double ft8_autorun_dial[N_FREQ] = {      // usb carrier/dial freq
     /* FT8 */ 1840, 3573, 5357, 7074,   10136, 14074, 18100, 21074, 24915, 28074,   // 1-10
     /* FT4 */       3575.5,     7047.5, 10140, 14080, 18104, 21140, 24919, 28180,   // 11-18
     /* FT8 */ 40680, 50313, 50323, 70154, 70190, 144174, 222065, 432174, 1296174,   // 19-27
-    /* FT4 */ 50318, 144150,    // 28-29
-    /* FT8 */ 10489540          // 30
+    /* FT4 */ 50318, 144150,            // 28-29
+    /* FT8 */ 10489540, CUSTOM_FREQ,    // 30-31
+    /* FT4 */ CUSTOM_FREQ               // 32
 };
 
 // must map to above entries
-static u1_t isFT4[N_FREQ] = { 0,0,0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1, 0,0,0,0,0,0,0,0,0, 1,1, 0 };
+static u1_t isFT4[N_FREQ] = { 0,0,0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1, 0,0,0,0,0,0,0,0,0, 1,1, 0,0, 1 };
 
 //#define DEBUG_MSG	true
 #define DEBUG_MSG	false
@@ -386,9 +389,13 @@ static void ft8_autorun(int instance, bool initial)
 {
     rx_util_t *r = &rx_util;
     int band = ft8_arun_band[instance]-1;
-    double dial_freq_kHz = ft8_autorun_dial[band];
-    double if_freq_kHz = dial_freq_kHz - freq.offset_kHz;
     bool ft4 = (isFT4[band] != 0);
+    double dial_freq_kHz = ft8_autorun_dial[band];
+    if (dial_freq_kHz == CUSTOM_FREQ) {
+        dial_freq_kHz = cfg_float(stprintf("ft8.custom%d", instance), NULL, CFG_OPTIONAL);
+        printf("FT%d autorun: CUSTOM freq %.2f instance=%d\n", ft4? 4:8, dial_freq_kHz, instance);
+    }
+    double if_freq_kHz = dial_freq_kHz - freq.offset_kHz;
     
     if (is_locked) {
         //printf("FT8 autorun: DRM is_locked\n");
@@ -397,8 +404,8 @@ static void ft8_autorun(int instance, bool initial)
 
 	if (!rx_freq_inRange(dial_freq_kHz)) {
 	    if (!ft8_arun_seen[instance]) {
-            printf("FT%d autorun: ERROR band=%d dial_freq_kHz %.2f is outside rx range %.2f - %.2f\n",
-                ft4? 4:8, band, dial_freq_kHz, freq.offset_kHz, freq.offmax_kHz);
+            printf("FT%d autorun: ERROR instance=%d band=%d dial_freq_kHz %.2f is outside rx range %.2f - %.2f\n",
+                ft4? 4:8, instance, band, dial_freq_kHz, freq.offset_kHz, freq.offmax_kHz);
 	        ft8_arun_seen[instance] = true;
 	    }
 	    return;
@@ -410,7 +417,7 @@ static void ft8_autorun(int instance, bool initial)
     char *geoloc;
     const char *pre = preempt? (ft8_conf.GPS_update_grid? ",%20pre" : ",%20preemptable") : "";
     const char *rgrid = ft8_conf.GPS_update_grid? stprintf(",%%20%s", ft8_conf.rgrid) : "";
-    printf("FT8 autorun: preempt=%d rgrid=%s GPS_update_grid=%d\n", preempt, ft8_conf.rgrid, ft8_conf.GPS_update_grid);
+    printf("FT8 autorun: instance=%d preempt=%d rgrid=%s GPS_update_grid=%d\n", instance, preempt, ft8_conf.rgrid, ft8_conf.GPS_update_grid);
     asprintf(&geoloc, "0%%20decoded%s%s", pre, rgrid);
 
 	bool ok = internal_conn_setup(ICONN_WS_SND | ICONN_WS_EXT, &iconn[instance], instance, PORT_BASE_INTERNAL_FT8,

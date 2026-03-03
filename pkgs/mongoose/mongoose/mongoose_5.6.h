@@ -19,6 +19,7 @@
 #define  MONGOOSE_HEADER_INCLUDED
 
 #define MG_VERSION "5.6"
+#define MG_VERSION_OLD
 
 #include <stdio.h>      // required for FILE
 #include <stddef.h>     // required for size_t

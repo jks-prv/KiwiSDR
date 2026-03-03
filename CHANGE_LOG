@@ -3,6 +3,22 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.830  March 3, 2026
+    DX labels: Fix bug where sorting labels by freq instead of freq + mode causes adjacent labels
+    to be rendered on top of each other in certain cases. (thanks VK2SKY)
+
+    FT8 extension: Add autorun custom frequencies. See the admin extensions tab. (thanks dh90)
+    
+    Antenna switch: Almost all special characters can now be used in the per-antenna curl field.
+    More info: kiwisdr.com/info/#id-antsw (thanks AD0VC)
+
+    Added UDP host:port option to admin configuration of FSK extension. Allows streaming of FSK
+    output to an external host via UDP. Only applies to local connections running FSK.
+    For example allows external FSK SYNOP decoding. (thanks DF6DBF)
+    
+    Admin status tab: Browser copy/paste of users list will now paste entries into e.g. a text file
+        as a single line rather than two. (thanks VK3KHZ)
+
 v1.829  February 17, 2026
     Admin connect tab:
         More UI improvements intended to reduce configuration errors and subsequent support time.
@@ -625,7 +641,7 @@ v1.696  August 5, 2024
             The mode menu will be preset based on your pre-v1.696 settings. But you should review it
             to make sure it is set to do what you want.
         
-        The "cURL command arguments" field allows an arbitrary cURL command to be run when an
+        The "curl command arguments" field allows an arbitrary curl command to be run when an
         antenna is selected. This could be a command causing a network-enabled downconverter to
         change setup such as frequency/band etc. More info: kiwisdr.com/info#id-antsw
         (thanks N6GN)

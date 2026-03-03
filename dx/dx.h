@@ -26,7 +26,7 @@ Boston, MA  02110-1301, USA.
 #define DX_HIDDEN_SLOT 1
 
 typedef struct {
-	double freq;        // must be first for qsort_doublecomp()
+	double freq;
     u2_t time_begin, time_end;
 	u4_t flags;
     u2_t ident_idx;

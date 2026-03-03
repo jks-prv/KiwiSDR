@@ -87,6 +87,8 @@ var fsk = {
    log_interval: null,
    log_txt: '',
 
+   udp_text: '',
+
    last_last: 0
 };
 
@@ -412,8 +414,19 @@ function fsk_output_char(s)
       s = 'EFR '+ fsk.menu_sel + s;
    }
    
-   //if (s.length != 1) console.log('fsk_output_char', {'slen':s.length});
    //if (iscntrl(s)) console.log('fsk_output_char '+ kiwi_string_to_hex(s));
+   if (isprint(s) || isspace(s)) {
+      fsk.udp_text += s;
+      //console.log({'udp_text': fsk.udp_text});
+      if (s == '\n') {
+         if (fsk.udp_text.length == 1) fsk.udp_text = '\r\n';
+         //console.log({'udp_text': fsk.udp_text});
+         ext_send('SET udp_text='+ fsk.udp_text);
+         fsk.udp_text = '';
+      }
+   }
+   
+   
    fsk_console_status_msg_p.s = encodeURIComponent(s);
    fsk.log_txt += kiwi_remove_escape_sequences(kiwi_decodeURIComponent('FSK', s));
 
@@ -1167,7 +1180,9 @@ function FSK_config_html()
    var s =
       w3_inline_percent('w3-container',
          w3_div('w3-restart',
-            w3_input_get('', 'Test filename', 'fsk.test_file', 'w3_string_set_cfg_cb', 'FSK.test.12k.au')
+            w3_input_get('', 'Test filename', 'fsk.test_file', 'w3_string_set_cfg_cb', 'FSK.test.12k.au'),
+            w3_input_get('w3-margin-T-16//', 'UDP receiver of FSK output', 'fsk.udp', 'w3_string_set_cfg_cb', '',
+               'host:port or ip_address:port')
          ), 40
       );
 
