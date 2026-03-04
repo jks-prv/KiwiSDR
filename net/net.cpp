@@ -31,6 +31,7 @@ Boston, MA  02110-1301, USA.
 #include "cfg.h"
 #include "net.h"
 #include "rx_util.h"
+#include "ansi.h"
 
 #include <string.h>
 #include <time.h>
@@ -509,31 +510,44 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
 	return isLocal;
 }
 
-u4_t inet4_d2h(char *inet4_str, bool *error, u1_t *ap, u1_t *bp, u1_t *cp, u1_t *dp)
+// be very strict about content of inet4_str
+u4_t inet4_d2h_strict(char *inet4_str, bool *error, u1_t *ap, u1_t *bp, u1_t *cp, u1_t *dp, bool debug)
 {
     if (error != NULL) *error = false;
-	int n;
-	u4_t a, b, c, d;
+	int n, sl;
+	u4_t a, b, c, d, nm = 32;
 
-	if (inet4_str == NULL)
+	if (kiwi_emptyStr(inet4_str))
 	    goto err;
 	
-	n = sscanf(inet4_str, "%d.%d.%d.%d", &a, &b, &c, &d);
-	if (n != 4) {
-		n = sscanf(inet4_str, "::ffff:%d.%d.%d.%d", &a, &b, &c, &d); //IPv4-mapped address
-		if (n != 4)
-			goto err;  // IPv6 or invalid
+	sl = strlen(inet4_str);
+	int consumed;   // guard against presence of any junk at the end
+    n = sscanf(inet4_str, "::ffff:%d.%d.%d.%d%n", &a, &b, &c, &d, &consumed);   // IPv4-mapped address
+    if (n != 4 || consumed != sl) {
+        if (inet4_str[0] != '+' && !isdigit(inet4_str[0])) {    // '+' is whitelist override indicator
+            goto err;
+        }
+        n = sscanf(inet4_str, "%d.%d.%d.%d/%d%n", &a, &b, &c, &d, &nm, &consumed);
+        if (n != 5 || consumed != sl) {
+            n = sscanf(inet4_str, "%d.%d.%d.%d%n", &a, &b, &c, &d, &consumed);
+            if (n != 4 || consumed != sl) {
+                goto err;  // IPv6 or invalid
+            }
+            nm = 32;
+        }
 	}
-	if (a > 255 || b > 255 || c > 255 || d > 255)
+	if (a < 0 || a > 255 || b < 0 || b > 255 || c < 0 || c > 255 || d < 0 || d > 255 || nm < 0 || nm > 32)
 	    goto err;
+	if (debug) printf(GREEN "inet4_d2h_strict: accepted \"%s\"" NONL, inet4_str);
 
-    if (ap != NULL) *ap = a & 255;
-    if (bp != NULL) *bp = b & 255;
-    if (cp != NULL) *cp = c & 255;
-    if (dp != NULL) *dp = d & 255;
+    if (ap) *ap = a & 255;
+    if (bp) *bp = b & 255;
+    if (cp) *cp = c & 255;
+    if (dp) *dp = d & 255;
 	return INET4_DTOH(a, b, c, d);
 
 err:
+    printf(RED "WARNING inet4_d2h_strict: BAD inet4_str \"%s\"" NONL, inet4_str);
     if (error != NULL) *error = true;
     return 0;
 }
@@ -566,6 +580,60 @@ bool is_inet4_map_6(u1_t *a)
 
 	return false;
 }
+
+// be very strict about content of inet6_str
+bool is_valid_ipv6_strict(char *inet6_str)
+{
+	if (kiwi_emptyStr(inet6_str)) return false;
+
+    // The glibc version of inet_pton() considers the entire sting, so junk after a valid ip
+    // will cause failure. But because this may not always be the case double check by using
+    // the scanf() check below to look for whitespace + junk after string.
+    struct in6_addr addr;
+    if (inet_pton(AF_INET6, inet6_str, &addr) != 1)
+        return false;
+
+    // detects whitespace + junk after
+    int sl = strlen(inet6_str);
+    int consumed = 0;
+    if (sscanf(inet6_str, "%*s%n", &consumed) != 0 || consumed != sl) {
+        printf(RED "WARNING is_valid_ipv6_strict: BAD inet6_str \"%s\"" NONL, inet6_str);
+        return false;
+    }
+
+    return true;
+}
+
+#ifdef TEST_IP_PARSE_STRICT
+
+#define TEST_inet4_d2h_strict(ip_s) \
+    inet4_d2h_strict((char *) ip_s, &err, NULL, NULL, NULL, NULL, DEBUG_TRUE); \
+    printf("TEST_inet4_d2h_strict \"" ip_s "\" err=%d\n\n", err);
+
+#define TEST_is_valid_ipv6_strict(ip_s) \
+    valid = is_valid_ipv6_strict((char *) ip_s); \
+    printf("TEST_is_valid_ipv6_strict \"" ip_s "\" valid=%d\n\n", valid);
+
+void ip_test_parse_strict()
+{
+    bool valid, err;
+    TEST_inet4_d2h_strict("1.2.3.4");
+    TEST_inet4_d2h_strict("1.2.3.4/24");
+    TEST_inet4_d2h_strict("+1.2.3.4/24");
+    TEST_inet4_d2h_strict("1.2.3.4/33");
+    TEST_inet4_d2h_strict("x1.2.3.4/24");
+    TEST_inet4_d2h_strict("1.2.3.4\"junk");
+    TEST_inet4_d2h_strict("1.2.3.4/24\"junk");
+
+    TEST_is_valid_ipv6_strict("fe80::1");
+    TEST_is_valid_ipv6_strict("::1");
+    TEST_is_valid_ipv6_strict("::ffff:1.2.3.4");
+    TEST_is_valid_ipv6_strict("::ffff:1.2.3.4/24");
+    TEST_is_valid_ipv6_strict("fe80::1zzz");
+    TEST_is_valid_ipv6_strict("fe80::1 ");
+    TEST_is_valid_ipv6_strict("x fe80::1");
+}
+#endif
 
 int inet_nm_bits(int family, void *netmask)
 {
@@ -604,13 +672,14 @@ int inet_nm_bits(int family, void *netmask)
 	return nm_bits;
 }
 
-bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4)
+bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4, bool *error)
 {
-    bool error;
-    u4_t ip = inet4_d2h(ip_str, &error);
+    bool err;
+    if (error) *error = false;
+    u4_t ip = inet4_d2h_strict(ip_str, &err);
     if (ipv4) *ipv4 = 0;
     
-    if (!error) {
+    if (!err) {
         // ipv4
         if (is_loopback)
             *is_loopback = (ip == INET4_DTOH(127,0,0,1));
@@ -619,17 +688,22 @@ bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4)
             (ip >= INET4_DTOH(172,16,0,0) && ip <= INET4_DTOH(172,31,255,255)) ||
             (ip >= INET4_DTOH(192,168,0,0) && ip <= INET4_DTOH(192,168,255,255)) ) {
             if (ipv4) *ipv4 = ip;
-            return true;
+            return true;    // is a local IP (*error set false)
         }
     } else {
+        if (!is_valid_ipv6_strict(ip_str)) {
+            if (error) *error = true;   // ipv4 or ipv6 address has a format error
+            return false;
+        }
+        
         // ipv6
         if (is_loopback)
             *is_loopback = (strcmp(ip_str, "::1") == 0 || strcmp(ip_str, ":0:0:0:0:0:0:0:1") == 0);
         if (strncasecmp(ip_str, "fd", 2) == 0)
-            return true;
+            return true;    // is a local IP (*error set false)
     }
     
-    return false;
+    return false;   // is not a local IP (*error set false)
 }
 
 bool ip_match(const char *ip, ip_lookup_t *ips)
@@ -670,7 +744,7 @@ int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, int n_ips, const cha
             int slen = strlen(ip_list[i]);
             if (ip_list[i][slen-1] == '\n') ip_list[i][slen-1] = '\0';    // remove trailing \n
 	        printf("LOOKUP: \"%s\" %s\n", domain_name, ip_list[i]);
-	        r_ips->ip[i] = inet4_d2h(ip_list[i], NULL);
+	        r_ips->ip[i] = inet4_d2h_strict(ip_list[i]);
         }
         
         kiwi_ifree(r_buf, "DNS_lookup");
@@ -678,7 +752,7 @@ int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, int n_ips, const cha
 	} else {
 	    if (ip_backup != NULL) {
             ip_list[0] = (char *) ip_backup;
-	        r_ips->ip[0] = inet4_d2h(ip_list[0], NULL);
+	        r_ips->ip[0] = inet4_d2h_strict(ip_list[0]);
             n = 1;
             r_ips->valid = r_ips->backup = true;
             lprintf("WARNING: lookup for \"%s\" failed, using backup IPv4 address %s\n", domain_name, ip_backup);
@@ -711,22 +785,34 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
     if (is_loopback) *is_loopback = false;
     kiwi_strncpy(remote_ip, ip_remote(mc), NET_ADDRSTRLEN);     // unforwarded
     
-    const char *x_real_ip = mg_get_header(mc, "X-Real-IP");
+    //#define TEST_X_REAL_IP_INJECTION
+    #ifdef TEST_X_REAL_IP_INJECTION
+        const char *x_real_ip = "1.1.1.1\"detect_injected_junk_at_the_end";
+    #else
+        const char *x_real_ip = mg_get_header(mc, "X-Real-IP");
+    #endif
     const char *x_forwarded_for = mg_get_header(mc, "X-Forwarded-For");
     //printf("check_if_forwarded: x_real_ip=<%s> x_forwarded_for=<%s>\n", x_real_ip, x_forwarded_for);
     if (x_real_ip == NULL && x_forwarded_for == NULL) return false;
 
     int n = 0;
     char *ip_r = NULL;
-    bool is_loop;
+    bool is_local, is_loop, error;
     
     if (x_real_ip != NULL) {
         //printf("check_if_forwarded %s: %s X-Real-IP %s\n", id, remote_ip, x_real_ip);
         n = sscanf(x_real_ip, "%" NET_ADDRSTRLEN_S "ms", &ip_r);
-        if (!kiwi.disable_recent_changes && isLocal_ip(ip_r, &is_loop)) {
-            lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Real-IP %s is_loopback=%d\n", id, ip_r, is_loop);
-            if (is_loop && is_loopback) *is_loopback = true;
-            n = 0;
+        if (!kiwi.disable_recent_changes) {
+            is_local = isLocal_ip(ip_r, &is_loop, NULL, &error);
+            if (error) {
+                lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? X-Real-IP %s\n", id, ip_r);
+                n = 0;
+            } else
+            if (is_local) {
+                lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Real-IP %s is_loopback=%d\n", id, ip_r, is_loop);
+                if (is_loop && is_loopback) *is_loopback = true;
+                n = 0;
+            }
         }
     }
     
@@ -735,10 +821,17 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
         if (x_real_ip == NULL || n != 1) {
             // take only client ip in case "X-Forwarded-For: client, proxy1, proxy2 ..."
             n = sscanf(x_forwarded_for, "%" NET_ADDRSTRLEN_S "m[^, ]", &ip_r);
-            if (!kiwi.disable_recent_changes && isLocal_ip(ip_r, &is_loop)) {
-                lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Forwarded-For %s is_loopback=%d\n", id, ip_r, is_loop);
-                if (is_loop && is_loopback) *is_loopback = true;
-                n = 0;
+            if (!kiwi.disable_recent_changes) {
+                isLocal_ip(ip_r, &is_loop, NULL, &error);
+                if (error) {
+                    lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? X-Forwarded-For %s\n", id, ip_r);
+                    n = 0;
+                } else
+                if (is_local) {
+                    lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Forwarded-For %s is_loopback=%d\n", id, ip_r, is_loop);
+                    if (is_loop && is_loopback) *is_loopback = true;
+                    n = 0;
+                }
             }
         }
     }
@@ -749,7 +842,10 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
         forwarded = true;
     }
     
-    mg_free_header(x_real_ip);
+    #ifdef TEST_X_REAL_IP_INJECTION
+    #else
+        mg_free_header(x_real_ip);
+    #endif
     mg_free_header(x_forwarded_for);
     kiwi_asfree(ip_r);
     return forwarded;

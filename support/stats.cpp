@@ -559,7 +559,7 @@ void user_arrive(conn_t *c)
 
     #if 0
         bool err;
-        u4_t ip4 = inet4_d2h(c->remote_ip, &err);
+        u4_t ip4 = inet4_d2h_strict(c->remote_ip, &err);
         if (err) {
             printf("user_arrive NOT IPv4 <%s>\n", c->remote_ip);
             ip4 = 0;
@@ -603,7 +603,7 @@ void user_leaving(conn_t *c, u4_t connected_secs)
 
     #if 0
         bool err;
-        u4_t ip4 = inet4_d2h(c->remote_ip, &err);
+        u4_t ip4 = inet4_d2h_strict(c->remote_ip, &err);
         if (err) {
             printf("user_leaving NOT IPv4 <%s>\n", c->remote_ip);
             ip4 = 0;

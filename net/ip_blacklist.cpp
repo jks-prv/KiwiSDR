@@ -89,7 +89,7 @@ static int ip_blacklist_add(char *ips, bool *whitelist)
     if (n == 1) cidr = 32;
     bool error;
     u1_t a,b,c,d;
-    u4_t ip = inet4_d2h(ip_str, &error, &a, &b, &c, &d);
+    u4_t ip = inet4_d2h_strict(ip_str, &error, &a, &b, &c, &d);
     if (error || cidr < 1 || cidr > 32) return -1;
     u4_t nm = ~( (1 << (32-cidr)) -1 );
     ip &= nm;       // make consistent with netmask
@@ -215,7 +215,7 @@ void ip_blacklist_init()
 bool check_ip_blacklist(char *remote_ip, bool log)
 {
     bool error;
-    u4_t ip = inet4_d2h(remote_ip, &error);
+    u4_t ip = inet4_d2h_strict(remote_ip, &error);
     if (error) return false;
     for (int i=0; i < net.ip_blacklist_len; i++) {
         ip_blacklist_t *bl = &net.ip_blacklist[i];
@@ -317,7 +317,7 @@ bool ip_blacklist_get(bool download_diff_restart)
 		        bl_sp = kstr_cat(bl_sp, (char *) " ");
 		    first = false;
 		    bl_sp = kstr_cat(bl_sp, (char *) ip_s);
-            inet4_d2h((char *) ip_s, &ip_err);
+            inet4_d2h_strict((char *) ip_s, &ip_err);
             json_string_free(&bl_json, ip_s);
         }
 	}

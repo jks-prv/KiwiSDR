@@ -919,8 +919,8 @@ void c2s_admin(void *param)
                     clprintf(conn, "SET dns1=%s dns2=%s\n", dns1, dns2);
 
                     bool dns1_err, dns2_err;
-                    inet4_d2h(dns1, &dns1_err);
-                    inet4_d2h(dns2, &dns2_err);
+                    inet4_d2h_strict(dns1, &dns1_err);
+                    inet4_d2h_strict(dns2, &dns2_err);
 
                     if (debian_ver >= 11) {
                         // careful: "DNS=(empty)" means reset DNS list
