@@ -48,7 +48,7 @@ typedef struct {
 	int rx_chan;
 	int run;
 	int proto;
-	bool debug;
+	bool debug, freq_sort;
 	int last_freq_kHz;
 	
 	bool task_created;
@@ -235,6 +235,13 @@ bool ft8_msgs(char *msg, int rx_chan)
 		return true;
 	}
 
+    int freq_sort;
+	if (sscanf(msg, "SET ft8_freq_sort=%d", &freq_sort) == 1) {
+	    e->freq_sort = freq_sort;
+        decode_ft8_freq_sort(rx_chan, e->freq_sort);
+		return true;
+    }
+    
 	float df;
 	n = sscanf(msg, "SET dialfreq=%f", &df);
 	if (n == 1) {

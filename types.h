@@ -110,6 +110,8 @@ typedef int (*funcPR_t)(void *);
 #endif
 
 #define	NOT_FOUND	-1
+#define	DEBUG_TRUE	true
+#define	DEBUG_FALSE	false
 
 #define	ARRAY_EL_LEN(x) ((int) sizeof ((x) [0]))
 #define	ARRAY_LEN(x)	((int) (sizeof (x) / ARRAY_EL_LEN(x)))

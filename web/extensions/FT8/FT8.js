@@ -15,6 +15,7 @@ var ft8 = {
    FT8: 0,
    FT4: 1,
    mode_s: ['FT8', 'FT4'],
+   freq_sort: 0,
 
    // yes, there are really no assigned FT4 freqs for 160m and 60m
    freq_s: {
@@ -232,27 +233,39 @@ function ft8_controls_setup()
 	var controls_html =
 		w3_div('id-ft8-controls w3-text-white',
 			w3_divs('',
-            w3_inline('w3-halign-space-between|width:84%/',
-				   w3_div('w3-medium w3-text-aqua', '<b>FT8/FT4 decoder</b>'),
-					w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b> Karlis Goba &copy; 2018')
+            w3_inline('w3-halign-space-between|width:75%/',
+				   w3_div('w3-medium w3-text-aqua', '<b>FT8/FT4 decoder</b>')
+					//w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b> Karlis Goba &copy; 2018')
 				),
-				w3_div('id-ft8-err w3-margin-T-10 w3-padding-small w3-css-yellow w3-width-fit w3-hide'),
-				w3_inline('id-ft8-container w3-margin-T-6/w3-margin-between-8',
+            
+				w3_divs('id-ft8-container w3-margin-T-6/w3-tspace-8',
 
-               w3_div('',
-                  w3_inline('/w3-margin-between-16',
-                     w3_select_hier('id-ft8-freq w3-text-red w3-width-auto', '', 'freq', 'ft8.freq_idx', -1, ft8.freq_s, 'ft8_freq_cb'),
-                     w3_select('w3-text-red', '', 'mode', 'ft8.mode', ft8.FT8, ft8.mode_s, 'ft8_mode_cb')
-                  ),
-                  w3_div('w3-margin-T-4',
-                     w3_link('w3-bold', url, 'pskreporter.info')
-                  )
+               w3_inline('/w3-margin-between-32',
+                  w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b>'),
+                  w3_link('w3-bold', url, 'pskreporter.info')
+               ),
+   
+               w3_div('id-ft8-err w3-margin-T-10 w3-padding-small w3-css-yellow w3-width-fit w3-hide'),
+
+
+               w3_inline('/w3-margin-between-16',
+                  w3_select_hier('id-ft8-freq w3-text-red w3-width-auto', '', 'freq', 'ft8.freq_idx', -1, ft8.freq_s, 'ft8_freq_cb'),
+                  w3_select('w3-text-red', '', 'mode', 'ft8.mode', ft8.FT8, ft8.mode_s, 'ft8_mode_cb')
                ),
 
-               w3_div('cl-ft8-text', 'reporter call '+ callsign),
-               w3_div('id-ft8-rgrid cl-ft8-text', 'reporter grid '+ grid + (cfg.ft8.GPS_update_grid? ' (GPS)':'')),
-               w3_button('w3-padding-smaller w3-css-yellow', 'Clear', 'ft8_clear_button_cb'),
-               (dbgUs? w3_button('id-ft8-test w3-padding-smaller w3-aqua', 'Test', 'ft8_test_cb') : '')
+               w3_inline('/w3-margin-between-16',
+                  w3_button('w3-padding-smaller w3-css-yellow', 'Clear', 'ft8_clear_button_cb'),
+                  w3_checkbox('/w3-label-inline w3-label-not-bold/', 'freq sort', 'ft8.freq_sort', false, 'ft8_freq_sort_cb'),
+                  (dbgUs? w3_button('id-ft8-test w3-padding-smaller w3-aqua', 'Test', 'ft8_test_cb') : '')
+               ),
+
+               w3_inline('/w3-margin-between-8',
+                  w3_div('cl-ft8-text', 'reporter call '+ callsign),
+                  w3_div('id-ft8-rgrid cl-ft8-text', 'reporter grid '+ grid + (cfg.ft8.GPS_update_grid? ' (GPS)':''))
+               ),
+
+               w3_div('w3-margin-T-4',
+               )
             )
 			)
 		);
@@ -261,7 +274,7 @@ function ft8_controls_setup()
 	time_display_setup('ft8');
 
    ext_set_data_height(300);
-	ext_set_controls_width_height(525, 100);
+	ext_set_controls_width_height(275, 175);
    ft8_clear_button_cb();
 
 	if (ext_nom_sample_rate() != 12000) {
@@ -345,6 +358,15 @@ function ft8_mode_cb(path, idx, first)
    ft8.mode = idx? ft8.FT4 : ft8.FT8;
 	ext_send('SET ft8_protocol='+ ft8.mode);
    //console.log('ft8_mode_cb: changing mode to '+ ft8.mode);
+}
+
+function ft8_freq_sort_cb(path, checked, first)
+{
+	if (first) return;
+	//console.log('ft8_freq_sort_cb: checked='+ checked);
+	w3_bool_cb(path, checked);
+   ft8.freq_sort = checked? 1:0;
+	ext_send('SET ft8_freq_sort='+ ft8.freq_sort);
 }
 
 function ft8_clear_button_cb(path, idx, first)
@@ -467,7 +489,7 @@ function FT8_config_html()
 	      s2 +=
 	         w3_div('',
 	            w3_select_hier(f1, 'Autorun '+ i, 'freq', 'ft8.autorun'+ i, arun, ft8.autorun_u, 'ft8_autorun_select_cb'),
-               w3_input_get('id-ft8-custom'+ i +' w3-margin-T-4/w3-label-not-bold/|padding:0;width:auto|size=8',
+               w3_input_get('id-ft8-custom'+ i +' w3-margin-T-4/w3-label-not-bold/|padding:4px;width:auto|size=8',
                   'custom freq', 'ft8.custom'+ i, 'w3_float_set_cfg_cb|2', 0),
 	            w3_select_get_param(f2, '', 'preemptable?', 'ft8.preempt'+ i, ft8.preempt_u, 'ft8_preempt_select_cb')
 	            //w3_select_get_param(f2, '', 'start UTC', 'ft8.start'+ i, ft8.sched_u, 'ft8_autorun_sched_cb', 0, 0),
