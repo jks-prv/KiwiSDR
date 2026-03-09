@@ -2660,6 +2660,11 @@ function open_websocket(stream, open_cb, open_cb_param, msg_cb, recv_cb, error_c
 	var opt_url = w3_opt(opt, 'url');
 	var ws_url = isNonEmptyString(opt_url)? opt_url : kiwi_url_origin().split("://")[1];
 	
+   // CAUTION: follow matching change in services.cpp::proxy_frpc_setup()
+	if (w3_opt(opt, 'proxy2') && ws_url.match(/21\d\d\d.proxy.kiwisdr.com/)) {
+	   ws_url = ws_url.replace(/proxy/, 'proxy2');
+	}
+	
 	// evaluate ws protocol
 	var ws_protocol = 'ws://';
 
