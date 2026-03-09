@@ -153,6 +153,23 @@ u64_t rx_conn_tstamp()
     return tstamp;
 }
 
+bool rx_in_HFDL_bands(int f)
+{
+    return (    // HFDL (aeronautical) bands
+        (f >= (2941-10) && f < 3500) ||     // stay outside 80m ham band
+        (f >= (4654-10) && f <= (4687+10)) ||
+        (f >= (5451-10) && f <= (5720+10)) ||
+        (f >= (6529-10) && f <= (6712+10)) ||
+        (f >= (8825-10) && f <= (8977+10)) ||
+        (f >= (10027-10) && f <= (10093+10)) ||
+        (f >= (11184-10) && f <= (11387+10)) ||
+        (f >= (13264-10) && f <= (13351+10)) ||
+        (f >= (15025-10) && f <= (15025+10)) ||
+        (f >= (17901-10) && f <= (17985+10)) ||
+        (f >= (21928-10) && f <= (21997+10))
+    );
+}
+
 void rx_loguser(conn_t *c, logtype_e type)
 {
     if (TaskFlags() & CTF_NO_LOG) return;
@@ -178,20 +195,7 @@ void rx_loguser(conn_t *c, logtype_e type)
             if (strcmp(c->ident_user, "kiwi_nc.py") == 0) {
                 float f_kHz = (float) c->freqHz / kHz + freq.offset_kHz;
                 int f = (int) floorf(f_kHz);
-                bool freq_trig = (
-                    (f >= (2941-10) && f < 3500) ||     // stay outside 80m ham band
-                    (f >= (4654-10) && f <= (4687+10)) ||
-                    (f >= (5451-10) && f <= (5720+10)) ||
-                    (f >= (6529-10) && f <= (6712+10)) ||
-                    (f >= (8825-10) && f <= (8977+10)) ||
-                    (f >= (10027-10) && f <= (10093+10)) ||
-                    (f >= (11184-10) && f <= (11387+10)) ||
-                    (f >= (13264-10) && f <= (13351+10)) ||
-                    (f >= (15025-10) && f <= (15025+10)) ||
-                    (f >= (17901-10) && f <= (17985+10)) ||
-                    (f >= (21928-10) && f <= (21997+10))
-                );
-                if (freq_trig) {
+                if (rx_in_HFDL_bands(f)) {
                     clprintf(c, "API: non-Kiwi app fingerprint-3 was denied connection: %s\n", c->remote_ip);
                     c->kick = true;
                     return;
