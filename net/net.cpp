@@ -547,7 +547,7 @@ u4_t inet4_d2h_strict(char *inet4_str, bool *error, u1_t *ap, u1_t *bp, u1_t *cp
 	return INET4_DTOH(a, b, c, d);
 
 err:
-    printf(RED "WARNING inet4_d2h_strict: BAD inet4_str \"%s\"" NONL, inet4_str);
+    if (debug) printf(RED "WARNING inet4_d2h_strict: BAD inet4_str \"%s\"" NONL, inet4_str);
     if (error != NULL) *error = true;
     return 0;
 }
@@ -805,7 +805,7 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
         if (!kiwi.disable_recent_changes) {
             is_local = isLocal_ip(ip_r, &is_loop, NULL, &error);
             if (error) {
-                lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? X-Real-IP %s\n", id, ip_r);
+                lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? (from %s) X-Real-IP %s\n", id, remote_ip, ip_r);
                 n = 0;
             } else
             if (is_local) {
@@ -824,7 +824,7 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
             if (!kiwi.disable_recent_changes) {
                 isLocal_ip(ip_r, &is_loop, NULL, &error);
                 if (error) {
-                    lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? X-Forwarded-For %s\n", id, ip_r);
+                    lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? (from %s) X-Forwarded-For %s\n", id, remote_ip, ip_r);
                     n = 0;
                 } else
                 if (is_local) {

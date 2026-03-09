@@ -473,7 +473,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     /usr/bin/jq:
 	    -apt-get -y $(APT_GET_FORCE) install jq
 
-	.PHONY frpc
+    .PHONY: frpc
     frpc: lftp
 	    cp $(DIR_FILE_SRC)/pkgs/frp/$(ARCH_DIR)/frpc /usr/local/bin
 	    chmod +x /usr/local/bin/frpc
