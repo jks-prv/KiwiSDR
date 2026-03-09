@@ -41,6 +41,7 @@ Boston, MA  02110-1301, USA.
 #include "fpga.h"
 #include "rx_util.h"
 #include "rx_waterfall_cmd.h"
+#include "net.h"
 
 #include "other.gen.h"
 
@@ -295,6 +296,11 @@ int main(int argc, char *argv[])
             free(s);
         }
         fflush(stdout);
+        _exit(0);
+    #endif
+    
+    #ifdef TEST_IP_PARSE_STRICT
+        ip_test_parse_strict();
         _exit(0);
     #endif
     

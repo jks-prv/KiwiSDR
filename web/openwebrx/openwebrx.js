@@ -4332,8 +4332,8 @@ var spec = {
    clear_avg: 0,
    avg: [[], []],
    
-   //slow_dev_color: '#66ffff',    // light-cyan hsl(180, 100%, 70%)
-   slow_dev_color: '#d3d3d3',
+   //spec_color_color: '#66ffff',    // light-cyan hsl(180, 100%, 70%)
+   spec_color_color: '#d3d3d3',
 
 
    // spectrum & peak hold
@@ -4719,8 +4719,8 @@ function spectrum_update(data)
 	   ctx = spec.af_ctx;
 	}
 	
-   if (spectrum_slow_dev)
-      ctx.fillStyle = spec.slow_dev_color;
+   if (spectrum_spec_color)
+      ctx.fillStyle = spec.spec_color_color;
 
    for (x=0; x < sw; x++) {
       z = color_index(wf_gnd? wf_gnd_value : data[x]);
@@ -4767,15 +4767,9 @@ function spectrum_update(data)
       // color the 10 dB bands appropriately
       y = Math.round((1 - z/255) * sh);
 
-      if (spectrum_slow_dev) {
+      if (spectrum_spec_color) {
          ctx.fillRect(x,y, 1,sh-y);
       } else {
-         // this is very slow on underpowered mobile devices
-         // hence need for "slow dev" button
-         //ctx.putImageData(spec.colormap, x,0, 0,y, 1,sh-y+1);
-
-         // This now runs as fast as "slow dev" mode.
-         // But we left "slow dev" mode in because some people like the single-color fill.
          //y = x % 200;      // checks for missing values
          var first = true;
          for (i = 0; i < spec.dB_bands.length; i++) {
@@ -8792,7 +8786,7 @@ function dx_label_render_cb(arr)
 	var gid, flags, top;
 	var ident, notes, freq;
 
-	var optimize_label_layout = function(x, z, f) {
+	var optimize_eibi_label_layout = function(x, z, f) {
 	   var i, j, k;
 	   var spacing = 6;
 	   var n = Math.ceil(gap / spacing);
@@ -8900,13 +8894,19 @@ function dx_label_render_cb(arr)
 		   if (lock_z == 0) lock_z = dx_z;
 		} else {
 		   if (eibi) {
-            if (dx.f_same.length > 2) optimize_label_layout(same_x, lock_z, dx.last_f_base/1e3);
+            if (dx.f_same.length > 2) optimize_eibi_label_layout(same_x, lock_z, dx.last_f_base/1e3);
             dx.f_same = [];
             dx.f_same.push(dx_idx);
             lock_z = 0;
          }
 		}
-		top = dx_label_top + (gap * (dx_idx & 1));    // stagger the labels vertically
+		
+		// stagger the labels vertically
+		if (!eibi && cfg.dx_three_high) {
+		   top = 26 * (dx_idx % 3);
+		} else {
+		   top = dx_label_top + (gap * (dx_idx & 1));
+		}
       dx.post_render[dx_idx] = { top: top, ltop: top, x: x /* , f: f_base_label_Hz/1e3, ident: ident */ };
 		dx.last_f_base = f_base_label_Hz;
 
@@ -8948,7 +8948,7 @@ function dx_label_render_cb(arr)
 		
 		dx_z++;
 	}
-   if (eibi && dx.f_same.length > 2) optimize_label_layout(same_x, lock_z, -1);
+   if (eibi && dx.f_same.length > 2) optimize_eibi_label_layout(same_x, lock_z, -1);
 	console_log_lbl(dx.list);
 	console_log_lbl(dx.displayed);
 	
@@ -10465,7 +10465,7 @@ function keyboard_shortcut_init()
             w3_inline_percent('w3-padding-tiny', 'z Z', 25, 'zoom in/out, add alt for max in/out'),
             w3_inline_percent('w3-padding-tiny', '< >', 25, 'waterfall page down/up'),
             w3_inline_percent('w3-padding-tiny', 'w W', 25, 'waterfall min dB slider -/+ 1 dB, add alt for -/+ 10 dB'),
-            w3_inline_percent('w3-padding-tiny', 'S D', 25, 'waterfall auto-scale, spectrum slow device mode'),
+            w3_inline_percent('w3-padding-tiny', 'S D', 25, 'waterfall auto-scale, spectrum color mode'),
             w3_inline_percent('w3-padding-tiny', 's alt-s', 25, 'spectrum RF/AF/off toggle, add alt to toggle backwards'),
             w3_inline_percent('w3-padding-tiny', 'v V space', 25, 'volume less/more, mute'),
             w3_inline_percent('w3-padding-tiny', 'o', 25, 'toggle between option bar <x1>off</x1> <x1>user</x1> and <x1>stats</x1> mode,<br>others selected by related shortcut key'),
@@ -10662,7 +10662,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    // spectrum
    case 's': toggle_or_set_spec(null, null, dir); keyboard_shortcut_nav('wf'); break;
    case 'S': wf_autoscale_cb(); keyboard_shortcut_nav('wf'); break;
-   case 'D': toggle_or_set_slow_dev(); keyboard_shortcut_nav('wf'); break;
+   case 'D': toggle_or_set_spec_color(); keyboard_shortcut_nav('wf'); break;
    
    // colormap
    case '!': keyboard_shortcut_nav('wf'); wf_aper_cb('wf.aper', wf.aper ^ 1, false); break;
@@ -11339,7 +11339,7 @@ function panels_setup()
                w3_button('id-button-wf-autoscale class-button||title="waterfall auto scale"', 'Auto<br>Scale', 'wf_autoscale_cb')
             ),
             w3_div('w3-hcenter',
-               w3_button('id-button-slow-dev class-button||title="slow device mode"', 'Slow<br>Dev', 'toggle_or_set_slow_dev')
+               w3_button('id-button-slow-dev class-button||title="spectrum color mode"', 'Spec<br>Color', 'toggle_or_set_spec_color')
             ),
             w3_button('id-button-spec-peak0 w3-margin-L-16 class-button w3-noactive w3-hold|border: 2px solid yellow; padding: 1px 3px|' +
                'title="toggle peak hold\n#1: off-on-hold\nshift: toggle backwards"', 'P1', 'toggle_or_set_spec_peak', 0)
@@ -11361,7 +11361,7 @@ function panels_setup()
    );
 
    setwfspeed_cb('', wf_speed, 1);
-   toggle_or_set_slow_dev(toggle_e.FROM_COOKIE | toggle_e.SET, 0);
+   toggle_or_set_spec_color(toggle_e.FROM_COOKIE | toggle_e.SET, 0);
    toggle_or_set_spec_peak(toggle_e.FROM_COOKIE | toggle_e.SET_URL, peak_initially1, 0);
    toggle_or_set_spec_peak(toggle_e.FROM_COOKIE | toggle_e.SET_URL, peak_initially2, 1);
    toggle_or_set_wf_sp_button(toggle_e.FROM_COOKIE | toggle_e.SET, 0);
@@ -12272,18 +12272,18 @@ function wf_autoscale()
       wf_autoscale_cb();
 }
 
-var spectrum_slow_dev = 0;
+var spectrum_spec_color = 0;
 
-function toggle_or_set_slow_dev(set, val)
+function toggle_or_set_spec_color(set, val)
 {
 	if (isNumber(set))
-		spectrum_slow_dev = kiwi_toggle(set, val, spectrum_slow_dev, 'last_slow_dev');
+		spectrum_spec_color = kiwi_toggle(set, val, spectrum_spec_color, 'last_slow_dev');  // backward compatibility "slow_dev"
 	else
-		spectrum_slow_dev ^= 1;
-	w3_color('id-button-slow-dev', spectrum_slow_dev? 'lime':'white');
+		spectrum_spec_color ^= 1;
+	w3_color('id-button-slow-dev', spectrum_spec_color? 'lime':'white');
 	freqset_select();
-	kiwi_storeWrite('last_slow_dev', spectrum_slow_dev.toString());
-	if (spectrum_slow_dev && wf_speed == WF_SPEED_FAST)
+	kiwi_storeWrite('last_slow_dev', spectrum_spec_color.toString());
+	if (spectrum_spec_color && wf_speed == WF_SPEED_FAST)
 	   setwfspeed_cb('', WF_SPEED_MED, 1);
 }
 

@@ -2,6 +2,7 @@
 #include "types.h"
 #include "config.h"
 #include "str.h"
+#include "mem.h"
 #include "rx/CuteSDR/datatypes.h"
 #include "coroutines.h"
 #include "FT8.h"
@@ -58,6 +59,7 @@ typedef struct {
     int rx_chan;
     bool init;
     bool debug;
+    bool freq_sort;
     
     u4_t decode_time;
     ftx_protocol_t protocol;
@@ -203,8 +205,15 @@ ftx_callsign_hash_interface_t hash_if = {
     .save_hash = hashtable_add
 };
 
+static int qsort_intcomp(const void *elem1, const void *elem2)
+{
+	const int i1 = *(const int *) elem1, i2 = *(const int *) elem2;
+	return i1 - i2;
+}
+
 static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
 {
+    int i;
     decode_ft8_t *ft8 = &decode_ft8[rx_chan];
 
     const ftx_waterfall_t* wf = &mon->wf;
@@ -216,7 +225,7 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
     int num_decoded = 0, num_spots = 0;
 
     // Initialize hash table pointers
-    for (int i = 0; i < kMax_decoded_messages; ++i)
+    for (i = 0; i < kMax_decoded_messages; ++i)
     {
         ft8->decoded_hashtable[i] = NULL;
     }
@@ -224,6 +233,9 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
     // Go over candidates and attempt to decode messages
     bool need_header = true;
     int limiter = 0;
+    typedef struct { int freq; char *chars; } save_deco_t;
+    save_deco_t save_deco[kMax_candidates];
+    int save_i = 0;
 
     for (int idx = 0; idx < num_candidates; ++idx)
     {
@@ -402,7 +414,8 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
                 ks = kstr_asprintf(ks, " %d.0 ", i3);
             else
                 ks = kstr_asprintf(ks, " 0.%d*", FTX_MSG_N3(&message));
-                
+            
+            char *chars;
             if (pskr_ok) {
                 char *call_to, *call_to_s = NULL, *call_de, *call_de_s, *grid_de, *grid_de_s;
                 if (n == 3)
@@ -435,29 +448,47 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
 
                 if (n == 3) {
                     // call_to call_de grid4
-                    ext_send_msg_encoded(rx_chan, false, "EXT", "chars",
+                    asprintf(&chars,
                         "%s %s%s %s%s %s" NONL, kstr_sp(ks), ft8->debug? "3> ":"", call_to_s, uploaded? GREEN : "", call_de_s, grid_de_s);
                 } else
                 if (n == 4) {
                     // CQ DX call_de grid4
-                    ext_send_msg_encoded(rx_chan, false, "EXT", "chars",
+                    asprintf(&chars,
                         "%s %s%s %s %s%s %s" NONL, kstr_sp(ks), ft8->debug? "4> ":"", f[0], f[1], uploaded? GREEN : "", call_de_s, grid_de_s);
                 } else {
                     // call_to call_de R grid4
-                    ext_send_msg_encoded(rx_chan, false, "EXT", "chars",
+                    asprintf(&chars,
                         "%s %s%s %s%s %s %s" NONL, kstr_sp(ks), ft8->debug? "9> ":"", call_to_s, uploaded? GREEN : "", call_de_s, f[2], grid_de_s);
                 }
                 
                 free(call_to_s); free(call_de_s); free(grid_de_s);
             } else {
-                ext_send_msg_encoded(rx_chan, false, "EXT", "chars",
+                asprintf(&chars,
                     "%s %s%s\n", kstr_sp(ks), ft8->debug? "0> ":"", text);
             }
 
+            if (ft8->freq_sort) {
+                save_deco[save_i].freq = freq_hz;
+                save_deco[save_i].chars = chars;
+                save_i++;
+            } else {
+                ext_send_msg_encoded(rx_chan, false, "EXT", "chars", chars);
+                kiwi_asfree(chars);
+            }
             kstr_free(ks);
             if (need_free) for (n = 0; n < 4; n++) free(f[n]);     // NB: free(NULL) is okay
         }
     }
+    
+    if (ft8->freq_sort) {
+        qsort(&save_deco, save_i, sizeof(save_deco_t), qsort_intcomp);
+        for (i = 0; i < save_i; i++) {
+            char *chars = save_deco[i].chars;
+            ext_send_msg_encoded(rx_chan, false, "EXT", "chars", chars);
+            kiwi_asfree(chars);
+        }
+    }
+    
     LOG(LOG_INFO, "Decoded %d messages, callsign hashtable size %d\n", num_decoded, ft8->callsign_hashtable_size);
     if (num_decoded > 0) {
         ft8->total_decoded += num_decoded;
@@ -620,6 +651,12 @@ void decode_ft8_protocol(int rx_chan, u64_t _freqHz, int proto)
     ext_send_msg_encoded(rx_chan, false, "EXT", "chars",
         "-------------------------------------------------------  new freq %.2f mode %s\n",
         (double) _freqHz / 1e3, ft8->protocol_s);
+}
+
+void decode_ft8_freq_sort(int rx_chan, int freq_sort)
+{
+    decode_ft8_t *ft8 = &decode_ft8[rx_chan];
+    ft8->freq_sort = freq_sort;
 }
 
 void decode_ft8_clear(int rx_chan)

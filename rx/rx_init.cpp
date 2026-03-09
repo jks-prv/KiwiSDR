@@ -382,6 +382,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("dx_default_db", 0, &up_cfg);
     cfg_default_int("spec_min_range", 50, &up_cfg);
     cfg_default_bool("all_fonts_bold", false, &up_cfg);
+    cfg_default_bool("dx_three_high", false, &up_cfg);
 
     cfg_default_int("rf_attn_allow", 1, &up_cfg);
     cfg_default_bool("rf_attn_alt", false, &up_cfg);

@@ -405,6 +405,7 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 	// since the internal blacklist is now used by the 24hr auto ban mechanism.
 	//
 	// There is a check against using a spoofed local/loopback forwarded address.
+	// And against invalid/injected junk in the forwarded address.
 
 	char ip_forwarded[NET_ADDRSTRLEN];
 	bool is_loopback;

@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 830
+VERSION_MIN = 831
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -473,7 +473,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     /usr/bin/jq:
 	    -apt-get -y $(APT_GET_FORCE) install jq
 
-	.PHONY frpc
+    .PHONY: frpc
     frpc: lftp
 	    cp $(DIR_FILE_SRC)/pkgs/frp/$(ARCH_DIR)/frpc /usr/local/bin
 	    chmod +x /usr/local/bin/frpc

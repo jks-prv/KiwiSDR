@@ -36,6 +36,8 @@ Boston, MA  02110-1301, USA.
 #include "non_block.h"
 #include "eeprom.h"
 #include "shmem.h"
+#include "rx_sound_cmd.h"
+#include "rx_waterfall_cmd.h"
 #include "ant_switch.h"
 
 #include <stdio.h>
@@ -130,9 +132,9 @@ static void webserver_collect_print_stats(int print)
 		#define NO_API_TIME 20
 		bool both_no_api = (!c->snd_cmd_recv_ok && !c->wf_cmd_recv_ok);
 		if (c->auth && both_no_api && (now - c->arrival) >= NO_API_TIME) {
-            clprintf(c, "\"%s\"%s%s%s%s incomplete connection kicked (snd=%02x wf=%02x)\n",
+            clprintf(c, "\"%s\"%s%s%s%s incomplete connection kicked (snd=%02x/%02x wf=%02x/%02x)\n",
                 kiwi_nonEmptyStr(c->ident_user)? c->ident_user : "(no identity)", c->isUserIP? "":" ", c->isUserIP? "":c->remote_ip,
-                c->geo? " ":"", c->geo? c->geo:"", c->snd_cmd_recv, c->wf_cmd_recv);
+                c->geo? " ":"", c->geo? c->geo:"", c->snd_cmd_recv, CMD_SND_ALL, c->wf_cmd_recv, CMD_WF_ALL);
             c->kick = true;
 		}
 		
@@ -361,20 +363,7 @@ static void called_every_second()
                     } else {
                         if (kiwi_str_begins_with(c->ident_user, "TDoA_service")) {
                             int f = (int) floor_kHz;
-                            freq_trig = (   // HFDL (aeronautical) bands
-                                (f >= (2941-10) && f < 3500) ||     // stay outside 80m ham band
-                                (f >= (4654-10) && f <= (4687+10)) ||
-                                (f >= (5451-10) && f <= (5720+10)) ||
-                                (f >= (6529-10) && f <= (6712+10)) ||
-                                (f >= (8825-10) && f <= (8977+10)) ||
-                                (f >= (10027-10) && f <= (10093+10)) ||
-                                (f >= (11184-10) && f <= (11387+10)) ||
-                                (f >= (13264-10) && f <= (13351+10)) ||
-                                (f >= (15025-10) && f <= (15025+10)) ||
-                                (f >= (17901-10) && f <= (17985+10)) ||
-                                (f >= (21928-10) && f <= (21997+10))
-                            );
-                            if (freq_trig) {
+                            if (rx_in_HFDL_bands(f)) {
                                 clprintf(c, "API: non-Kiwi app fingerprint-2 was denied connection: %s\n", c->remote_ip);
                                 c->kick = true;
                             }
@@ -559,7 +548,7 @@ void user_arrive(conn_t *c)
 
     #if 0
         bool err;
-        u4_t ip4 = inet4_d2h(c->remote_ip, &err);
+        u4_t ip4 = inet4_d2h_strict(c->remote_ip, &err);
         if (err) {
             printf("user_arrive NOT IPv4 <%s>\n", c->remote_ip);
             ip4 = 0;
@@ -603,7 +592,7 @@ void user_leaving(conn_t *c, u4_t connected_secs)
 
     #if 0
         bool err;
-        u4_t ip4 = inet4_d2h(c->remote_ip, &err);
+        u4_t ip4 = inet4_d2h_strict(c->remote_ip, &err);
         if (err) {
             printf("user_leaving NOT IPv4 <%s>\n", c->remote_ip);
             ip4 = 0;

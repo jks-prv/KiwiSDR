@@ -227,8 +227,8 @@ static void led_display_info()
     
         // these checks are inside the loop to react to admin config changes and delayed pvt_valid
         if (net.pvt_valid == IPV4) {
-            inet4_d2h(net.ip_pvt, (bool *) &ip_error, &a, &b, &c, &d);
-            //printf("led_reporter ip4_valid=%d ip4_6_valid=%d ip_pvt=%s inet4_d2h.error=%d\n",
+            inet4_d2h_strict(net.ip_pvt, (bool *) &ip_error, &a, &b, &c, &d);
+            //printf("led_reporter ip4_valid=%d ip4_6_valid=%d ip_pvt=%s inet4_d2h_strict.error=%d\n",
             //    net.ip4_valid, net.ip4_6_valid, net.ip_pvt, ip_error);
             if (ip_error) ip_error = LED_FLASHES_IP_ERROR;
         } else

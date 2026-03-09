@@ -216,7 +216,17 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
 
     char *kiwisdr_com = DNS_lookup_result("my_kiwi", "kiwisdr.com", &net.ips_kiwisdr_com);
     int dom_stat = (net.dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
-    printf("my_kiwi_register dom=%d dom_%s dom_stat=%d\n", net.dom_sel, dom_type_s[net.dom_sel], dom_stat);
+    int rev_auto = admcfg_true("rev_auto")? 1:0;
+    const char *user, *host;
+    if (rev_auto) {
+        user = admcfg_string("rev_auto_user", NULL, CFG_OPTIONAL);
+        host = admcfg_string("rev_auto_host", NULL, CFG_OPTIONAL);
+    } else {
+        user = admcfg_string("rev_user", NULL, CFG_OPTIONAL);
+        host = admcfg_string("rev_host", NULL, CFG_OPTIONAL);
+    }
+    printf("my_kiwi_register dom=%d dom_%s dom_stat=%d rev_auto=%d user=%s host=%s\n",
+        net.dom_sel, dom_type_s[net.dom_sel], dom_stat, rev_auto, user, host);
 
     const char *server_url = cfg_string("server_url", NULL, CFG_OPTIONAL);
     if (kiwi_emptyStr(server_url)) server_url = strdup("ERROR");
@@ -238,17 +248,20 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         "pub=%s&pvt=%s&"
         "port=%d&dhcp=%d&jq=%d&"
         "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
-        "dom=%d&dom%s&dom_stat=%d&dna=%08x%08x&apu=%d&mtu=%d&serno=%d&reg=%d&vr=%x&up=%d"
+        "dom=%d&dom%s&dom_stat=%d&auto=%d&user=%s&host=%s&"
+        "dna=%08x%08x&apu=%d&mtu=%d&serno=%d&reg=%d&vr=%x&up=%d"
         "%s\"",
         kiwisdr_com,
         server_url, server_port, net.mac, add_nat, kiwi_str_encode_static(net.hostname),
         net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
         net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
         email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
-        net.dom_sel, dom_type_s[net.dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
+        net.dom_sel, dom_type_s[net.dom_sel], dom_stat, rev_auto, user, host,
+        PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
         mtu, net.serno, kiwisdr_com_reg? 1:0, kiwi.vr, timer_sec(),
         kstr_sp(cmd_p2));
     cfg_string_free(server_url);
+    admcfg_string_free(user); admcfg_string_free(host);
     kiwi_ifree(email, "email");
 
     kstr_free(non_blocking_cmd(cmd_p, &status));
@@ -267,8 +280,8 @@ void proxy_frpc_setup(const char *proxy_server, const char *user, const char *ho
     //#define PROXY2_TEST
     #ifdef PROXY2_ENABLE
         // redirect all [0-9]xxxx.proxy.kiwisdr.com => proxy2.kiwisdr.com
+        // CAUTION: make matching change in kiwi_util.js::open_websocket()
         //bool p2 = isdigit(host[0]);
-        //bool p2 = (strncmp(host, "210", 3) == 0);
         bool p2 = (strncmp(host, "21", 2) == 0);
         actual_proxy_server = p2? "proxy2.kiwisdr.com" : proxy_server;
     #elif PROXY2_TEST
@@ -1008,7 +1021,17 @@ static void reg_public(void *param)
 
         // proxy always uses port 8073
         int server_port = (net.dom_sel == DOM_SEL_REV)? 8073 : net.port_ext;
+        int mtu = mtu_v[cfg_int_("ethernet_mtu")];
         int dom_stat = (net.dom_sel == DOM_SEL_REV)? net.proxy_status : (DUC_enable_start? net.DUC_status : -1);
+        int rev_auto = admcfg_true("rev_auto")? 1:0;
+        const char *user, *host;
+        if (rev_auto) {
+            user = admcfg_string("rev_auto_user", NULL, CFG_OPTIONAL);
+            host = admcfg_string("rev_auto_host", NULL, CFG_OPTIONAL);
+        } else {
+            user = admcfg_string("rev_user", NULL, CFG_OPTIONAL);
+            host = admcfg_string("rev_host", NULL, CFG_OPTIONAL);
+        }
 
 	    // done here because updating timer_sec() is sent
         asprintf(&cmd_p, "wget --timeout=30 --tries=2 --inet4-only -qO- "
@@ -1017,15 +1040,17 @@ static void reg_public(void *param)
             "pub=%s&pvt=%s&"
             "port=%d&dhcp=%d&jq=%d&"
             "email=%s&ver=%d.%d&deb=%d.%d&model=%d&plat=%d&"
-            "dom=%d&dom%s&dom_stat=%d&dna=%08x%08x&apu=%d&serno=%d&reg=%d&up=%d"
+            "dom=%d&dom%s&dom_stat=%d&auto=%d&user=%s&host=%s&"
+            "dna=%08x%08x&apu=%d&mtu=%d&serno=%d&reg=%d&vr=%x&up=%d"
             "\" 2>&1",
             kiwisdr_com,
             server_url, server_port, net.mac, add_nat, kiwi_str_encode_static(net.hostname),
             net.pub_valid? net.ip_pub : "not_valid", net.pvt_valid? net.ip_pvt : "not_valid",
             net.use_ssl? net.port_http_local : net.port, dhcp, kiwi_file_exists("/usr/bin/jq"),
             email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
-            net.dom_sel, dom_type_s[net.dom_sel], dom_stat, PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
-            net.serno, kiwisdr_com_reg? 1:0, timer_sec()
+            net.dom_sel, dom_type_s[net.dom_sel], dom_stat, rev_auto, user, host,
+            PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
+            mtu, net.serno, kiwisdr_com_reg? 1:0, kiwi.vr, timer_sec()
             );
     
 		bool server_enabled = (!down && admcfg_true("server_enabled"));
@@ -1061,6 +1086,7 @@ static void reg_public(void *param)
 		kiwi_asfree(cmd_p);
 		//kiwi_ifree(server_enc, "server_enc");
         cfg_string_free(server_url);
+        admcfg_string_free(user); admcfg_string_free(host);
         kiwi_ifree(email, "email");
         
         if (kiwi_reg_debug) printf("reg_kiwisdr_com TaskSleepSec(min=%d)\n", retrytime_mins);

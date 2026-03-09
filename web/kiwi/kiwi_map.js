@@ -525,6 +525,7 @@ function kiwi_map_wf_preview(kmap, h)
 
    kmap.wf_ws = open_websocket('W/F',
       function() {   // open_cb
+         kiwi.wf_preview_mode = true;
          //setTimeout(function() {
          kmap.preview_lines = 0;
          kmap.wf_ws.send("SET auth t=kiwi");
@@ -549,12 +550,11 @@ function kiwi_map_wf_preview(kmap, h)
       kiwi_map_wf_preview_error_cb, // error_cb
       kiwi_map_waterfall_close,     // close_cb
       // opt
-      { url: kmap.wf_url_full, new_ts: true, qs: '', all_msg_cb: kiwi_map_all_msg_cb, gen_cb_param: kmap, trace:0 }
+      { url:kmap.wf_url_full, proxy2:true, new_ts:true, qs:'', all_msg_cb:kiwi_map_all_msg_cb, gen_cb_param:kmap, trace:0 }
    );
 
    kmap.wf_conn_bad = false;
    kmap.wf_ws_bad = false;
-   kiwi.wf_preview_mode = true;
 }
 
 function kiwi_map_wf_preview_error_cb(ev, ws)

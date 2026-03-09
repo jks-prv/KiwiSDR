@@ -76,6 +76,7 @@ void rx_server_kick(kick_e kick, int chan = -1);
 void rx_set_freq(double freq_with_offset_kHz, double foff_kHz = -1);
 void rx_set_freq_offset_kHz(double foff_kHz);
 bool rx_freq_inRange(double freq_kHz);
+bool rx_in_HFDL_bands(int f);
 
 conn_t *conn_other(conn_t *conn, int type);
 void show_conn(const char *prefix, u4_t printf_type, conn_t *cd);
