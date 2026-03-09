@@ -3,8 +3,18 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.831  March 10, 2026
+    TDoA waterfall preview works again for hosts on second proxy server. (thanks Martin)
+
+    FT8 extension: New checkbox "freq sort" on control panel that displays decoded spots in
+    passband frequency order (rather than the default decreasing SNR order).
+    
+    Admin config tab: Added checkbox enabling 3-high stacking of DX labels. (thanks Martin)
+    
+    On WF tab renamed "Slow Dev" button to "Spec Color". (thanks Suffolk_guy61)
+
 v1.830  March 3, 2026
-    DX labels: Fix bug where sorting labels by freq instead of freq + mode causes adjacent labels
+    DX labels: Fixed bug where sorting labels by freq instead of freq + mode causes adjacent labels
     to be rendered on top of each other in certain cases. (thanks VK2SKY)
 
     FT8 extension: Add autorun custom frequencies. See the admin extensions tab. (thanks dh90)
@@ -17,7 +27,7 @@ v1.830  March 3, 2026
     For example allows external FSK SYNOP decoding. (thanks DF6DBF)
     
     Admin status tab: Browser copy/paste of users list will now paste entries into e.g. a text file
-        as a single line rather than two. (thanks VK3KHZ)
+    as a single line rather than two. (thanks VK3KHZ)
 
 v1.829  February 17, 2026
     Admin connect tab:
