@@ -490,7 +490,7 @@ function FT8_config_html()
 	         w3_div('',
 	            w3_select_hier(f1, 'Autorun '+ i, 'freq', 'ft8.autorun'+ i, arun, ft8.autorun_u, 'ft8_autorun_select_cb'),
                w3_input_get('id-ft8-custom'+ i +' w3-margin-T-4/w3-label-not-bold/|padding:4px;width:auto|size=8',
-                  'custom freq', 'ft8.custom'+ i, 'w3_float_set_cfg_cb|2', 0),
+                  'custom freq', 'ft8.custom'+ i, 'ft8_custom_freq_cb', 0),
 	            w3_select_get_param(f2, '', 'preemptable?', 'ft8.preempt'+ i, ft8.preempt_u, 'ft8_preempt_select_cb')
 	            //w3_select_get_param(f2, '', 'start UTC', 'ft8.start'+ i, ft8.sched_u, 'ft8_autorun_sched_cb', 0, 0),
 	            //w3_select_get_param(f2, '', 'stop UTC', 'ft8.stop'+ i, ft8.sched_u, 'ft8_autorun_sched_cb', 0, 1)
@@ -538,15 +538,26 @@ function ft8_autorun_restart_cb()
    ext_send("ADM ft8_autorun_restart");  // NB: must be sent as ADM command
 }
 
+function ft8_highlight_restart()
+{
+   w3_border('id-ft8-restart', ft8.restart_highlight);
+	var el = w3_el('id-kiwi-container');
+	w3_scrollDown(el);   // keep menus visible
+}
+
 function ft8_autorun_select_cb(path, idx, first)
 {
    //console.log('ft8_autorun_select_cb path='+ path +' idx='+ idx +' cfg_i='+ ft8.menu_i_to_cfg_i[+idx]);
    admin_select_cb(path, ft8.menu_i_to_cfg_i[+idx], first);
    w3_select_value(path, +idx);
    if (first) return;
-   w3_border('id-ft8-restart', ft8.restart_highlight);
-	var el = w3_el('id-kiwi-container');
-	w3_scrollDown(el);   // keep menus visible
+   ft8_highlight_restart();
+}
+
+function ft8_custom_freq_cb(path, val, first)
+{
+   w3_float_set_cfg_cb(path, val, first, 2);
+   ft8_highlight_restart();
 }
 
 function ft8_preempt_select_cb(path, idx, first)
@@ -554,9 +565,7 @@ function ft8_preempt_select_cb(path, idx, first)
    //console.log('ft8_preempt_select_cb: path='+ path +' idx='+ idx +' first='+ first);
    admin_select_cb(path, idx, first);
    if (first) return;
-   w3_border('id-ft8-restart', ft8.restart_highlight);
-	var el = w3_el('id-kiwi-container');
-	w3_scrollDown(el);   // keep menus visible
+   ft8_highlight_restart();
 }
 
 function ft8_autorun_sched_cb(path, idx, first, cbp)
@@ -573,9 +582,7 @@ function ft8_autorun_all_regular_cb(path, idx, first)
       admin_select_cb(path, 0, /* first: true => no save */ true);
    }
    ext_set_cfg_param('ft8.autorun', 0, EXT_SAVE);
-   w3_border('id-ft8-restart', ft8.restart_highlight);
-	var el = w3_el('id-kiwi-container');
-	w3_scrollDown(el);   // keep menus visible
+   ft8_highlight_restart();
 }
 
 function ft8_autorun_all_preempt_cb(path, idx, first)
@@ -589,9 +596,7 @@ function ft8_autorun_all_preempt_cb(path, idx, first)
       admin_select_cb(path, val, /* first: true => no save */ true);
    }
    ext_set_cfg_param('ft8.preempt', 0, EXT_SAVE);
-   w3_border('id-ft8-restart', ft8.restart_highlight);
-	var el = w3_el('id-kiwi-container');
-	w3_scrollDown(el);   // keep menus visible
+   ft8_highlight_restart();
 }
 
 function FT8_config_focus()

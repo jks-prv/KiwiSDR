@@ -37,6 +37,7 @@ typedef struct {
 
 	arun_e arun_which[MAX_RX_CHANS];
 	int arun_band[MAX_RX_CHANS];
+	double arun_custom_freq[MAX_RX_CHANS];
 	u4_t arun_evictions[MAX_RX_CHANS];
 } rx_util_t;
 
