@@ -823,13 +823,17 @@ function ant_switch_config_html()
                ),
 
                w3_div('',
-                  w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left',
-                     'Switch to default antenna when no users connected?',
-                     'Yes', 'No', 'ant_switch.default_when_no_users', true, true, 'admin_radio_YN_cb'),
+                  w3_inline('', 
+                     w3_switch_label_get_param('w3-defer/w3-label-inline w3-label-left',
+                        'Switch to default antenna when no users connected?',
+                        'Yes', 'No', 'ant_switch.default_when_no_users', true, true, 'admin_radio_YN_cb'),
+                     w3_checkbox_get_param('w3-margin-L-64//w3-label-inline', 'Exclude autorun/kiwirecorder in definition of "users"', 'ant_switch.default_exclude_non_ui', 'admin_bool_cb', false)
+                  ),
                   w3_div('w3-margin-T-8',
                      'The <x1>Default antenna</x1> checkbox below defines which single antenna is initially selected. <br>' +
                      'And also when no users are connected if the switch above is set to <x1>Yes</x1>. <br>' +
-                     '"Users" includes all connections including FT8/WSPR autorun and kiwirecorder (e.g. wsprdaemon, TDoA). <br>' +
+                     '"Users" includes all connections including FT8/WSPR autorun and kiwirecorder (e.g. wsprdaemon, TDoA) <br>' +
+                     'unless the "exclude autorun/kiwirecorder" option is checked. <br>' +
                      'If multiple are checked only the first encountered is used.')
                ),
 
