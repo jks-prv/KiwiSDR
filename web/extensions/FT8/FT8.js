@@ -262,9 +262,6 @@ function ft8_controls_setup()
                w3_inline('/w3-margin-between-8',
                   w3_div('cl-ft8-text', 'reporter call '+ callsign),
                   w3_div('id-ft8-rgrid cl-ft8-text', 'reporter grid '+ grid + (cfg.ft8.GPS_update_grid? ' (GPS)':''))
-               ),
-
-               w3_div('w3-margin-T-4',
                )
             )
 			)

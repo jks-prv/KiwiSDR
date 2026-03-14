@@ -30,7 +30,7 @@ function isdigit(c) { return c.length === 1 && c >= '0' && c <= '9'; }
 function isspace(c) { return c.length === 1 && /\s/.test(c); }
 function islower(c) { return c.length === 1 && c >= 'a' && c <= 'z'; }
 function isupper(c) { return c.length === 1 && c >= 'A' && c <= 'Z'; }
-function isprint(c) { return c.length === 1 && ord(c) >= 32 && ord(c) <= 126 }
+function isprint(c) { return c.length === 1 && ord(c) >= 32 && ord(c) <= 126; }
 function isxdigit(c) { return c.length === 1 && /[0-9a-fA-F]/.test(c); }
 
 // browsers have added includes() only relatively recently
