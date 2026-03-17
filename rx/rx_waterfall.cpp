@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "kiwi.h"
@@ -34,6 +34,7 @@ Boston, MA  02110-1301, USA.
 #include "rx_noise.h"
 #include "noiseproc.h"
 #include "dx.h"
+#include "dx_debug.h"
 #include "non_block.h"
 #include "noise_blank.h"
 #include "str.h"
@@ -222,7 +223,7 @@ void c2s_waterfall(void *param)
 
 	int _dvar, _pipe;
 	double adc_clock_corrected = 0;
-	u4_t dx_update_seq = 0;
+	u4_t dx_update_seq = 0, masked_update_seq = 0;
 	int wf_cal = waterfall_cal;
 	
 	wf_inst_t *wf = &WF_SHMEM->wf_inst[rx_chan];
@@ -455,7 +456,14 @@ void c2s_waterfall(void *param)
         // or made any other change to dx label list
 		if (dx_update_seq != dx.update_seq) {
             send_msg(conn, false, "MSG request_dx_update");
+		    dx_print_masked("WF dx_update_seq(%d) != dx.update_seq(%d)\n", dx_update_seq, dx.update_seq);
 		    dx_update_seq = dx.update_seq;
+		    wf->new_scale_mask = true;
+		}
+		
+		if (masked_update_seq != dx.masked_update_seq) {
+		    dx_print_masked("WF masked_update_seq(%d) != dx.masked_update_seq(%d)\n", masked_update_seq, dx.masked_update_seq);
+		    masked_update_seq = dx.masked_update_seq;
 		    wf->new_scale_mask = true;
 		}
 		
@@ -489,13 +497,23 @@ void c2s_waterfall(void *param)
 			
 			// apply masked frequencies
 			if (dx.masked_len != 0 && !(conn->other != NULL && conn->other->tlimit_exempt_by_pwd)) {
+			    #ifdef DX_PRINT
+                    for (j=0; j < dx.masked_len; j++) {
+                        dx_mask_t *dmp = &dx.masked_list[j];
+                        dx_print_masked("WF MASKED %.2f|%.2f TOD %04d|%04d %s\n", dmp->masked_lo/1e3, dmp->masked_hi/1e3,
+                            dmp->time_begin, dmp->time_end, dmp->active? "ACTIVE" : "no");
+                    }
+			    #endif
                 for (i=0; i < wf->plot_width_clamped; i++) {
                     float scale = fft_scale;
                     int f = roundf((wf->start + (i << (MAX_ZOOM - wf->zoom))) * wf->HZperStart);
                     for (j=0; j < dx.masked_len; j++) {
                         dx_mask_t *dmp = &dx.masked_list[j];
-                        //cprintf(conn, "MASKED %.2f|%.2f|%.2f %s\n", dmp->masked_lo/1e3, f/1e3, dmp->masked_hi/1e3, (f >= dmp->masked_lo && f <= dmp->masked_hi)? "Y":"N");
-                        if (f >= dmp->masked_lo && f <= dmp->masked_hi) {
+                        if (!dmp->active) continue;
+                        bool masked = (f >= dmp->masked_lo && f <= dmp->masked_hi);
+                        //dx_print_masked("WF MASKED %.2f|%.2f|%.2f %04d|%04d\n", dmp->masked_lo/1e3, f/1e3, dmp->masked_hi/1e3,
+                        //    dmp->time_begin, dmp->time_end);
+                        if (masked) {
                             scale = 0;
                             break;
                         }

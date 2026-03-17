@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -71,6 +71,8 @@ typedef enum { DX_JSON = 0, DX_CSV = 1 } dx_upload_e;
 
 typedef struct {
 	int masked_lo, masked_hi;   // Hz
+    u2_t time_begin, time_end;
+	bool active;
 } dx_mask_t;
 
 typedef struct {
@@ -82,9 +84,11 @@ typedef struct {
     #define DX_N_STORED 16
     int stored_types_n[DX_N_STORED];
 
+    int hr_min, today_Mo_0, yesterday_Mo_0;
+
 	dx_mask_t *masked_list;
 	int masked_len;
-	u4_t update_seq;
+	u4_t masked_update_seq, update_seq;
 } dxlist_t;
 
 extern dxlist_t dx;
@@ -136,13 +140,16 @@ extern dxlist_t dx;
 #define DX_SUN      0x00000200
 
 #define DX_FLAGS    0xffff0000
-#define DX_FILTERED 0x00010000
+#define DX_FILTERED 0x00010000      // label was filtered, e.g. by tod, so show in lighter color
 #define DX_HAS_EXT  0x00020000
 #define DX_MODE_16  0x00040000
 
 extern const int eibi_counts[DX_N_EiBi];
 
 void dx_label_init();
+void dx_setup_Mo_0();
+enum { FILTER_TOD = 1 };
+bool dx_dow_time_ok(const char *id, dx_t *dp, int filter_tod, u2_t *time_begin_r, u2_t *time_end_r, u4_t *flags_r = NULL);
 void update_masked_freqs(dx_t *_dx_list = NULL, int _dx_list_len = 0);
 void dx_prep_list(dx_db_t *dx_db, bool need_sort, dx_t *_dx_list, int _dx_list_len_prev, int _dx_list_len_new);
 void dx_eibi_init();
