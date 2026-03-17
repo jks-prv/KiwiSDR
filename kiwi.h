@@ -38,7 +38,7 @@ typedef struct {
     model_e model;
     platform_e platform;
     
-    int current_nusers;
+    int current_nusers, current_nusers_ui;
     bool dbgUs;
     tid_t proxy_task_tid;
     

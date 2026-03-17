@@ -4097,15 +4097,19 @@ function w3_int_set_cfg_cb(path, val, first)
 	ext_set_cfg_param(path, v, save);
 }
 
-// limit precision using callback spec: 'admin_float_cb|prec'
+// limit precision using callback spec: 'w3_float_set_cfg_cb|prec'
 function w3_float_set_cfg_cb(path, val, first, cb_a)
 {
    var prec = -1;    // default to no precision limiting applied
 	//console.log('admin_float_cb '+ path +'='+ val +' cb_a.len='+ cb_a.length);
-	if (cb_a && cb_a.length >= 2) {
+	if (isArray(cb_a) && cb_a.length >= 2) {
 	   prec = +(cb_a[1]);
 	   if (isNaN(prec)) prec = -1;
 	   //console.log('admin_float_cb prec='+ prec);
+	} else
+	if (isNumber(cb_a)) {
+	   prec = cb_a;
+	   if (isNaN(prec)) prec = -1;
 	}
 	val = parseFloat(val);
 	if (isNaN(val)) {

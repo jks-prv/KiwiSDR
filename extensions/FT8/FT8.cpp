@@ -398,6 +398,7 @@ static void ft8_autorun(int instance, bool initial)
     int band = ft8_arun_band[instance]-1;
     bool ft4 = (isFT4[band] != 0);
     double dial_freq_kHz = ft8_autorun_dial[band];
+    //printf("FT%d autorun: instance=%d band=%d freq %.2f\n", ft4? 4:8, instance, band, dial_freq_kHz);
     if (dial_freq_kHz == CUSTOM_FREQ) {
         dial_freq_kHz = cfg_float(stprintf("ft8.custom%d", instance), NULL, CFG_OPTIONAL);
         printf("FT%d autorun: CUSTOM freq %.2f instance=%d\n", ft4? 4:8, dial_freq_kHz, instance);
@@ -442,6 +443,7 @@ static void ft8_autorun(int instance, bool initial)
     int rx_chan = csnd->rx_channel;
     r->arun_which[rx_chan] = ARUN_FT8;
     r->arun_band[rx_chan] = band;
+    r->arun_custom_freq[rx_chan] = dial_freq_kHz;
     ft8_t *e = &ft8[rx_chan];
     ft8_reset(e);
     e->instance = instance;
@@ -480,11 +482,17 @@ void ft8_autorun_start(bool initial)
         // This loop should never exclude ft8_autorun() when called from ft8_autorun_restart()
         // because all instances were just stopped.
         // When called from rx_autorun_restart_victims() it functions normally.
+        double custom_freq = cfg_float(stprintf("ft8.custom%d", instance), NULL, CFG_OPTIONAL);
         int rx_chan;
         for (rx_chan = 0; rx_chan < rx_chans; rx_chan++) {
-            if (r->arun_which[rx_chan] == ARUN_FT8 && r->arun_band[rx_chan] == band) {
-                //printf("FT8 autorun: instance=%d band=%d %.2f already running on rx%d\n",
-                //    instance, band, ft8_autorun_dial[band], rx_chan);
+            bool same_band_or_freq;
+            if (ft8_autorun_dial[band] == CUSTOM_FREQ)
+                same_band_or_freq = (r->arun_custom_freq[rx_chan] == custom_freq);
+            else
+                same_band_or_freq = (r->arun_band[rx_chan] == band);
+            if (r->arun_which[rx_chan] == ARUN_FT8 && same_band_or_freq) {
+                //printf("FT8 autorun: instance=%d band=%d freq=%.2f custom_freq=%.2f already running on rx%d\n",
+                //    instance, band, ft8_autorun_dial[band], custom_freq, rx_chan);
                 break;
             }
         }

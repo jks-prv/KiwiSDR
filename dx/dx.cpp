@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -31,6 +31,7 @@ Boston, MA  02110-1301, USA.
 #include "jsmn.h"
 #include "cfg.h"
 #include "dx.h"
+#include "dx_debug.h"
 #include "rx.h"
 #include "rx_util.h"
 #include "coroutines.h"
@@ -270,11 +271,130 @@ static void dx_flag(dx_t *dxp, const char *flag)
 	lprintf("%.2f \"%s\": unknown dx flag \"%s\"\n", dxp->freq, dxp->ident, flag);
 }
 
+void dx_setup_Mo_0()
+{
+    int today_Su_0;
+    utc_year_month_day(NULL, NULL, NULL, &today_Su_0);
+
+    //#define TEST_DX_TIME_REV
+    // search for TEST_DX_TIME_REV on js side to enable dx update to see debug effect once per minute 
+    #ifdef TEST_DX_TIME_REV
+        dx.hr_min = 23*60 + 58 + timer_sec()/60;
+        dx.hr_min = dx.hr_min/60*100 + dx.hr_min % 60;
+        if (dx.hr_min >= 2400) {
+            dx.hr_min -= 2400;
+            today_Su_0 = (today_Su_0 == 6)? 0 : (today_Su_0 + 1);
+        }
+        static int hr_min_last;
+        if (dx.hr_min != hr_min_last) {
+            printf("TICK hr_min=%04d\n", dx.hr_min);
+            hr_min_last = dx.hr_min;
+        }
+    #else
+        int _hr, _min;
+        utc_hour_min_sec(&_hr, &_min);
+        dx.hr_min = _hr*100 + _min;    // NB: not *60 because value is stored base 100, e.g. "12:34" = 1234(1200 + 34)
+    #endif
+    
+    dx.today_Mo_0 = (today_Su_0 == 0)? 6 : (today_Su_0 - 1);
+    dx.yesterday_Mo_0 = (dx.today_Mo_0 == 0)? 6 : (dx.today_Mo_0 - 1);
+}
+
+bool dx_dow_time_ok(const char *id, dx_t *dp, int filter_tod, u2_t *time_begin_r, u2_t *time_end_r, u4_t *flags_r)
+{
+    // This is tricky.
+    //
+    // It's possible for begin/end times to span midnight (00:00 UTC).
+    // The DOW value is only specified for the pre-midnight part of the span.
+    // So if we're checking during the post-midnight part of the span need to
+    // check against what's now the previous DOW in case the current DOW is
+    // not part of the schedule.
+    //
+    // Example: The schedule is Fri 23:00 - 02:00. When the current time
+    // is >= 00:00 today_Mo_0 will now be Sat. So need to check instead against
+    // yesterday_Mo_0 which is now set to Fri (remember that today_Mo_0 and
+    // yesterday_Mo_0 always follow the current TOD when this code runs).
+    
+    if (dp->time_begin == 0 && dp->time_end == 0) {
+        printf("$DX_MKRS why is b=e=0? idx=%d f=%.2f\n", dp->idx, dp->freq);
+        dp->time_end = 2400;
+    }
+    u2_t time_begin = dp->time_begin, time_end = dp->time_end;
+    
+    //#define DX_TEST_TIME_END
+    #ifdef DX_TEST_TIME_END
+        if (dx.hr_min & 1 && loop & 1) time_end = dx.hr_min;
+    #endif
+    *time_begin_r = time_begin;
+    *time_end_r = time_end;
+    bool rev = (time_begin > time_end);
+
+    u2_t dow = (dp->flags & DX_DOW) >> DX_DOW_SFT;
+    if (dow == 0) {
+        printf("$DX_MKRS why is dow=0? idx=%d f=%.2f\n", dp->idx, dp->freq);
+        dp->flags |= DX_DOW;
+    }
+
+    u4_t dow_mask = dp->flags & DX_DOW;
+    if (dow_mask == 0) dow_mask = DX_DOW;   // zero same as all dow specified (saves space in dx.json)
+    u4_t today_bit =  DX_MON >> dx.today_Mo_0;
+    u4_t yesterday_bit = DX_MON >> dx.yesterday_Mo_0;
+    bool today_ok = ((dow_mask & today_bit) != 0);
+    bool yesterday_ok = ((dow_mask & yesterday_bit) != 0);
+    bool dow_ok;
+    
+    if (!rev) {
+        // begin/end times are within current day
+        dow_ok = today_ok;
+    } else {
+        // begin/end times span today and tomorrow
+        // this means when we get to tomorrow we need to check for yesterday enabled in dow mask
+        dow_ok = (dx.hr_min >= time_begin)? today_ok : yesterday_ok;
+    }
+    
+    dx_print_dow_time(!dow_ok || rev, "dx_print_dow_time %s %s today_Mo_0=%d|%d today_ok=%d|%d b=%04x|%04x m=%04x fl=%04x rev=%d %04d|%04d|%04d %s %s %.2f %s\n",
+        id, !dow_ok? "DOW" : "REV",
+        dx.today_Mo_0, dx.yesterday_Mo_0, today_ok, yesterday_ok, today_bit, yesterday_bit,
+        dow_mask, dp->flags, rev, time_begin, dx.hr_min, time_end,
+        filter_tod? "FILTER-ON" : "FILTER-OFF", (filter_tod && !dow_ok)? "DOW-FAIL" : "DOW-PASS",
+        freq, dp->ident_s);
+
+    if (!dow_ok) {
+        if (filter_tod) {
+            dx_print_dow_time(true, "dx_print_dow_time %s FALSE\n", id);
+            return false;
+        } else {
+            dx_print_dow_time(true, "dx_print_dow_time %s DX_FILTERED\n", id);
+            if (flags_r) *flags_r = *flags_r | DX_FILTERED;
+        }
+    }
+    
+    bool within = (dx.hr_min >= time_begin && dx.hr_min < time_end);
+    bool within_rev = (dx.hr_min >= time_end && dx.hr_min < time_begin);
+    bool tod_ok = ((!rev && within) || (rev && !within_rev));
+    if (!tod_ok) {
+        dx_print_dow_time(true, "dx_print_dow_time %s TOD %04d|%04d|%04d fl=04%x %s %s %.2f %s\n",
+            id, time_begin, dx.hr_min, time_end, dp->flags,
+            filter_tod? "FILTER-ON" : "FILTER-OFF", (filter_tod && !tod_ok)? "TOD-FAIL" : "TOD-PASS",
+            freq, dp->ident_s);
+        if (filter_tod) {
+            dx_print_dow_time(true, "dx_print_dow_time %s FALSE\n", id);
+            return false;
+        } else {
+            dx_print_dow_time(true, "dx_print_dow_time %s DX_FILTERED\n", id);
+            if (flags_r) *flags_r = *flags_r | DX_FILTERED;
+        }
+    }
+
+    dx_print_dow_time(true, "dx_print_dow_time %s TRUE\n", id);
+    return true;
+}
+
 void update_masked_freqs(dx_t *_dx_list, int _dx_list_len)
 {
     int i, j;
     dx_t *dxp;
-    //printf("update_masked_freqs\n");
+    dx_print_masked("update_masked_freqs\n");
     
     // always use masked freqs set by admin in stored list, even when other lists currently active
     if (_dx_list == NULL) {
@@ -290,6 +410,7 @@ void update_masked_freqs(dx_t *_dx_list, int _dx_list_len)
     }
     kiwi_ifree(dx.masked_list, "dx masked"); dx.masked_list = NULL;
     if (dx.masked_len > 0) dx.masked_list = (dx_mask_t *) kiwi_imalloc("update_masked_freqs", dx.masked_len * sizeof(dx_mask_t));
+    dx_setup_Mo_0();
 
     for (i = j = 0, dxp = _dx_list; i < _dx_list_len; i++, dxp++) {
         if ((dxp->flags & DX_TYPE) == DX_MASKED && rx_freq_inRange(dxp->freq)) {
@@ -300,8 +421,15 @@ void update_masked_freqs(dx_t *_dx_list, int _dx_list_len)
             int offset = (modes[mode_i].flags & IS_SSB)? modes[mode_i].bfo : 0;     // NB: IS_SSB, not IS_F_PBC
             dmp->masked_lo = masked_f + offset + (dxp->low_cut? dxp->low_cut : -hbw);
             dmp->masked_hi = masked_f + offset + (dxp->high_cut? dxp->high_cut : hbw);
-            //printf("masked %.2f baseband: %d-%d %s hbw=%d off=%d lc=%d hc=%d\n",
-            //    dxp->freq, dmp->masked_lo, dmp->masked_hi, modes[mode_i].uc, hbw, offset, dxp->low_cut, dxp->high_cut);
+            dmp->time_begin = dxp->time_begin;
+            dmp->time_end = dxp->time_end;
+            u2_t time_begin = dxp->time_begin;
+            u2_t time_end = dxp->time_end;
+            dmp->active = dx_dow_time_ok("DX", dxp, FILTER_TOD, &time_begin, &time_end);
+            dx_print_masked("DX masked %.2f baseband: %d-%d %s hbw=%d off=%d lc=%d hc=%d %04d|%04d %s\n",
+                dxp->freq, dmp->masked_lo, dmp->masked_hi, modes[mode_i].uc, hbw, offset, dxp->low_cut, dxp->high_cut,
+                dmp->time_begin, dmp->time_end, dmp->active? "ACTIVE":"");
+            NextTask("update_masked_freqs");
         }
     }
 }
@@ -386,6 +514,7 @@ void dx_prep_list(dx_db_t *dx_db, bool need_sort, dx_t *_dx_list, int _dx_list_l
     // this causes all active user waterfall tasks to reload the dx list when it changes
     // from dx edit panel or admin dx tab
     dx.update_seq++;
+    dx_print_masked("DX dx_prep_list dx.update_seq++=%d\n", dx.update_seq);
 }
 
 enum { E_ARRAY = 0, E_FREQ, E_MODE, E_IDENT, E_NOTES, E_OPT_ARRAY, E_OPT_ID, E_SORT, E_UNEXPECTED } error_e;

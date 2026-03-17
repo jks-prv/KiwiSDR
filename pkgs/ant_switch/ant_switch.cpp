@@ -36,6 +36,7 @@
 #include "ant_switch.h"
 #include "peri.h"
 #include "rx_snr.h"
+#include "ansi.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -348,12 +349,14 @@ void ant_switch_poll_10s()
 {
     ant_switch_check_isConfigured();
     
-    bool no_users = (kiwi.current_nusers == 0);
+    bool default_exclude_non_ui = cfg_true("ant_switch.default_exclude_non_ui");
+    int nusers = default_exclude_non_ui? kiwi.current_nusers_ui : kiwi.current_nusers;
+    bool no_users = (nusers == 0);
     bool enable = cfg_true("ant_switch.enable");
     bool thunderstorm = cfg_true("ant_switch.thunderstorm");
 
-    antsw_printf("ant_switch_poll_10s using_default=%d enable=%d Tcfg=%d Tmode=%d snr_initial_meas_done=%d current_nusers=%d %s\n",
-        using_default, enable, thunderstorm, antsw.using_tstorm, kiwi.snr_initial_meas_done, kiwi.current_nusers, no_users? "NO USERS" : "");
+    antsw_printf("ant_switch_poll_10s using_default=%d enable=%d Tcfg=%d Tmode=%d snr_initial_meas_done=%d default_exclude_non_ui=%d nusers=%d %s\n",
+        using_default, enable, thunderstorm, antsw.using_tstorm, kiwi.snr_initial_meas_done, default_exclude_non_ui, nusers, no_users? "NO USERS" : "");
 
     static bool snr_initial_meas_done;
     bool snr_done = (snr_initial_meas_done != kiwi.snr_initial_meas_done);

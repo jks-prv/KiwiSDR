@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 // Copyright (c) 2018-2024 Christoph Mayer, DL1CH
 
 #include "types.h"
@@ -56,6 +56,7 @@ Boston, MA  02110-1301, USA.
 #include "fpga.h"
 #include "rf_attn.h"
 #include "rsid.h"
+#include "ansi.h"
 
 #ifdef DRM
  #include "DRM.h"
@@ -276,7 +277,7 @@ void c2s_sound(void *param)
         u4_t first_freq_time;
     #endif
 	
-	u4_t dx_update_seq = 0;
+	u4_t dx_update_seq = 0, masked_update_seq = 0;
 	bool masked = false, masked_area = false;
 	bool allow_gps_tstamp = admcfg_bool("GPS_tstamp", NULL, CFG_REQUIRED);	
 	int noise_pulse_last = 0;
@@ -436,7 +437,7 @@ void c2s_sound(void *param)
             rx_server_send_config(conn);
         }
 
-		if (s->check_masked || dx_update_seq != dx.update_seq) {
+		if (s->check_masked || dx_update_seq != dx.update_seq || masked_update_seq != dx.masked_update_seq) {
 
             // apply masked frequencies
             masked = masked_area = false;
@@ -444,13 +445,14 @@ void c2s_sound(void *param)
                 int f = round(s->freq_kHz * kHz);
                 int pb_lo = f + s->locut;
                 int pb_hi = f + s->hicut;
-                //printf("SND f=%d lo=%.0f|%d hi=%.0f|%d ", f, s->locut, pb_lo, s->hicut, pb_hi);
+                //printf("SND masked f=%d lo=%.0f|%d hi=%.0f|%d", f, s->locut, pb_lo, s->hicut, pb_hi);
                 for (j=0; j < dx.masked_len; j++) {
                     dx_mask_t *dmp = &dx.masked_list[j];
-                    if (!((pb_hi < dmp->masked_lo || pb_lo > dmp->masked_hi))) {
+                    //printf(" TOD %04d|%04d %s", dmp->time_begin, dmp->time_end, dmp->active? "ACTIVE" : "no");
+                    if (!dmp->active) continue;
+                    if (!(pb_hi < dmp->masked_lo || pb_lo > dmp->masked_hi)) {
                         masked_area = true;     // needed by c2s_sound_camp()
                         masked = conn->tlimit_exempt_by_pwd? false : true;
-                        //printf("MASKED");
                         break;
                     }
                 }
@@ -458,6 +460,7 @@ void c2s_sound(void *param)
             }
             s->check_masked = false;
 		    dx_update_seq = dx.update_seq;
+		    masked_update_seq = dx.masked_update_seq;
         }
 
 		#define	SND_FLAG_LPF		    0x01

@@ -3,6 +3,14 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.832  March 18, 2026
+    FT8 extension: Made the custom frequency feature work for more than one instance. (thanks LA9XKA)
+    
+    Antenna switch: added option to exclude autorun/kiwirecorder in determination of "users" for
+    switching to default antenna when no users connected. (thanks AD0VC)
+    
+    Masked frequency labels now implement day-of-week, time-of-day scheduling. (thanks F5LFE)
+
 v1.831  March 10, 2026
     TDoA waterfall preview works again for hosts on second proxy server. (thanks Martin)
 

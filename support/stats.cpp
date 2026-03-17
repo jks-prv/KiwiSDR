@@ -52,7 +52,7 @@ static int last_hour = -1, last_min = -1;
 // called periodically (currently every 10 seconds)
 static void webserver_collect_print_stats(int print)
 {
-	int i, nusers=0;
+	int i, nusers=0, nusers_ui=0;
 	conn_t *c;
 	
 	// print / log connections
@@ -139,8 +139,10 @@ static void webserver_collect_print_stats(int print)
 		}
 		
 		nusers++;
+		if (!c->internal_connection && !c->ext_api) nusers_ui++;
 	}
 	kiwi.current_nusers = nusers;
+	kiwi.current_nusers_ui = nusers_ui;
 
 	// construct cpu stats response
 	#define NCPU 4

@@ -52,6 +52,7 @@ Boston, MA  02110-1301, USA.
 #ifdef USE_SDR
  #include "data_pump.h"
  #include "dx.h"
+ #include "dx_debug.h"
 #endif
 
 #include <string.h>
@@ -69,61 +70,6 @@ volatile float audio_kbps[MAX_RX_CHANS+1], waterfall_kbps[MAX_RX_CHANS+1], water
 volatile u4_t audio_bytes[MAX_RX_CHANS+1], waterfall_bytes[MAX_RX_CHANS+1], waterfall_frames[MAX_RX_CHANS+1], http_bytes;
 
 #ifdef USE_SDR
-
-#define DX_PRINT
-#ifdef DX_PRINT
-
-    // -dx 0xhh
-    
-	#define DX_PRINT_MKRS 0x01
-	#define dx_print_mkrs(cond, fmt, ...) \
-		if ((dx_print & DX_PRINT_MKRS) && (cond)) cprintf(conn, fmt, ## __VA_ARGS__)
-
-	#define DX_PRINT_MKRS_ALL 0x02
-	#define dx_print_mkrs_all(cond, fmt, ...) \
-		if ((dx_print & DX_PRINT_MKRS_ALL) && (cond)) cprintf(conn, fmt, ## __VA_ARGS__)
-
-	#define DX_PRINT_ADM_MKRS 0x04
-	#define dx_print_adm_mkrs(fmt, ...) \
-		if (dx_print & DX_PRINT_ADM_MKRS) cprintf(conn, fmt, ## __VA_ARGS__)
-
-	#define DX_PRINT_UPD 0x08
-	#define dx_print_upd(fmt, ...) \
-		if (dx_print & DX_PRINT_UPD) cprintf(conn, fmt, ## __VA_ARGS__)
-
-	#define DX_PRINT_SEARCH 0x10
-	#define dx_print_search(cond, fmt, ...) \
-		if ((dx_print & DX_PRINT_SEARCH) && (cond)) cprintf(conn, fmt, ## __VA_ARGS__)
-
-	#define DX_PRINT_FILTER 0x20
-	#define dx_print_filter(cond, fmt, ...) \
-		if ((dx_print & DX_PRINT_FILTER) && (cond)) cprintf(conn, fmt, ## __VA_ARGS__)
-
-	#define DX_PRINT_DOW_TIME 0x40
-	#define dx_print_dow_time(cond, fmt, ...) \
-		if ((dx_print & DX_PRINT_DOW_TIME) && (cond)) cprintf(conn, fmt, ## __VA_ARGS__)
-
-	#define DX_PRINT_DEBUG 0x80
-	#define dx_print_debug(cond, fmt, ...) \
-		if ((dx_print & DX_PRINT_DEBUG) && (cond)) printf(fmt, ## __VA_ARGS__)
-
-    #define DX_DONE() \
-        if (dx_print) _dx_done(conn, mark, max_quanta, loop, nt_loop, send, nt_send, msg_sl)
-
-#else
-	#define DX_PRINT_MKRS 0
-	#define DX_PRINT_UPD 0
-	#define DX_PRINT_FILTER 0
-	#define dx_print_mkrs(cond, fmt, ...)
-	#define dx_print_mkrs_all(cond, fmt, ...)
-	#define dx_print_adm_mkrs(fmt, ...)
-	#define dx_print_upd(fmt, ...)
-	#define dx_print_search(cond, fmt, ...)
-	#define dx_print_filter(cond, fmt, ...)
-	#define dx_print_dow_time(cond, fmt, ...)
-	#define dx_print_debug(cond, fmt, ...)
-    #define DX_DONE()
-#endif
 
 static dx_t *dx_list_first, *dx_list_last;
 
@@ -1425,32 +1371,8 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 DX_DONE();
                 return true;
             }
-        
-            int today_Su_0;
-            utc_year_month_day(NULL, NULL, NULL, &today_Su_0);
 
-            //#define TEST_DX_TIME_REV
-            // search for TEST_DX_TIME_REV on js side to enable dx update to see debug effect once per minute 
-            #ifdef TEST_DX_TIME_REV
-                int hr_min = 23*60 + 58 + timer_sec()/60;
-                hr_min = hr_min/60*100 + hr_min % 60;
-                if (hr_min >= 2400) {
-                    hr_min -= 2400;
-                    today_Su_0 = (today_Su_0 == 6)? 0 : (today_Su_0 + 1);
-                }
-                static int hr_min_last;
-                if (hr_min != hr_min_last) {
-                    printf("TICK hr_min=%04d\n", hr_min);
-                    hr_min_last = hr_min;
-                }
-            #else
-                int _hr, _min;
-                utc_hour_min_sec(&_hr, &_min);
-                int hr_min = _hr*100 + _min;    // NB: not *60 because value is stored base 100, e.g. "12:34" = 1234(1200 + 34)
-            #endif
-            
-            int today_Mo_0 = (today_Su_0 == 0)? 6 : (today_Su_0 - 1);
-            int yesterday_Mo_0 = (today_Mo_0 == 0)? 6 : (today_Mo_0 - 1);
+            dx_setup_Mo_0();
             struct timespec ts;
             clock_gettime(CLOCK_REALTIME, &ts);
             u4_t msec = ts.tv_nsec/1000000;
@@ -1567,80 +1489,9 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                         if ((type_bit & eibi_types_mask) == 0) continue;
                     }
 
-                    // This is tricky.
-                    //
-                    // It's possible for begin/end times to span midnight (00:00 UTC).
-                    // The DOW value is only specified for the pre-midnight part of the span.
-                    // So if we're checking during the post-midnight part of the span need to
-                    // check against what's now the previous DOW in case the current DOW is
-                    // not part of the schedule.
-                    //
-                    // Example: The schedule is Fri 23:00 - 02:00. When the current time
-                    // is >= 00:00 today_Mo_0 will now be Sat. So need to check instead against
-                    // yesterday_Mo_0 which is now set to Fri (remember that today_Mo_0 and
-                    // yesterday_Mo_0 always follow the current TOD when this code runs).
-                    
-                    if (dp->time_begin == 0 && dp->time_end == 0) {
-                        cprintf(conn, "$DX_MKRS why is b=e=0? idx=%d f=%.2f\n", dp->idx, dp->freq);
-                        dp->time_end = 2400;
-                    }
-                    u2_t time_begin = dp->time_begin, time_end = dp->time_end;
-                    //#define DX_TEST_TIME_END
-                    #ifdef DX_TEST_TIME_END
-                        if (hr_min & 1 && loop & 1) time_end = hr_min;
-                    #endif
-                    bool rev = (time_begin > time_end);
-
-                    u2_t dow = (dp->flags & DX_DOW) >> DX_DOW_SFT;
-                    if (dow == 0) {
-                        cprintf(conn, "$DX_MKRS why is dow=0? idx=%d f=%.2f\n", dp->idx, dp->freq);
-                        dp->flags |= DX_DOW;
-                    }
-
-                    u4_t dow_mask = dp->flags & DX_DOW;
-                    if (dow_mask == 0) dow_mask = DX_DOW;   // zero same as all dow specified (saves space in dx.jaon)
-                    u4_t today_bit =  DX_MON >> today_Mo_0;
-                    u4_t yesterday_bit = DX_MON >> yesterday_Mo_0;
-                    bool today_ok = ((dow_mask & today_bit) != 0);
-                    bool yesterday_ok = ((dow_mask & yesterday_bit) != 0);
-                    bool dow_ok;
-                    
-                    if (!rev) {
-                        // begin/end times are within current day
-                        dow_ok = today_ok;
-                    } else {
-                        // begin/end times span today and tomorrow
-                        // this means when we get to tomorrow we need to check for yesterday enabled in dow mask
-                        dow_ok = (hr_min >= time_begin)? today_ok : yesterday_ok;
-                    }
-                    
-                    dx_print_dow_time(!dow_ok || rev, "%s today_Mo_0=%d|%d today_ok=%d|%d b=%04x|%04x m=%04x fl=%04x rev=%d %04d|%04d|%04d %s %s %.2f %s\n",
-                        !dow_ok? "DOW" : "REV",
-                        today_Mo_0, yesterday_Mo_0, today_ok, yesterday_ok, today_bit, yesterday_bit,
-                        dow_mask, dp->flags, rev, time_begin, hr_min, time_end,
-                        filter_tod? "FILTER-ON" : "FILTER-OFF", (filter_tod && !dow_ok)? "DOW-FAIL" : "DOW-PASS",
-                        freq, dp->ident_s);
-
-                    if (!dow_ok) {
-                        if (filter_tod)
-                            continue;
-                        else
-                            flags = DX_FILTERED;
-                    }
-                    
-                    bool within = (hr_min >= time_begin && hr_min < time_end);
-                    bool within_rev = (hr_min >= time_end && hr_min < time_begin);
-                    bool tod_ok = ((!rev && within) || (rev && !within_rev));
-                    if (!tod_ok) {
-                        dx_print_dow_time(true, "TOD %04d|%04d|%04d fl=04%x %s %s %.2f %s\n",
-                            time_begin, hr_min, time_end, dp->flags,
-                            filter_tod? "FILTER-ON" : "FILTER-OFF", (filter_tod && !tod_ok)? "TOD-FAIL" : "TOD-PASS",
-                            freq, dp->ident_s);
-                        if (filter_tod)
-                            continue;
-                        else
-                            flags = DX_FILTERED;
-                    }
+                    u2_t time_begin, time_end;
+                    if (!dx_dow_time_ok("DX_MKR", dp, filter_tod, &time_begin, &time_end, &flags))
+                        continue;
             
                     if (dx_filter) {
                         dx_print_mkrs(db_eibi, "DX_MKR CHECK dx_filter EiBi %d: %.2f(%d) %s\n", send, freq, dp->idx, dp->ident_s);
@@ -1684,7 +1535,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                             if (dx_print & DX_PRINT_MKRS && clutter_filtered < 32) {
                                 dx_print_mkrs_all(db_eibi, "DX_MKR anti-clutter EiBi %d: %.2f(#%d,x%d) %s\n",
                                     send, freq, dp->idx, dx_lastx, dp->ident_s);
-                                dx_print_mkrs_all(db_stored_comm, "DX_MKR anti-clutter %d: %.2f(#%d,x%d) flags=%05x o=%d b=%d e=%d \"%s\"\n",
+                                dx_print_mkrs_all(db_stored_comm, "DX_MKR anti-clutter %d: %.2f(#%d,x%d) flags=%05x o=%d b=%04d e=%04d \"%s\"\n",
                                     send, freq, dp->idx, dx_lastx, dp->flags, dp->offset, time_begin, time_end, kiwi_str_decode_static((char *) dp->ident));
                             }
                             clutter_filtered++;
@@ -1753,7 +1604,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                                 dp->params? ",\"p\":\"":"", dp->params? dp->params:"", dp->params? "\"":"");
                             dx_print_mkrs_all(db_eibi, "DX_MKR EiBi %d: %.2f(i%d,x%d) %s\n",
                                 send, freq, dp->idx, dx_lastx, dp->ident_s);
-                            dx_print_mkrs_all(db_stored_comm, "DX_MKR %d: %.2f(i%d,x%d) flags=%05x o=%d s=%d b=%d e=%d \"%s\"\n",
+                            dx_print_mkrs_all(db_stored_comm, "DX_MKR %d: %.2f(i%d,x%d) flags=%05x o=%d s=%d b=%04d e=%04d \"%s\"\n",
                                 send, freq, dp->idx, dx_lastx, dp->flags, dp->offset, dp->sig_bw, time_begin, time_end, kiwi_str_decode_static((char *) dp->ident));
                             send++;
                         }
@@ -1782,6 +1633,13 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             if (db_eibi) {
                 //cprintf(conn, "DX_MKR EiBi send=%d\n", send);
                 //real_printf("%s\n", kstr_sp(sb));
+            } else {
+                // get SND & WF to re-evaluate masked areas
+                if (func == DX_MKRS) {
+                    update_masked_freqs();
+                    dx.masked_update_seq++;
+                    dx_print_masked("DX_MKR dx.masked_update_seq++=%d\n", dx.masked_update_seq);
+                }
             }
             kstr_free(sb);
 
