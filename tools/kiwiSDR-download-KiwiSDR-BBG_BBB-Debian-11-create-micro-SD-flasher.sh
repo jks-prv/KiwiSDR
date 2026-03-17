@@ -1,12 +1,17 @@
 #!/bin/bash -e
-# Copyright (c) 2016-2024 John Seamons, ZL4VO/KF6VO
+# Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 # NB: this distro image is a flasher
 
 PLAT="BBG_BBB"
-VER="v1.804"
+VER="v1.831"
 DEBIAN_VER="11.11"
-CKSUM="2f60798f60b647f0b18f8ac7493776c7b75f22f17977dffdd6c8253274538c3f"
+CKSUM="bc637c0b6124865115b45e5f90edaca899dd4c2323e34423de1705780da68b72"
+
+#PLAT="BBG_BBB"
+#VER="v1.804"
+#DEBIAN_VER="11.11"
+#CKSUM="2f60798f60b647f0b18f8ac7493776c7b75f22f17977dffdd6c8253274538c3f"
 
 HOST="http://kiwisdr.com/files"
 DISTRO="KiwiSDR_${VER}_${PLAT}_Debian_${DEBIAN_VER}.img.xz"
