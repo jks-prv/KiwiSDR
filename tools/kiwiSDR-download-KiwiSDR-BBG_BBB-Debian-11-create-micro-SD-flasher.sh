@@ -3,6 +3,11 @@
 
 # NB: this distro image is a flasher
 
+# CAUTION: When changing the image specified by this file also update
+# these files so the admin > backup > upgrade function continues to work:
+# kiwisdr.com/files/KiwiSDR_BBG_BBB_Debian_11.img.xz (symlink)
+# kiwisdr.com/files/KiwiSDR_BBG_BBB_Debian_11.sha
+
 PLAT="BBG_BBB"
 VER="v1.831"
 DEBIAN_VER="11.11"
