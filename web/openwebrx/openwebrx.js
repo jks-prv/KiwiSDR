@@ -19,7 +19,7 @@ This file is part of OpenWebRX.
 
 */
 
-// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2026 John Seamons, ZL4VO/KF6VO
 
 /*
    searchable contents:
@@ -8656,9 +8656,10 @@ function dx_update()
 	if (dx.filter_tod[dx.db]) {
 	//if (1) {    // so can observe change from dashed/lighter to solid/darker when not filtered
 	   var _5_min_ms = 5*60*1e3;
-	   //var _5_min_ms = 60*1e3;    // #ifdef TEST_DX_TIME_REV
+	   //var _1_min_ms = 60*1e3;    // #ifdef TEST_DX_TIME_REV
+	   var ms_refresh_interval = _5_min_ms;
 	   var ms_delay = 2e3;        // wait for boundary to pass before checking
-	   var ms_rem = _5_min_ms - (Date.now() % _5_min_ms);
+	   var ms_rem = ms_refresh_interval - (Date.now() % ms_refresh_interval);
 	   //console_log_dbgUs('$ SET dx_refresh_timeout rem='+ (ms_rem/1e3).toFixed(3));
 	   dx.dx_refresh_timeout = setTimeout(function() {
 	      //console_log_dbgUs('$ GO dx_refresh_timeout ');
