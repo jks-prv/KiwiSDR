@@ -4332,8 +4332,8 @@ var spec = {
    clear_avg: 0,
    avg: [[], []],
    
-   //spec_color_color: '#66ffff',    // light-cyan hsl(180, 100%, 70%)
-   spec_color_color: '#d3d3d3',
+   //spec_color: '#66ffff',    // light-cyan hsl(180, 100%, 70%)
+   spec_color: '#d3d3d3',
 
 
    // spectrum & peak hold
@@ -4720,7 +4720,7 @@ function spectrum_update(data)
 	}
 	
    if (spectrum_spec_color)
-      ctx.fillStyle = spec.spec_color_color;
+      ctx.fillStyle = spec.spec_color;
 
    for (x=0; x < sw; x++) {
       z = color_index(wf_gnd? wf_gnd_value : data[x]);
