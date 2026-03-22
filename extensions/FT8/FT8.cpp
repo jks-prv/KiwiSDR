@@ -321,6 +321,7 @@ bool ft8_update_vars_from_config(bool called_at_init_or_restart)
 	cfg_string_free(s);
     s = (char *) cfg_string("ft8.grid", NULL, CFG_REQUIRED);
 	kiwi_strncpy(ft8_conf.rgrid, s, LEN_GRID6);
+    //printf("ft8_update_vars_from_config: ft8_conf.rgrid %s\n", ft8_conf.rgrid);
     wspr_set_latlon_from_grid(s);
 	cfg_string_free(s);
 	grid_to_latLon(ft8_conf.rgrid, &ft8_conf2.r_loc);

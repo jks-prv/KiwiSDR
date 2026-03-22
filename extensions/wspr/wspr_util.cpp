@@ -407,7 +407,10 @@ int freq_comp(const void *elem1, const void *elem2)
 
 void wspr_set_latlon_from_grid(char *grid)
 {
+    //printf("wspr_set_latlon_from_grid grid=%s\n", grid);
+    if (kiwi_emptyStr(grid)) return;
 	grid_to_latLon(grid, &wspr_c.r_loc);
+    //printf("wspr_set_latlon_from_grid wspr_c.r_loc.lat=%.1f\n", wspr_c.r_loc.lat);
 	if (wspr_c.r_loc.lat != 999.0)
 		latLon_deg_to_rad(wspr_c.r_loc);
 }
