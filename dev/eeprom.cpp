@@ -341,6 +341,31 @@ void eeprom_write(eeprom_action_e action, int serno, int model, char *key)
 	ctrl_clr_set(0, CTRL_EEPROM_WP);    // takes effect about 200 us after last write
 }
 
+// key: "rev_auto_user" or "rev_user"
+int restore_user_key(eeprom_t *e, const char *key, bool *upd_cfg = NULL)
+{
+    int i, key_ok = 0;
+    const char *user_key = admcfg_string(key, NULL, CFG_OPTIONAL);
+    if (kiwi_emptyStr(user_key)) {
+        for (i = 0; i < 29; i++) {
+            if (!isxdigit(e->key[0][i]))
+                break;
+        }
+        if (i == 29 && e->key[0][29] == '\0') {
+            admcfg_set_string(key, e->key[0]);
+            lprintf("EEPROM %s RECOVERED TO %s\n", key, e->key[0]);
+            if (upd_cfg) *upd_cfg = true;
+            key_ok = 1;
+        } else {
+            lprintf("EEPROM %s UNSET, BUT EEPROM KEY INVALID\n", key);
+        }
+    } else {
+        key_ok = 1;     // found existing key
+    }
+    admcfg_string_free(user_key);
+    return key_ok;
+}
+
 void eeprom_update(eeprom_action_e action)
 {
 	int i, n, serno;
@@ -393,28 +418,12 @@ void eeprom_update(eeprom_action_e action)
 	// In re-flash image rev_auto is always set false, rev_{user,host} and admin password blank.
 	if (action == EE_NORM && model != KiwiSDR_1) {
 	    bool upd_cfg = false;
-	    int ok = 0;
-        const char *auto_user = admcfg_string("rev_auto_user", NULL, CFG_OPTIONAL);
-        if (auto_user == NULL || auto_user[0] == '\0') {
-            for (i = 0; i < 29; i++) {
-                if (!isxdigit(e->key[0][i]))
-                    break;
-            }
-            if (i == 29 && e->key[0][29] == '\0') {
-                admcfg_set_string("rev_auto_user", e->key[0]);
-                lprintf("EEPROM rev_auto_user RECOVERED TO %s\n", e->key[0]);
-                upd_cfg = true;
-                ok++;
-            } else {
-                lprintf("EEPROM rev_auto_user UNSET, BUT EEPROM KEY INVALID\n");
-            }
-        } else {
-            ok++;       // found existing auto_user
-        }
-        admcfg_string_free(auto_user);
+	    int auto_key_ok = restore_user_key(e, "rev_auto_user", &upd_cfg);
+	    // if we restored rev_auto_user attempt to restore rev_user
+	    if (upd_cfg) restore_user_key(e, "rev_user");
         
         const char *auto_host = admcfg_string("rev_auto_host", NULL, CFG_OPTIONAL);
-        if (auto_host == NULL || auto_host[0] == '\0') {
+        if (kiwi_emptyStr(auto_host)) {
             admcfg_set_string("rev_auto_host", stprintf("%d", serno));
             lprintf("EEPROM rev_auto_host RECOVERED TO %d\n", serno);
             upd_cfg = true;
@@ -422,13 +431,13 @@ void eeprom_update(eeprom_action_e action)
         admcfg_string_free(auto_host);
         
         if (upd_cfg) {
-            if (ok) {   // don't use auto if user key wasn't good
+            if (auto_key_ok) {   // don't set auto if user key wasn't good
                 admcfg_set_bool("rev_auto", true);
                 lprintf("EEPROM rev_auto SET TRUE\n");
 
                 // set admin password to serno if unset/blank (is blank from re-flash)
                 const char *apw = admcfg_string("admin_password", NULL, CFG_OPTIONAL);
-                if (apw == NULL || apw[0] == '\0') {
+                if (kiwi_emptyStr(apw)) {
                     admcfg_set_string("admin_password", stprintf("%d", serno));
                     lprintf("EEPROM admin password unset/blank, set to serial number\n");
                 }
