@@ -4332,8 +4332,8 @@ var spec = {
    clear_avg: 0,
    avg: [[], []],
    
-   //spec_color_color: '#66ffff',    // light-cyan hsl(180, 100%, 70%)
-   spec_color_color: '#d3d3d3',
+   //spec_color: '#66ffff',    // light-cyan hsl(180, 100%, 70%)
+   spec_color: '#d3d3d3',
 
 
    // spectrum & peak hold
@@ -4720,7 +4720,7 @@ function spectrum_update(data)
 	}
 	
    if (spectrum_spec_color)
-      ctx.fillStyle = spec.spec_color_color;
+      ctx.fillStyle = spec.spec_color;
 
    for (x=0; x < sw; x++) {
       z = color_index(wf_gnd? wf_gnd_value : data[x]);
@@ -11340,7 +11340,7 @@ function panels_setup()
                w3_button('id-button-wf-autoscale class-button||title="waterfall auto scale"', 'Auto<br>Scale', 'wf_autoscale_cb')
             ),
             w3_div('w3-hcenter',
-               w3_button('id-button-slow-dev class-button||title="spectrum color mode"', 'Spec<br>Color', 'toggle_or_set_spec_color')
+               w3_button('id-button-spec-color class-button||title="spectrum color mode"', 'Spec<br>Color', 'toggle_or_set_spec_color')
             ),
             w3_button('id-button-spec-peak0 w3-margin-L-16 class-button w3-noactive w3-hold|border: 2px solid yellow; padding: 1px 3px|' +
                'title="toggle peak hold\n#1: off-on-hold\nshift: toggle backwards"', 'P1', 'toggle_or_set_spec_peak', 0)
@@ -12281,7 +12281,7 @@ function toggle_or_set_spec_color(set, val)
 		spectrum_spec_color = kiwi_toggle(set, val, spectrum_spec_color, 'last_slow_dev');  // backward compatibility "slow_dev"
 	else
 		spectrum_spec_color ^= 1;
-	w3_color('id-button-slow-dev', spectrum_spec_color? 'lime':'white');
+	w3_color('id-button-spec-color', spectrum_spec_color? 'lime':'white');
 	freqset_select();
 	kiwi_storeWrite('last_slow_dev', spectrum_spec_color.toString());
 	if (spectrum_spec_color && wf_speed == WF_SPEED_FAST)

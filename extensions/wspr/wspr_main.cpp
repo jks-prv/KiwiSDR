@@ -961,8 +961,8 @@ bool wspr_msgs(char *msg, int rx_chan)
 void wspr_update_rgrid(char *rgrid)
 {
     kiwi_strncpy(wspr_c.rgrid, rgrid, LEN_GRID);
+    //printf("wspr_update_rgrid: wspr_c.rgrid %s\n", wspr_c.rgrid);
     wspr_set_latlon_from_grid((char *) wspr_c.rgrid);
-    printf("wspr_c.rgrid %s\n", wspr_c.rgrid);
     
     // update grid shown in user lists when there haven't been any new spots recently
     for (int ch = 0; ch < MAX_RX_CHANS; ch++) {
@@ -999,6 +999,7 @@ bool wspr_update_vars_from_config(bool called_at_init_or_restart)
 	kiwi_strncpy(wspr_c.rgrid, s, LEN_GRID);
 	cfg_string_free(s);
     wspr_set_latlon_from_grid((char *) wspr_c.rgrid);
+    //printf("wspr_update_vars_from_config: wspr_c.rgrid %s\n", wspr_c.rgrid);
 
     // Make sure WSPR.autorun holds *correct* count of non-preemptable autorun processes.
     // For the benefit of refusing enable of public listing if there are no non-preemptable autoruns.

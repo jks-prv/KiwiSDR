@@ -718,7 +718,8 @@ void sample_wf(int rx_chan)
         #endif
     #endif
 
-    #ifndef WF_IPC_SAMPLE_WF
+    #ifdef WF_IPC_SAMPLE_WF
+    #else
         if (wf->aper == AUTO && wf->done_autoscale > wf->sent_autoscale) {
             wf->sent_autoscale++;
 

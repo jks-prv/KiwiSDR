@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2019-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -45,6 +45,16 @@ Boston, MA  02110-1301, USA.
 #include <sched.h>
 #include <math.h>
 #include <fftw3.h>
+
+
+//#define WF_INFO
+
+#ifdef WF_INFO
+	#define wf_printf(fmt, ...) \
+		if (!bg) cprintf(wf->conn, fmt, ## __VA_ARGS__)
+#else
+	#define wf_printf(fmt, ...)
+#endif
 
 #define TR_WF_CMDS      0
 #define SM_WF_DEBUG		false

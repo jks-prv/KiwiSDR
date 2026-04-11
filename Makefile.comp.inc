@@ -1,7 +1,7 @@
 #
 # Makefile for KiwiSDR project
 #
-# Copyright (c) 2014-2025 John Seamons, ZL4VO/KF6VO
+# Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 #
 # The '/etc/dogtag' file is present on the Beagle and not on the dev machine.
 # Grep returns 0 if "Debian" is found in /etc/dogtag, 1 if it isn't and 2 if /etc/dogtag doesn't exist.
