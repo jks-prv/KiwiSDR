@@ -304,7 +304,7 @@ int rx_chan_no_pwd(pwd_check_e pwd_check)
 
 int rx_count_server_conns(conn_count_e type, u4_t flags, conn_t *our_conn)
 {
-	int users=0, any=0;
+	int users=0, any=0, krec=0;
 	
 	conn_t *c = conns;
 	for (int i=0; i < N_CONNS; i++, c++) {
@@ -350,8 +350,11 @@ int rx_count_server_conns(conn_count_e type, u4_t flags, conn_t *our_conn)
             // will return 1 if there are no sound connections but at least one waterfall connection
             if (sound || c->type == STREAM_WATERFALL) any = 1;
         }
+        
+        if (c->krec) krec++;
 	}
 	
+	if (type == KIWIRECORDER) return krec;
 	return (users? users : any);
 }
 

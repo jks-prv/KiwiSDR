@@ -66,7 +66,8 @@ int rx_chan_free_count(rx_free_count_e flags, int *idx = NULL, int *heavy = NULL
 typedef enum { PWD_CHECK_NO, PWD_CHECK_YES } pwd_check_e;
 int rx_chan_no_pwd(pwd_check_e pwd_check = PWD_CHECK_NO);
 
-enum conn_count_e { EXTERNAL_ONLY, INCLUDE_INTERNAL, TDOA_USERS, EXT_API_USERS, LOCAL_OR_PWD_PROTECTED_USERS, ADMIN_USERS, ADMIN_CONN };
+enum conn_count_e { EXTERNAL_ONLY, INCLUDE_INTERNAL, TDOA_USERS, EXT_API_USERS,
+    LOCAL_OR_PWD_PROTECTED_USERS, ADMIN_USERS, ADMIN_CONN, KIWIRECORDER };
 #define EXCEPT_PREEMPTABLE  0x01
 int rx_count_server_conns(conn_count_e type, u4_t flags = 0, conn_t *our_conn = NULL);
 
