@@ -4,7 +4,12 @@
 //
 // Double-slash comment sequence MUST start in column one!
 //
-// CAUTION:     kiwisdr.com 50.116.2.xxx    forum 45.79.102.xxx     jks 103.156.230.xxx
+// CAUTION:
+//      kiwisdr.com 50.116.2.xxx
+//      forum       45.79.102.xxx
+//      d13         45.78.73.xxx
+//      jks         103.156.230.xxx
+//
 // www.ipaddressguide.com/cidr
 //
 // Updates:
