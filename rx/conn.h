@@ -56,7 +56,7 @@ typedef struct conn_st {
 	funcP_t task_func;
 	char *tname;
 
-	bool ext_api, ext_api_determined;
+	bool ext_api, ext_api_determined, krec;
 	u4_t served;
 
 	// set in STREAM_{SOUND, WATERFALL, EXT, ADMIN}

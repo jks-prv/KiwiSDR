@@ -420,6 +420,24 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
     
     if (check_ip_blacklist(ip_forwarded) || check_ip_blacklist(ip_unforwarded)) return NULL;
     
+    if (isKrec) {
+        bool isLocal = isLocal_ip(ip_forwarded, &is_loopback);
+        if (is_loopback) isLocal = true;
+        if (!isLocal) {
+            if (kiwi.ext_api_nchans == 0) {
+                if (kiwi.log_denied_conns)
+                    printf("KREC: no conns allowed, from %s\n", ip_forwarded);
+                return NULL;
+            }
+            int n_krec = rx_count_server_conns(KIWIRECORDER);
+            if (n_krec >= kiwi.ext_api_nchans) {
+                if (kiwi.log_denied_conns)
+                    printf("KREC: limit of %d conns exceeded, from %s\n", kiwi.ext_api_nchans, ip_forwarded);
+                return NULL;
+            }
+        }
+    }
+
     if (!kiwi.allow_admin_conns && timer_sec() > 60) {
         kiwi.allow_admin_conns = true;
         lprintf("WARNING: allow_admin_conns still unset > 60 seconds after startup\n");
@@ -485,6 +503,7 @@ retry:
 	bool snd_or_wf_or_ext = (snd_or_wf || st->type == STREAM_EXT);
 	int mon_total = 0;
 	
+	// look for free connections (conn_t not rx_chan_t) and matching streams
 	for (c = conns, cn=0; c < &conns[N_CONNS]; c++, cn++) {
 		assert(c->magic == CN_MAGIC);
 
@@ -798,6 +817,7 @@ retry:
 	ndesc_init(&c->c2s, mc);
 	c->arrival = timer_sec();
 	c->isWF_conn = !isNo_WF;
+	if (isKrec) c->krec = true;
 	clock_conn_init(c);
 	conn_printf("NEW %s channel RX%d\n", st->uri, c->rx_channel);
 	

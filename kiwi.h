@@ -39,6 +39,7 @@ typedef struct {
     platform_e platform;
     
     int current_nusers, current_nusers_ui;
+    int ext_api_nchans;
     bool dbgUs;
     tid_t proxy_task_tid;
     
@@ -50,6 +51,7 @@ typedef struct {
     bool ext_clk;
     bool isWB;
     bool allow_admin_conns;
+    bool log_denied_conns;
     bool spectral_inversion, spectral_inversion_lockout;
     bool require_id;
     bool test_marine_mobile;

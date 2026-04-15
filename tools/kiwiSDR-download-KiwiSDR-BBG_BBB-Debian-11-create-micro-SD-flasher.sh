@@ -6,17 +6,17 @@
 # CAUTION: When changing the image specified by this file also update
 # these files so the admin > backup > upgrade function continues to work:
 # kiwisdr.com/files/KiwiSDR_BBG_BBB_Debian_11.img.xz (symlink)
-# kiwisdr.com/files/KiwiSDR_BBG_BBB_Debian_11.sha
+# kiwisdr.com/files/KiwiSDR_BBG_BBB_Debian_11.sha (symlink)
 
 PLAT="BBG_BBB"
-VER="v1.831"
+VER="v1.833"
 DEBIAN_VER="11.11"
-CKSUM="bc637c0b6124865115b45e5f90edaca899dd4c2323e34423de1705780da68b72"
+CKSUM="1732c2381c26caa6d341060bd587ff8d1a5708a1b5fee1a5d08fdcafbcfff89b"
 
 #PLAT="BBG_BBB"
-#VER="v1.804"
+#VER="v1.831"
 #DEBIAN_VER="11.11"
-#CKSUM="2f60798f60b647f0b18f8ac7493776c7b75f22f17977dffdd6c8253274538c3f"
+#CKSUM="bc637c0b6124865115b45e5f90edaca899dd4c2323e34423de1705780da68b72"
 
 HOST="http://kiwisdr.com/files"
 DISTRO="KiwiSDR_${VER}_${PLAT}_Debian_${DEBIAN_VER}.img.xz"

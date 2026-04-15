@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 833
+VERSION_MIN = 834
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -2104,9 +2104,9 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    -systemctl --full --lines=250 enable kiwid.service || true
 	    (cd $(DIR_CFG); jq '.onetime_password_check = false | .admin_password = "" | .user_password = "" | .rev_auto = false | .rev_auto_user = "" | .rev_auto_host = "" | .rev_user = "" | .rev_host = "" | .update_check = true | .update_install = true' admin.json > /tmp/jq && mv /tmp/jq admin.json)
 	    (cd $(DIR_CFG); jq '.sdr_hu_dom_sel = 2 | .server_url = ""' kiwi.json > /tmp/jq && mv /tmp/jq kiwi.json)
-	    (cd $(DIR_CFG); rm -f .do_once.dep .keyring*.dep frpc.ini seq_serno)
+	    -(cd $(DIR_CFG); rm -f .do_once.dep .keyring*.dep frpc.ini seq_serno)
 	    -rm -f /tmp/.kiwi* /root/.ssh/auth* /root/.ssh/known*
-	    -rm -f .bashrc.local.common build.log _FLASHED_FROM_SD_
+	    -(cd /root; rm -f .bashrc.local.common build.log _FLASHED_FROM_SD_)
 	    -touch unix_env/reflash_delay_update
 	    -cp unix_env/shadow /etc/shadow
 	    sum *.bit
@@ -2190,7 +2190,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     TO_IMG = /home/debian/KiwiSDR_$(VER)_$(PLAT)_Debian_$(DISTRO_DEBIAN_VER).img.xz
 
     create_img_from_sd: /usr/bin/xz
-	    @echo "--- this takes about an hour"
+	    @echo "--- this can take several hours"
 	    @echo "--- KiwiSDR server will be stopped to maximize write speed"
 	    lsblk
 	    @echo "CAUTION: SD_CARD_MMC_COPY = $(SD_CARD_MMC_COPY)"

@@ -349,7 +349,8 @@ void update_vars_from_config(bool called_at_init)
         cfg_default_int("ADC_clk2_corr", ADC_CLK_CORR_CONTINUOUS, &up_cfg);
     }
 
-    cfg_default_int("ext_api_nchans", -1, &up_cfg);
+    kiwi.ext_api_nchans = cfg_default_int("ext_api_nchans", -1, &up_cfg);
+    kiwi.log_denied_conns = cfg_default_bool("log_denied_conns", false, &up_cfg);
     cfg_default_bool("no_wf", false, &up_cfg);
     cfg_default_bool("test_webserver_prio", false, &up_cfg);
     cfg_default_bool("test_deadline_update", false, &up_cfg);

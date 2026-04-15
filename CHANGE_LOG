@@ -3,6 +3,18 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.834  April 15, 2026
+    Admin control tab:
+        New behavior for when the menu "Number of simultaneous channels available for connection by
+        non-Kiwi apps" is active (i.e. set to less than the number of total channels).
+        In that case connections from kiwirecorder are rejected earlier in the connection process
+        so they don't ever take up a receive channel for any length of time.
+        
+        Note that connections from the local network are exempt from this check.
+    
+        The new checkbox "Log details of denied connections" will show these connection attempts
+        in the admin log tab (but not the Debian syslog).
+
 v1.833  April 11, 2026
     Bug fix: Restore proxy user key in the same way auto user key gets restored from EEPROM when
     using the generic recovery re-flash sd card include with Kiwi.
