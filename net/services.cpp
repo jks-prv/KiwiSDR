@@ -852,7 +852,9 @@ static void pvt_NET(void *param)
         rx_send_config(SM_SND_ADM_ALL);
     }
 
-    DNS_lookup("kiwisdr.com", &net.ips_kiwisdr_com, N_IPS, KIWISDR_COM_PUBLIC_IP);
+    DNS_lookup("kiwisdr.com",        &net.ips_kiwisdr_com,        KIWISDR_COM_PUBLIC_IP);
+    DNS_lookup("forum.kiwisdr.com",  &net.ips_forum_kiwisdr_com,  FORUM_KIWISDR_COM_PUBLIC_IP);
+    DNS_lookup("freedv.kiwisdr.com", &net.ips_freedv_kiwisdr_com, FREEDV_KIWISDR_COM_PUBLIC_IP);
 }
 
 static void pub_NET(void *param)

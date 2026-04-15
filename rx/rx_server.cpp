@@ -421,8 +421,14 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
     if (check_ip_blacklist(ip_forwarded) || check_ip_blacklist(ip_unforwarded)) return NULL;
     
     if (isKrec) {
-        bool isLocal = isLocal_ip(ip_forwarded, &is_loopback);
+        bool is_kiwisdr_com = false;
+        bool isLocal = isLocal_ip(ip_forwarded, &is_loopback, NULL, NULL, &is_kiwisdr_com);
         if (is_loopback) isLocal = true;
+        
+        if (is_kiwisdr_com) {
+            if (kiwi.log_denied_conns)
+                printf("KREC: conn from kiwisdr.com OK %s\n", ip_forwarded);
+        } else
         if (!isLocal) {
             if (kiwi.ext_api_nchans == 0) {
                 if (kiwi.log_denied_conns)
