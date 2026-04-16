@@ -3,6 +3,12 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.835  April 17, 2026
+    Make kiwirecorder connections originating from kiwisdr.com exempt from the latest kiwirecorder
+    filtering. This allows the TDoA and (upcoming) FreeDV extensions to continue to work.
+    The number of simultaneous TDoA connections can still be limited by the setting on the
+    admin > extensions > TDoA configuration page.
+
 v1.834  April 15, 2026
     Admin control tab:
         New behavior for when the menu "Number of simultaneous channels available for connection by
