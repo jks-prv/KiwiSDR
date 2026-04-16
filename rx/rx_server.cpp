@@ -420,8 +420,8 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
     
     if (check_ip_blacklist(ip_forwarded) || check_ip_blacklist(ip_unforwarded)) return NULL;
     
+    bool is_kiwisdr_com = false;
     if (isKrec) {
-        bool is_kiwisdr_com = false;
         bool isLocal = isLocal_ip(ip_forwarded, &is_loopback, NULL, NULL, &is_kiwisdr_com);
         if (is_loopback) isLocal = true;
         
@@ -824,6 +824,7 @@ retry:
 	c->arrival = timer_sec();
 	c->isWF_conn = !isNo_WF;
 	if (isKrec) c->krec = true;
+	if (is_kiwisdr_com) c->is_kiwisdr_com = true;
 	clock_conn_init(c);
 	conn_printf("NEW %s channel RX%d\n", st->uri, c->rx_channel);
 	

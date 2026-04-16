@@ -335,8 +335,9 @@ static void called_every_second()
 		    served, c->browser? c->browser : "");
 		//dump();
 
-        // ext_api_nchans, if exceeded, overrides tdoa_nchans
-        if (!c->kick && !c->awaitingPassword) {
+        // ext_api_nchans no longer overrides tdoa_nchans since we can use c->is_kiwisdr_com
+        // to guarantee connection is coming from kiwisdr.com
+        if (!c->kick && !c->awaitingPassword && !c->is_kiwisdr_com) {
             int ext_api_ch = cfg_int("ext_api_nchans", NULL, CFG_REQUIRED);
             if (ext_api_ch == -1) ext_api_ch = rx_chans;      // has never been set
             int ext_api_users = rx_count_server_conns(EXT_API_USERS);
