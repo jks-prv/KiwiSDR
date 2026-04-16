@@ -30,8 +30,8 @@ Boston, MA  02110-1301, USA.
 
 // backup values only if dig lookup fails
 #define KIWISDR_COM_PUBLIC_IP           "50.116.2.70"
-#define FORUM_KIWISDR_COM_PUBLIC_IP     "50.116.2.70"
-#define FREEDV_KIWISDR_COM_PUBLIC_IP    "50.116.2.70"
+#define FORUM_KIWISDR_COM_PUBLIC_IP     "45.79.102.170"
+#define FREEDV_KIWISDR_COM_PUBLIC_IP    "45.79.73.122"
 #define GITHUB_COM_PUBLIC_IP            "4.237.22.38"   // was "52.64.108.95"
 
 // range of port base: + 0 .. MAX_RX_CHANS(instance) * 3(SND/WF/EXT)
