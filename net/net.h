@@ -29,8 +29,10 @@ Boston, MA  02110-1301, USA.
 #include <netdb.h>
 
 // backup values only if dig lookup fails
-#define KIWISDR_COM_PUBLIC_IP   "50.116.2.70"
-#define GITHUB_COM_PUBLIC_IP    "52.64.108.95"      // was "192.30.253.112"
+#define KIWISDR_COM_PUBLIC_IP           "50.116.2.70"
+#define FORUM_KIWISDR_COM_PUBLIC_IP     "45.79.102.170"
+#define FREEDV_KIWISDR_COM_PUBLIC_IP    "45.79.73.122"
+#define GITHUB_COM_PUBLIC_IP            "4.237.22.38"   // was "52.64.108.95"
 
 // range of port base: + 0 .. MAX_RX_CHANS(instance) * 3(SND/WF/EXT)
 #define PORT_BASE_INTERNAL_WSPR     1138
@@ -87,7 +89,7 @@ typedef enum { IPV_NONE = 0, IPV4 = 4, IPV6 = 6 } ipv46_e;
 typedef struct {
     bool valid, backup;
     int n_ips;
-	#define N_IPS 16
+	#define N_IPS 4
 	char *ip_list[N_IPS];
 	u4_t ip[N_IPS];
 } ip_lookup_t;
@@ -167,6 +169,8 @@ typedef struct {
 	int nm_bits6LL;
 
     ip_lookup_t ips_kiwisdr_com;
+    ip_lookup_t ips_forum_kiwisdr_com;
+    ip_lookup_t ips_freedv_kiwisdr_com;
     
     bool ip_blacklist_inuse, ip_blacklist_update_busy;
     int ip_blacklist_port_only;
@@ -199,11 +203,12 @@ void inet4_h2d(u4_t inet4, u1_t *ap, u1_t *bp, u1_t *cp, u1_t *dp);
 char *inet4_h2s(u4_t inet4, int which = 0);
 bool is_inet4_map_6(u1_t *a);
 int inet_nm_bits(int family, void *netmask);
-bool isLocal_ip(char *ip, bool *is_loopback = NULL, u4_t *ipv4 = NULL, bool *error = NULL);
+bool isLocal_ip(char *ip, bool *is_loopback = NULL, u4_t *ipv4 = NULL, bool *error = NULL, bool *kiwisdr_com = NULL);
 
-int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, int n_ips, const char *ip_backup = NULL);
+int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, const char *ip_backup = NULL);
 char *DNS_lookup_result(const char *caller, const char *host, ip_lookup_t *ips);
-bool ip_match(const char *ip, ip_lookup_t *ips);
+bool ip_match(u4_t ip, ip_lookup_t *ips);
+bool ip_match_s(const char *ip, ip_lookup_t *ips);
 
 char *ip_remote(struct mg_connection *mc);
 bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_ip, bool *is_loopback = NULL);

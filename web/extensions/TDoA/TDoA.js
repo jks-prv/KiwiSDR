@@ -2758,7 +2758,7 @@ function TDoA_config_html()
          w3_div('w3-text-black'), 15,
 
          w3_div('',
-            w3_input('||size=12', 'TDoA ID (alphanumeric and \'/\', 12 char max)', 'cfg.tdoa_id', '', 'tdoa_id_cb',
+            w3_input_get('||size=12', 'TDoA ID (alphanumeric and \'/\', 12 char max)', 'cfg.tdoa_id', 'tdoa_id_cb', '',
                'TDoA map marker id (e.g. callsign)'
             ),
             w3_div('w3-margin-T-8 w3-text-black',

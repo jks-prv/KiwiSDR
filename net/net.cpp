@@ -672,7 +672,7 @@ int inet_nm_bits(int family, void *netmask)
 	return nm_bits;
 }
 
-bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4, bool *error)
+bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4, bool *error, bool *kiwisdr_com)
 {
     bool err;
     if (error) *error = false;
@@ -683,6 +683,14 @@ bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4, bool *error)
         // ipv4
         if (is_loopback)
             *is_loopback = (ip == INET4_DTOH(127,0,0,1));
+        
+        if (kiwisdr_com) {
+            *kiwisdr_com =
+                ip_match(ip, &net.ips_kiwisdr_com) ||
+                ip_match(ip, &net.ips_forum_kiwisdr_com) ||
+                ip_match(ip, &net.ips_freedv_kiwisdr_com);
+        }
+        
         if (
             (ip >= INET4_DTOH(10,0,0,0) && ip <= INET4_DTOH(10,255,255,255)) ||
             (ip >= INET4_DTOH(172,16,0,0) && ip <= INET4_DTOH(172,31,255,255)) ||
@@ -706,12 +714,19 @@ bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4, bool *error)
     return false;   // is not a local IP (*error set false)
 }
 
-bool ip_match(const char *ip, ip_lookup_t *ips)
+bool ip_match(u4_t ip, ip_lookup_t *ips)
 {
-    char *needle_ip;
+    for (int i = 0; i < ips->n_ips; i++) {
+        if (ip == ips->ip[i]) return true;
+    }
+    return false;
+}
 
-    for (int i = 0; (needle_ip = ips->ip_list[i]) != NULL; i++) {
-        bool match = (*needle_ip != '\0' && strstr(ip, needle_ip) != NULL);
+bool ip_match_s(const char *ip, ip_lookup_t *ips)
+{
+    for (int i = 0; i < ips->n_ips; i++) {
+        char *needle_ip = ips->ip_list[i];
+        bool match = (kiwi_nonEmptyStr(needle_ip) && strstr(ip, needle_ip) != NULL);
         //printf("ipmatch: %s %d=\"%s\" %s\n", ip, i, needle_ip, match? "T":"F");
         if (match) {
             //printf("ipmatch: TRUE\n");
@@ -723,21 +738,21 @@ bool ip_match(const char *ip, ip_lookup_t *ips)
     return false;
 }
 
-int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, int n_ips, const char *ip_backup)
+int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, const char *ip_backup)
 {
     int i, n, status;
     char *cmd_p;
     char **ip_list = r_ips->ip_list;
 
-    assert(n_ips <= N_IPS);
     asprintf(&cmd_p, "dig +short +noedns +time=2 +tries=2 %s A %s AAAA", domain_name, domain_name);
     //printf("LOOKUP: \"%s\" <%s>\n", domain_name, cmd_p);
 	kstr_t *reply = non_blocking_cmd(cmd_p, &status);
 	
 	if (reply != NULL && status >= 0 && WEXITSTATUS(status) == 0) {
 		char *r_buf;
-		str_split_t ips[N_IPS];
-		n = kiwi_split(kstr_sp(reply), &r_buf, "\n", ips, n_ips-1);
+		str_split_t ips[N_IPS+1];
+		n = kiwi_split(kstr_sp(reply), &r_buf, "\n", ips, N_IPS);
+		if (n > N_IPS) n = N_IPS;   // don't trust kiwi_split() return value
 
         for (i = 0; i < n; i++) {
             ip_list[i] = strndup(ips[i].str, NET_ADDRSTRLEN);
@@ -763,7 +778,6 @@ int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, int n_ips, const cha
 	}
 	kiwi_asfree(cmd_p);
 	kstr_free(reply);
-    ip_list[n] = NULL;
     r_ips->n_ips = n;
 	return n;
 }

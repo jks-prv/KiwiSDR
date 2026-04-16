@@ -558,7 +558,7 @@ html, body
 #id-control
 {
     padding-bottom: 5px;
-	z-index: 130;
+	z-index: 400;
 	/*background: lightGrey;	/* debug */
 }
 

@@ -480,7 +480,7 @@ static void PSKReporter_init()
 {
     #define BACKUP_PSKREPORTER_PUBLIC_IP "74.116.41.13"
     static ip_lookup_t ips_pskreporter;
-    DNS_lookup("report.pskreporter.info", &ips_pskreporter, N_IPS, BACKUP_PSKREPORTER_PUBLIC_IP);
+    DNS_lookup("report.pskreporter.info", &ips_pskreporter, BACKUP_PSKREPORTER_PUBLIC_IP);
     u1_t a,b,c,d;
     inet4_h2d(ips_pskreporter.ip[0], &a,&b,&c,&d);
     asprintf(&pr_conf.upload_url, "udp://%d.%d.%d.%d:%d", a,b,c,d, PR_UPLOAD_PORT);
