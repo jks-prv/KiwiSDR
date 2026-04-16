@@ -577,7 +577,7 @@ function control_html()
                '', 'ext_api_nchans', ext_api_nchans, ext_api_chans_u, 'admin_select_cb'),
             w3_div('w3-text-black',
                'If you want to limit incoming connections from <br> non-Kiwi apps like kiwirecorder set this value. <br>' +
-               'This overrides similar value in TDoA extension settings.'
+               'Does not affect connections from the <br> local network or kiwisdr.com like TDoA.'
             )
          )
       );
