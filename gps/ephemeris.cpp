@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdint.h>
 
 EPHEM Ephemeris[MAX_SATS];
 
@@ -37,77 +38,106 @@ static double TimeFromEpoch(double t, double t_ref) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
+// Robust helpers to extract "top n bits" and sign-extend them.
+// Replaces union PACK() to avoid endianness/aliasing/char-signedness pitfalls.
 
-union PACK {
-    PACK(int a, int b=0, int c=0, int d=0) { byte[3]=a, byte[2]=b, byte[1]=c, byte[0]=d; }
-    char     byte[4];
-    unsigned u32;
-    signed   s32;
-    unsigned u(int n) { return u32>>(32-n); }
-    signed   s(int n) { return s32>>(32-n); }
-};
+static inline uint32_t pack_u32(uint8_t a, uint8_t b=0, uint8_t c=0, uint8_t d=0) {
+    return (uint32_t(a)<<24) | (uint32_t(b)<<16) | (uint32_t(c)<<8) | uint32_t(d);
+}
+
+static inline uint32_t topbits(uint32_t x, int n) {
+    return x >> (32-n);
+}
+
+static inline int32_t sign_extend(uint32_t x, int n) {
+    uint32_t m = 1u << (n-1);
+    return (int32_t)((x ^ m) - m);
+}
+
+static inline uint32_t U(uint8_t a, int n) {
+    return topbits(pack_u32(a), n);
+}
+static inline uint32_t U(uint8_t a, uint8_t b, int n) {
+    return topbits(pack_u32(a,b), n);
+}
+static inline uint32_t U(uint8_t a, uint8_t b, uint8_t c, uint8_t d, int n) {
+    return topbits(pack_u32(a,b,c,d), n);
+}
+
+static inline int32_t S(uint8_t a, int n) {
+    return sign_extend(topbits(pack_u32(a), n), n);
+}
+static inline int32_t S(uint8_t a, uint8_t b, int n) {
+    return sign_extend(topbits(pack_u32(a,b), n), n);
+}
+static inline int32_t S(uint8_t a, uint8_t b, uint8_t c, int n) {
+    return sign_extend(topbits(pack_u32(a,b,c), n), n);
+}
+static inline int32_t S(uint8_t a, uint8_t b, uint8_t c, uint8_t d, int n) {
+    return sign_extend(topbits(pack_u32(a,b,c,d), n), n);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-void EPHEM::Subframe1(char *nav) {
-    week      =               PACK(                  nav[ 6], nav[ 7]).u(10);
-    t_gd      = pow(2, -31) * PACK(                           nav[20]).s( 8);
-    IODC      =               PACK(                           nav[21]).u( 8);
-    t_oc      =    (1 << 4) * PACK(                  nav[22], nav[23]).u(16);
-    a_f[2]    = pow(2, -55) * PACK(                           nav[24]).s( 8);
-    a_f[1]    = pow(2, -43) * PACK(                  nav[25], nav[26]).s(16);
-    a_f[0]    = pow(2, -31) * PACK(         nav[27], nav[28], nav[29]).s(22);
+void EPHEM::Subframe1(const uint8_t *nav) {
+    week      =               U(nav[6], nav[7], 10);
+    t_gd      = ldexp((double) S(nav[20], 8), -31);
+    IODC      =               U(nav[21], 8);   // NB: stores IODC low 8 bits (IODE) for Navstar
+    t_oc      =    (1 << 4) * U(nav[22], nav[23], 16);
+    a_f[2]    = ldexp((double) S(nav[24], 8), -55);
+    a_f[1]    = ldexp((double) S(nav[25], nav[26], 16), -43);
+    a_f[0]    = ldexp((double) S(nav[27], nav[28], nav[29], 22), -31);
     
-    //if (!is_Navstar(sat)) printf("%s t_gd=0x%x\n", PRN(sat), PACK(nav[20]).u(8));
+    //if (!is_Navstar(sat)) printf("%s t_gd=0x%x\n", PRN(sat), U(nav[20], 8));
 }
 
-void EPHEM::Subframe2(char *nav) {
-    IODE2     =               PACK(                           nav[ 6]).u( 8);
-    C_rs      = pow(2,  -5) * PACK(                  nav[ 7], nav[ 8]).s(16);
-    dn        = pow(2, -43) * PACK(                  nav[ 9], nav[10]).s(16) * PI;
-    M_0       = pow(2, -31) * PACK(nav[11], nav[12], nav[13], nav[14]).s(32) * PI;
-    C_uc      = pow(2, -29) * PACK(                  nav[15], nav[16]).s(16);
-    e         = pow(2, -33) * PACK(nav[17], nav[18], nav[19], nav[20]).u(32);
-    C_us      = pow(2, -29) * PACK(                  nav[21], nav[22]).s(16);
-    sqrtA     = pow(2, -19) * PACK(nav[23], nav[24], nav[25], nav[26]).u(32);
-    t_oe      =    (1 << 4) * PACK(                  nav[27], nav[28]).u(16);
+void EPHEM::Subframe2(const uint8_t *nav) {
+    IODE2     =               U(nav[6], 8);
+    C_rs      = ldexp((double) S(nav[7], nav[8], 16), -5);
+    dn        = ldexp((double) S(nav[9], nav[10], 16), -43) * PI;
+    M_0       = ldexp((double) S(nav[11], nav[12], nav[13], nav[14], 32), -31) * PI;
+    C_uc      = ldexp((double) S(nav[15], nav[16], 16), -29);
+    e         = ldexp((double) U(nav[17], nav[18], nav[19], nav[20], 32), -33);
+    C_us      = ldexp((double) S(nav[21], nav[22], 16), -29);
+    sqrtA     = ldexp((double) U(nav[23], nav[24], nav[25], nav[26], 32), -19);
+    t_oe      =    (1 << 4) * U(nav[27], nav[28], 16);
 }
 
-void EPHEM::Subframe3(char *nav) {
-    C_ic      = pow(2, -29) * PACK(                  nav[ 6], nav[ 7]).s(16);
-    OMEGA_0   = pow(2, -31) * PACK(nav[ 8], nav[ 9], nav[10], nav[11]).s(32) * PI;
-    C_is      = pow(2, -29) * PACK(                  nav[12], nav[13]).s(16);
-    i_0       = pow(2, -31) * PACK(nav[14], nav[15], nav[16], nav[17]).s(32) * PI;
-    C_rc      = pow(2,  -5) * PACK(                  nav[18], nav[19]).s(16);
-    omega     = pow(2, -31) * PACK(nav[20], nav[21], nav[22], nav[23]).s(32) * PI;
-    OMEGA_dot = pow(2, -43) * PACK(         nav[24], nav[25], nav[26]).s(24) * PI;
-    IODE3     =               PACK(                           nav[27]).u( 8);
-    IDOT      = pow(2, -43) * PACK(                  nav[28], nav[29]).s(14) * PI;
+void EPHEM::Subframe3(const uint8_t *nav) {
+    C_ic      = ldexp((double) S(nav[6], nav[7], 16), -29);
+    OMEGA_0   = ldexp((double) S(nav[8], nav[9], nav[10], nav[11], 32), -31) * PI;
+    C_is      = ldexp((double) S(nav[12], nav[13], 16), -29);
+    i_0       = ldexp((double) S(nav[14], nav[15], nav[16], nav[17], 32), -31) * PI;
+    C_rc      = ldexp((double) S(nav[18], nav[19], 16), -5);
+    omega     = ldexp((double) S(nav[20], nav[21], nav[22], nav[23], 32), -31) * PI;
+    OMEGA_dot = ldexp((double) S(nav[24], nav[25], nav[26], 24), -43) * PI;
+    IODE3     =               U(nav[27], 8);
+    IDOT      = ldexp((double) S(nav[28], nav[29], 14), -43) * PI;
 }
 
-void EPHEM::LoadPage18(char *nav) {
+void EPHEM::LoadPage18(const uint8_t *nav) {
 	// Ionospheric delay
-    alpha[0]  = pow(2, -30) * PACK(nav[ 7]).s(8);
-    alpha[1]  = pow(2, -27) * PACK(nav[ 8]).s(8);
-    alpha[2]  = pow(2, -24) * PACK(nav[ 9]).s(8);
-    alpha[3]  = pow(2, -24) * PACK(nav[10]).s(8);
-    beta [0]  = pow(2,  11) * PACK(nav[11]).s(8);
-    beta [1]  = pow(2,  14) * PACK(nav[12]).s(8);
-    beta [2]  = pow(2,  16) * PACK(nav[13]).s(8);
-    beta [3]  = pow(2,  16) * PACK(nav[14]).s(8);
+    alpha[0]  = ldexp((double) S(nav[7], 8), -30);
+    alpha[1]  = ldexp((double) S(nav[8], 8), -27);
+    alpha[2]  = ldexp((double) S(nav[9], 8), -24);
+    alpha[3]  = ldexp((double) S(nav[10], 8), -24);
+    beta [0]  = ldexp((double) S(nav[11], 8), 11);
+    beta [1]  = ldexp((double) S(nav[12], 8), 14);
+    beta [2]  = ldexp((double) S(nav[13], 8), 16);
+    beta [3]  = ldexp((double) S(nav[14], 8), 16);
     
     // GPS/UTC delta time due to leap seconds (Navstar only)
     if (is_Navstar(sat)) {
-        gps.delta_tLS  = PACK(nav[24]).s(8);
-        gps.delta_tLSF = PACK(nav[27]).s(8);
+        gps.delta_tLS  = S(nav[24], 8);
+        gps.delta_tLSF = S(nav[27], 8);
         if (!gps.tLS_valid)
             printf("GPS/UTC +%d sec\n", gps.delta_tLS);
         gps.tLS_valid = true;
     }
 }
 
-void EPHEM::Subframe4(char *nav) {
-    if (PACK(nav[6]).u(8) == ((1 << 6) + 56)) LoadPage18(nav);
+void EPHEM::Subframe4(const uint8_t *nav) {
+    if (U(nav[6], 8) == ((1 << 6) + 56)) LoadPage18(nav);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,15 +161,19 @@ double EPHEM::EccentricAnomaly(double t_k) const {
     // Mean anomaly
     double M_k = M_0 + n*t_k;
 
-    // Solve Kepler's Equation for Eccentric Anomaly
-    double E_k = M_k;
+    // Solve Kepler's Equation for Eccentric Anomaly using Newton-Raphson
+    // E - e*sin(E) = M
+    double E_k = M_k;   // good initial estimate for GPS (small e)
     int i;
-    for(i=0; i<10000; i++) {
-        double temp = E_k;
-        E_k = M_k + e*sin(E_k);
-        if (fabs(E_k - temp) < 1e-10) break;
+    for (i = 0; i < 20; i++) {
+        double sE = sin(E_k), cE = cos(E_k);
+        double f  = E_k - e * sE - M_k;
+        double fp = 1.0 - e * cE;
+        double dE = -f / fp;
+        E_k += dE;
+        if (fabs(dE) < 1e-12) break;
     }
-    if (i == 10000) printf("EPHEM::EccentricAnomaly didn't converge?\n");
+    if (i == 20) printf("EPHEM::EccentricAnomaly NR didn't converge?\n");
 
     return E_k;
 }
@@ -203,8 +237,8 @@ double EPHEM::GetClockCorrection(double t) const {
 
     // 20.3.3.3.3.1 User Algorithm for sat Clock Correction
     return a_f[0]
-         + a_f[1] * pow(t, 1)
-         + a_f[2] * pow(t, 2) + t_R - t_gd;
+         + a_f[1] * t
+         + a_f[2] * t * t + t_R - t_gd;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -227,18 +261,18 @@ bool EPHEM::Valid() {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 void EPHEM::Subframe(char *buf) { // called from channel tasks
-    char nav[30];
+    uint8_t nav[30];
 
 	sub = tow_pg = bin(buf+49,3);
 
     for (int i=0; i<30; buf+=6) {	// skip 6 parity bits
         for (int j=0; j<3; j++) {
-			nav[i++] = bin(buf,8);
+			nav[i++] = (uint8_t) bin(buf,8);
 			buf += 8;
         }
     }
 
-    tow = PACK(nav[3], nav[4], nav[5]).u(17) * 6;
+    tow = U(nav[3], nav[4], nav[5], 0, 17) * 6;
     
     tow_time = timer_ms();      //jks2
     //printf("%s SET  TOW %d sf%d\n", PRN(sat), tow/6, sub);
@@ -252,7 +286,7 @@ void EPHEM::Subframe(char *buf) { // called from channel tasks
     }
 }
 
-// FIXME_E1B: Consider recasting GNSS-SDRLIB/sdrnav_gal.cpp code to reside here using PACK() etc.
+// FIXME_E1B: Consider recasting GNSS-SDRLIB/sdrnav_gal.cpp code to reside here using U()/S() helpers etc.
 
 void EPHEM::PageN(unsigned page) {
     sub = page;
