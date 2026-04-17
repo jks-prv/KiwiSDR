@@ -11268,7 +11268,8 @@ function panels_setup()
 
    // rf opt-rf
    fmt = 'id-rf-attn-disable w3-btn w3-padding-tiny w3-margin-R-8 ';
-   var rf_attn = (kiwi.model == kiwi.KiwiSDR_1 && !cfg.rf_attn_alt)? 0 : +kiwi_storeInit('last_rf_attn', cfg.init.rf_attn);
+   var no_attn = (!kiwi.has_attn && !cfg.rf_attn_alt);
+   var rf_attn = no_attn? 0 : +kiwi_storeInit('last_rf_attn', cfg.init.rf_attn);
    //console.log('INIT rf_attn='+ rf_attn +' kiwi.model='+ kiwi.model +' rf_attn_alt='+ cfg.rf_attn_alt);
    kiwi.rf_attn = rf_attn;
 	w3_innerHTML('id-optbar-rf',
@@ -11294,7 +11295,6 @@ function panels_setup()
       w3_div('id-optbar-rf-antsw')
    );
    
-   var no_attn = (kiwi.model == kiwi.KiwiSDR_1) && !cfg.rf_attn_alt;
    var deny_not_local = false, deny_not_local_or_pwd = false;
    if (cfg.rf_attn_allow == kiwi.RF_ATTN_ALLOW_LOCAL_ONLY && ext_auth() != kiwi.AUTH_LOCAL) deny_not_local = true;
    if (cfg.rf_attn_allow == kiwi.RF_ATTN_ALLOW_LOCAL_OR_PASSWORD_ONLY && ext_auth() == kiwi.AUTH_USER) deny_not_local_or_pwd = true;
@@ -11303,11 +11303,15 @@ function panels_setup()
       kiwi.rf_attn_disabled = true;
       w3_disable_multi('id-rf-attn-disable', true);
       var title;
-      if (no_attn) title = 'no RF attenuator on KiwiSDR 1';
+      if (no_attn && kiwi.model == kiwi.KiwiSDR_2) title = 'no RF attenuator on KiwiSDR 2\nwith serial number >= 23000';
+      else
+      if (no_attn) title = 'no RF attenuator on this KiwiSDR model';
       else
       if (deny_not_local) title = 'only available to local connections';
       else
       if (deny_not_local_or_pwd) title = 'only available to local connections or with password';
+      else
+         title = '';
       w3_title_multi('id-rf-attn-disable', title);
    }
 

@@ -3234,6 +3234,10 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			kiwi.hw = parseInt(param[1]);
 			break;
 
+		case "has_attn":
+			kiwi.has_attn = parseInt(param[1]);
+			break;
+
 		case "abyy":
          dx.db_s[dx.DB_EiBi] = 'EiBi-'+ param[1] +' (read-only)';    // abyy value sent by server
          dx.db_short_s[dx.DB_EiBi] = 'EiBi-'+ param[1];

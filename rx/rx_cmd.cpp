@@ -821,10 +821,12 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     conn->isPassword = is_password;
                     
                     if (stream_snd_or_wf || stream_mon || stream_admin_or_mfg) {
+                        int has_attn = (kiwi.model == 2 && net.serno > 20000 && net.serno < 23000)? 1:0;
+                        printf("model=%d serno=%d has_attn=%d\n", kiwi.model, net.serno, has_attn);
                         send_msg(conn, SM_NO_DEBUG, "MSG version_maj=%d version_min=%d debian_ver=%d model=%d platform=%d hw=%d ext_clk=%d freq_offset=%.3f "
-                            "abyy=%s dx_db_name=%s",
+                            "abyy=%s dx_db_name=%s has_attn=%d",
                             version_maj, version_min, debian_ver, kiwi.model, kiwi.platform, kiwi.hw, kiwi.ext_clk, freq.offset_kHz,
-                            eibi_abyy, kiwi_str_encode_static(dx.dx_db[DB_STORED].db_name));
+                            eibi_abyy, kiwi_str_encode_static(dx.dx_db[DB_STORED].db_name), has_attn);
                     }
 
                     // send cfg once to javascript

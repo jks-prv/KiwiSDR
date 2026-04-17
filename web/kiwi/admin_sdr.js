@@ -110,9 +110,13 @@ var clone_files_s = [ 'complete config', 'dx label config only' ];
 
 function config_init()
 {
-   if (kiwi.model == kiwi.KiwiSDR_1 && !cfg.rf_attn_alt) {
+   if (!kiwi.has_attn && !cfg.rf_attn_alt) {
+      var title;
+      if (kiwi.model == kiwi.KiwiSDR_2) title = 'no RF attenuator on KiwiSDR 2\nwith serial number >= 23000';
+      else
+         title = 'no RF attenuator on this KiwiSDR model';
       w3_disable_multi('id-rf-attn', true);
-      w3_title_multi('id-rf-attn', 'no RF attenuator on KiwiSDR 1');
+      w3_title_multi('id-rf-attn', title);
    }
 }
 
@@ -165,7 +169,7 @@ function config_html()
       ) +
       
       w3_third('w3-text-teal w3-margin-top', 'w3-container',
-         w3_slider('id-rf-attn//', 'RF Attn (default value at restart)', 'init.rf_attn', init_rf_attn,
+         w3_slider('//id-rf-attn', 'RF Attn (default value at restart)', 'init.rf_attn', init_rf_attn,
             0, 31.5, 0.5, 'config_rf_attn_cb'),
          '', ''
       ) +
