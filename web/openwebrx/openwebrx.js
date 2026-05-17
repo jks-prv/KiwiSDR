@@ -10329,6 +10329,11 @@ function ident_init()
 	//console.log('ident_init: SET send_ident=true ident='+ ident_user);
 }
 
+function ident_illegal(ident)
+{
+   return isEmptyString(ident) || ident.length < 2 || ['(connecting)', '(unknown)', '(no identity)'].includes(ident);
+}
+
 function ident_complete(from, which)
 {
 	var i, el = [];
@@ -10348,7 +10353,12 @@ function ident_complete(from, which)
 	// okay for ident='' to erase it
 	// SECURITY: input value length limited by "maxlength" attribute, but also guard against binary data injection?
 	//w3_field_select(el, {mobile:1});
+	var retry = false;
 	if (which != 3 || (which == 3 && ident != '')) {    // don't highlight flash field being erased
+	   if (ident_illegal(ident)) {
+	      ident = '';
+	      retry = true;
+	   }
       for (i = 1; i <= 3; i++) {
          if (el[i]) {
             el[i].value = ident;
@@ -10356,6 +10366,11 @@ function ident_complete(from, which)
             w3_dismiss_keyboard(el[i]);
          }
       }
+   }
+   if (retry) {
+      //w3_field_select(el[which], {mobile:1});
+      console.info(el[which]);
+      return;
    }
 	freqset_select();    // don't keep ident field selected
 
@@ -10965,7 +10980,7 @@ function test_audio_suspended()
    //console.log('$test_audio_suspended require_id='+ cfg.require_id +' ident=<'+ ident +'>');
    var m_old = (kiwi.mdev && !kiwi.mnew);
 
-   if (cfg.require_id && isEmptyString(ident)) {
+   if (cfg.require_id && ident_illegal(ident)) {
       snd_send('SET require_id=1');
       s1 = w3_input('w3-flex w3-flex-col w3-valign-center//w3-custom-events w3-margin-T-10 w3-font-18px w3-normal w3-padding-1'+
          '|width:300px|size=20'+
