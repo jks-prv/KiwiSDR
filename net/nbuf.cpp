@@ -98,6 +98,11 @@ void ndesc_init(ndesc_t *nd, struct mg_connection *mc)
 	nd->mc = mc;
 }
 
+bool ndesc_valid(ndesc_t *nd)
+{
+    return (nd != NULL && nd->magic_b == NDESC_MAGIC_B);
+}
+
 void ndesc_register(ndesc_t *nd)
 {
 	lock_register(&nd->lock);
