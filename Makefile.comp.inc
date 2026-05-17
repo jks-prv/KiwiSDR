@@ -66,6 +66,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
             RPI := $(shell cat $(KIWI_XC_REMOTE_FS)/etc/os-release | grep -q -s "raspbian" && echo true)
         endif
 
+        # will include BBGE when defined this way
         BBG_BBB := $(and $(if $(BYAI),,true), $(if $(BBAI_64),,true), $(if $(BBAI),,true), $(if $(RPI),,true))
         DEBIAN_VERSION := $(shell cat $(KIWI_XC_REMOTE_FS)/etc/debian_version | sed "s/\([0-9]*\)\..*/\1/")
         DEBIAN_VERSION_MIN := $(shell cat /etc/debian_version | sed "s/.*\.\([0-9]*\)/\1/")
