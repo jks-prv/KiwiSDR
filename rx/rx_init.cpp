@@ -165,6 +165,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("init.comp", 0, &up_cfg);
     cfg_default_int("init.setup", 0, &up_cfg);
     cfg_default_int("init.tab", 0, &up_cfg);
+    cfg_default_int("init.ITU_region", 0, &up_cfg);
     cfg_default_float("init.rf_attn", 0, &up_cfg);
 
     // enforce waterfall min_dB < max_dB
