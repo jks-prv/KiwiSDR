@@ -1227,6 +1227,9 @@ DIR_DTB2 =
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     DO_ONCE = $(DIR_CFG)/.do_once.dep
 
+    DTS_DEP_SRC  = $(addprefix $(DIR_DTS)/,$(DTS))
+    DTS_DEP_SRC2 = $(addprefix $(DIR_DTS)/,$(DTS2))
+
     $(DO_ONCE):
 	    @mkdir -p $(DIR_CFG)
 	    @touch $(DO_ONCE)
@@ -1246,8 +1249,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             DEB := D12+
         endif
 
-        DTS_DEP_SRC  = $(addprefix $(DIR_DTS)/,$(DTS))
-        DTS_DEP_SRC2 = $(addprefix $(DIR_DTS)/,$(DTS2))
         DTS_DEP_DST  = $(addprefix $(DIR_DTB)/,$(DTS))
         DTS_DEP_DST2 = $(addprefix $(DIR_DTB)/,$(DTS2))
 
@@ -1288,8 +1289,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             endif
         endif
 
-        DTS_DEP_SRC  = $(addprefix $(DIR_DTS)/,$(DTS))
-        DTS_DEP_SRC2 = $(addprefix $(DIR_DTS)/,$(DTS2))
         DTS_DEP_DST  = $(addprefix $(DIR_DTB)/,$(DTS))
         DTS_DEP_DST2 = $(addprefix $(DIR_DTB)/,$(DTS2))
 
@@ -1340,11 +1339,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
         DTB_DEB_NEW = am5729-beagleboneai-custom.dtb
         UENV_HAS_DTB_NEW := $(shell grep -qi '^dtb=$(DTB_DEB_NEW)' /boot/uEnv.txt && echo true)
 
-        DTS_DEP_SRC  = $(addprefix $(DIR_DTS)/,$(DTS))
-        DTS_DEP_SRC2 = $(addprefix $(DIR_DTS)/,$(DTS2))
-        DTS_DEP_DST  = $(addprefix $(DIR_DTB)/,$(DTS))
-        DTS_DEP_DST2 = $(addprefix $(DIR_DTB)/,$(DTS2))
-
         # re-install device tree if changes made to *.dts source file
 #        $(DTS_DEP_DST) $(DTS_DEP_DST2): $(DTS_DEP_SRC) $(DTS_DEP_SRC2)
 #	        @echo "BBAI: re-install Kiwi device tree to configure GPIO pins"
@@ -1389,9 +1383,6 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             DIR_DTB = /lib/firmware
         endif
 
-        DTS_DEP_SRC  = $(addprefix $(DIR_DTS)/,$(DTS))
-        DTS_DEP_DST  = $(addprefix $(DIR_DTB)/,$(DTS))
-
         # re-install device tree if changes made to *.dts source file
         ifeq ($(DEBIAN_12_AND_LATER),true)
             $(DTS_DEP_DST): $(DTS_DEP_SRC)
@@ -1402,8 +1393,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	            touch $(FORCE_REBOOT)
         endif
 
-        install_kiwi_device_tree: $(DTS_DEP_DST)
-            ifeq ($(DEBIAN_12_AND_LATER),true)
+        ifeq ($(DEBIAN_12_AND_LATER),true)
+            install_kiwi_device_tree: $(DTS_DEP_DST)
 	            @echo "BBG_BBB: D12+, SPI at boottime via uEnv.txt"
 #	            @echo "BBG_BBB: DTS=$(DTS) DTS_DEP_DST=$(DTS_DEP_DST) DTS_DEP_SRC=$(DTS_DEP_SRC)"
 #	            -@ls -la $(DTS_DEP_SRC) $(DTS_DEP_DST)
@@ -1412,7 +1403,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	            -sed -i -e 's:^#uboot_overlay_addr4=<file4>.dtbo:uboot_overlay_addr4=cape-bone-kiwi-00A0.dtbo:' /boot/uEnv.txt
 	            -sed -i -e 's:^#uboot_overlay_addr5=<file5>.dtbo:uboot_overlay_addr5=BB-SPIDEV0-00A0.dtbo:' /boot/uEnv.txt
 	            grep -e uboot_overlay_addr4 -e uboot_overlay_addr5 /boot/uEnv.txt || true
-            else ifeq ($(DEBIAN_10_AND_LATER),true)
+        else ifeq ($(DEBIAN_10_AND_LATER),true)
+            install_kiwi_device_tree:
 	            @echo "BBG_BBB: D10-11, check uEnv.txt for BB-SPIDEV0 and cape-bone-kiwi"
                 # For SPI uEnv.txt needs added by hand: cape_enable=bone_capemgr.enable_partno=BB-SPIDEV0
 	            grep BB-SPIDEV0 /boot/uEnv.txt || true
@@ -1424,13 +1416,14 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
                 # Debian 11
 	            -sed -i -e 's:^#uboot_overlay_addr4=<file4>.dtbo:uboot_overlay_addr4=/lib/firmware/cape-bone-kiwi-00A0.dtbo:' /boot/uEnv.txt
 	            #@cp -v $(DTS_DEP_SRC) $(DIR_DTB)
-            else
+        else
+            install_kiwi_device_tree:
 	            @echo "BBG_BBB: D8, GPIO at runtime via capemgr, SPI at boottime via uEnv.txt"
                 # ./k and init:kiwid load cape-bone-kiwi-00A0 via capemgr and run dtc if necessary
                 # So we only have to place cape-bone-kiwi-00A0.dts in /lib/firmware
 	            @cp -v $(DTS_DEP_SRC) $(DIR_DTB)
                 # For SPI uEnv.txt needs added by hand: cape_enable=bone_capemgr.enable_partno=BB-SPIDEV0
-            endif
+        endif
     endif
 endif
 
