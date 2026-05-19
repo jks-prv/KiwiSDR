@@ -811,41 +811,39 @@ bool check_if_forwarded(const char *id, struct mg_connection *mc, char *remote_i
 
     int n = 0;
     char *ip_r = NULL;
-    bool is_local, is_loop, error;
+    bool is_local, is_loop, local_or_loopback, error;
     
     if (x_real_ip != NULL) {
         //printf("check_if_forwarded %s: %s X-Real-IP %s\n", id, remote_ip, x_real_ip);
         n = sscanf(x_real_ip, "%" NET_ADDRSTRLEN_S "ms", &ip_r);
-        if (!kiwi.disable_recent_changes) {
-            is_local = isLocal_ip(ip_r, &is_loop, NULL, &error);
-            if (error) {
-                lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? (from %s) X-Real-IP %s\n", id, remote_ip, ip_r);
-                n = 0;
-            } else
-            if (is_local) {
-                lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Real-IP %s is_loopback=%d\n", id, ip_r, is_loop);
-                if (is_loop && is_loopback) *is_loopback = true;
-                n = 0;
-            }
+        is_local = isLocal_ip(ip_r, &is_loop, NULL, &error);
+        local_or_loopback = is_local || is_loop;
+        if (error) {
+            lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? (from %s) X-Real-IP %s\n", id, remote_ip, ip_r);
+            n = 0;
+        } else
+            if (local_or_loopback) {
+            lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Real-IP %s is_loopback=%d\n", id, ip_r, is_loop);
+            if (is_loop && is_loopback) *is_loopback = true;
+            n = 0;
         }
     }
     
     if (x_forwarded_for != NULL) {
         //printf("check_if_forwarded %s: %s X-Forwarded-For %s\n", id, remote_ip, x_forwarded_for);
-        if (x_real_ip == NULL || n != 1) {
+        if (x_real_ip == NULL || n != 1) {      // i.e. X-Real-IP check above failed
             // take only client ip in case "X-Forwarded-For: client, proxy1, proxy2 ..."
             n = sscanf(x_forwarded_for, "%" NET_ADDRSTRLEN_S "m[^, ]", &ip_r);
-            if (!kiwi.disable_recent_changes) {
-                isLocal_ip(ip_r, &is_loop, NULL, &error);
-                if (error) {
-                    lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? (from %s) X-Forwarded-For %s\n", id, remote_ip, ip_r);
-                    n = 0;
-                } else
-                if (is_local) {
-                    lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Forwarded-For %s is_loopback=%d\n", id, ip_r, is_loop);
-                    if (is_loop && is_loopback) *is_loopback = true;
-                    n = 0;
-                }
+            is_local = isLocal_ip(ip_r, &is_loop, NULL, &error);
+            local_or_loopback = is_local || is_loop;
+            if (error) {
+                lprintf("check_if_forwarded %s ERROR: BAD IP ADDR FORMAT? (from %s) X-Forwarded-For %s\n", id, remote_ip, ip_r);
+                n = 0;
+            } else
+            if (local_or_loopback) {
+                lprintf("check_if_forwarded %s ERROR: FWD IS LOCAL/LOOPBACK? X-Forwarded-For %s is_loopback=%d\n", id, ip_r, is_loop);
+                if (is_loop && is_loopback) *is_loopback = true;
+                n = 0;
             }
         }
     }

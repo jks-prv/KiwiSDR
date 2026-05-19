@@ -257,7 +257,7 @@ void my_kiwi_register(bool reg, int root_pwd_unset, int debian_pwd_default)
         email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
         net.dom_sel, dom_type_s[net.dom_sel], dom_stat, rev_auto, user, host,
         PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
-        mtu, net.serno, kiwi.isPublic, kiwi.vr, timer_sec(),
+        mtu, kiwi.serno, kiwi.isPublic, kiwi.vr, timer_sec(),
         kstr_sp(cmd_p2));
     cfg_string_free(server_url);
     admcfg_string_free(user); admcfg_string_free(host);
@@ -385,8 +385,8 @@ static void misc_NET(void *param)
         const char *which;
 
         #ifdef CRYPT_PW
-            if (net.serno != 0) {
-                asprintf(&cmd_p2, "%d", net.serno);
+            if (kiwi.serno != 0) {
+                asprintf(&cmd_p2, "%d", kiwi.serno);
                 which = "Kiwi serial number";
             } else {
                 need_serno_but_zero = true;
@@ -400,8 +400,8 @@ static void misc_NET(void *param)
                     admcfg_string_free(admin_pwd);
                 } else
             #endif
-            if (net.serno != 0) {
-                asprintf(&cmd_p2, "%d", net.serno);
+            if (kiwi.serno != 0) {
+                asprintf(&cmd_p2, "%d", kiwi.serno);
                 //which = "Kiwi serial number (because Kiwi admin password unset)";
                 which = "Kiwi serial number";
             } else {
@@ -820,7 +820,7 @@ static void pvt_NET(void *param)
                 SHA256_CTX ctx;
                 sha256_init(&ctx);
                 sha256_update_str(&ctx, net.mac_no_delim);
-                sha256_update_str(&ctx, stprintf("%d", net.serno));
+                sha256_update_str(&ctx, stprintf("%d", kiwi.serno));
                 BYTE hash[SHA256_BLOCK_SIZE];
                 sha256_final(&ctx, hash);
                 mg_bin2str(net.unique_id, hash, N_UNIQUE_ID_BYTES);
@@ -1058,7 +1058,7 @@ static void reg_public(void *param)
             email, version_maj, version_min, debian_maj, debian_min, kiwi.model, kiwi.platform,
             net.dom_sel, dom_type_s[net.dom_sel], dom_stat, rev_auto, user, host,
             PRINTF_U64_ARG(net.dna), admin_pwd_unsafe(),
-            mtu, net.serno, kiwi.isPublic, kiwi.vr, timer_sec()
+            mtu, kiwi.serno, kiwi.isPublic, kiwi.vr, timer_sec()
             );
     
 		bool server_enabled = (!down && admcfg_true("server_enabled"));
@@ -1147,8 +1147,6 @@ void file_GET(void *param)
 
 void services_start()
 {
-	net.serno = serial_number;
-	
     // Because these run early on child_task() doesn't have to be used to avoid excessive task pauses.
     // This is good, because otherwise shared memory would have to be used to communicate with
     // the child tasks as it does with led_task.

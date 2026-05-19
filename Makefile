@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 839
+VERSION_MIN = 840
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -321,23 +321,23 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
     KEYRING := $(DIR_CFG)/.keyring5.dep
     $(KEYRING):
 	    @echo "KEYRING.."
-    ifeq ($(DEBIAN_VERSION),8)
-	    @echo "switch to using Debian 8 (Jessie) archive repo"
-	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
-	    -cp unix_env/sources.D8.new.list /etc/apt/sources.list
-	    -cp unix_env/sources.D8.new.list /etc/apt/
-	    -cp unix_env/sources.D8.upgrade.list /etc/apt/
-    endif
-    ifeq ($(DEBIAN_VERSION),9)
-	    @echo "switch to using Debian 9 (Stretch) archive repo"
-	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
-	    -cp unix_env/sources.D9.new.list /etc/apt/sources.list
-    endif
-    ifeq ($(DEBIAN_VERSION),10)
-	    @echo "switch to using Debian 10 (Buster) archive repo"
-	    -cp /etc/apt/sources.list /etc/apt/sources.list.orig
-	    -cp unix_env/sources.D10.new.list /etc/apt/sources.list
-    endif
+        ifeq ($(DEBIAN_VERSION),8)
+	        @echo "switch to using Debian 8 (Jessie) archive repo"
+	        -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	        -cp unix_env/sources.D8.new.list /etc/apt/sources.list
+	        -cp unix_env/sources.D8.new.list /etc/apt/
+	        -cp unix_env/sources.D8.upgrade.list /etc/apt/
+        endif
+        ifeq ($(DEBIAN_VERSION),9)
+	        @echo "switch to using Debian 9 (Stretch) archive repo"
+	        -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	        -cp unix_env/sources.D9.new.list /etc/apt/sources.list
+        endif
+        ifeq ($(DEBIAN_VERSION),10)
+	        @echo "switch to using Debian 10 (Buster) archive repo"
+	        -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	        -cp unix_env/sources.D10.new.list /etc/apt/sources.list
+        endif
 	    -apt-get -y $(APT_GET_FORCE) update
 	    -apt-get -y $(APT_GET_FORCE) install debian-archive-keyring
 	    -apt-get -y $(APT_GET_FORCE) update
@@ -438,7 +438,10 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	        -apt-get -y $(APT_GET_FORCE) install connman
     endif
 
-    ifeq ($(DEBIAN_10_AND_LATER),true)
+    ifeq ($(DEBIAN_12_AND_LATER),true)
+        /usr/include/openssl/ssl.h:
+	        -apt-get -y install openssl libssl3 libssl-dev
+    else ifeq ($(DEBIAN_10_AND_LATER),true)
         /usr/include/openssl/ssl.h:
 	        -apt-get -y install openssl libssl1.1 libssl-dev
     endif
@@ -1231,7 +1234,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    @mkdir -p $(DIR_CFG)
 	    @touch $(DO_ONCE)
 	    make install_kiwi_device_tree
-	    @touch $(FORCE_REBOOT)
+	    touch $(FORCE_REBOOT)
 
     ifeq ($(BYAI),true)
         DTS = k3-am67a-beagley-ai.dts
@@ -1368,28 +1371,40 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 
     ifeq ($(BBG_BBB),true)
         DTS = cape-bone-kiwi-00A0.dts
-        DTS2 = 
         DIR_DTS = platform/beaglebone_black
 
         ifeq ($(DEBIAN_12_AND_LATER),true)
-            DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN).*)
-            DIR_DTB = $(DIR_DTB_BASE)/src/arm
+            # NB: source file extension change .dts => .dtso
+            DTS = cape-bone-kiwi-00A0.dtso
+            DIR_DTS = platform/beaglebone_black/D12
+            DIR_DTB_BASE = $(wildcard /opt/source/dtb-$(SYS_MAJ).$(SYS_MIN)\.*)
+            DIR_DTB = $(DIR_DTB_BASE)/src/arm/overlays
         else
             DIR_DTB = /lib/firmware
         endif
 
         # re-install device tree if changes made to *.dts source file
-#        $(DTS_DEP_DST): $(DTS_DEP_SRC)
-#	        @echo "BBG_BBB: re-install Kiwi device tree to configure GPIO pins"
-#	        make install_kiwi_device_tree
-#	        touch $(FORCE_REBOOT)
+        ifeq ($(DEBIAN_12_AND_LATER),true)
+            $(DTS_DEP_DST): $(DTS_DEP_SRC)
+	            @echo "BBG_BBB: re-install Kiwi device tree to configure GPIO pins"
+	            @cp -v $(DTS_DEP_SRC) $(DIR_DTB)
+	            (cd $(DIR_DTB_BASE); make)
+	            (cd $(DIR_DTB_BASE); make install_arm)
+	            touch $(FORCE_REBOOT)
+        endif
 
-        install_kiwi_device_tree:
-            ifeq ($(DEBIAN_12_AND_LATER),true)
+        ifeq ($(DEBIAN_12_AND_LATER),true)
+            install_kiwi_device_tree: $(DTS_DEP_DST)
 	            @echo "BBG_BBB: D12+, SPI at boottime via uEnv.txt"
-	            -sed -i -e 's:^#uboot_overlay_addr4=<file4>.dtbo:uboot_overlay_addr4=BB-SPIDEV0-00A0.dtbo:' /boot/uEnv.txt
-	            grep uboot_overlay_addr4 /boot/uEnv.txt || true
-            else ifeq ($(DEBIAN_10_AND_LATER),true)
+#	            @echo "BBG_BBB: DTS=$(DTS) DTS_DEP_DST=$(DTS_DEP_DST) DTS_DEP_SRC=$(DTS_DEP_SRC)"
+#	            -@ls -la $(DTS_DEP_SRC) $(DTS_DEP_DST)
+#	            -@sum $(DTS_DEP_SRC) $(DTS_DEP_DST)
+                # load kiwi first because it disables uart2 which otherwise conflichs with spi0
+	            -sed -i -e 's:^#uboot_overlay_addr4=<file4>.dtbo:uboot_overlay_addr4=cape-bone-kiwi-00A0.dtbo:' /boot/uEnv.txt
+	            -sed -i -e 's:^#uboot_overlay_addr5=<file5>.dtbo:uboot_overlay_addr5=BB-SPIDEV0-00A0.dtbo:' /boot/uEnv.txt
+	            grep -e uboot_overlay_addr4 -e uboot_overlay_addr5 /boot/uEnv.txt || true
+        else ifeq ($(DEBIAN_10_AND_LATER),true)
+            install_kiwi_device_tree:
 	            @echo "BBG_BBB: D10-11, check uEnv.txt for BB-SPIDEV0 and cape-bone-kiwi"
                 # For SPI uEnv.txt needs added by hand: cape_enable=bone_capemgr.enable_partno=BB-SPIDEV0
 	            grep BB-SPIDEV0 /boot/uEnv.txt || true
@@ -1401,13 +1416,14 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
                 # Debian 11
 	            -sed -i -e 's:^#uboot_overlay_addr4=<file4>.dtbo:uboot_overlay_addr4=/lib/firmware/cape-bone-kiwi-00A0.dtbo:' /boot/uEnv.txt
 	            #@cp -v $(DTS_DEP_SRC) $(DIR_DTB)
-            else
+        else
+            install_kiwi_device_tree:
 	            @echo "BBG_BBB: D8, GPIO at runtime via capemgr, SPI at boottime via uEnv.txt"
                 # ./k and init:kiwid load cape-bone-kiwi-00A0 via capemgr and run dtc if necessary
                 # So we only have to place cape-bone-kiwi-00A0.dts in /lib/firmware
 	            @cp -v $(DTS_DEP_SRC) $(DIR_DTB)
                 # For SPI uEnv.txt needs added by hand: cape_enable=bone_capemgr.enable_partno=BB-SPIDEV0
-            endif
+        endif
     endif
 endif
 

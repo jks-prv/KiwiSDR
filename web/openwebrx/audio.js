@@ -1455,10 +1455,10 @@ function audio_stats()
 // FIXME
 // To eliminate the clicking when switching filter buffers, consider fading between new & old convolvers.
 
-// NB: always use kiwi_log() instead of console.log() in here
+// NB: always use kiwi_log() instead of console.log() in here because called by audio_onprocess()
 function audio_recompute_LPF(force, lo_cut, hi_cut)
 {
-   //console.log('--> audio_recompute_LPF lo='+ lo_cut +' hi='+ hi_cut +' force='+ force);
+   //kiwi_log('--> audio_recompute_LPF lo='+ lo_cut +' hi='+ hi_cut +' force='+ force);
 	if (isDefined(lo_cut) && isDefined(hi_cut)) {
 	   audio.lo_cut = Math.abs(lo_cut);
 	   audio.hi_cut = Math.abs(hi_cut);
@@ -1470,7 +1470,7 @@ function audio_recompute_LPF(force, lo_cut, hi_cut)
    } else {  
       if (isDefined(demodulators[0])) {
          hi_cut = Math.abs(demodulators[0].high_cut);
-         if (isNaN(hi_cut)) console.log(demodulators[0]);
+         if (isNaN(hi_cut)) kiwi_log(demodulators[0]);
          lo_cut = Math.abs(demodulators[0].low_cut);
       } else {
          lo_cut = 0; hi_cut = 4000;    // default if no modulator currently defined
@@ -1478,7 +1478,7 @@ function audio_recompute_LPF(force, lo_cut, hi_cut)
    }
 
 	var lpf_freq = Math.max(hi_cut, lo_cut);
-   //console.log('--> audio_recompute_LPF lo='+ lo_cut +' hi='+ hi_cut +' force='+ force +' lpf_freq='+ lpf_freq);
+   //kiwi_log('--> audio_recompute_LPF lo='+ lo_cut +' hi='+ hi_cut +' force='+ force +' lpf_freq='+ lpf_freq);
 	
    if (force || lpf_freq != comp_lpf_freq) {
 		var cutoff = lpf_freq / audio_output_rate;

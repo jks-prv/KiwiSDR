@@ -165,6 +165,7 @@ void update_vars_from_config(bool called_at_init)
     cfg_default_int("init.comp", 0, &up_cfg);
     cfg_default_int("init.setup", 0, &up_cfg);
     cfg_default_int("init.tab", 0, &up_cfg);
+    cfg_default_int("init.ITU_region", 0, &up_cfg);
     cfg_default_float("init.rf_attn", 0, &up_cfg);
 
     // enforce waterfall min_dB < max_dB
@@ -209,7 +210,6 @@ void update_vars_from_config(bool called_at_init)
 
     // force DC offsets to the default value if not configured
     // also if set to the previous default value
-    kiwi.firmware_sel = admcfg_default_int("firmware_sel", 0, &update_admcfg);   // needed below
     int mode_20kHz = (kiwi.firmware_sel == FW_SEL_SDR_RX3_WF3)? 1:0;
     TYPEREAL Ioff, Ioff_20kHz, Qoff, Qoff_20kHz;
     //printf("mode_20kHz=%d\n", mode_20kHz);
@@ -478,16 +478,6 @@ void update_vars_from_config(bool called_at_init)
     net.dom_sel = cfg_default_int("sdr_hu_dom_sel", DOM_SEL_NAM, &up_cfg);
     //printf("rx_init: dom_sel=%d\n", net.dom_sel);
 
-    #if 0
-        // try and get this Kiwi working with the proxy
-        //printf("serno=%d dom_sel=%d\n", serial_number, net.dom_sel);
-	    if (serial_number == 1006 && _dom_sel == DOM_SEL_NAM) {
-            cfg_set_int("sdr_hu_dom_sel", DOM_SEL_REV);
-            UPDATE_CFG_BREAK(up_cfg);
-            lprintf("######## FORCE DOM_SEL_REV serno=%d ########\n", serial_number);
-	    }
-    #endif
-    
     // remove old kiwisdr.example.com default
     cfg_default_string("server_url", "", &up_cfg);
     const char *server_url = cfg_string("server_url", NULL, CFG_REQUIRED);

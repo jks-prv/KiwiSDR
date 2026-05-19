@@ -217,7 +217,7 @@ void c2s_waterfall_stop_data(int rx_chan)
 
 static void c2s_wf_stop(const char *s, conn_t *conn, int rx_chan, bool chan_free)
 {
-    clprintf(conn, "WF c2s_wf_stop %s\n", s);
+    //cprintf(conn, "WF c2s_wf_stop %s\n", s);
     if (chan_free)
         rx_enable(rx_chan, RX_CHAN_FREE);
     rx_server_remove(conn);

@@ -464,7 +464,7 @@ fail:
 	case AJAX_DISCOVERY:
 		if (!isLocalIP) return (char *) -1;
 		asprintf(&sb, "%d %s %s %d %d %s",
-			net.serno, net.ip_pub, net.ip_pvt, net.port, net.nm_bits, net.mac);
+			kiwi.serno, net.ip_pub, net.ip_pvt, net.port, net.nm_bits, net.mac);
 		printf("/DIS REQUESTED from %s: <%s>\n", ip_unforwarded, sb);
 		break;
 

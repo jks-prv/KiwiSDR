@@ -55,6 +55,7 @@ typedef struct {
 #define	ND_LOWAT	32
 
 void ndesc_init(ndesc_t *nd, struct mg_connection *mc);
+bool ndesc_valid(ndesc_t *nd);
 void ndesc_register(ndesc_t *nd);
 
 void nbuf_init();
