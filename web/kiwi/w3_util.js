@@ -817,11 +817,10 @@ function w3_iterate_classList(el_id, func)
 	return el;
 }
 
-function w3_create_appendElement(el_parent, el_type, html, css, id)
+function w3_create_appendElement(el_parent, el_type, html, id)
 {
    var el_child = document.createElement(el_type);
    if (isString(id)) el_child.id = id;
-   if (isString(css)) el_child.style.cssText = css;
    w3_innerHTML(el_child, html);
 	w3_el(el_parent).appendChild(el_child);
 	return el_child;
@@ -1657,42 +1656,6 @@ function w3_basename(path)
 	return path;
 }
 
-function w3_psa3(psa3)
-{
-   //if (psa3.includes('w3-dump')) console.log('w3_psa3 in=['+ psa3 +']');
-   psa3 = psa3 || '';
-
-	var a = psa3.split('||');
-	if (a.length == 2) {
-	   if (a[1].includes('/')) {
-	      var s = a[1].replace(/\//g, '&slash;');
-	      // e.g. ...||... title="foo/bar instead of foo&slash;bar"
-	      console.log('w3_psa3 psa='+ sq(psa3));
-	      console.log('w3_psa3 DANGER: psa attribute part after "||" contained "/", replaced with "&slash;"');
-	      console.log("w3_psa3 before: '||"+ a[1] +"'");
-	      console.log("w3_psa3  after: '||"+ s +"'");
-	      psa3 = a[0] +'||'+ s;
-	   }
-	}
-
-   a = psa3.split('/');
-   var a0 = (a[0] || '').replace(/&slash;/g, '/');
-   var a1 = (a[1] || '').replace(/&slash;/g, '/');
-   var a2 = (a[2] || '').replace(/&slash;/g, '/');
-   //if (psa3.includes('w3-dump')) console.log(a);
-
-   if (a.length == 1)
-      return { left:'', middle:'', right:a0 };
-   else
-   if (a.length == 2)
-      return { left:'', middle:a0, right:a1 };
-   else
-   if (a.length == 3)
-      return { left:a0, middle:a1, right:a2 };
-   else
-      return { left:'', middle:'', right:'' };
-}
-
 // add 'c' between string arguments
 function w3_sbc(c)
 {
@@ -1748,10 +1711,11 @@ function w3_br(s)
 }
 
 // psa = prop|style|attr
-// => <div [class="[prop] [extra_prop]"] [style="[style] [extra_style]"] [attr] [extra_attr]>
+// => [class="[prop] [extra_prop]"] [style="[style] [extra_style]"] [attr] [extra_attr]
 function w3_psa(psa, extra_prop, extra_style, extra_attr)
 {
-   if (psa && psa.includes('w3-dump')) {
+   var dump = psa && psa.includes('w3-dump');
+   if (dump) {
 	   console.log('psa_in=['+ psa +']');
 	   console.log('extra_prop=['+ extra_prop +']');
 	   console.log('extra_style=['+ extra_style +']');
@@ -1778,11 +1742,48 @@ function w3_psa(psa, extra_prop, extra_style, extra_attr)
 	if (extra_attr) attr = w3_sb(attr, extra_attr);
 	if (attr != '') psa = w3_sb(psa, attr);
 
-	//console.log('psa_out=['+ psa +']');
+	if (dump) console.log('psa_out=['+ psa +']');
 	return psa;
 }
 
+function w3_psa3(psa3)
+{
+   //if (psa3.includes('w3-dump')) console.log('w3_psa3 in=['+ psa3 +']');
+   psa3 = psa3 || '';
+
+	var a = psa3.split('||');
+	if (a.length == 2) {
+	   if (a[1].includes('/')) {
+	      var s = a[1].replace(/\//g, '&slash;');
+	      // e.g. ...||... title="foo/bar instead of foo&slash;bar"
+	      console.log('w3_psa3 psa='+ sq(psa3));
+	      console.log('w3_psa3 DANGER: psa attribute part after "||" contained "/", replaced with "&slash;"');
+	      console.log("w3_psa3 before: '||"+ a[1] +"'");
+	      console.log("w3_psa3  after: '||"+ s +"'");
+	      psa3 = a[0] +'||'+ s;
+	   }
+	}
+
+   a = psa3.split('/');
+   var a0 = (a[0] || '').replace(/&slash;/g, '/');
+   var a1 = (a[1] || '').replace(/&slash;/g, '/');
+   var a2 = (a[2] || '').replace(/&slash;/g, '/');
+   //if (psa3.includes('w3-dump')) console.log(a);
+
+   if (a.length == 1)
+      return { left:'', middle:'', right:a0 };
+   else
+   if (a.length == 2)
+      return { left:'', middle:a0, right:a1 };
+   else
+   if (a.length == 3)
+      return { left:a0, middle:a1, right:a2 };
+   else
+      return { left:'', middle:'', right:'' };
+}
+
 // like w3_psa() except returns in original psa format (i.e. not expanded to "class=...")
+// NB: does not handle left/middle/right notation -- only p|s|a
 function w3_psa_mix(psa, extra_prop, extra_style, extra_attr)
 {
    var dump = psa.includes('w3-dump');
@@ -3214,18 +3215,26 @@ function w3_textarea_get_param(psa, label, path, rows, cols, cb, init_val)
 // alert
 ////////////////////////////////
 
-function w3_alert(width, psa, msg) {
+function w3_alert(width, psa, msg, top) {
    var path = 'id-alert-'+ w3int.alert_uniq.toString();
    w3int.alert_uniq++;
-   var html =
-      w3_text('w3-wrap '+ psa, msg) +
-      w3_button('w3-margin-T-16 w3-aqua', 'OK', 'w3int_alert_ok', path);
+   top = top || 100;
    var css = sprintf(
-      'position: fixed; top: 100px; left: 50%%; transform: translateX(-50%%); width: %s; ' +
+      'position: fixed; top: %s; left: 50%%; transform: translateX(-50%%); width: %s; ' +
       'background: #444; color: white; padding: 15px 25px; border-radius: 8px; ' +
       'box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; font-family: sans-serif;',
-      px(width));
-   var alert = w3_create_appendElement('id-kiwi-body', 'div', html, css, path);
+      px(top), px(width));
+   var psa3 = w3_psa3(psa);
+   var psa_outer = w3_psa(psa3.middle, path, css);
+   var psa_inner = w3_psa(psa3.right);
+   //console.info(psa_outer);
+   //console.info(psa_inner);
+   var html =
+      w3_div(psa_outer,
+         w3_text('w3-wrap '+ psa_inner, msg),
+         w3_button('w3-margin-T-16 w3-green', 'OK', 'w3int_alert_ok', path)
+      );
+   var alert = w3_create_appendElement('id-kiwi-body', 'div', html, path);
    w3int.alert_cur = path;
    w3int.alert_active = true;
 }
