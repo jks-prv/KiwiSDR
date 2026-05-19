@@ -10,7 +10,7 @@ var kiwi = {
    
    KiwiSDR_1: 1,
    KiwiSDR_2: 2,
-   model: 1,   
+   model: 1,
    
    PLATFORM_BBG_BBB: 0,
    PLATFORM_BBAI:    1,
@@ -2627,7 +2627,7 @@ function config_str_update(rx_chans, gps_chans, vmaj, vmin)
 
 var config_net = {};
 
-function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm, mac, vmaj, vmin, dmaj, dmin)
+function config_cb(rx_chans, gps_chans, pub, port_ext, pvt, port_int, nm, mac, vmaj, vmin, dmaj, dmin)
 {
 	var s;
 	kiwi.debian_maj = dmaj;
@@ -2648,7 +2648,7 @@ function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm,
 				w3_col_percent('',
 					w3_div('', 'Private IP address (inside your firewall/router): '+ pvt +' [port '+ port_int +']'), 50,
 					w3_div('', 'Private netmask: /'+ nm), 30,
-					w3_div('', 'Serial number: '+ serno), 20
+					w3_div('', 'Serial number: '+ admin.serno), 20
 				)
 			);
 		config_net.pub_ip = pub;
@@ -2656,7 +2656,6 @@ function config_cb(rx_chans, gps_chans, serno, pub, port_ext, pvt, port_int, nm,
 		config_net.pvt_ip = pvt;
 		config_net.pvt_port = port_int;
 		config_net.mac = mac;
-		config_net.serno = serno;
 		
 		//console.log('$config_cb: CALLING connect_update_url');
 		w3_call('connect_update_url');
@@ -3457,7 +3456,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 		case "config_cb":    // in response to "SET GET_CONFIG"
 			//console.log('config_cb='+ param[1]);
 			o = kiwi_JSON_parse('config_cb', param[1]);
-			if (o) config_cb(o.r, o.g, o.s, o.pu, o.pe, o.pv, o.pi, o.n, o.m, o.v1, o.v2, o.d1, o.d2);
+			if (o) config_cb(o.r, o.g, o.pu, o.pe, o.pv, o.pi, o.n, o.m, o.v1, o.v2, o.d1, o.d2);
 			break;
 
 		case "update_cb":
@@ -3523,6 +3522,7 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 		   console.log('kiwi_msg rx_chan='+ p[0] +' is_local='+ p[1]);
 			kiwi.is_local[+p[0]] = +p[1];
 			kiwi.tlimit_exempt_by_pwd[+p[0]] = +p[2];
+			kiwi.admin_advisory = +p[3];
 			break;
 		
 		case "no_reopen_retry":

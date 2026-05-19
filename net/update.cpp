@@ -444,7 +444,7 @@ void schedule_update(int min)
 	// don't let Kiwis hit github.com all at once!
 	if (update_window) {
 		int mins_now = min + (local_hour - UPDATE_START_HOUR) * 60;
-		int serno = serial_number;
+		int serno = kiwi.serno;
 		
 		#ifdef TEST_UPDATE
             #define SERNO_MIN_TRIG1 1   // set to minute in the future test update should start

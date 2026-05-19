@@ -479,16 +479,6 @@ void update_vars_from_config(bool called_at_init)
     net.dom_sel = cfg_default_int("sdr_hu_dom_sel", DOM_SEL_NAM, &up_cfg);
     //printf("rx_init: dom_sel=%d\n", net.dom_sel);
 
-    #if 0
-        // try and get this Kiwi working with the proxy
-        //printf("serno=%d dom_sel=%d\n", serial_number, net.dom_sel);
-	    if (serial_number == 1006 && _dom_sel == DOM_SEL_NAM) {
-            cfg_set_int("sdr_hu_dom_sel", DOM_SEL_REV);
-            UPDATE_CFG_BREAK(up_cfg);
-            lprintf("######## FORCE DOM_SEL_REV serno=%d ########\n", serial_number);
-	    }
-    #endif
-    
     // remove old kiwisdr.example.com default
     cfg_default_string("server_url", "", &up_cfg);
     const char *server_url = cfg_string("server_url", NULL, CFG_REQUIRED);

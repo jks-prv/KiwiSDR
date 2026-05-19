@@ -618,8 +618,8 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                         cprintf(conn, "PWD RESET: TOO LATE\n");
                         badp = BADP_RESET_TOO_LATE;
                     } else
-                    if (reset_serno != net.serno) {
-                        cprintf(conn, "PWD RESET: WRONG SERNO reset_serno=%d serno=%d\n", reset_serno, net.serno);
+                    if (reset_serno != kiwi.serno) {
+                        cprintf(conn, "PWD RESET: WRONG SERNO reset_serno=%d serno=%d\n", reset_serno, kiwi.serno);
                         badp = BADP_RESET_NOT_SERNO;
                     } else
                     if (!conn->isLocal_ip) {
@@ -774,7 +774,10 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             send_msg(conn, false, "MSG chan_no_pwd=%d", rx_chan_no_pwd());  // potentially corrected from cfg.chan_no_pwd
             send_msg(conn, false, "MSG chan_no_pwd_true=%d", rx_chan_no_pwd(PWD_CHECK_YES));
             if (badp_ok && (stream_snd || conn->type == STREAM_ADMIN)) {
-                send_msg(conn, false, "MSG is_local=%d,%d,%d", chan, is_local? 1:0, conn->tlimit_exempt_by_pwd);
+            
+                // NB: only send admin_advisory to local connections
+                send_msg(conn, false, "MSG is_local=%d,%d,%d,%d",
+                    chan, is_local? 1:0, conn->tlimit_exempt_by_pwd, (kiwi.admin_advisory && is_local)? 1:0);
                 //pdb_printf("PWD %s %s\n", type_m, uri);
             }
             send_msg(conn, false, "MSG max_camp=%d", N_CAMP);
@@ -822,7 +825,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                     conn->isPassword = is_password;
                     
                     if (stream_snd_or_wf || stream_mon || stream_admin_or_mfg) {
-                        //printf("model=%d serno=%d has_attn=%d\n", kiwi.model, net.serno, kiwi.pcb_has_attn);
+                        //printf("model=%d serno=%d has_attn=%d\n", kiwi.model, kiwi.serno, kiwi.pcb_has_attn);
                         send_msg(conn, SM_NO_DEBUG, "MSG version_maj=%d version_min=%d debian_ver=%d model=%d platform=%d hw=%d ext_clk=%d freq_offset=%.3f "
                             "abyy=%s dx_db_name=%s has_attn=%d",
                             version_maj, version_min, debian_ver, kiwi.model, kiwi.platform, kiwi.hw, kiwi.ext_clk, freq.offset_kHz,

@@ -30,6 +30,7 @@ Boston, MA  02110-1301, USA.
 #include "jsmn.h"
 #include "cfg.h"
 #include "utf8.h"
+#include "security.h"
 
 #ifdef USE_SDR
  #include "dx.h"
@@ -180,8 +181,6 @@ static void _cfgTestTask(void *param) {
 // init
 ////////////////////////////////
 
-int serial_number;
-
 // only called once from main()
 void cfg_reload()
 {
@@ -195,16 +194,17 @@ void cfg_reload()
     
     model_e model;
     int serno = eeprom_check(&model);
-    if ((serial_number = cfg_int("serial_number", NULL, CFG_OPTIONAL)) > 0) {
-        lprintf("serial number override from configuration: %d\n", serial_number);
+    if ((kiwi.serno = cfg_int("serial_number", NULL, CFG_OPTIONAL)) > 0) {
+        lprintf("serial number override from configuration: %d\n", kiwi.serno);
     } else {
-        if ((serial_number = serno) <= 0) {
+        if ((kiwi.serno = serno) <= 0) {
             lprintf("can't read serial number from EEPROM and no configuration override\n");
-            serial_number = 0;
+            kiwi.serno = 0;
         } else {
-            lprintf("serial number from EEPROM: %d\n", serial_number);
+            lprintf("serial number from EEPROM: %d\n", kiwi.serno);
         }
     }
+    admin_pwd_unsafe();
 
     bool err;
     kiwi.model = (model_e) admcfg_int("kiwi_model", &err, CFG_OPTIONAL);
@@ -221,9 +221,9 @@ void cfg_reload()
         }
     }
 
-    kiwi.pcb_has_beads = kiwi.pcb_has_attn = (kiwi.model == KiwiSDR_2 && serial_number > 20000 && serial_number < 23000);
-    kiwi.pcb_ths_4509 = (serial_number >= 23000);
-    kiwi.pcb_fpga_a50 = (serial_number >= 25000 && serial_number < 26000);
+    kiwi.pcb_has_beads = kiwi.pcb_has_attn = (kiwi.model == KiwiSDR_2 && kiwi.serno > 20000 && kiwi.serno < 23000);
+    kiwi.pcb_ths_4509 = (kiwi.serno >= 23000);
+    kiwi.pcb_fpga_a50 = (kiwi.serno >= 25000 && kiwi.serno < 26000);
 
     #ifdef USE_SDR
         dx_label_init();

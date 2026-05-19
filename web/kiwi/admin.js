@@ -4675,6 +4675,7 @@ function security_set_apw_cb(path, val, first)
 {
    adm.admin_pwd_seq = +adm.admin_pwd_seq + 1;
    w3_string_set_cfg_cb(path, val, first);
+   admin_admin_pwd_unsafe_alert();
 }
 
 function security_save_pwd_cb(path, idx, first)
@@ -5164,6 +5165,27 @@ function admin_update(p)
 	}
 }
 
+function admin_admin_pwd_unsafe_alert()
+{
+   if (adm.admin_password == admin.serno) {
+      w3_alert(650, 'w3-font-15px',
+         '<yel>WARNING: ADMIN PASSWORD SAME AS SERIAL NUMBER</yel><br><br>' +
+         
+         'Your admin password, as set on the <x1>security</x1> tab at the upper right of this page, ' +
+         'is set to the serial number of this Kiwi: <b>'+ admin.serno +'</b>' +
+         '<br><br>' +
+         
+         w3_text('w3-text-css-orange w3-wrap', 'This is extremely unsafe. ') +
+         'If your Kiwi is accessible from the proxy service <br>(e.g. '+ admin.serno +'.proxy.kiwisdr.com) ' +
+         'then anyone on the Internet can do a sequential serial number scan and connect as admin to this Kiwi.' +
+         '<br><br>' +
+         
+         '<yel>Please change your admin password as soon as possible.</yel>' +
+         '<br><br>Thank you.'
+      );
+   }
+}
+
 // Process replies to our messages sent via ext_send('SET ...')
 // As opposed to admin_recv() below that processes unsolicited messages sent from C code.
 // #msg-proc
@@ -5250,6 +5272,7 @@ var admin_sdr_mode = 1;
 
 // Process replies to our messages sent via ext_send('ADM ...')
 // after calling admin_main(), server will download cfg and adm state to us, then send 'init' message
+// #msg-proc
 function admin_recv(data)
 {
    var param, el, s;
@@ -5262,7 +5285,7 @@ function admin_recv(data)
 		param = params[i].split("=");
 
 		//console.log('admin_recv: '+ param[0]);
-		switch (param[0]) {     // #msg-proc
+		switch (param[0]) {
 
 			case "admin_sdr_mode":
 				admin_sdr_mode = (+param[1])? 1:0;
@@ -5279,6 +5302,10 @@ function admin_recv(data)
 				admin.is_multi_core = true;
 				break;
 
+			case "serno":
+				admin.serno = +param[1];
+				break;
+
 			case "init":
 		      // rx_chan == rx_chans for admin connections (e.g. 4 when ch = 0..3 for user connections)
 				rx_chans = rx_chan = +param[1];
@@ -5286,6 +5313,7 @@ function admin_recv(data)
             admin_draw(admin_sdr_mode);
             ext_send('SET extint_load_extension_configs');
             ant_switch_config_html();
+            admin_admin_pwd_unsafe_alert();
 				break;
 
 			case "repo_dir":
