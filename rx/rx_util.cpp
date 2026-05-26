@@ -738,6 +738,9 @@ bool save_config(u2_t key, conn_t *conn, char *cmd)
         }
 
         update_vars_from_config();      // update C copies of vars
+        if (key == CMD_SAVE_ADM) {
+            admin_pwd_unsafe();
+        }
 
         save_prf(conn, "save_config: %s " RED "COMMIT" NORM " conn=%p seq=%d\n", cfg->name, conn, cfg->seq);
         return true;
@@ -1123,6 +1126,10 @@ char *rx_users(bool isAdmin)
 
 void rx_send_config(int rx_chan)
 {
+    // The config_cb= below can cause admin html to be rendered that shows serial number,
+    // so must send it here first.
+    snd_send_msg(SM_ADMIN_ALL, SM_NO_DEBUG, "ADM serno=%d", kiwi.serno);
+
     char *sb;
     asprintf(&sb, "{\"r\":%d,\"g\":%d,\"pu\":\"%s\",\"pe\":%d,\"pv\":\"%s\",\"pi\":%d,\"n\":%d,\"m\":\"%s\",\"v1\":%d,\"v2\":%d,\"d1\":%d,\"d2\":%d}",
         rx_chans, gps_chans, net.ip_pub, net.port_ext, net.ip_pvt, net.port, net.nm_bits, net.mac, version_maj, version_min, debian_maj, debian_min);

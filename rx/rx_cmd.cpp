@@ -774,10 +774,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
             send_msg(conn, false, "MSG chan_no_pwd=%d", rx_chan_no_pwd());  // potentially corrected from cfg.chan_no_pwd
             send_msg(conn, false, "MSG chan_no_pwd_true=%d", rx_chan_no_pwd(PWD_CHECK_YES));
             if (badp_ok && (stream_snd || conn->type == STREAM_ADMIN)) {
-            
-                // NB: only send admin_advisory to local connections
-                send_msg(conn, false, "MSG is_local=%d,%d,%d,%d",
-                    chan, is_local? 1:0, conn->tlimit_exempt_by_pwd, (kiwi.admin_advisory && is_local)? 1:0);
+                send_msg(conn, false, "MSG is_local=%d,%d,%d", chan, is_local? 1:0, conn->tlimit_exempt_by_pwd);
                 //pdb_printf("PWD %s %s\n", type_m, uri);
             }
             send_msg(conn, false, "MSG max_camp=%d", N_CAMP);
@@ -1700,10 +1697,12 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
 
             sb = kstr_asprintf(NULL, cpu_stats_buf? "{%s," : "{", kstr_sp(cpu_stats_buf));
 
+            // NB: only send admin_advisory to local connections
             float sum_kbps = audio_kbps[rx_chans] + waterfall_kbps[rx_chans] + http_kbps;
-            sb = kstr_asprintf(sb, "\"ac\":%.0f,\"wc\":%.0f,\"fc\":%d,\"ah\":%.0f,\"as\":%.0f,\"sr\":%.6f,\"wsr\":%d,\"nsr\":%d",
+            sb = kstr_asprintf(sb, "\"ac\":%.0f,\"wc\":%.0f,\"fc\":%d,\"ah\":%.0f,\"as\":%.0f,\"sr\":%.6f,\"wsr\":%d,\"nsr\":%d,\"aa\":%d",
                 audio_kbps[ch], waterfall_kbps[ch], (int) floorf(waterfall_fps[ch]), http_kbps, sum_kbps,
-                ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate * rx_wb_buf_chans, snd_rate);
+                ext_update_get_sample_rateHz(ADC_CLK_SYS), snd_rate * rx_wb_buf_chans, snd_rate,
+                (conn->isLocal && kiwi.admin_advisory)? 1:0);
 
             #ifdef USE_GPS
                 sb = kstr_asprintf(sb, ",\"ga\":%d,\"gt\":%d,\"gg\":%d,\"gf\":%d,\"gc\":%.6f,\"go\":%d",
@@ -1741,7 +1740,7 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 utc_s, local_s, tzone_id, tzone_name);
 
             send_msg(conn, false, "MSG stats_cb=%s", kstr_sp(sb));
-            //printf("MSG stats_cb=<%s>\n", kstr_sp(sb));
+            //cprintf(conn, "MSG stats_cb=<%s>\n", kstr_sp(sb));
             kstr_free(sb);
             return true;
         }
