@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -216,7 +216,7 @@ int fpga_init(int check, int fpga_sim_fail) {
 
 	// FPGA configuration bitstream
 	char *file;
-	asprintf(&file, "%sKiwiSDR.%s.bit", background_mode? "/usr/local/bin/":"", fpga_file);
+	asprintf(&file, "%sKiwiSDR%s.%s.bit", background_mode? "/usr/local/bin/":"", kiwi.pcb_fpga_a50? "_a50" : "", fpga_file);
     char *sum = non_blocking_cmd_fmt(NULL, "sum %s", file);
     lprintf("FPGA firmware: %s %.5s\n", file, kstr_sp(sum));
     fp = fopen(file, "rb");
