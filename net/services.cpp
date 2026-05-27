@@ -302,57 +302,72 @@ void proxy_frpc_setup(const char *proxy_server, const char *user, const char *ho
 static void misc_NET(void *param)
 {
     char *cmd_p, *cmd_p2 = NULL;
-    int status;
-    int err;
+    int status, err, rc;
     
     // find and remove known viruses, mostly as a result of Debian root/debian accounts
     // without passwords on networks with ssh open to the Internet
-    kiwi.vr = 0, kiwi.vc = 0;
+    kiwi.vr = 0;
     struct stat st;
+    
+    #define VR_CHK 0
+    #define VR_REM 1
+    #define VR_CMD 2
+    #define VR_RC  3
 
-	#define VR_DOT_KOWORKER     0x001
-	#define VR_DOT_CRON         0x002
-	#define VR_DOT_PROFILES     0x004
-    #define VR_IRQ0             0x008
-    #define VR_IRQ1             0x010
-    #define VR_IRQ2             0x020
-    #define VR_PTY              0x040
+	#define VR_NONE             0x00000000
+	#define VR_DOT_KOWORKER     0x00000001
+	#define VR_DOT_CRON         0x00000002
+    #define VR_IRQ0             0x00000004
+    #define VR_IRQ1             0x00000008
+    #define VR_IRQ2             0x00000010
+    #define VR_PTY              0x00000020
+    #define VR_UPDATE_XML       0x00000040
 
-    #define CK(f, r, ...) \
+	#define VR_DOT_PROFILES     0x00010000
+
+	#define VR_CRONTAB_ROOT     0x10000000
+	#define VR_CRONTAB_DEBIAN   0x20000000
+
+    #define CK(f, a, r, ...) \
         err = stat(f, &st); \
         if (err == 0) { \
-            kiwi.vr |= r; \
             if (strlen(STRINGIFY(__VA_ARGS__)) == 0) { \
-                /*printf("CK vr|=%d unlink: %s\n", r, f);*/ \
-                scalle(f, unlink(f)); \
-                kiwi.vc = st.st_ctime; \
+                kiwi.vr |= r; \
+                /*lprintf("CK vr|=0x%x %s\n", r, f);*/ \
+                if (a == VR_REM) scalle(f, unlink(f)); \
             } else { \
-                /*printf("CK vr|=%d cmd: \"%s\"\n", r, STRINGIFY(__VA_ARGS__));*/ \
+                /*lprintf("CK vr|=0x%x cmd: \"%s\"\n", r, STRINGIFY(__VA_ARGS__));*/ \
+                rc = 0; \
                 __VA_ARGS__ ; \
+                kiwi.vr |= (a == VR_RC)? (rc? r : 0) : r; \
             } \
         } else { \
             if (errno != ENOENT) perror(f); \
         }
     
-    CK("/usr/bin/.koworker", VR_DOT_KOWORKER);
-    CK("/usr/bin/.cron", VR_DOT_CRON);
+    // files
+    CK("/usr/bin/.koworker",    VR_REM, VR_DOT_KOWORKER);
+    CK("/usr/bin/.cron",        VR_REM, VR_DOT_CRON);
+    CK("/home/debian/irq0",     VR_REM, VR_IRQ0);
+    CK("/home/debian/irq1",     VR_REM, VR_IRQ1);
+    CK("/home/debian/irq2",     VR_REM, VR_IRQ2);
+    CK("/home/debian/pty",      VR_REM, VR_PTY);
+    CK("/usr/sbin/update-xml",  VR_CHK, VR_UPDATE_XML);
 
+    // dirs
     // NB: dir ".profiles/" not file ".profile"
     #define F_PR "/root/.profiles/"
-    CK(F_PR, VR_DOT_PROFILES, (system("rm -rf " F_PR)));
+    CK(F_PR, VR_CMD, VR_DOT_PROFILES, (system("rm -rf " F_PR)));
     
+    // crontabs
     #define F_CT "/var/spool/cron/crontabs/root"
-    CK(F_CT, 0, (system("sed -i -f " DIR_CFG "/v.sed " F_CT)));
-    
-    CK("/home/debian/irq0", VR_IRQ0);
-    CK("/home/debian/irq1", VR_IRQ1);
-    CK("/home/debian/irq2", VR_IRQ2);
-    CK("/home/debian/pty",  VR_PTY);
-    
-    #define F_DCT "/var/spool/cron/crontabs/debian"
-    CK(F_DCT, 0, (system("sed -i -f " DIR_CFG "/vd.sed " F_DCT)));
+    CK(F_CT, VR_RC, VR_CRONTAB_ROOT, (rc = system("cp " F_CT " /tmp/ct; sed -i -f " DIR_CFG "/v.sed " F_CT "; diff -q " F_CT " /tmp/ct")));
 
-    printf("vr=0x%x vc=0x%x\n", kiwi.vr, kiwi.vc);
+    #define F_DCT "/var/spool/cron/crontabs/debian"
+    CK(F_DCT, VR_RC, VR_CRONTAB_DEBIAN, (rc = system("cp " F_DCT " /tmp/dct; sed -i -f " DIR_CFG "/vd.sed " F_DCT "; diff -q " F_DCT " /tmp/dct")));
+
+    system("rm /tmp/ct /tmp/dct");
+    lprintf("vr=0x%x\n", kiwi.vr);
     
     // apply passwords to password-less root/debian accounts
     int root_pwd_unset=0, debian_pwd_default=0;
