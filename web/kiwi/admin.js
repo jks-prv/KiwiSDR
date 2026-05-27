@@ -1526,10 +1526,12 @@ function connect_rev_register_cb(id, idx)
 // user field
 function connect_rev_user_cb(path, val, first)
 {
+   val = val.trim();
 	admin.last_rev_user = connect_rev_user();
 	console.log('connect_rev_user_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
    w3_clearInnerHTML('id-connect-rev-status');
    w3_string_set_cfg_cb(path, val, first);
+	admin_set_decoded_value(path);
    connect_rev_register_cb();
    connect_rev_usage();
 }
@@ -1537,6 +1539,7 @@ function connect_rev_user_cb(path, val, first)
 // host field
 function connect_rev_host_cb(path, val, first)
 {
+   val = val.trim();
 	console.log('connect_rev_host_cb: path='+ path +' val=<'+ val +'>');
 	admin.last_rev_host = connect_rev_host();
 	console.log('connect_rev_host_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
@@ -1548,6 +1551,7 @@ function connect_rev_host_cb(path, val, first)
       no_change = true;
    } else {
       w3_clearInnerHTML('id-connect-rev-status');
+      admin_set_decoded_value(path);
    }
    w3_string_set_cfg_cb(path, val, first);
    if (cfg.sdr_hu_dom_sel == kiwi.REV) {     // if currently selected option update the value
