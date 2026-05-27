@@ -77,7 +77,7 @@ bool admin_pwd_unsafe()
 
     //printf("admin_pwd_unsafe serno=%d apw=<%s> rev_auto=%d auto_host=<%s> norm_host=<%s> unsafe=%d\n",
     //    kiwi.serno, apw, rev_auto, auto_host, norm_host, kiwi.admin_advisory);
-    admcfg_string_free(serno_s); admcfg_string_free(apw); admcfg_string_free(auto_host); admcfg_string_free(norm_host);
+    kiwi_asfree(serno_s); admcfg_string_free(apw); admcfg_string_free(auto_host); admcfg_string_free(norm_host);
     return kiwi.admin_advisory;
 }
 

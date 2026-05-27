@@ -3215,9 +3215,10 @@ function w3_textarea_get_param(psa, label, path, rows, cols, cb, init_val)
 // alert
 ////////////////////////////////
 
-function w3_alert(width, psa, msg, top) {
+function w3_alert(psa, msg, width, top) {
    var path = 'id-alert-'+ w3int.alert_uniq.toString();
    w3int.alert_uniq++;
+   width = width || 650;
    top = top || 100;
    var css = sprintf(
       'position: fixed; top: %s; left: 50%%; transform: translateX(-50%%); width: %s; ' +
@@ -3232,7 +3233,7 @@ function w3_alert(width, psa, msg, top) {
    var html =
       w3_div(psa_outer,
          w3_text('w3-wrap '+ psa_inner, msg),
-         w3_button('w3-margin-T-16 w3-green', 'OK', 'w3int_alert_ok', path)
+         w3_button('w3-margin-T-16 w3-green', 'Close', 'w3int_alert_ok', path)
       );
    var alert = w3_create_appendElement('id-kiwi-body', 'div', html, path);
    w3int.alert_cur = path;

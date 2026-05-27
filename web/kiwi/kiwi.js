@@ -56,6 +56,8 @@ var kiwi = {
    AUTH_PASSWORD: 1,
    AUTH_USER: 2,
    is_local: [],
+   admin_advisory: 0,
+   seen_admin_advisory: false,
    tlimit_exempt_by_pwd: [],
    admin_save_pwd: false,
    uptime: 0,
@@ -3478,6 +3480,18 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 				extint.wb_srate = Math.round(o.wsr / 1e3);
 				extint.nom_srate = o.nsr;
 
+				kiwi.admin_advisory = o.aa;
+				if (kiwi.admin_advisory && !kiwi.seen_admin_advisory && kiwi.is_local[rx_chan] && !isAdmin()) {
+               w3_alert('|border: 1px solid white/w3-font-15px',
+                  '<yel>Kiwi owner/admin: Please open the admin page for an important security advisory.</yel>' +
+                  '<br><br>' +
+                  w3_button('w3-aqua w3-medium w3-padding-small w3-margin-L-16x', 'admin page', 'admin_page_cb') +
+                  ' &nbsp; Thank you.',
+                  650, 250
+               );
+				   kiwi.seen_admin_advisory = true;
+				}
+
 				gps_stats_cb(o.ga, o.gt, o.gg, o.gf, o.gc, o.go);
 				//console.log('o.gr='+ o.gr +' o.gl='+ o.gl);
 				if (o.gr || o.gl) {
@@ -3522,7 +3536,6 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 		   console.log('kiwi_msg rx_chan='+ p[0] +' is_local='+ p[1]);
 			kiwi.is_local[+p[0]] = +p[1];
 			kiwi.tlimit_exempt_by_pwd[+p[0]] = +p[2];
-			kiwi.admin_advisory = +p[3];
 			break;
 		
 		case "no_reopen_retry":

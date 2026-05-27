@@ -4902,17 +4902,6 @@ function wf_init_ready()
    if (cfg.init.tab) keyboard_shortcut_nav(kiwi.tab_s[cfg.init.tab]);
 
 	openwebrx_resize();
-	
-	if (kiwi.is_local[rx_chan] && kiwi.admin_advisory) {
-      w3_alert(650, '|border: 1px solid white/w3-font-15px',
-         '<yel>Kiwi owner/admin: Please open the admin page for an important security advisory.</yel>' +
-         '<br><br>' +
-         w3_button('w3-aqua w3-medium w3-padding-small w3-margin-L-16x', 'admin page', 'admin_page_cb') +
-         ' &nbsp; Thank you.',
-         250
-      );
-	}
-	
 	waterfall_setup_done = 1;
 }
 

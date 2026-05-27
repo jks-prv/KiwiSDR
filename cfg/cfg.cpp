@@ -223,7 +223,7 @@ void cfg_reload()
 
     kiwi.pcb_has_beads = kiwi.pcb_has_attn = (kiwi.model == KiwiSDR_2 && kiwi.serno > 20000 && kiwi.serno < 23000);
     kiwi.pcb_ths_4509 = (kiwi.serno >= 23000);
-    kiwi.pcb_fpga_a50 = (kiwi.serno >= 25000 && kiwi.serno < 26000);
+    kiwi.pcb_fpga_a50 = (kiwi.serno >= 30000 && kiwi.serno < 40000);
 
     #ifdef USE_SDR
         dx_label_init();

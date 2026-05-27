@@ -632,7 +632,7 @@ alias adcov="function _adcov () { curl -sL $_our_ip:8073/adc_ov } ; _adcov"
 alias adcovr="function _adcovr () { curl -sL $_our_ip:8073/adc_ov?reset } ; _adcovr"
 alias plog="tail -n 100 -f /var/log/frpc.log"
 alias prlog="tail -n 100 -f /var/log/frpc.log"
-
+alias vr='g vr= | gr "vr=[1-9]" | gr vr='
 
 # networking
 alias nt="iptraf"

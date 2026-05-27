@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 840
+VERSION_MIN = 841
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -851,7 +851,7 @@ make_vars: check_detect
 	@echo DIR_FILE_SRC = $(DIR_FILE_SRC)
 	@echo BUILD_DIR = $(BUILD_DIR)
 	@echo OTHER_DIR = $(OTHER_DIR)
-	@echo EXISTS_OTHER_BITFILE = $(shell test -f $(V_DIR)/KiwiSDR.other.bit && echo true)
+#	@echo EXISTS_OTHER_BITFILE = $(shell test -f $(V_DIR)/KiwiSDR.other.bit && echo true)
 	@echo OBJ_DIR = $(OBJ_DIR)
 	@echo OBJ_DIR_O3 = $(OBJ_DIR_O3)
 	@echo OBJ_DIR_DEFAULT = $(OBJ_DIR_DEFAULT)
@@ -1937,6 +1937,7 @@ endif
 ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 
     ifeq ($(XC),) ## do not copy bit streams from $(V_DIR) when cross-compiling
+        ifeq ($(DOWNLOAD_BIT),true)
 
         # FIXME: isn't there a better way to do this in GNU make?
 
@@ -1990,6 +1991,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
             else
                 KiwiSDR.other.bit:
             endif
+        endif
         endif
     else
         KiwiSDR.other.bit:

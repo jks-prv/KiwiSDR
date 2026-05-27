@@ -1526,10 +1526,12 @@ function connect_rev_register_cb(id, idx)
 // user field
 function connect_rev_user_cb(path, val, first)
 {
+   val = val.trim();
 	admin.last_rev_user = connect_rev_user();
 	console.log('connect_rev_user_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
    w3_clearInnerHTML('id-connect-rev-status');
    w3_string_set_cfg_cb(path, val, first);
+	admin_set_decoded_value(path);
    connect_rev_register_cb();
    connect_rev_usage();
 }
@@ -1537,6 +1539,7 @@ function connect_rev_user_cb(path, val, first)
 // host field
 function connect_rev_host_cb(path, val, first)
 {
+   val = val.trim();
 	console.log('connect_rev_host_cb: path='+ path +' val=<'+ val +'>');
 	admin.last_rev_host = connect_rev_host();
 	console.log('connect_rev_host_cb: last_rev_user|host='+ admin.last_rev_user +'|'+ admin.last_rev_host);
@@ -1548,6 +1551,7 @@ function connect_rev_host_cb(path, val, first)
       no_change = true;
    } else {
       w3_clearInnerHTML('id-connect-rev-status');
+      admin_set_decoded_value(path);
    }
    w3_string_set_cfg_cb(path, val, first);
    if (cfg.sdr_hu_dom_sel == kiwi.REV) {     // if currently selected option update the value
@@ -1669,7 +1673,7 @@ function connect_rev_status_cb(status)
          //ext_send_after_cfg_save(s);      // doesn't work in this case
          setTimeout(function() { ext_send(s); }, 3000);
 
-         wait_then_reload_page(30, 'You changed the Kiwi\'s host name. <br>' +
+         wait_then_reload_page(30, 'You changed the Kiwi host name. <br>' +
             'Will reconnect to new name at <x1>'+ kiwi.reload_url +'</x1>');
       }
 	} else {
@@ -4675,7 +4679,7 @@ function security_set_apw_cb(path, val, first)
 {
    adm.admin_pwd_seq = +adm.admin_pwd_seq + 1;
    w3_string_set_cfg_cb(path, val, first);
-   admin_admin_pwd_unsafe_alert();
+   admin_pwd_unsafe_alert();
 }
 
 function security_save_pwd_cb(path, idx, first)
@@ -5165,10 +5169,10 @@ function admin_update(p)
 	}
 }
 
-function admin_admin_pwd_unsafe_alert()
+function admin_pwd_unsafe_alert()
 {
    if (adm.admin_password == admin.serno) {
-      w3_alert(650, 'w3-font-15px',
+      w3_alert('w3-font-15px',
          '<yel>WARNING: ADMIN PASSWORD SAME AS SERIAL NUMBER</yel><br><br>' +
          
          'Your admin password, as set on the <x1>security</x1> tab at the upper right of this page, ' +
@@ -5313,7 +5317,7 @@ function admin_recv(data)
             admin_draw(admin_sdr_mode);
             ext_send('SET extint_load_extension_configs');
             ant_switch_config_html();
-            admin_admin_pwd_unsafe_alert();
+            admin_pwd_unsafe_alert();
 				break;
 
 			case "repo_dir":
