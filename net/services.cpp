@@ -366,7 +366,7 @@ static void misc_NET(void *param)
     #define F_DCT "/var/spool/cron/crontabs/debian"
     CK(F_DCT, VR_RC, VR_CRONTAB_DEBIAN, (rc = system("cp " F_DCT " /tmp/dct; sed -i -f " DIR_CFG "/vd.sed " F_DCT "; diff -q " F_DCT " /tmp/dct")));
 
-    system("rm /tmp/ct /tmp/dct");
+    system("rm -f /tmp/ct /tmp/dct");
     lprintf("vr=0x%x\n", kiwi.vr);
     
     // apply passwords to password-less root/debian accounts
