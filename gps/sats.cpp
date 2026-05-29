@@ -20,7 +20,7 @@
 
 #include "gps.h"
 
-// NOTE: updated 17-Dec-2025
+// NOTE: updated 29-May-2026
 // Rules enforced:
 // - USABLE => enabled
 // - NOT USABLE / DECOMMISSIONED / RETIRED => commented out (disable) with //
@@ -30,7 +30,8 @@ SATELLITE Sats[] = {
 
     // SBAS PRN 120-158
     // en.wikipedia.org/wiki/GPS-aided_GEO_augmented_navigation
-    // 11/04/2025 SBAS update based on information of www.gps.gov/pseudorandom-noise-code-assignments
+    // 29-May-2026 SBAS update based on GPS.gov L1 C/A PRN Code Assignments Jan-2026
+    // https://www.gps.gov/sites/default/files/2026-02/L1CA-PRN-code-assignments-2026-Jan_2.pdf
     // PRN, G2 delay, G2 init
     // NB: listed first so better chance of obtaining a channel
 
@@ -38,7 +39,7 @@ SATELLITE Sats[] = {
     {131, 1012, 00551, SBAS},  // Eutelsat 117 West B
     {133,  603, 01731, SBAS},  // SES-15
     {135,  359, 01216, SBAS},  // Intelsat Galaxy 30
-  //{138,  386, 00450, SBAS},  // Ceased operational WAAS transmissions on May 17, 2022. en.wikipedia.org/wiki/Anik_F1R
+    {138,  386, 00450, SBAS},  // WAAS GEO 8, 117W - PRN138 reassigned after former Anik F1R retirement; added 29-May-2026 from GPS.gov Jan-2026 assignments (effective through Dec 2029)
 
     // UK-SBAS (United-Kingdom SBAS)
     {158,  904, 01542, SBAS},  // UK SBAS Testbed over Inmarsat 3F5
@@ -47,8 +48,8 @@ SATELLITE Sats[] = {
     {121,  175, 01241, SBAS},  // Eutelsat 5WB en.wikipedia.org/wiki/Eutelsat_5_West_B
     {123,   21, 00232, SBAS},  // ASTRA 5B
     {126,  886, 01764, SBAS},  // Inmarsat 4F2
-    {136,  595, 00740, SBAS},  // HOTBIRD 13G en.wikipedia.org/wiki/Hot_Bird#Hotbird_13G
-  //{150,  853, 01041, SBAS},  // reserved
+    {136,  595, 00740, SBAS},  // EGNOS SES-5, 5E - comment corrected 29-May-2026 from GPS.gov Jan-2026 assignments
+    {150,  853, 01041, SBAS},  // EGNOS HOTBIRD 13G, 13E - enabled 29-May-2026 from GPS.gov Jan-2026 assignments (effective through May 2031)
 
     // SDCM (RUSSIA SBAS)
     {125, 235, 01076, SBAS},   // Luch-5B Satellite en.wikipedia.org/wiki/Luch_5B
@@ -74,14 +75,19 @@ SATELLITE Sats[] = {
 
     // KASS (South Korea SBAS)
     {134,  130, 00706, SBAS},  // MEASAT-3D en.wikipedia.org/wiki/MEASAT_Satellite_Systems
+    {142,  883, 01644, SBAS},  // KASS KOREASAT-116N, 116E - added 29-May-2026 from GPS.gov Jan-2026 assignments (effective through Dec 2027)
 
     // MSAS (Japan SBAS)
-    {129,  762, 01250, SBAS},  // QZS-3
-    {137,   68, 01007, SBAS},  // QZS-3
-  //{139,  797, 00305, SBAS},  // QZS-7 - Launch planned (PRN assignment exists, not used here)
+    {129,  762, 01250, SBAS},  // MSAS QZS-6, 90.5E - comment corrected 29-May-2026 from GPS.gov Jan-2026 assignments
+    {137,   68, 01007, SBAS},  // MSAS QZS-3, 127E - operational
+  //{139,  797, 00305, SBAS},  // MSAS QZS-7 - kept disabled 29-May-2026, assigned in GPS.gov Jan-2026 but satellite not launched / not operational
 
     // SPAN/SouthPAN (AUS/NZ SBAS)
-    {122,   52, 00267, SBAS},  // Inmarsat 4F1
+    {122,   52, 00267, SBAS},  // SPAN/SouthPAN INMARSAT 4F2, 143.5E - comment corrected 29-May-2026 from GPS.gov Jan-2026 assignments
+    {124,  237, 01617, SBAS},  // SPAN/SouthPAN INMARSAT 4F1, 178E - added 29-May-2026 from GPS.gov Jan-2026 assignments (effective through May 2034)
+
+    // Pak-SBAS (Pakistan SBAS)
+    {145,  211, 01560, SBAS},  // Pak-SBAS PakSat-MM1, 38.2E - added 29-May-2026 from GPS.gov Jan-2026 assignments (effective through May 2027)
 
     // Navstar
     // www.navcen.uscg.gov/gps-constellation
@@ -121,7 +127,7 @@ SATELLITE Sats[] = {
     {32,  4,  9, Navstar},
 
     // QZSS (Japan) prn(saif) = 183++, prn(std) = 193++
-    // last checked: 17-Dec-2025
+    // last checked: 29-May-2026
     // KiwiSDR typically tracks GPS-like L1 C/A. Keep only QZSS PRNs that transmit L1 C/A.
     // PRN, G2 delay, G2 init
 
@@ -135,8 +141,8 @@ SATELLITE Sats[] = {
 //  {202, 900, 01045, QZSS},   // QZSS Test
 
     // Galileo E1B
-    // last checked: 17-Dec-2025
-    // Source: GSC Constellation Information (status) + NAGUs
+    // last checked: 29-May-2026
+    // Source: GSC Constellation Information (status) + NAGUs 2026033 / 2025061
     // PRN, (E1B codes derived separately)
     // Keep PRNs strictly in numeric order. No blank lines.
 
@@ -167,11 +173,11 @@ SATELLITE Sats[] = {
     {25,0,0,E1B},    // GSAT0216 (E25) USABLE
     {26,0,0,E1B},    // GSAT0203 (E26) USABLE
     {27,0,0,E1B},    // GSAT0217 (E27) USABLE
-  //{28,0,0,E1B},    // GSAT0233 (E28) LAUNCHED 17-Dec-2025 05:01 UTC - UNDER COMMISSIONING (NAGU 2025061)
+    {28,0,0,E1B},    // GSAT0233 (E28) PHM - USABLE since 2026-05-21 10:31 UTC - NAGU 2026033 USABINIT
     {29,0,0,E1B},    // GSAT0225 (E29) USABLE
     {30,0,0,E1B},    // GSAT0206 (E30) USABLE
     {31,0,0,E1B},    // GSAT0218 (E31) USABLE
-  //{32,0,0,E1B},    // GSAT0234 (E32) LAUNCHED 17-Dec-2025 05:01 UTC - UNDER COMMISSIONING (NAGU 2025061)
+  //{32,0,0,E1B},    // GSAT0234 (E32) UNDER COMMISSIONING - launched with GSAT0233 on 2025-12-17 05:01 UTC - NAGU 2025061 LAUNCH
     {33,0,0,E1B},    // GSAT0222 (E33) USABLE
     {34,0,0,E1B},    // GSAT0223 (E34) USABLE
   //{35,0,0,E1B},    // unused
