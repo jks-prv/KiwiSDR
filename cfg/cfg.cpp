@@ -221,9 +221,10 @@ void cfg_reload()
         }
     }
 
-    kiwi.pcb_has_beads = kiwi.pcb_has_attn = (kiwi.model == KiwiSDR_2 && kiwi.serno > 20000 && kiwi.serno < 23000);
-    kiwi.pcb_ths_4509 = (kiwi.serno >= 23000);
-    kiwi.pcb_fpga_a50 = (kiwi.serno >= 30000 && kiwi.serno < 40000);
+    kiwi.pcb_has_attn  = (kiwi.model == KiwiSDR_2 && RANGE(kiwi.serno, 20000, 22999));
+    kiwi.pcb_has_beads = (kiwi.pcb_has_attn && !RANGE(kiwi.serno, 21001, 21016));
+    kiwi.pcb_ths_4509  = (kiwi.serno >= 23000);
+    kiwi.pcb_fpga_a50  = RANGE(kiwi.serno, 30000, 39999);
 
     #ifdef USE_SDR
         dx_label_init();

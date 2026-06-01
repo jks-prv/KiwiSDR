@@ -144,6 +144,8 @@ static __inline__ u4_t round_up(u4_t val, u4_t size) {
 #define PN_CLAMP(a,n) ( ((a) < -(n))? -(n) : ( ((a) > (n))? (n) : (a) ) )
 #define SI_CLAMP(a,n) ( ((a) > ((n)-1))? ((n)-1) : ( ((a) < -(n))? -(n) : (a) ) )
 
+#define RANGE(a,min,max) ( ((a) >= (min)) && ((a) <= (max)) )
+
 #define	STRINGIFY(x) #x
 #define	STRINGIFY_DEFINE(x) STRINGIFY(x)	// indirection needed for a -Dx=y define
 #define	CAT_STRING(x,y) x y			// just a reminder of how this is done: "foo" "bar"
