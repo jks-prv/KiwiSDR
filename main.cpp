@@ -188,6 +188,7 @@ int main(int argc, char *argv[])
 		if (ARG("-fw_test")) { ARGL(fw_test); printf("firmware test: %d\n", fw_test); } else
 		if (ARG("-fpga_id")) fpga_id_check = 0; else
 		if (ARG("-fpga_fail")) fpga_sim_fail = 1; else
+		if (ARG("-a50")) kiwi.a50 = true; else
 		if (ARG("-wb")) { ARGL(wb_sel_override); printf("wideband rate override: %d\n", wb_sel_override); } else
 		if (ARG("-rdoff")) { ARGL(wf_rd_offset); printf("WF rd_offset: %d\n", wf_rd_offset); } else
 		if (ARG("-wfsd")) { ARGL(wf_slowdown); printf("WF slowdown: %d\n", wf_slowdown); } else

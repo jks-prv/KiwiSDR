@@ -52,7 +52,7 @@ typedef struct {
     int firmware_sel;
     int serno;
     bool admin_advisory;
-    bool pcb_has_beads, pcb_has_attn, pcb_ths_4509, pcb_fpga_a50;
+    bool pcb_has_beads, pcb_has_attn, pcb_ths_4509, pcb_fpga_a50, a50;
     
     int current_nusers, current_nusers_ui;
     int ext_api_nchans;
