@@ -1982,7 +1982,6 @@ function update_html()
                'Yes', 'No', 'disable_recent_changes', cfg.disable_recent_changes, 'admin_radio_YN_cb'),
             w3_text('w3-text-black', 'Currently:<br><ul>' +
                '<li>The Firefox audio hang workaround.</li>' +
-               '<li>The HTTP X-Real-IP &amp; X-Forwarded-For header check rejecting local/loopback IP addresses.</li>' +
             '</ul>')
          ),
          ''
