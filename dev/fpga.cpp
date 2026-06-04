@@ -381,8 +381,8 @@ int fpga_init(int check, int fpga_sim_fail) {
 	}
 
 	stat_reg_t stat = stat_get();
-	//printf("stat.word=0x%04x fw_id=0x%x fpga_ver=0x%x stat_user=0x%x fpga_id=0x%x\n",
-	//    stat.word, stat.fw_id, stat.fpga_ver, stat.stat_user, stat.fpga_id);
+	//printf("stat.word=0x%04x ovfl=0x%x dna=0x%x unused_inputs=0x%x fpga_id=0x%x stat=0x%x\n",
+	//    stat.word, stat.ovfl, stat.dna, stat.unused_inputs, stat.fpga_id, stat.stat);
 
 	if (check && stat.fpga_id != fpga_id) {
 		lprintf("FPGA ID %d, expecting %d\n", stat.fpga_id, fpga_id);
