@@ -3,6 +3,9 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.842  June 5, 2026
+    Changes to support latest manufacturing build.
+
 v1.841  May 28, 2026
     Important security fixes/improvements.
 
