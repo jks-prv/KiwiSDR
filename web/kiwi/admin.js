@@ -5170,6 +5170,7 @@ function admin_update(p)
 
 function admin_pwd_unsafe_alert()
 {
+   //console.log('admin_pwd_unsafe_alert: adm.admin_password='+ adm.admin_password +' admin.serno='+ admin.serno +' '+ TF(adm.admin_password == admin.serno));   
    if (adm.admin_password == admin.serno) {
       w3_alert('w3-font-15px',
          '<yel>WARNING: ADMIN PASSWORD SAME AS SERIAL NUMBER</yel><br><br>' +
@@ -5307,6 +5308,8 @@ function admin_recv(data)
 
 			case "serno":
 				admin.serno = +param[1];
+				//console.log('SET serno='+ admin.serno);
+            admin_pwd_unsafe_alert();
 				break;
 
 			case "init":
@@ -5316,7 +5319,6 @@ function admin_recv(data)
             admin_draw(admin_sdr_mode);
             ext_send('SET extint_load_extension_configs');
             ant_switch_config_html();
-            admin_pwd_unsafe_alert();
 				break;
 
 			case "repo_dir":
