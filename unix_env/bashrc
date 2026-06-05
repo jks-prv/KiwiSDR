@@ -648,10 +648,11 @@ alias iftl="iftop -nNBP -m 4M -f '!port 22 and !port 80 and !port 5353 and !port
 alias ift80="iftop -nNBP -m 4M -f '!port 22 and !port 5353 and !port 53 and !port 137 and !port 8073 and !port 7000'"
 
 alias ipt="function _ipt () { iptables -n -v -L \$* ; } ; _ipt"
+alias iptm="function _ipt () { iptables -n -v -L \$* | more; } ; _ipt"
 alias ips="ipset list"
 alias ipti="ipt INPUT"
 alias iptio="ipt INPUT; ipt OUTPUT"
-# argument is rul # in INPUT chain
+# argument is rule # in INPUT chain
 alias iptz="iptables -n -v -Z -L INPUT"
 # arguments are chain name and rule number in chain
 alias iptc="iptables -n -v -Z -L"
@@ -659,6 +660,8 @@ alias iptadd="iptables -N KIWI; iptables -F KIWI; iptables -A KIWI -j RETURN; ip
 alias iptrm="iptables -D KIWI -m set --match-set ipset-kiwi src,dst -j DROP; iptables -D INPUT -j KIWI; iptables -F KIWI; iptables -X KIWI"
 alias ipban="function _iptban () { iptables -I INPUT -s \$1 -j DROP ; } ; _iptban"
 alias ipunban="function _iptunban () { iptables -D INPUT -s \$1 -j DROP ; } ; _iptunban"
+alias ipbanmsg="function _iptban () { iptables -I INPUT -s \$1 -j DROP -m comment --comment \$2 ; } ; _iptban"
+alias ipunbanmsg="function _iptunban () { iptables -D INPUT -s \$1 -j DROP -m comment --comment \$2 ; } ; _iptunban"
 alias iprtn="function _iprtn () { iptables -I INPUT -s \$1 -j RETURN ; } ; _iprtn"
 alias ipunrtn="function _ipunrtn () { iptables -D INPUT -s \$1 -j RETURN ; } ; _ipunrtn"
 alias tcpdhttp="tcpdump -vnlA 'tcp dst port 8073' | egrep -i 'POST /|GET /|Host:'"

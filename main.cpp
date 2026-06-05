@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
 	int fpga_id_check = 1;
 	int fpga_sim_fail = 0;
 	int wb_sel, wb_sel_override = -1;
+	kiwi.a50 = -1;
 	
 	version_maj = VERSION_MAJ;
 	version_min = VERSION_MIN;
@@ -188,6 +189,7 @@ int main(int argc, char *argv[])
 		if (ARG("-fw_test")) { ARGL(fw_test); printf("firmware test: %d\n", fw_test); } else
 		if (ARG("-fpga_id")) fpga_id_check = 0; else
 		if (ARG("-fpga_fail")) fpga_sim_fail = 1; else
+		if (ARG("-a50")) { ARGL(kiwi.a50); printf("a50: %d\n", kiwi.a50); } else
 		if (ARG("-wb")) { ARGL(wb_sel_override); printf("wideband rate override: %d\n", wb_sel_override); } else
 		if (ARG("-rdoff")) { ARGL(wf_rd_offset); printf("WF rd_offset: %d\n", wf_rd_offset); } else
 		if (ARG("-wfsd")) { ARGL(wf_slowdown); printf("WF slowdown: %d\n", wf_slowdown); } else

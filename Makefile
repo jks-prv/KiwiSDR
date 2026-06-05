@@ -1,5 +1,5 @@
 VERSION_MAJ = 1
-VERSION_MIN = 841
+VERSION_MIN = 842
 
 # Caution: software update mechanism depends on format of first two lines in this file
 
@@ -493,6 +493,7 @@ INT_FLAGS += -DREPO_NAME=STRINGIFY\($(REPO_NAME)\) -DREPO_GIT=STRINGIFY\($(REPO_
 #SRC_DEPS = Makefile
 SRC_DEPS = 
 BIN_DEPS = KiwiSDR.rx4.wf4.bit KiwiSDR.rx8.wf2.bit KiwiSDR.rx3.wf3.bit KiwiSDR.rx14.wf0.bit KiwiSDR.rx1.wf1.bit
+BIN_DEPS += KiwiSDR_a50.rx4.wf4.bit KiwiSDR_a50.rx8.wf2.bit KiwiSDR_a50.rx3.wf3.bit
 #BIN_DEPS = 
 DEVEL_DEPS = $(OBJ_DIR_DEFAULT)/web_devel.o $(KEEP_DIR)/edata_always.o $(KEEP_DIR)/edata_always2.o
 EMBED_DEPS = $(OBJ_DIR_DEFAULT)/web_embed.o $(OBJ_DIR)/edata_embed.o $(KEEP_DIR)/edata_always.o $(KEEP_DIR)/edata_always2.o
@@ -988,16 +989,34 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
         KiwiSDR.rx4.wf4.bit:
     endif
 
+    EXISTS_A50_RX4_WF4 := $(shell test -f KiwiSDR_a50.rx4.wf4.bit && echo true)
+    ifeq ($(EXISTS_A50_RX4_WF4),true)
+    else
+        KiwiSDR_a50.rx4.wf4.bit:
+    endif
+
     EXISTS_RX8_WF2 := $(shell test -f KiwiSDR.rx8.wf2.bit && echo true)
     ifeq ($(EXISTS_RX8_WF2),true)
     else
         KiwiSDR.rx8.wf2.bit:
     endif
 
+    EXISTS_A50_RX8_WF2 := $(shell test -f KiwiSDR_a50.rx8.wf2.bit && echo true)
+    ifeq ($(EXISTS_A50_RX8_WF2),true)
+    else
+        KiwiSDR_a50.rx8.wf2.bit:
+    endif
+
     EXISTS_RX3_WF3 := $(shell test -f KiwiSDR.rx3.wf3.bit && echo true)
     ifeq ($(EXISTS_RX3_WF3),true)
     else
         KiwiSDR.rx3.wf3.bit:
+    endif
+
+    EXISTS_A50_RX3_WF3 := $(shell test -f KiwiSDR_a50.rx3.wf3.bit && echo true)
+    ifeq ($(EXISTS_A50_RX3_WF3),true)
+    else
+        KiwiSDR_a50.rx3.wf3.bit:
     endif
 
     EXISTS_RX14_WF0 := $(shell test -f KiwiSDR.rx14.wf0.bit && echo true)
@@ -1603,12 +1622,24 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST)
 	        install -D -o root -g root KiwiSDR.rx4.wf4.bit /usr/local/bin/KiwiSDR.rx4.wf4.bit
         endif
 
+        ifeq ($(EXISTS_A50_RX4_WF4),true)
+	        install -D -o root -g root KiwiSDR_a50.rx4.wf4.bit /usr/local/bin/KiwiSDR_a50.rx4.wf4.bit
+        endif
+
         ifeq ($(EXISTS_RX8_WF2),true)
 	        install -D -o root -g root KiwiSDR.rx8.wf2.bit /usr/local/bin/KiwiSDR.rx8.wf2.bit
         endif
 
+        ifeq ($(EXISTS_A50_RX8_WF2),true)
+	        install -D -o root -g root KiwiSDR_a50.rx8.wf2.bit /usr/local/bin/KiwiSDR_a50.rx8.wf2.bit
+        endif
+
         ifeq ($(EXISTS_RX3_WF3),true)
 	        install -D -o root -g root KiwiSDR.rx3.wf3.bit /usr/local/bin/KiwiSDR.rx3.wf3.bit
+        endif
+
+        ifeq ($(EXISTS_A50_RX3_WF3),true)
+	        install -D -o root -g root KiwiSDR_a50.rx3.wf3.bit /usr/local/bin/KiwiSDR_a50.rx3.wf3.bit
         endif
 
         ifeq ($(EXISTS_RX14_WF0),true)

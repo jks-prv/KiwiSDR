@@ -7,8 +7,6 @@
 `define USE_SDR 1    // DEFh 0x1
 //`define USE_24K_WIDE    // DEFh 0x0
 `define USE_GPS 1    // DEFh 0x1
-`define ARTIX_7A35 1    // DEFh 0x1
-//`define ZYNQ_7007    // DEFh 0x0
 	localparam ADC_BITS = 14;    // DEFp 0xe
 `define DEF_ADC_BITS 1
 	localparam DEFAULT_NSYNC = 2;    // DEFp 0x2

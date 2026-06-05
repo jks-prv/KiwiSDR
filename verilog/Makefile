@@ -60,6 +60,12 @@ sum: $(BIN_DEPS)
 endif
 
 
+ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
+sum: $(BIN_DEPS)
+	sum *.bit *.aout
+endif
+
+
 ifeq ($(DEBIAN_DEVSYS),verilog_host)
 
 ################################

@@ -1982,7 +1982,6 @@ function update_html()
                'Yes', 'No', 'disable_recent_changes', cfg.disable_recent_changes, 'admin_radio_YN_cb'),
             w3_text('w3-text-black', 'Currently:<br><ul>' +
                '<li>The Firefox audio hang workaround.</li>' +
-               '<li>The HTTP X-Real-IP &amp; X-Forwarded-For header check rejecting local/loopback IP addresses.</li>' +
             '</ul>')
          ),
          ''
@@ -5171,6 +5170,7 @@ function admin_update(p)
 
 function admin_pwd_unsafe_alert()
 {
+   //console.log('admin_pwd_unsafe_alert: adm.admin_password='+ adm.admin_password +' admin.serno='+ admin.serno +' '+ TF(adm.admin_password == admin.serno));   
    if (adm.admin_password == admin.serno) {
       w3_alert('w3-font-15px',
          '<yel>WARNING: ADMIN PASSWORD SAME AS SERIAL NUMBER</yel><br><br>' +
@@ -5308,6 +5308,8 @@ function admin_recv(data)
 
 			case "serno":
 				admin.serno = +param[1];
+				//console.log('SET serno='+ admin.serno);
+            admin_pwd_unsafe_alert();
 				break;
 
 			case "init":
@@ -5317,7 +5319,6 @@ function admin_recv(data)
             admin_draw(admin_sdr_mode);
             ext_send('SET extint_load_extension_configs');
             ant_switch_config_html();
-            admin_pwd_unsafe_alert();
 				break;
 
 			case "repo_dir":
