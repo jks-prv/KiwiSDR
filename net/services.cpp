@@ -352,7 +352,7 @@ static void misc_NET(void *param)
     CK("/home/debian/irq1",     VR_REM, VR_IRQ1);
     CK("/home/debian/irq2",     VR_REM, VR_IRQ2);
     CK("/home/debian/pty",      VR_REM, VR_PTY);
-    CK("/usr/sbin/update-xml",  VR_CHK, VR_UPDATE_XML);
+    CK("/usr/sbin/update-xml",  VR_REM, VR_UPDATE_XML);
 
     // dirs
     // NB: dir ".profiles/" not file ".profile"
