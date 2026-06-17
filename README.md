@@ -1,4 +1,4 @@
-[updated 22 April 2026]
+[updated 17 June 2026]
 
 [![KiwiSDR](http://www.kiwisdr.com/ks/kiwi2.780px.jpg)](http://www.kiwisdr.com/ks/kiwi2.1024px.jpg)
 
@@ -20,15 +20,20 @@ An add-on board ("cape") that turns your BeagleBone into a web-accessible shortw
 ### Details
 
 * Listen live: [List](http://rx.kiwisdr.com), [Map](http://map.kiwisdr.com)
-* [Online Store](https://kiwisdr.nz)
+* Listening apps:
+    * [AM_SW Radio Online Streamer (iOS)](https://apps.apple.com/app/am-sw-radio/id6759920170)
+    * [Echo: The Universal iOS SDR Client](https://apps.apple.com/app/echo-global-sdr-receiver/id6759174390)
+    * [QiwiQ: a KiwiSDR client for Android](https://vanbarel.eu.org/tools/qiwiq)
+* [Online store](https://kiwisdr.nz)
 * [Project webpage](http://www.kiwisdr.com)
 * [Operating information: installation, operation, FAQ](http://www.kiwisdr.com/info)
-* [User Forum](http://forum.kiwisdr.com)
+* [User forum](http://forum.kiwisdr.com)
 * Latest [source code commits](https://github.com/jks-prv/KiwiSDR/commits/master)
 * Previous [source code commits](https://github.com/jks-prv/Beagle_SDR_GPS/commits/master)
 * [Design review document](http://kiwisdr.com/docs/KiwiSDR/KiwiSDR.design.review.pdf)
-* [KiwiSDR 1 Schematic](http://www.kiwisdr.com/docs/KiwiSDR/kiwi.schematic.pdf)
-* [KiwiSDR 2 Schematic](http://www.kiwisdr.com/docs/KiwiSDR/kiwi-2.schematic.pdf)
+* [KiwiSDR 1 schematic](http://www.kiwisdr.com/docs/KiwiSDR/kiwi.schematic.pdf)
+* [KiwiSDR 2 schematic](http://www.kiwisdr.com/docs/KiwiSDR/kiwi-2.schematic.pdf)
+* [KiwiSDR 2 rev 1.1 schematic](http://www.kiwisdr.com/docs/KiwiSDR/kiwi-2-rev1.1.schematic.pdf)
 
 ### Description
 This SDR is a bit different. It has a web interface that can be used by up to four separate listeners. Each one listening and tuning an independent frequency simultaneously. See the screenshots below.
