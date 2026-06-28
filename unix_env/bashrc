@@ -148,8 +148,7 @@ alias upy="jq '.update_check = true | .update_install = true' /root/kiwi.config/
 alias bln="jq '.ip_blacklist_auto_download = false | .ip_blacklist = \"\"' /root/kiwi.config/admin.json >/tmp/jq && mv /tmp/jq /root/kiwi.config/admin.json"
 alias bly="jq '.ip_blacklist_auto_download = true | .ip_blacklist = \"\"' /root/kiwi.config/admin.json >/tmp/jq && mv /tmp/jq /root/kiwi.config/admin.json"
 alias trunc="truncate -s 0"
-alias keys="cd /root; mkdir -p .ssh; cd .ssh; cat >authorized_keys"
-alias keys2="cp authorized_keys authorized_keys2"
+alias keys="cd /root; mkdir -p .ssh; cd .ssh; cat >authorized_keys; cp authorized_keys authorized_keys2"
 alias ss="/bin/ss -tulapn"
 alias ssr="/bin/ss -tulapnr"
 alias netstat="/bin/ss -tulapn"
@@ -664,6 +663,23 @@ alias ipbanmsg="function _iptban () { iptables -I INPUT -s \$1 -j DROP -m commen
 alias ipunbanmsg="function _iptunban () { iptables -D INPUT -s \$1 -j DROP -m comment --comment \$2 ; } ; _iptunban"
 alias iprtn="function _iprtn () { iptables -I INPUT -s \$1 -j RETURN ; } ; _iprtn"
 alias ipunrtn="function _ipunrtn () { iptables -D INPUT -s \$1 -j RETURN ; } ; _ipunrtn"
+
+# Count rules per iptables chain
+iptn() {
+    sudo iptables -L -v -n --line-numbers | \
+    awk '
+        /^Chain / {
+            chain=$2; 
+            gsub(/\(.*/,"",chain); 
+            count=0
+        }
+        /^[0-9]+ / {count++}
+        /^Chain / && NR>1 {print prev_chain ": " prev_count " rules"}
+        {prev_chain=chain; prev_count=count}
+        END {print chain ": " count " rules"}
+    '
+}
+
 alias tcpdhttp="tcpdump -vnlA 'tcp dst port 8073' | egrep -i 'POST /|GET /|Host:'"
 alias geoloc="curl -sL https://ipapi.co/json | jq '.'"
 alias geoloc2="curl -sL https://get.geojs.io/v1/ip/geo.json | jq '.'"
