@@ -3892,7 +3892,7 @@ function export_waterfall() {
    // same format filename as .wav recording
    var imgURL = e_canvas.toDataURL("image/jpeg", 0.85);
    var dlLink = document.createElement('a');
-   dlLink.download = kiwi_timestamp_filename('', '.jpg');
+   dlLink.download = kiwi_timestamp_filename('WF.', '.jpg');
    dlLink.href = imgURL;
    dlLink.target = '_blank';  // opens new tab in iOS instead of download
    dlLink.dataset.downloadurl = ["image/jpeg", dlLink.download, dlLink.href].join(':');
@@ -10331,7 +10331,8 @@ function ident_init()
 
 function ident_illegal(ident)
 {
-   return isEmptyString(ident) || ident.length < 2 || ['(connecting)', '(unknown)', '(no identity)'].includes(ident);
+   return isEmptyString(ident) || ident.length < 2 ||
+      ['(connecting)', '(unknown)', '(no identity)', 'TDoA'].includes(ident);
 }
 
 function ident_complete(from, which)
@@ -12638,7 +12639,7 @@ function toggle_or_set_rec(set)
          data: null,          // DataView for the current buffer
          offset: 0,           // Current offset within the current ArrayBuffer
          total_size: 0,       // Total size of all recorded data in bytes
-         filename: kiwi_timestamp_filename('', '.wav')
+         filename: kiwi_timestamp_filename('SND.', '.wav')
       };
       window.recording_meta.buffers.push(new ArrayBuffer(65536));
       window.recording_meta.data = new DataView(window.recording_meta.buffers[0]);
