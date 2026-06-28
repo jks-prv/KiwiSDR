@@ -1,4 +1,4 @@
-[updated 17 June 2026]
+[updated 26 June 2026]
 
 [![KiwiSDR](http://www.kiwisdr.com/ks/kiwi2.780px.jpg)](http://www.kiwisdr.com/ks/kiwi2.1024px.jpg)
 
@@ -27,7 +27,7 @@ An add-on board ("cape") that turns your BeagleBone into a web-accessible shortw
 * [Online store](https://kiwisdr.nz)
 * [Project webpage](http://www.kiwisdr.com)
 * [Operating information: installation, operation, FAQ](http://www.kiwisdr.com/info)
-* [User forum](http://forum.kiwisdr.com)
+* [User forum](http://forum.kiwisdr.com) (signup required)
 * Latest [source code commits](https://github.com/jks-prv/KiwiSDR/commits/master)
 * Previous [source code commits](https://github.com/jks-prv/Beagle_SDR_GPS/commits/master)
 * [Design review document](http://kiwisdr.com/docs/KiwiSDR/KiwiSDR.design.review.pdf)
@@ -45,7 +45,7 @@ This SDR is a bit different. It has a web interface that can be used by up to fo
 * LTC/Analog Devices 14-bit 65 MHz ADC.
 * Xilinx/AMD Artix-7 A35 FPGA.
 * Maxim/Analog Devices MAX2769B GPS front-end.
-* Kiwi board works with BeagleBone Green, Black, BBAI or BBAI-64.
+* Kiwi board works with BeagleBone Green, Green Eco, Black, BBAI or BBAI-64.
 
 ### Features
 * Open Source.
@@ -65,25 +65,26 @@ This SDR is a bit different. It has a web interface that can be used by up to fo
 
 ### Status
 
-Give the live receivers a try at the links above. You'll need a recent version of a modern web browser that supports HTML5. The web interface works, with some problems, on mobile devices. But there is no mobile version of the interface yet.
+Give the live receivers a try at the links above. The web interface works, with some problems, on mobile devices. But there is no mobile version of the interface yet. The mobile apps listed above provide good alternatives.
 
 A second generation device, the [KiwiSDR 2](https://forum.kiwisdr.com/index.php?p=/discussion/2986/kiwisdr-2-prototypes-working/p1), is now in production.
 
 ### Objectives
 
-We wanted to design an SDR that provides certain features, at a low price point, that we felt weren't covered by current devices. The SDR must be web-accessible and simple to setup and use.
+We wanted to design an SDR that provides certain features that we felt weren't covered by current devices. The SDR must be web-accessible and simple to setup and use.
 We also wanted to provide a self-contained platform for experimentation with SDR and GPS techniques. The TDoA extension is an example.
 
-Most importantly, we wanted to see a significant number of web-enabled, wide-band SDRs deployed in diverse locations world-wide because that makes possible some really interesting applications and experiments. Over 700 Kiwis are publicly available currently.
+Most importantly, we wanted to see a significant number of web-enabled, wide-band SDRs deployed in diverse locations world-wide because that makes possible some really interesting applications and experiments. Over 800 Kiwis are [publicly available](http://rx.kiwisdr.com) currently.
+
+### Hardware
+
+The KiwiSDR 2 consists of the Kiwi board and BeagleBone Green (software pre-installed) in a metal case, with GPS antenna, recovery sd card and a self-test cable (see [kiwisdr.com](http://www.kiwisdr.com/)). An optional external SDR protection circuit and MW band filter are available.
 
 ### Operation
 
-Users can purchase just the KiwiSDR board or a complete unit consisting of the board, BeagleBone Green (software pre-installed), enclosure, and GPS antenna (see [here](http://www.kiwisdr.com/)).
-The software will try to automatically open up an incoming port through whatever Internet firewall/router may exist on the local network, but the user may have to perform this step manually. A reverse proxy service is available.
+An antenna solution must be provided. An adequate power supply (e.g. 5V @ 2A) will also be required. And of course a wired Ethernet network connection. Inexpensive Ethernet-to-WiFi adapters can also be used.
 
-An antenna solution must be provided. An adequate power supply (e.g. 5V @ 2A) will also be required.
-
-Four channels of audio and waterfall streamed over the Internet 24/7 requires about 30 GB per month. This is a common cap for many residential broadband plans. An automatic dynamic-DNS system is already part of the software so a web link to the SDR is immediately available with no configuration. Of course the system can be configured to only allow connections from the local network and ignore Internet connection requests.
+A reverse proxy service is enabled by default. So the Kiwi is immediately available at [(serial_number).proxy.kiwisdr.com](http://serial_number.proxy.kiwisdr.com). Other network configuration modes are available. Such as using a user-owned domain name, DDNS/DUC, fixed IP address etc. Of course the system can be configured to only allow connections from the local network and ignore Internet connection requests.
 
 ### Web interface and built-in signal decoder screenshots:
 
