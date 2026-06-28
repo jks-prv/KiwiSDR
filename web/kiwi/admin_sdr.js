@@ -1523,10 +1523,13 @@ function dx_html()
 	if (dx.dxcfg_parse_error) {
 	   s =
 	      w3_div('', 
-            w3_text('', 'Warning: The configuration file /root/kiwi.config/dxcfg.json is corrupt. <br>' +
-               'The error is: '+ dx.dxcfg_parse_error +
-               '<br>Please use a text editor to fix the file (for example "nano /root/kiwi.config/dxcfg.json" in the admin console tab), ' +
-               'or restore from backup, and restart the Kiwi. <br> Or ask for help on the Kiwi forum or email support@kiwisdr.com')
+            w3_text('', 'Warning: The configuration file /root/kiwi.config/dx_config.json is corrupt. <br>' +
+               'The error is: <b>'+ dx.dxcfg_parse_error +'</b>' +
+               '<br>Please use a text editor to fix the file (for example "nano /root/kiwi.config/dx_config.json" in the admin console tab) <br>' +
+               'if you have made significant customizations to this file and need to salvage it. <br><br>' +
+               'Otherwise restore the file from a backup, or type the following in the console tab to set it to the default values: <br>' +
+               '<b>cp unix_env/kiwi.config/dist.dx_config.json ../kiwi.config/dx_config.json</b> <br>' +
+               'and restart the Kiwi. <br><br> Or ask for help on the Kiwi forum or email support@kiwisdr.com')
          );
       color = ' w3-red';
 	   abort = true;
@@ -1536,9 +1539,12 @@ function dx_html()
 	   s = w3_br(s) +
 	      w3_div('', 
             w3_text('', 'Warning: The configuration file /root/kiwi.config/dx_community_config.json is corrupt. <br>' +
-               'The error is: '+ dx.dxcomm_cfg_parse_error +
-               '<br>Please use a text editor to fix the file (for example "nano /root/kiwi.config/dx_community_config.json" in the admin console tab), ' +
-               'or restore from backup, and restart the Kiwi. <br> Or ask for help on the Kiwi forum or email support@kiwisdr.com')
+               'The error is: <b>'+ dx.dxcomm_cfg_parse_error +'</b>' +
+               '<br>Please use a text editor to fix the file (for example "nano /root/kiwi.config/dx_community_config.json" in the admin console tab), <br>' +
+               'if you have made significant customizations to this file and need to salvage it. <br><br>' +
+               'Otherwise restore the file from a backup, or type the following in the console tab to set it to the default values: <br>' +
+               '<b>cp unix_env/kiwi.config/dist.dx_community_config.json ../kiwi.config/dx_community_config.json</b> <br>' +
+               'and restart the Kiwi. <br><br> Or ask for help on the Kiwi forum or email support@kiwisdr.com')
          );
       color = ' w3-red';
 	}
