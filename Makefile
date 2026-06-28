@@ -1418,7 +1418,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 #	            @echo "BBG_BBB: DTS=$(DTS) DTS_DEP_DST=$(DTS_DEP_DST) DTS_DEP_SRC=$(DTS_DEP_SRC)"
 #	            -@ls -la $(DTS_DEP_SRC) $(DTS_DEP_DST)
 #	            -@sum $(DTS_DEP_SRC) $(DTS_DEP_DST)
-                # load kiwi first because it disables uart2 which otherwise conflichs with spi0
+                # load kiwi first because it disables uart2 which otherwise conflicts with spi0
 	            -sed -i -e 's:^#uboot_overlay_addr4=<file4>.dtbo:uboot_overlay_addr4=cape-bone-kiwi-00A0.dtbo:' /boot/uEnv.txt
 	            -sed -i -e 's:^#uboot_overlay_addr5=<file5>.dtbo:uboot_overlay_addr5=BB-SPIDEV0-00A0.dtbo:' /boot/uEnv.txt
 	            grep -e uboot_overlay_addr4 -e uboot_overlay_addr5 /boot/uEnv.txt || true
@@ -2212,6 +2212,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    -dd if=/dev/zero of=/dev/mmcblk$(SD_CARD_MMC_COPY) bs=1M iflag=count_bytes count=$(DD_SIZE) status=progress
 	    make backup
 	    fsck /dev/mmcblk$(SD_CARD_MMC_COPY)$(SD_CARD_MMC_PART)
+	    dmesg | tail
 
     # makefile version of admin backup tab
     backup:
@@ -2237,6 +2238,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    date
 	    dd if=/dev/mmcblk$(SD_CARD_MMC_COPY) bs=1M iflag=count_bytes count=$(DD_SIZE) | xz --verbose > $(TO_IMG)
 	    sha256sum $(TO_IMG)
+	    dmesg | tail
 	    date
 
 

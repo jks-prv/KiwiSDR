@@ -73,7 +73,7 @@ typedef struct {
     u4_t sent_silence;
 
     // DRM_msg_encoded()
-    #define N_MSGBUF 4
+    #define N_MSGBUF 4      // drm_msg_e
     #define L_MSGCMD 32
     #define L_MSGBUF 4096
     char msg_cmd[N_MSGBUF][L_MSGCMD];
@@ -87,6 +87,8 @@ typedef struct {
     u1_t data_buf[N_DATABUF];
     u1_t data_cmd;
     
+    u4_t rsci_tx_seq, rsci_rx_seq;
+
     DRM_CHECK(u4_t magic2;)
 } drm_t;
 

@@ -406,6 +406,7 @@ void DRM_poll(int rx_chan)
     
     drm_t *d = &DRM_SHMEM->drm[rx_chan];
     
+    // DRM_msg_encoded()
     for (int i = 0; i < N_MSGBUF; i++) {
         if (d->msg_rx_seq[i] != d->msg_tx_seq[i]) {
             //printf("%d %s=%s\n", rx_chan, d->msg_cmd[i], d->msg_buf[i]);
@@ -414,6 +415,7 @@ void DRM_poll(int rx_chan)
         }
     }
     
+    // DRM_data()
     if (d->data_rx_seq != d->data_tx_seq) {
         ext_send_msg_data(rx_chan, false, d->data_cmd, d->data_buf, d->data_nbuf);
         d->data_rx_seq = d->data_tx_seq;
