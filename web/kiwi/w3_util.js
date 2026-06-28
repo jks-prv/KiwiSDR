@@ -826,6 +826,17 @@ function w3_create_appendElement(el_parent, el_type, html, id)
 	return el_child;
 }
 
+/*
+not currently used
+// NB: only elements, not text and comments nodes
+function w3_trim_childElements(el_parent, max_len)
+{
+	var el = w3_el(el_parent);
+	while (el.children.length > max_len)
+	   el.removeChild(el.firstElementChild);
+}
+*/
+
 function w3_iterate_parent(el_id, func)
 {
 	var el = w3_el(el_id);
