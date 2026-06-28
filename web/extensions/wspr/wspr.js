@@ -111,6 +111,12 @@ var wspr = {
 
    restart_highlight: '3px solid red',
 
+   // must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
+   console_status_msg_p: {
+      no_decode: true, scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true,
+      cols: 135
+   },
+
    last_last: 0
 };
 
@@ -123,6 +129,15 @@ function wspr_main()
 	if (!wspr.first_time)
 		wspr_controls_setup();
 	wspr.first_time = false;
+}
+
+function wspr_output_chars(c)
+{
+   var rv = kiwi_output_chars('WSPR', c);
+   wspr.console_status_msg_p.s = rv.chars;
+   //wspr.log_txt += rv.log;
+   //console.log(wspr.console_status_msg_p);
+   kiwi_output_msg('id-wspr-console-msgs', 'id-wspr-console-msg', wspr.console_status_msg_p);
 }
 
 var wspr_cmd_e = { WSPR_DATA:0 };
@@ -256,14 +271,18 @@ function wspr_recv(data)
 				break;
 
 			case "WSPR_DECODED":
-				s = decodeURIComponent(param[1]);
+				//jksx
+				//s = decodeURIComponent(param[1]);
 				//console.log('WSPR: '+ s);
-				el = w3_el('id-wspr-decode');
-				var wasScrolledDown = w3_isScrolledDown(el);
-				el.innerHTML += s +'<br>';
+				//el = w3_el('id-wspr-decode');
+				//var wasScrolledDown = w3_isScrolledDown(el);
+				//w3_create_appendElement(el, 'div', s);
+				//w3_trim_childElements(el, 500);
 				
 				// only jump to bottom of updated list if it was already sitting at the bottom
-				if (wasScrolledDown) w3_scrollDown(el);
+				//if (wasScrolledDown) w3_scrollDown(el);
+
+	         wspr_output_chars(param[1]);
 				break;
 			
 			case "WSPR_UPLOAD":
@@ -457,7 +476,10 @@ function wspr_controls_setup()
          )
       ),
       
-		w3_div('id-wspr-decode|white-space:pre; background-color:white; overflow:scroll; height:100px; width:100%; margin-top:0px; font-family:monospace; font-size:100%')
+		//w3_div('id-wspr-decode|white-space:pre; background-color:white; overflow:scroll; height:100px; width:100%; margin-top:0px; font-family:monospace; font-size:100%')
+      w3_div('id-wspr-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|width:1024px; height:300px; position:absolute; overflow-x:hidden;',
+         w3_code('id-wspr-console-msgs w3-text-output-striped/')
+      )
 	);
 
 	ext_panel_show(controls_html, data_html, null);
@@ -467,7 +489,10 @@ function wspr_controls_setup()
    var ch = (wh <= 225)? 203 : Math.round(wh * 0.9);     // scale control panel height on larger screens
    ext_set_controls_width_height(null, ch);
    var dh = ch - w3_el('id-wspr-controls-top').clientHeight - /* borders */ 20;
-   w3_el('id-wspr-decode').style.height = px(dh);
+   
+   //jksx FIXME adjust size to maximize spot log
+   //w3_el('id-wspr-decode').style.height = px(dh);
+   
    //console.log('WSPR wh='+ wh +' ch='+ ch +' dh='+ dh);
 	time_display_setup('wspr');
 	wspr.saved_mode = ext_get_mode();
@@ -942,9 +967,11 @@ function wspr_reset()
 
 function wspr_clear_cb(path, idx, first)
 {
-	wspr_reset();
-   wspr_test_cb('', 0);
-	w3_el('id-wspr-decode').innerHTML = '';
+   //jksx
+	//wspr_reset();
+   //wspr_test_cb('', 0);
+	//w3_el('id-wspr-decode').innerHTML = '';
+	wspr_output_chars('\f');
 	w3_el('id-wspr-peaks-labels').innerHTML = '';
 }
 

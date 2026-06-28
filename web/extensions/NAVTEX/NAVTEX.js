@@ -71,6 +71,9 @@ var nt = {
    too_old_min: 30,
    locations_visible: true,
 
+   // must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
+   console_status_msg_p: { scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true, cols: 135 },
+
    last_last: 0
 };
 
@@ -168,15 +171,13 @@ function navtex_baud_error(err)
    }
 }
 
-// must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
-var navtex_console_status_msg_p = { scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true, cols: 135 };
-
 function navtex_output(s)
 {
-   navtex_console_status_msg_p.s = encodeURIComponent(s);
-
-   // kiwi_output_msg() does decodeURIComponent()
-   kiwi_output_msg('id-navtex-console-msgs', 'id-navtex-console-msg', navtex_console_status_msg_p);
+   var rv = kiwi_output_chars('NAVTEX', c, {log:1});
+   nt.console_status_msg_p.s = rv.chars;
+   nt.log_txt += rv.log;
+   //console.log(nt.console_status_msg_p);
+   kiwi_output_msg('id-navtex-console-msgs', 'id-navtex-console-msg', nt.console_status_msg_p);
 }
 
 function navtex_output_char(c)
@@ -208,7 +209,6 @@ function navtex_output_char(c)
    }
    
    navtex_output(c);
-   nt.log_txt += kiwi_remove_escape_sequences(kiwi_decodeURIComponent('NAVTEX', c));
 }
 
 function navtex_audio_data_cb(samps, nsamps)

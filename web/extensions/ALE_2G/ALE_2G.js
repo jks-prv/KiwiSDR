@@ -249,10 +249,10 @@ function ale_2g_recording_stop()
 
 function ale_2g_decoder_output_chars(c)
 {
-   ale.console_status_msg_p.s = c;     // NB: already encoded on C-side
-   ale.log_txt += kiwi_remove_escape_sequences(kiwi_decodeURIComponent('ALE_2G', c));
-
-   // kiwi_output_msg() does decodeURIComponent()
+   var rv = kiwi_output_chars('ALE_2G', c, {log:1});
+   ale.console_status_msg_p.s = rv.chars;
+   ale.log_txt += rv.log;
+   //console.log(ale.console_status_msg_p);
    kiwi_output_msg('id-ale_2g-console-msgs', 'id-ale_2g-console-msg', ale.console_status_msg_p);
 }
 
@@ -1044,8 +1044,7 @@ function ale_2g_clear_button_cb(path, val, first)
 {
    if (first) return;
    //console.log('ale_2g_clear_button_cb'); 
-   ale.console_status_msg_p.s = encodeURIComponent('\f');
-   kiwi_output_msg('id-ale_2g-console-msgs', 'id-ale_2g-console-msg', ale.console_status_msg_p);
+   ale_2g_decoder_output_chars('\f');
    ale.log_txt = '';
    ale_2g_test_cb('', 0);
 }
