@@ -29,7 +29,6 @@ struct fax_t {
 };
 
 static fax_t fax[MAX_RX_CHANS];
-static u4_t serno[MAX_RX_CHANS];
 
 //static void fax_data(int rx_chan, int chan, int nsamps, TYPEMONO16 *samps)
 void fax_task(void *param)
@@ -168,50 +167,6 @@ bool fax_msgs(char *msg, int rx_chan)
 	if (strcmp(msg, "SET fax_stop") == 0) {
 		rcprintf(rx_chan, "FAX stop\n");
 		fax_close(rx_chan);
-		return true;
-	}
-
-	if (strcmp(msg, "SET fax_file_open") == 0) {
-		rcprintf(rx_chan, "FAX fax_file_open\n");
-		m_FaxDecoder[rx_chan].FileOpen();
-		return true;
-	}
-
-	if (strcmp(msg, "SET fax_file_close") == 0) {
-		rcprintf(rx_chan, "FAX fax_file_close\n");
-		m_FaxDecoder[rx_chan].FileClose();
-		
-		u4_t sn = serno[rx_chan];
-		#if 1
-		    // Debian 11 doesn't have pnmtopng anymore, use .ppm intermediate format
-		    // Also, have to use .gif now instead of .png (there is no p*topng)
-            non_blocking_cmd_system_child("kiwi.fax", 
-                stprintf("cd " DIR_DATA "; "
-                    "pgmtoppm rgbi:1/1/1 fax.ch%d.pgm > fax.ch%d.ppm; "
-                    "ppmtogif fax.ch%d.ppm > fax.ch%d_%d.gif; "
-                    "pnmscale fax.ch%d.pgm -width=96 -height=32 > fax.ch%d.thumb.pgm; "
-                    "pgmtoppm rgbi:1/1/1 fax.ch%d.thumb.pgm > fax.ch%d.thumb.ppm; "
-                    "ppmtogif fax.ch%d.thumb.ppm > fax.ch%d_%d.thumb.gif",
-                    rx_chan, rx_chan,
-                    rx_chan, rx_chan, sn,
-                    rx_chan, rx_chan,
-                    rx_chan, rx_chan,
-                    rx_chan, rx_chan, sn),
-                POLL_MSEC(500));
-		#else
-            non_blocking_cmd_system_child("kiwi.fax", 
-                stprintf("cd " DIR_DATA ";"
-                    "pnmtopng fax.ch%d.pgm > fax.ch%d_%d.png; "
-                    "pnmscale fax.ch%d.pgm -width=96 -height=32 > fax.ch%d.thumb.pgm; "
-                    "pnmtopng fax.ch%d.thumb.pgm > fax.ch%d_%d.thumb.png",
-                    rx_chan, rx_chan, sn,
-                    rx_chan, rx_chan,
-                    rx_chan, rx_chan, sn),
-                POLL_MSEC(500));
-        #endif
-        
-        ext_send_msg(rx_chan, false, "EXT fax_download_avail=%d", sn);
-        serno[rx_chan]++;
 		return true;
 	}
 
