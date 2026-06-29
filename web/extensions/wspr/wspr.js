@@ -282,7 +282,7 @@ function wspr_recv(data)
 				// only jump to bottom of updated list if it was already sitting at the bottom
 				//if (wasScrolledDown) w3_scrollDown(el);
 
-	         wspr_output_chars(param[1]);
+	         wspr_output_chars(param[1] +'\n');
 				break;
 			
 			case "WSPR_UPLOAD":
@@ -477,7 +477,8 @@ function wspr_controls_setup()
       ),
       
 		//w3_div('id-wspr-decode|white-space:pre; background-color:white; overflow:scroll; height:100px; width:100%; margin-top:0px; font-family:monospace; font-size:100%')
-      w3_div('id-wspr-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|width:1024px; height:300px; position:absolute; overflow-x:hidden;',
+      w3_div('id-wspr-console-msg w3-text-output w3-padding-0 w3-scroll-down w3-text-black w3-font-12_75px' +
+         '|height:100px; width:100%; position:absolute; font-family:monospace; font-size:100%; overflow-x:hidden;',
          w3_code('id-wspr-console-msgs w3-text-output-striped/')
       )
 	);
@@ -489,10 +490,7 @@ function wspr_controls_setup()
    var ch = (wh <= 225)? 203 : Math.round(wh * 0.9);     // scale control panel height on larger screens
    ext_set_controls_width_height(null, ch);
    var dh = ch - w3_el('id-wspr-controls-top').clientHeight - /* borders */ 20;
-   
-   //jksx FIXME adjust size to maximize spot log
-   //w3_el('id-wspr-decode').style.height = px(dh);
-   
+   w3_el('id-wspr-console-msg').style.height = px(dh);
    //console.log('WSPR wh='+ wh +' ch='+ ch +' dh='+ dh);
 	time_display_setup('wspr');
 	wspr.saved_mode = ext_get_mode();
