@@ -3,6 +3,16 @@ CHANGE_LOG
 For the Github commit log see here: github.com/jks-prv/KiwiSDR/commits/master
     Older commits: github.com/jks-prv/Beagle_SDR_GPS/commits/master
 
+v1.843  June 30, 2026
+    WSPR "clear" button now simply clears the spot log without stopping the signal processing.
+    
+    FAX image recording now works like other recording in the user interface (WF, extensions)
+    instead of the crazy scheme it had that produced an intermediate .gif file. (thanks Fabrys)
+    
+    Update GNSS satellite table to reflect Galileo and SBAS changes. (thanks F4FPR)
+    
+    Admin "users" tab: Added spinning icon while the list loads since it can take a long time.
+
 v1.842  June 5, 2026
     Changes to support latest manufacturing build.
 
