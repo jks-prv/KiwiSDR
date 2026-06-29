@@ -428,7 +428,7 @@ function fsk_output_char(s)
       }
    }
    
-   var rv = kiwi_output_chars('FSK', c, {log:1});
+   var rv = kiwi_output_chars('FSK', s, {log:1});
    fsk.console_status_msg_p.s = rv.chars;
    fsk.log_txt += rv.log;
    //console.log(fsk.console_status_msg_p);

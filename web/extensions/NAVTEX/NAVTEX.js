@@ -173,7 +173,7 @@ function navtex_baud_error(err)
 
 function navtex_output(s)
 {
-   var rv = kiwi_output_chars('NAVTEX', c, {log:1});
+   var rv = kiwi_output_chars('NAVTEX', s, {log:1});
    nt.console_status_msg_p.s = rv.chars;
    nt.log_txt += rv.log;
    //console.log(nt.console_status_msg_p);
