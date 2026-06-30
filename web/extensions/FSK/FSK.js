@@ -89,6 +89,9 @@ var fsk = {
 
    udp_text: '',
 
+   // must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
+   console_status_msg_p: { scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true, cols: 135 },
+
    last_last: 0
 };
 
@@ -403,35 +406,33 @@ function fsk_baud_error(err)
    }
 }
 
-// must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
-var fsk_console_status_msg_p = { scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true, cols: 135 };
-
 function fsk_output_char(s)
 {
    if (s == '') return;
    
-   if (fsk.framing.includes('EFR')) {
-      s = 'EFR '+ fsk.menu_sel + s;
-   }
-   
-   //if (iscntrl(s)) console.log('fsk_output_char '+ kiwi_string_to_hex(s));
-   if (isprint(s) || isspace(s)) {
-      fsk.udp_text += s;
-      //console.log({'udp_text': fsk.udp_text});
-      if (s == '\n') {
-         if (fsk.udp_text.length == 1) fsk.udp_text = '\r\n';
+   if (s != '\f') {
+      if (fsk.framing.includes('EFR')) {
+         s = 'EFR '+ fsk.menu_sel + s;
+      }
+      
+      //if (iscntrl(s)) console.log('fsk_output_char '+ kiwi_string_to_hex(s));
+      if (isprint(s) || isspace(s)) {
+         fsk.udp_text += s;
          //console.log({'udp_text': fsk.udp_text});
-         ext_send('SET udp_text='+ fsk.udp_text);
-         fsk.udp_text = '';
+         if (s == '\n') {
+            if (fsk.udp_text.length == 1) fsk.udp_text = '\r\n';
+            //console.log({'udp_text': fsk.udp_text});
+            ext_send('SET udp_text='+ fsk.udp_text);
+            fsk.udp_text = '';
+         }
       }
    }
    
-   
-   fsk_console_status_msg_p.s = encodeURIComponent(s);
-   fsk.log_txt += kiwi_remove_escape_sequences(kiwi_decodeURIComponent('FSK', s));
-
-   // kiwi_output_msg() does decodeURIComponent()
-   kiwi_output_msg('id-fsk-console-msgs', 'id-fsk-console-msg', fsk_console_status_msg_p);
+   var rv = kiwi_output_chars('FSK', s, {log:1});
+   fsk.console_status_msg_p.s = rv.chars;
+   fsk.log_txt += rv.log;
+   //console.log(fsk.console_status_msg_p);
+   kiwi_output_msg('id-fsk-console-msgs', 'id-fsk-console-msg', fsk.console_status_msg_p);
 }
 
 function fsk_audio_data_cb(samps, nsamps)
@@ -1032,6 +1033,7 @@ function fsk_mode_cb(path, idx, first)
    switch (idx) {
    
    case fsk.MODE_DECODE:  // decode
+      /* fall through */
    default:
       fsk.decode = 1;
       break;
@@ -1069,8 +1071,7 @@ function fsk_auto_zoom_cb(path, checked, first)
 function fsk_clear_button_cb(path, idx, first)
 {
    if (first) return;
-   fsk_console_status_msg_p.s = encodeURIComponent('\f');
-   kiwi_output_msg('id-fsk-console-msgs', 'id-fsk-console-msg', fsk_console_status_msg_p);
+   fsk_output_char('\f');
    fsk.log_txt = '';
 }
 

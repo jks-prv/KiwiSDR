@@ -402,7 +402,6 @@ void FaxDecoder::DecodeImageLine(u1_t* buffer, int buffer_len, u1_t *image)
         //real_printf("%.2f ", m_lineNextBlend); fflush(stdout);
         NextTaskFast("DecodeImageLine send");
         ext_send_msg_data(m_rx_chan, false, FAX_MSG_DRAW, m_debug? image : m_outImage, m_imagewidth);
-        FileWrite(m_outImage, m_imagewidth);
     }
     NextTaskFast("DecodeImageLine end");
 }
@@ -553,43 +552,4 @@ void FaxDecoder::CleanUpBuffers()
      delete [] m_samples;
      delete [] m_demod_data;
      delete [] phasingPos;
-}
-
-// SECURITY:
-// Little bit of a security hole: Can look at previously saved fax images by downloading the fixed filename.
-// Not a big deal really.
-
-void FaxDecoder::FileOpen()
-{
-    FileClose();
-    asprintf(&m_fn, DIR_DATA "/fax.ch%d.pgm", m_rx_chan);
-    m_file = pgm_file_open(m_fn, &m_offset, m_imagewidth, 0, 255);
-
-    if (m_file == NULL) {
-        faxprintf("FAX open FAILED %s\n", m_fn);
-    } else {
-        faxprintf("FAX open %s\n", m_fn);
-    }
-}
-
-void FaxDecoder::FileWrite(u1_t *data, int datalen)
-{
-    if (m_file == NULL) return;
-    //faxprintf("len=%d m_fax_line=%d\n", datalen, m_fax_line);
-    fwrite(data, datalen, 1, m_file);
-    m_fax_line++;
-    ext_send_msg(m_rx_chan, false, "EXT fax_record_line=%d", m_fax_line);
-}
-
-void FaxDecoder::FileClose()
-{
-    if (m_file == NULL) return;
-    
-    fflush(m_file);
-    pgm_file_height(m_file, m_offset, m_fax_line);
-    fclose(m_file);
-    faxprintf("FAX %s wrote %d lines\n", m_fn, m_fax_line);
-    if (m_fn) kiwi_asfree(m_fn, "FileClose"); m_fn = NULL;
-    m_file = NULL;
-    m_fax_line = 0;
 }

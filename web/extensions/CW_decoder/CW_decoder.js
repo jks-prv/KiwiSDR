@@ -137,10 +137,10 @@ function cw_decoder_recv(data)
 
 function cw_decoder_output_chars(c)
 {
-   cw.console_status_msg_p.s = c;      // NB: already encoded on C-side
-   cw.log_txt += kiwi_remove_escape_sequences(kiwi_decodeURIComponent('CW', c));
-
-   // kiwi_output_msg() does decodeURIComponent()
+   var rv = kiwi_output_chars('CW', c, {log:1});
+   cw.console_status_msg_p.s = rv.chars;
+   cw.log_txt += rv.log;
+   //console.log(cw.console_status_msg_p);
    kiwi_output_msg('id-cw-console-msgs', 'id-cw-console-msg', cw.console_status_msg_p);
 }
 
@@ -295,8 +295,7 @@ function CW_decoder_environment_changed(changed)
 function cw_clear_button_cb(path, idx, first)
 {
    if (first) return;
-   cw.console_status_msg_p.s = encodeURIComponent('\f');
-   kiwi_output_msg('id-cw-console-msgs', 'id-cw-console-msg', cw.console_status_msg_p);
+   cw_decoder_output_chars('\f');
    cw.log_txt = '';
 }
 

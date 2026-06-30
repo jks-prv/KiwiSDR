@@ -103,7 +103,7 @@ function ant_switch_view()
       function() {
          var Hopt = kiwi.OPTBAR_CONTENT_HEIGHT;
          var Hant = w3_el('id-optbar-rf-antsw').clientHeight + /* w3-margin-B-8 */ 8;
-         pct = w3_clamp(kiwi_round(1 - (Hant - Hopt) / (Hrf - Hopt), 2), 0, 1);
+         var pct = w3_clamp(kiwi_round(1 - (Hant - Hopt) / (Hrf - Hopt), 2), 0, 1);
          //console.log('ant_switch view', {Hant, Hrf, pct});   // 160 233
          w3_scrollTo('id-optbar-content', pct);
       }, null,

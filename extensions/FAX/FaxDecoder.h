@@ -58,9 +58,6 @@ public:
                    bool use_phasing, bool autostop, int debug, bool reset);
 
     void ProcessSamples(s2_t *samps, int nsamps, float shift);
-    void FileOpen();
-    void FileWrite(u1_t *data, int datalen);
-    void FileClose();
     
     bool DecodeFaxFromFilename();
     bool DecodeFaxFromDSP();

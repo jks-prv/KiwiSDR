@@ -291,10 +291,10 @@ function hfdl_recv(data)
 
 function hfdl_decoder_output_chars(c)
 {
-   hfdl.console_status_msg_p.s = c;     // NB: already encoded on C-side
-   hfdl.log_txt += kiwi_remove_escape_sequences(kiwi_decodeURIComponent('HFDL', c));
-
-   // kiwi_output_msg() does decodeURIComponent()
+   var rv = kiwi_output_chars('HFDL', c, {log:1});
+   hfdl.console_status_msg_p.s = rv.chars;
+   hfdl.log_txt += rv.log;
+   //console.log(hfdl.console_status_msg_p);
    kiwi_output_msg('id-hfdl-console-msgs', 'id-hfdl-console-msg', hfdl.console_status_msg_p);
 }
 
@@ -1053,8 +1053,7 @@ function hfdl_clear_button_cb(path, val, first)
 {
    if (first) return;
    //console.log('hfdl_clear_button_cb'); 
-   hfdl.console_status_msg_p.s = encodeURIComponent('\f');
-   kiwi_output_msg('id-hfdl-console-msgs', 'id-hfdl-console-msg', hfdl.console_status_msg_p);
+   hfdl_decoder_output_chars('\f');
    hfdl.log_txt = '';
    hfdl_test_cb('', 0);
 }

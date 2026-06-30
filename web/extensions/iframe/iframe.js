@@ -11,7 +11,7 @@ var iframe = {
    
    std: [
       // must be first in list
-      { src:0, url:'//spots.kiwisdr.com', menu:'DX spots', w:400, h:500, tune:1,
+      { src:0, url:'https://spots.kiwisdr.com', menu:'DX spots', w:400, h:500, tune:1,
          title:'<span style="color:cyan">Spots by <a href="//kiwisdr.com" target="_blank">kiwisdr.com</a></span>',
          help:'Clicking on a spot frequency will tune the Kiwi.'
       },
@@ -20,22 +20,22 @@ var iframe = {
          html:'<center><a href="//www.hamqsl.com/solar.html" title="Click to add Solar-Terrestrial Data to your website!" target="_blank"><img src="//www.hamqsl.com/solarn0nbh.php"></a></center>'
       },
          
-      { src:0, url:'//api.meteoagent.com/widgets/v1/kindex', menu:'K-index', w:400, h:600, tune:0, title:'Solar K-index', help:''
+      { src:0, url:'https://api.meteoagent.com/widgets/v1/kindex', menu:'K-index', w:400, h:600, tune:0, title:'Solar K-index', help:''
       },
          
-      { src:0, url:'//www.sws.bom.gov.au/Images/HF Systems/Global HF/Ionospheric Map/WorldIMap.gif', menu:'HF-prop', w:500, h:500,
+      { src:0, url:'https://www.sws.bom.gov.au/Images/HF Systems/Global HF/Ionospheric Map/WorldIMap.gif', menu:'HF-prop', w:500, h:500,
          tune:0, title:'HF propagation', help:''
       },
          
-      { src:0, url:'//map.blitzortung.org/#2.0/-27.0/146', menu:'lightning', w:400, h:300, tune:0, title:'Live Lightning Map',
+      { src:0, url:'https://map.blitzortung.org/#2.0/-27.0/146', menu:'lightning', w:400, h:300, tune:0, title:'Live Lightning Map',
          help:'Click and hold on Map for repositioning, use +/- for Zoom.<br>Admin: change default zoom and lat/lon in URL.'
       },
          
-      { src:0, url:'//services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg', menu:'aurora-N', w:0, h:0,
+      { src:0, url:'https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg', menu:'aurora-N', w:0, h:0,
          tune:0, title:'Aurora northern hemisphere', help:''
       },
          
-      { src:0, url:'//services.swpc.noaa.gov/images/aurora-forecast-southern-hemisphere.jpg', menu:'aurora-S', w:0, h:0,
+      { src:0, url:'https://services.swpc.noaa.gov/images/aurora-forecast-southern-hemisphere.jpg', menu:'aurora-S', w:0, h:0,
          tune:0, title:'Aurora southern hemisphere', help:''
       }
    ],
@@ -176,7 +176,7 @@ function iframe_controls_setup()
    if (iframe.helptext == '') iframe.helptext = '';
    if (iframe.url == '') iframe.url = '/gfx/kiwi-with-headphones.51x67.png';
    if (iframe.title == '') iframe.title = 'iframe extension';
-   //console.log('iframe', {'url':iframe.url, 'html':iframe.html, 'title':iframe.title, 'width':iframe.width, 'height':iframe.height, 'helptext':iframe.helptext'});
+   //console.log('iframe', {'url':iframe.url, 'html':iframe.html, 'title':iframe.title, 'width':iframe.width, 'height':iframe.height, 'helptext':iframe.helptext});
    
    var controls_html =
       w3_div('w3-text-white',
@@ -192,6 +192,8 @@ function iframe_controls_setup()
    ext_set_controls_width_height(iframe.width + margin, iframe.height + margin + top_line);
 
    if (iframe.src == iframe.SRC_URL) {
+      if (iframe.url.startsWith('//'))
+         iframe.url = 'https:'+ iframe.url;
       w3_attribute('id-iframe-src', 'src', iframe.url);
    } else {
       w3_attribute('id-iframe-src', 'srcdoc', iframe.html);

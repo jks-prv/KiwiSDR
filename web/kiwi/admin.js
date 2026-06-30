@@ -1736,6 +1736,7 @@ function users_html()
       w3_div('id-users w3-container w3-hide',
          w3_inline('w3-container/w3-margin-top',
             w3_text('w3-text-teal w3-bold', 'All users since Kiwi restart'),
+            w3_icon('id-users-spin w3-margin-left w3-hide', 'fa-refresh fa-spin', 24),
             w3_button('w3-margin-left w3-aqua', 'Clear list', 'users_clear_cb')
          ),
          w3_div('w3-container w3-margin-top w3-margin-bottom w3-card-8 w3-round-xlarge w3-pale-blue',
@@ -1761,6 +1762,7 @@ function users_blur()
 
 function users_get_list()
 {
+   w3_show('id-users-spin');
    ext_send("SET get_user_list");
 }
 
@@ -1911,7 +1913,10 @@ function users_list_cb(s)
          }
       }
    );
-   if (!isEnd) users_get_list();
+   if (!isEnd)
+      users_get_list();
+   else
+      w3_hide('id-users-spin');
 }
 
 
@@ -5443,8 +5448,8 @@ function admin_recv(data)
 				break;
 				
 			case "console_c2w":
-		      // kiwi_output_msg() does decodeURIComponent()
-		      admin.console.s = param[1];
+            var rv = kiwi_output_chars('console_c2w', param[1]);
+            admin.console.s = rv.chars;
 		      //console.log('console_c2w:');
 		      //console.log(admin.console);
 				kiwi_output_msg('id-console-msgs', 'id-console-msg', admin.console);

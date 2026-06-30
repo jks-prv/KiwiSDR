@@ -19,7 +19,6 @@ var fax = {
    autostop:   false,
    debug:      0,
    contrast:   1,
-   file:       0,
    ch:         0,
    data_canvas:   0,
    copy_canvas:   0,
@@ -172,14 +171,6 @@ function fax_recv(data)
 				fax.ch = parseInt(param[1]);
 				break;
 
-			case "fax_download_avail":
-            var file = kiwi_url_origin() +'/kiwi.data/fax.ch'+ fax.ch +'_'+ param[1];
-            var gif = file +'.gif';
-            var thumb = file +'.thumb.gif';
-            w3_remove_then_add('id-fax-file-icon', 'fa-refresh fa-spin w3-text-aqua', 'fa-repeat w3-text-pink');
-            w3_el('id-fax-file-status').innerHTML = w3_link('', gif, w3_img('', thumb));
-				break;
-
 			case "fax_sps_changed":
 			   if (fax_mkr) {
                ct.fillStyle = 'red';
@@ -270,15 +261,8 @@ function fax_controls_setup()
             w3_button('w3-padding-smaller', 'Next', 'w3_select_next_prev_cb', { dir:w3_MENU_NEXT, id:'fax.menu', func:'fax_pre_select_cb' }),
             w3_button('w3-padding-smaller', 'Prev', 'w3_select_next_prev_cb', { dir:w3_MENU_PREV, id:'fax.menu', func:'fax_pre_select_cb' }),
             w3_button('id-fax-stop-start w3-padding-smaller', 'Stop', 'fax_stop_start_cb'),
-            w3_button('w3-padding-smaller', 'Clear', 'fax_clear_cb'),
-            w3_inline('',
-               w3_div('',
-                  w3_div('fa-stack||title="record"',
-                     w3_icon('id-fax-file-icon', 'fa-repeat fa-stack-1x w3-text-pink', 22, '', 'fax_file_cb')
-                  )
-               ),
-               w3_div('id-fax-file-status w3-margin-left')
-            )
+            w3_button('w3-css-yellow w3-padding-smaller', 'Clear', 'fax_clear_cb'),
+            w3_button('w3-blue w3-padding-smaller', 'Save', 'fax_save_cb')
          ),
          w3_inline('w3-tspace-8',
             w3_checkbox('w3-label-inline w3-label-not-bold/', 'auto align', 'fax.phasing', fax.phasing, 'fax_phasing_cb'),
@@ -561,29 +545,20 @@ function fax_lpm_cb(path, idx, first)
 function fax_clear_cb()
 {
    fax_clear_display();
-   if (!fax.file) {
-      w3_remove_then_add('id-fax-file-icon', 'fa-repeat fa-refresh fa-spin w3-text-aqua', 'fa-repeat  w3-text-pink');
-      w3_el('id-fax-file-status').innerHTML = '';
-   }
 }
 
-function fax_file_cb(path, param, first)
+function fax_save_cb(path, val, first)
 {
    if (first) return;
-   fax.file ^= 1;
-   //console.log('flip fax.file='+ fax.file +' param='+ param);
-   var el1 = w3_el('id-fax-file-icon');
-   
-   if (fax.file) {
-	   ext_send('SET fax_file_open');
-      w3_spin(el1);
-      w3_el('id-fax-file-status').innerHTML =
-         w3_div('w3-show-inline-block', 'recording<br>line '+ w3_div('id-fax-line w3-show-inline-block'));
-	} else {
-	   ext_send('SET fax_file_close');
-      w3_remove_then_add(el1, 'fa-repeat w3-text-pink', 'fa-refresh fa-spin w3-text-aqua');
-      w3_el('id-fax-file-status').innerHTML = 'processing';
-	}
+   var imgURL = fax.data_canvas.toDataURL("image/jpeg", 0.85);
+   var dlLink = document.createElement('a');
+   dlLink.download = kiwi_timestamp_filename('FAX.', '.jpg');
+   dlLink.href = imgURL;
+   dlLink.target = '_blank';  // opens new tab in iOS instead of download
+   dlLink.dataset.downloadurl = ["image/jpeg", dlLink.download, dlLink.href].join(':');
+   document.body.appendChild(dlLink);
+   dlLink.click();
+   document.body.removeChild(dlLink);
 }
 
 function FAX_blur()

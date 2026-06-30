@@ -50,7 +50,7 @@ function noise_filter_view()
    var nf = w3_el('id-nfilter-more').clientHeight;
    var test = w3_el('id-ntest-more').clientHeight;
    var Hnf = total - (audio + hr + nb + hr);
-   pct = w3_clamp(kiwi_round(1 - (Hnf - Hopt) / (total - Hopt), 2), 0, 1);
+   var pct = w3_clamp(kiwi_round(1 - (Hnf - Hopt) / (total - Hopt), 2), 0, 1);
    //console.log('noise_blank view', {total, audio, nb, nf, test, Hnf, pct});
    w3_scrollTo('id-optbar-content', pct);
 }

@@ -1582,6 +1582,7 @@ CDRMReceiver::LoadSettings()
 		for(;n<rci.size(); n++)
 			downstreamRSCI.AddSubscriber("", ' ', rci[n]);
     }
+    
     /* RSCI File Recording */
     str = s.Get("command", "rsirecordprofile");
     string s2 = s.Get("command", "rsirecordtype");

@@ -1533,6 +1533,10 @@ input[type=range]::-moz-range-thumb {
     font-size: 12px;
 }
 
+.w3-font-12_75px {
+    font-size: 12.75px;
+}
+
 .w3-font-13px {
     font-size: 13px;
 }

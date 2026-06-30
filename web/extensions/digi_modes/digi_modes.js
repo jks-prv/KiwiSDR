@@ -22,7 +22,7 @@ var digi = {
    // must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
    console_status_msg_p: {
       no_decode: true, scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true,
-      cols: 135, max_lines: 1024
+      cols: 135
    },
 
    log_mins: 0,
@@ -92,17 +92,9 @@ function digi_recv(data)
 
 function digi_output_chars(c)
 {
-   c = kiwi_decodeURIComponent('digi', c);    // NB: already encoded on C-side
-   //console.log('digi_output_chars <'+ c +'>');
-   //digi.log_txt += kiwi_remove_escape_sequences(c);
-
-   var a = c.split('');
-   a.forEach(function(ch, i) {
-      if (ch == '<') a[i] = kiwi.esc_lt;
-      else
-      if (ch == '>') a[i] = kiwi.esc_gt;
-   });
-   digi.console_status_msg_p.s = a.join('');
+   var rv = kiwi_output_chars('digi', c);
+   digi.console_status_msg_p.s = rv.chars;
+   //digi.log_txt += rv.log;
    //console.log(digi.console_status_msg_p);
    kiwi_output_msg('id-digi-console-msgs', 'id-digi-console-msg', digi.console_status_msg_p);
 }
@@ -215,8 +207,7 @@ function digi_mode_cb(path, idx, first)
 function digi_clear_button_cb(path, idx, first)
 {
    if (first) return;
-   digi.console_status_msg_p.s = '\f';
-   kiwi_output_msg('id-digi-console-msgs', 'id-digi-console-msg', digi.console_status_msg_p);
+   digi_output_chars('\f');
    digi.log_txt = '';
 }
 

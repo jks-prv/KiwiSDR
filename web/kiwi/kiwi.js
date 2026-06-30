@@ -1154,6 +1154,21 @@ function kiwi_output_sgr(p)
    return { msg: msg, str: str };
 }
 
+function kiwi_output_chars(id, chars, opts)
+{
+   opts = opts || {};
+   var c = kiwi_decodeURIComponent(id, chars);     // NB: already encoded on C-side
+   var a = c.split('');
+   a.forEach(function(ch, i) {
+      if (ch == '<') a[i] = kiwi.esc_lt;
+      else
+      if (ch == '>') a[i] = kiwi.esc_gt;
+   });
+   var rv = { chars: a.join('') };
+   rv.log = opts.log? kiwi_remove_escape_sequences(c) : '';
+   return rv;
+}
+
 function kiwi_output_msg(id, id_scroll, p)
 {
    var i, j;
@@ -1458,8 +1473,9 @@ function kiwi_output_msg(id, id_scroll, p)
       }
    };
    
-	var s;
-	if (isNoArg(p.no_decode) || p.no_decode != true) {
+   /*    // kiwi_decodeURIComponent() now done in kiwi_output_chars()
+   var s;
+   if (isNoArg(p.no_decode) || p.no_decode != true) {
       try {
          //if (dbg) console.log(kiwi_JSON(p.s));
          s = kiwi_decodeURIComponent('kiwi_output_msg', p.s);
@@ -1468,10 +1484,12 @@ function kiwi_output_msg(id, id_scroll, p)
          console.log(p.s);
          s = p.s;
       }
-      if (s == null) s = '(kiwi_decodeURIComponent():null)';
+      if (s == null) s = '(admin console: kiwi_decodeURIComponent():null)';
    } else {
       s = p.s;
    }
+   */
+   var s = p.s;
 	
    if (p.intercept) {
       p.intercept(s);
@@ -1488,6 +1506,7 @@ function kiwi_output_msg(id, id_scroll, p)
       removeAllLines(parent_el);
       p.el = appendEmptyLine(parent_el);
       p.cols = p.cols || 140;
+      p.max_lines = p.max_lines || 1024;
       p.NONE = 0;
       p.ESC = 1;
       p.CSI = 2;
@@ -3514,9 +3533,9 @@ function kiwi_msg(param, ws)     // #msg-proc #MSG
 			break;
 
 		case "output_msg":
-		   // kiwi_output_msg() does decodeURIComponent()
 		   //console.log('output_msg: '+ param[1]);
-		   kiwi_output_msg_p.s = param[1];
+         var rv = kiwi_output_chars('output_msg', param[1]);
+         kiwi_output_msg_p.s = rv.chars;
 			kiwi_output_msg('id-output-msg', 'id-output-msg', kiwi_output_msg_p);
 			break;
 
@@ -3702,6 +3721,7 @@ function kiwi_show_msg(s)
       // The default body used by id-kiwi-container needs to be overflow:hidden,
       // so change to scrolling here in case error message is long.
       w3_el('id-kiwi-body').style.overflow = 'scroll';
+      w3_alert_cancel();
    }
 }
 
