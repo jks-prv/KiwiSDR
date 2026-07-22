@@ -108,6 +108,16 @@ function sstv_recv(data)
 				sstv_controls_setup();
 				break;
 
+         case "started":
+            w3_hide('id-sstv-btn-retry');
+            break;
+
+         case "busy":
+            var busy = param[1].split(',');
+            sstv_status_cb('decoder limit reached ('+ busy[0] +' active; limit '+ busy[1] +')');
+            w3_show_inline_block('id-sstv-btn-retry');
+            break;
+
          case "img_size":
             var a = param[1].split(',');
             var w = +a[0];
@@ -258,6 +268,7 @@ function sstv_controls_setup()
                w3_checkbox('id-sstv-cbox-auto w3-margin-left w3-label-inline w3-label-not-bold', 'auto adjust', 'sstv.auto', true, 'sstv_auto_cbox_cb'),
 				   w3_button('id-sstv-btn-auto w3-margin-left w3-padding-smaller', 'Undo adjust', 'sstv_auto_cb'),
 				   w3_button('w3-margin-left w3-padding-smaller w3-css-yellow', 'Reset', 'sstv_reset_cb'),
+				   w3_button('id-sstv-btn-retry w3-margin-left w3-padding-smaller w3-orange w3-hide', 'Retry', 'sstv_retry_cb'),
 				   w3_button('w3-margin-left w3-padding-smaller w3-blue', 'Save images', 'sstv_save_cb'),
 				   w3_button('id-sstv-test1 w3-margin-left w3-padding-smaller w3-aqua', 'Test', 'sstv_test_cb', 0),
 				   dbgUs?
@@ -453,6 +464,14 @@ function sstv_reset_cb(path, val, first)
 	ext_send('SET reset');
 }
 
+function sstv_retry_cb(path, val, first)
+{
+   if (first) return;
+   w3_hide('id-sstv-btn-retry');
+   sstv_status_cb('retrying...');
+	ext_send('SET start');
+}
+
 function sstv_test_cb(path, val, first)
 {
    // mode_name & status fields set in cpp code
@@ -536,17 +555,29 @@ function SSTV_help(show)
 // called to display HTML for configuration parameters in admin interface
 function SSTV_config_html()
 {
+   var max_users_s = ['unlimited'];
+   for (var i = 1; i <= rx_chans; i++) max_users_s.push(i.toString());
+
    var s =
       w3_inline_percent('w3-container',
-         w3_div('w3-margin-T-16 w3-restart',
-            w3_input_get('', 'Test1 filename', 'SSTV.test_file1', 'w3_string_set_cfg_cb', 'SSTV.test.au')
+         w3_div('w3-margin-T-16',
+            w3_select_get_param('w3-text-red', 'Maximum simultaneous decoders', '',
+               'SSTV.max_users', max_users_s, 'w3_int_set_cfg_cb', cfg.SSTV.max_users),
+            w3_div('w3-margin-T-8 w3-text-black',
+               'Limits CPU-intensive SSTV decoders. Existing sessions are not disconnected when this value is lowered.')
          ), 40
       ) +
 
       w3_inline_percent('w3-container',
          w3_div('w3-margin-T-16 w3-restart',
+            w3_input_get('', 'Test1 filename', 'SSTV.test_file1', 'w3_string_set_cfg_cb', 'SSTV.test.au')
+         ), 28
+      ) +
+
+      w3_inline_percent('w3-container',
+         w3_div('w3-margin-T-16 w3-restart',
             w3_input_get('', 'Test2 filename', 'SSTV.test_file2', 'w3_string_set_cfg_cb', 'SSTV.test2.au')
-         ), 40
+         ), 28
       );
 
    ext_config_html(sstv, 'sstv', 'SSTV', 'SSTV configuration', s);

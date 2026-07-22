@@ -24,6 +24,17 @@
 sstv_t sstv;
 sstv_chan_t sstv_chan[MAX_RX_CHANS];
 
+static int sstv_active_users()
+{
+    int active = 0;
+
+    for (int i = 0; i < rx_chans; i++) {
+        if (sstv_chan[i].task_created) active++;
+    }
+
+    return active;
+}
+
 #ifdef SSTV_TEST_FILE
 static void sstv_file_data(int rx_chan, int chan, int nsamps, TYPEMONO16 *samps, int freqHz)
 {
@@ -149,6 +160,23 @@ bool sstv_msgs(char *msg, int rx_chan)
 	if (strcmp(msg, "SET start") == 0) {
 		printf("SSTV: start\n");
 
+        // SET start can be repeated by the client when retrying after the limit was reached.
+        if (e->task_created) {
+            ext_send_msg(rx_chan, false, "EXT started");
+            return true;
+        }
+
+        int max_users = cfg_int("SSTV.max_users", NULL, CFG_REQUIRED);
+        if (max_users > 0) {
+            max_users = MIN(max_users, rx_chans);
+            int active = sstv_active_users();
+            if (active >= max_users) {
+                printf("SSTV: start denied active=%d max_users=%d\n", active, max_users);
+                ext_send_msg(rx_chan, false, "EXT busy=%d,%d", active, max_users);
+                return true;
+            }
+        }
+
         #ifdef SSTV_TEST_FILE
             int tn = e->test_n;
             if (sstv.s2p_start[tn]) {
@@ -165,6 +193,7 @@ bool sstv_msgs(char *msg, int rx_chan)
         }
 		
 		ext_register_receive_real_samps_task(e->tid, rx_chan);
+		ext_send_msg(rx_chan, false, "EXT started");
 		return true;
 	}
 
@@ -278,7 +307,15 @@ bool sstv_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool SSTV_vars() { return false; }
+bool SSTV_vars()
+{
+    bool update_cfg = false;
+
+    cfg_default_object("SSTV", "{}", &update_cfg);
+    cfg_default_int("SSTV.max_users", 0, &update_cfg);   // 0 = unlimited
+
+    return update_cfg;
+}
 
 void SSTV_main();
 
