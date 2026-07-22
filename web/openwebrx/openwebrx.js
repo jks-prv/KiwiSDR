@@ -7778,10 +7778,14 @@ function bands_addl_info(isAdmin)
 
 var band_menu = [];
 
-function setup_band_menu()
+function mk_band_menu()
 {
-	var i, op = 0, service = null;
-	var s = '<option value="0" selected disabled>select band</option>';
+   //console.log('mk_band_menu');
+   band_menu = [];
+   owrx.last_selected_band = 0;
+
+	var i, op = 0, service = null, last_svc_name = null;
+	var obj = {};
 	band_menu[op++] = null;		// menu title
 	var ITU_region = cfg.init.ITU_region + 1;    // cfg.init.ITU_region = 0:R1, 1:R2, 2:R3
 
@@ -7801,28 +7805,22 @@ function setup_band_menu()
 			service = b1.svc;
 			var svc = band_svc_lookup(b1.svc);
 			if (!svc) continue;
-			s += '<option value='+ dq(op) +' disabled>'+ svc.o.name.toUpperCase() +'</option>';
+			last_svc_name = svc.o.name.toUpperCase();
+			obj[last_svc_name] = [];
 			band_menu[op++] = null;		// section title
 		}
-		s += '<option value='+ dq(op) +'>'+ b1.name +'</option>';
+		obj[last_svc_name].push(b1.name);
 		//console.log("BAND-MENU"+ op +" i="+ i +' '+ b1.min +'/'+ b1.max);
 		band_menu[op] = {};
 		band_menu[op].b1 = b1;
 		band_menu[op].b2 = b2;
 		op++;
 	}
-	return s;
-}
+	//console.info(kiwi_JSON(obj));
 
-function mk_band_menu()
-{
-   //console.log('mk_band_menu');
-   band_menu = [];
-   owrx.last_selected_band = 0;
-   var id = 'id-select-band';
-   var el = w3_el(id);
-   w3_innerHTML(el, setup_band_menu());
-   //w3_event_listener(id, el);
+   w3_innerHTML('id-select-band-container',
+      w3_select_hier('id-select-band w3-pointer', '', 'select band', '', -1, obj, 'select_band_cb')
+   );
 }
 
 // find_band() is only called by code related to setting the frequency step size.
@@ -11100,7 +11098,7 @@ function panels_setup()
             '</form>'
          ) +
 
-         w3_select('id-select-band w3-pointer', '', '', '', 0, '', 'select_band_cb') +
+         w3_div('id-select-band-container') +
 
 /*
          '<select id="id-select-ext" class="w3-pointer w3-select-menu" onchange="freqset_select(); extint_select(this.value)">' +
