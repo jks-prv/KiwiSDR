@@ -315,29 +315,30 @@ function w3_esc_dq(s)
 	return s;
 }
 
-// a multi-argument call that silently continues if func not found
-function w3_call(func, arg0, arg1, arg2, arg3, arg4)
+// an arguments-in-array call that silently continues if func not found
+function w3_apply(func, args_a)
 {
    var rv;
 
    if (isNoArg(func)) return rv;
+   //console.log('w3_call: '+ kiwi_JSON(args_a));
    
 	try {
 	   if (isString(func)) {
          var f = getVarFromString(func);
-         //console.log('w3_call: '+ func +'() = '+ typeof(f));
+         //console.log('w3_call: '+ func +'('+ kiwi_JSON(args_a) +')');
          if (isFunction(f)) {
             //var args = Array.prototype.slice.call(arguments);
-            rv = f(arg0, arg1, arg2, arg3, arg4);
+            rv = f.apply(null, args_a);
          } else {
-            //console.log('w3_call: getVarFromString(func) not a function: '+ func +' ('+ typeof(f) +')');
+            //console.error('w3_call: getVarFromString(func) not a function: '+ func +'('+ kiwi_JSON(args_a) +')');
          }
       } else
 	   if (isFunction(func)) {
-         rv = func(arg0, arg1, arg2, arg3, arg4);
+         rv = func.apply(null, args_a);
 	   } else {
 	      console.log('w3_call: func not a string or function');
-	      console.log(JSON.stringify(func));
+	      console.log(kiwi_JSON(func));
 	      //kiwi_trace();
 	   }
 	} catch(ex) {
@@ -348,6 +349,19 @@ function w3_call(func, arg0, arg1, arg2, arg3, arg4)
 	}
 	
 	return rv;
+}
+
+// a multi-argument call that silently continues if func not found
+function w3_call(func)
+{
+   var rv;
+
+   if (isNoArg(func)) return rv;
+   var args_a = Array.from(arguments);    // works because arguments is iterable
+   args_a.shift();   // remove func
+   //console.log('w3_call: '+ kiwi_JSON(args_a));
+   rv = w3_apply(func, args_a);
+   return rv;
 }
 
 function w3_first_value(v)
@@ -896,10 +910,11 @@ function w3_iterate_classList(el_id, func)
 	return el;
 }
 
-function w3_create_appendElement(el_parent, el_type, html, id)
+function w3_create_appendElement(el_parent, el_type, html, id, psa)
 {
    var el_child = document.createElement(el_type);
    if (isString(id)) el_child.id = id;
+   if (isString(psa)) w3_set_psa(el_child, psa);
    w3_innerHTML(el_child, html);
 	w3_el(el_parent).appendChild(el_child);
 	return el_child;
@@ -1092,7 +1107,7 @@ function w3_dismiss_keyboard(el)
 // add, remove or check presence of class properties
 function w3_add(el_id, props)
 {
-   if (!el_id) return null;
+   if (!el_id || isEmptyString(props)) return null;
    
    var first_el = null;
    // FIXME: why doesn't this work?!?
@@ -1113,9 +1128,22 @@ function w3_add(el_id, props)
 	//return el;
 }
 
+// remember selector syntax: #id .class
+function w3_add_by_selector(selector, props)
+{
+   var node_list = document.querySelectorAll(selector);
+   if (isNull(node_list)) return;
+   node_list.forEach(
+      function(el,i) {
+         //console.log(i +' '+ el.id);
+         w3_add(el, props);
+      }
+   );
+}
+
 function w3_remove(el_id, props)
 {
-   if (!el_id) return null;
+   if (!el_id || isEmptyString(props)) return null;
    
    var first_el = null;
    //w3_els(el_id, function(el) {
@@ -1131,6 +1159,19 @@ function w3_remove(el_id, props)
    //});
 
 	return first_el;
+}
+
+// remember selector syntax: #id .class
+function w3_remove_by_selector(selector, props)
+{
+   var node_list = document.querySelectorAll(selector);
+   if (isNull(node_list)) return;
+   node_list.forEach(
+      function(el,i) {
+         //console.log(i +' '+ el.id);
+         w3_remove(el, props);
+      }
+   );
 }
 
 function w3_match_wildcard(el_id, prefix)
@@ -1182,6 +1223,39 @@ function w3_remove_then_add_cond(el_id, cond, t_props, f_props)
 {
 	w3_remove(el_id, t_props +' '+ f_props);
 	w3_add(el_id, cond? t_props : f_props);
+}
+
+// remember selector syntax: #id .class
+function w3_remove_then_add_cond_by_selector(selector, cond, t_props, f_props)
+{
+   var node_list = document.querySelectorAll(selector);
+   if (isNull(node_list)) return;
+   node_list.forEach(
+      function(el,i) {
+         //console.log(i +' '+ el.id);
+         w3_remove_then_add_cond(el, cond, t_props, f_props);
+      }
+   );
+}
+
+// remember selector syntax: #id .class
+function w3_func_by_selector(selector, func)
+{
+   var args = Array.from(arguments);   // works because arguments is iterable
+   args.shift(); args.shift();         // remove selector, func
+   console.log(args);
+   var node_list = document.querySelectorAll(selector);
+   console.log(node_list);
+   if (isNull(node_list)) return;
+   node_list.forEach(
+      function(el,i) {
+         console.log(i +' id='+ el.id);
+         var a = args;
+         a.unshift(el);    // add el
+         console.log(a);
+         w3_apply(func, a);
+      }
+   );
 }
 
 function w3_contains(el_id, prop)
@@ -1916,11 +1990,11 @@ function w3_set_psa(el, psa)
    if (!el || isEmptyString(psa)) return null;
    psa = psa.split('/')[0];
    psa = psa.split('|');
-   var _class = psa[0];
-   var _style = psa[1];
-   var _attr = psa[2];
-   if (isArg(_class)) w3_add(el, _class);
-   if (isArg(_style)) el.style = _style;
+   var props = psa[0];
+   var styles = psa[1];
+   var attrs = psa[2];
+   if (isArg(props)) w3_add(el, props);
+   if (isArg(styles)) el.style = styles;
    // FIXME: handle attr
 }
 
@@ -4660,7 +4734,7 @@ function w3_inline_percent(psa)
 		   } else {
 		      style = 'flex-basis:'+ (100 - total) +'%';
 		   }
-		   if (i == narg-1 && last_halign_end) prop += 'w3-flex w3-halign-end';
+		   if (i == narg-1 && last_halign_end) prop += 'w3-halign-end';
          if (psa_inner != '') {
             var psa3r = '';
             var a1 = psa3.right.split(' ');
