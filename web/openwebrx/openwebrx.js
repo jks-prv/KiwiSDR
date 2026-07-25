@@ -8096,9 +8096,8 @@ function mk_band_menu()
    band_menu = [];
    owrx.last_selected_band = 0;
 
-	var i, op = 0, service = null, last_svc_name = null;
+	var i, j, op = 0, service = null, last_svc_name = null;
 	var obj = {};
-	band_menu[op++] = null;		// menu title
 	var ITU_region = cfg.init.ITU_region + 1;    // cfg.init.ITU_region = 0:R1, 1:R2, 2:R3
 
    var _dxcfg = dx_cfg_db();
@@ -8119,7 +8118,11 @@ function mk_band_menu()
 			if (!svc) continue;
 			last_svc_name = svc.o.name.toUpperCase();
 			obj[last_svc_name] = [];
-			band_menu[op++] = null;		// section title
+			
+			// account for multi-line section names
+			var a = last_svc_name.split('_');
+			for (j = 0; j < a.length; j++)
+			   band_menu[op++] = null;		// section title
 		}
 		obj[last_svc_name].push(b1.name);
 		//console.log("BAND-MENU"+ op +" i="+ i +' '+ b1.min +'/'+ b1.max);
