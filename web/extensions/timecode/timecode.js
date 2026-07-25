@@ -23,7 +23,9 @@ var tc = {
    first_time: true,
    update: false,
    
-   w: 800,
+   dw: 800,
+   sh: 200,
+   th: 150,
    start_point: 0,
    ref: 0,
    col: 0,
@@ -507,11 +509,15 @@ function timecode_process_params(p) {
 
 function tc_controls_setup()
 {
+   tc.dh = tc.sh + tc.th;
    var data_html =
       time_display_html('tc') +
 
-		w3_div(sprintf('id-tc-data|width:%dpx; height:200px; background-color:black; position:relative;', tc.w),
-			sprintf('<canvas id="id-tc-scope" width="%d" height="200" style="position:absolute"></canvas>', tc.w)
+		w3_div(sprintf('id-tc-data|width:%dpx; height:%dpx; background-color:black; position:relative;', tc.dw, tc.dh),
+			sprintf('<canvas id="id-tc-scope" width="%d" height="%d" style="position:absolute"></canvas>', tc.dw, tc.sh),
+         w3_div(sprintf('id-tc-scroll w3-scroll w3-relative w3-font-11px w3-margin-TB-8 w3-grey-white|height:%dpx; top:%dpx', tc.th, tc.sh),
+            '<pre id="id-tc-dbug"></pre>'
+         )
 		);
 	
 	tc.saved_setup = ext_save_setup();
@@ -540,8 +546,7 @@ function tc_controls_setup()
 				w3_div('id-tc-status w3-show-inline-block'),
 				w3_div('id-tc-status2 w3-show-inline-block')
 			),
-			w3_div('id-tc-addon'),
-         w3_div('w3-scroll w3-margin-TB-8 w3-grey-white|height:70%', '<pre id="id-tc-dbug"></pre>')
+			w3_div('id-tc-addon')
 		);
 	
 	ext_panel_show(controls_html, data_html, null);
@@ -553,7 +558,8 @@ function tc_controls_setup()
 	if (ext_nom_sample_rate() != 12000)
 	   w3_disable('id-tc-test');
 	
-	ext_set_controls_width_height(900);
+	ext_set_controls_width_height(800, 150);
+	ext_set_data_height(tc.dh);
 	timecode_process_params(ext_param());
 }
 
@@ -570,7 +576,7 @@ function timecode_environment_changed(changed)
       var el = w3_el('id-tc-data');
       // NB: For large displays this causes the desired effect of data panel centering.
       // The time display remains on the right side because left is applied to id-tc-data only.
-      var width = tc.w + kiwi.time_display_width;
+      var width = tc.dw + kiwi.time_display_width;
       ext_set_data_width(width);
       var left = Math.max(0, (window.innerWidth - width) / 2);
       console.log('timecode resize left='+ left);
@@ -615,7 +621,7 @@ function tc_signal_menu_cb(path, val, first)
 	ext_send('SET pll_offset='+ cwo);
 	ext_send('SET pll_mode=1 arg='+ (phase_mode? 2:1));   // PLL on, mode: carrier=1, BPSK=2
 	opt = {
-	      width: tc.w,
+	      width: tc.dw,
          sec_per_sweep: 10,
          srate: tc.srate,
          single_shot: 0,
