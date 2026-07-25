@@ -1607,7 +1607,7 @@ function fft_controls_setup()
 
 	var controls_html =
 		w3_div('id-fft-controls w3-text-white',
-			w3_half('', '0:id-fft-controls-left 1:id-fft-controls-right 1:w3-ialign-top',
+			w3_half('', '0:id-fft-controls-left 1:id-fft-controls-right',
 				info_html,
 				w3_divs('',
 					w3_div('w3-medium w3-text-aqua', '<b>Audio FFT</b>'),

@@ -1094,7 +1094,7 @@ input[type=range]::-moz-range-thumb {
 .w3-ialign-baseline { display: flex; align-self: baseline }
 .w3-ialign-right { display: flex; margin-left: auto }      /* medium.com/@iamryanyu/how-to-align-last-flex-item-to-right-73512e4e5912 */
 .w3-ialign-bottom { display: flex; margin-top: auto }
-.w3-ialign-top { display: flex; margin-bottom: auto }
+.w3-ialign-top { margin-bottom: auto }      /* don't want display:flex here */
 
 
 .w3-hcenter, .w3-halign
