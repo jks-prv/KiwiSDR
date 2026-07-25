@@ -440,11 +440,11 @@ function mode_html()
          w3_div('w3-text-black',
             w3_text('w3-bold w3-margin-B-8 w3-text-teal', 'Trade-offs: receiver channels, audio bandwidth and waterfalls'),
 
-            w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
-            w3_div('w3-flex w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
-            w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf),  w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
-            w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wfs), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 11-level zoom, shared hardware architecture')),
-            w3_div('w3-flex w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12/20 kHz max bandwidth'))
+            w3_div('w3-valign-center', w3_div('|width:40px', mode_icon_snd12), w3_div('', 'Audio output, 12 kHz max bandwidth')),
+            w3_div('w3-valign-center', w3_div('|width:40px', mode_icon_snd20), w3_div('', 'Audio output, 20 kHz max bandwidth')),
+            w3_div('w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wf),  w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 14-level zoom')),
+            w3_div('w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_wfs), w3_div('', 'Tuneable waterfall/spectrum, 30 MHz bandwidth, 11-level zoom, shared hardware architecture')),
+            w3_div('w3-margin-B-8 w3-valign-center', w3_div('|width:40px', mode_icon_fft), w3_div('', 'Audio FFT display, 12/20 kHz max bandwidth'))
          ),
 		   w3_div('w3-margin-T-16', '<hr>'),
    
@@ -2391,7 +2391,7 @@ function network_html()
          ),
          
          w3_textarea_get_param('w3-margin-T-32//w3-input-any-change|width:100%',
-            w3_div('w3-flex w3-valign',
+            w3_div('w3-valign',
                w3_text('w3-bold  w3-text-teal', 'Local blacklist (writeable)'),
                w3_button('w3-margin-left w3-aqua', 'Save', 'network_user_blacklist_save_cb')
             ) +
@@ -4850,7 +4850,7 @@ function admin_resize()
    // The X scroll for screen widths less-than-laptop only works when the w3-scroll is
    // one div level above where the div minWidth is set.
    w3_add(scr, 'w3-scroll');
-   con1.style.minWidth = px(kiwi.WIN_WIDTH_NOM);
+   con1.style.minWidth = px(kiwi.NOM_WIDTH_ADMIN);
 
    // The Y scroll only works when the height is set in the *same* div as the w3-scroll.
    // "footer slop" is a compromise between iPhone/iPad devices.

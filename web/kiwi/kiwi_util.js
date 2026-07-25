@@ -976,24 +976,25 @@ function canvas_log_int(s)
          if (w >= 600 && h >= 950) {   // iPad & tablets
             //el.style.top = '36px';     // top
             //el.style.top = '200px';    // mid
-            el.style.bottom = '0';     // bottom
-            //el.style.right = '0';
-            el.style.left = '0';
+            el.style.bottom = 0;       // bottom
+            el.style.right = 0;
+            //el.style.left = 0;
             el.style.width = '350px';
             //el.style.height = '300px';
             el.style.height = '400px';
          } else {                      // phones
-            el.style.top = '36px';     // top
+            el.style.top = 0;          // top
+            //el.style.top = '36px';     // top
             //el.style.top = '300px';    // bottom
-            //el.style.right = '0';        // right
-            el.style.left = '0';         // left
+            el.style.right = 0;        // right
+            //el.style.left = 0;         // left
             //el.style.width = '350px';
             el.style.width = '150px';
             el.style.height = '150px';
          }
       } else {                         // non-mobile
-         el.style.bottom = '0';
-         el.style.left = '0';
+         el.style.bottom = 0;
+         el.style.left = 0;
          el.style.width = '350px';
          el.style.height = '300px';
       }
@@ -1902,6 +1903,12 @@ function cancelEvent(ev)
 function ignore(ev)
 {
 	return cancelEvent(ev);
+}
+
+function preventDefault(ev)
+{
+	ev.preventDefault();
+	return false;
 }
 
 function kiwi_rgb(r, g, b)

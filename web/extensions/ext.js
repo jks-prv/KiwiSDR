@@ -165,7 +165,7 @@ function ext_set_data_width(width)
 {
    var el = w3_el('id-ext-data-scroll');
    if (!width) {
-      if (el) el.style.minWidth = px(kiwi.WIN_WIDTH_EXT);   // revert to default
+      if (el) el.style.minWidth = px(kiwi.NOM_WIDTH_EXT);   // revert to default
    } else {
       if (el) el.style.minWidth = px(width);
    }
@@ -964,7 +964,7 @@ function extint_panel_show(controls_html, data_html, show_func, hide_func, show_
 		w3_hide('id-top-container');
 
 		el = w3_el('id-ext-data-scroll');
-		el.style.minWidth = px(kiwi.WIN_WIDTH_EXT);
+		el.style.minWidth = px(kiwi.NOM_WIDTH_EXT);
 		w3_innerHTML(el, data_html);
 		
 		w3_show_block('id-ext-data-container');
@@ -1052,7 +1052,7 @@ function extint_panel_hide(skip_calling_hide_spec)
 	// on close, reset extension menu
 	w3_select_value('id-select-ext', -1);
 	
-	resize_waterfall_container(true);	// necessary if an ext was present so wf canvas size stays correct
+	resize_waterfall_container();	// necessary if an ext was present so wf canvas size stays correct
 
    extint.displayed = false;     // NB: must occur before freqset_select()
    freqset_select();

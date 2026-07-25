@@ -704,7 +704,7 @@ function drm_lock_setup()
    //alert('# DRM SET lock_set');
 }
 
-function drm_saved_mode()
+function drm_save_mode()
 {
    drm.saved_mode = ext_get_mode();
    console.log('drm_save_mode FIRST saved_mode='+ drm.saved_mode);
@@ -1462,7 +1462,7 @@ function drm_desktop_controls_setup(w_multi)
 
 function drm_controls_setup()
 {
-   drm_saved_mode();
+   drm_save_mode();
    console.log('drm_controls_setup saved_mode='+ drm.saved_mode);
    drm.saved_passband = ext_get_passband();
    drm.saved_zoom = ext_get_zoom();
@@ -1564,7 +1564,7 @@ function drm_run(run)
    if (run == drm.run) return;
 
    if (run) {
-      drm_saved_mode();
+      drm_save_mode();
       console.log('drm_run saved_mode='+ drm.saved_mode);
       //kiwi_trace();
       drm.saved_passband = ext_get_passband();
