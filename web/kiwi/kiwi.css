@@ -376,15 +376,15 @@ yel
 
 
 /* Tooltip container, from: www.w3schools.com/howto/howto_css_tooltip.asp */
-.class-tooltip {
+.cl-tooltip {
     display: inline-block;
 }
 
 /* Tooltip text */
-.class-tooltip .class-tooltip-text {
+.cl-tooltip .cl-tooltip-text {
 	visibility: hidden;
     width: 150px;
-    background-color: #555;
+    background-color: hsl(0, 0%, 62%);
     color: white;
     text-align: center;
     padding: 5px 0;
@@ -394,13 +394,13 @@ yel
     position: absolute;
     margin-left: -75px;
 
-    /* Fade in tooltip */
+    /* Fade-in tooltip */
     opacity: 0;
     transition: opacity 1s;
 }
 
 /* Tooltip arrow */
-.class-tooltip .class-tooltip-text::after {
+.cl-tooltip .cl-tooltip-down::after {
     content: "";
     position: absolute;
     top: 100%;
@@ -408,11 +408,22 @@ yel
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #555 transparent transparent transparent;
+    border-color: hsl(0, 0%, 62%) transparent transparent transparent;
+}
+
+.cl-tooltip .cl-tooltip-up::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent hsl(0, 0%, 62%) transparent;
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
-.class-tooltip:hover .class-tooltip-text {
+.cl-tooltip:hover .cl-tooltip-text {
     visibility: visible;
     opacity: 1;
 }

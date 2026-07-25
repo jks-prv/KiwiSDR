@@ -30,10 +30,13 @@ var kiwi = {
    time_display_width: 200 + 16,
    time_display_height: 80,
    
-   WIN_WIDTH_MAX: 1496,    // development laptop width
-   WIN_WIDTH_EXT: 1024 + (200 + 16),   // ext data: 1024 + time display
-   WIN_WIDTH_NOM: 1465,    // waterfall area: WIN_WIDTH_MAX - 31px (scrollbar + spacing) = 1465px
-   WIN_WIDTH_MIN: 1400,
+   NOM_WIDTH:        1496,
+   NOM_WIDTH_SPEC:   1496 - 15,  // less scrollbar = 1481
+   NOM_WIDTH_WF:     1496 - 15,  // less scrollbar = 1481
+   NOM_WIDTH_EXT:    1024 + (200 + 16),   // ext data: 1024 + time display w/ spacing
+   NOM_WIDTH_ADMIN:  1465,       // NOM_WIDTH - 31px (scrollbar + spacing)
+
+   MIN_WIDTH_TOPBAR: 1400,
    
    wf_share: false,
    force_mobile: false,

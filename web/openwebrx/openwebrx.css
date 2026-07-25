@@ -355,21 +355,51 @@ html, body
 	background-color: black;
 }
 
-#id-spectrum-container
+#id-spec-container
 {
 	display: none;
 	background-color: black;
 	height: 200px;		/* sum of elements below */
 	cursor: default;
 	position: relative;
+	background-image: url('/kiwi/gfx/kiwi.alpha.130x170.png');
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
 }
 
-#id-spectrum-canvas
+#id-spec-canvas
 {
 	height: 200px;
 	position: absolute;
 	top: 0px;
 	left: 0px;
+}
+
+#id-spec-size-container
+{
+	cursor: pointer;
+	position: absolute;
+	left: 0;
+	bottom: 16px;
+	z-index: 9999;      /* needed to receive mousedown */
+}
+
+#id-spec-text-canvas
+{
+    position: absolute;
+}
+
+#id-spec-pb-canvas
+{
+    position: absolute;
+    left: 0;
+}
+
+.id-spec-size
+{
+    background: grey;
+    padding: 4px;
+    border-radius: 6px;
 }
 
 #id-tuning-container
@@ -428,6 +458,13 @@ html, body
 	overflow: hidden;
 }
 
+#id-dx-database
+{
+    position: relative;
+    left: 16px;
+	z-index: 9999;
+}
+
 .class-passband-adjust-cf
 {
 	height: 20px;
@@ -481,6 +518,11 @@ html, body
 	z-index: 106;
 }
 
+.cl-tooltip-bottom
+{
+    bottom: -200%;
+}
+
 .class-spectrum-dB
 {
 	position: absolute;
@@ -513,7 +555,8 @@ html, body
 	/*background-color: #646464;*/
 	/*background-image: -webkit-linear-gradient(top, rgba(247,247,247,1) 0%, rgba(0,0,0,1) 100%);*/
 	background-image: url('gfx/openwebrx-background-cool-blue.png');
-	background-repeat: no-repeat;
+	/*background-repeat: no-repeat;*/
+	background-repeat: round;
 	background-color: #1e5f7f;
 	cursor: crosshair;
 }

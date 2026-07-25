@@ -79,9 +79,9 @@ var owrx = {
    
    top_bar_nom_height: 67,
    hide_bars: 0,
-   HIDE_TOPBAR: 1,
-   HIDE_BANDBAR: 2,
-   HIDE_ALLBARS: 3,
+   HIDE_TOPBAR:  0x1,
+   HIDE_BANDBAR: 0x2,
+   HIDE_ALLBARS: 0x3,
    
    SETUP_DEFAULT: 0,
    SETUP_RF_SPEC_WF: 1,
@@ -105,6 +105,10 @@ var owrx = {
    PB_HI: 1,
    PB_CENTER: 2,
    PB_WIDTH: 3,
+   
+   RCM_PBC: 0,
+   RCM_SNAP: 1,
+   RCM_CAR: 2,
    
    wheel_tunes: 0,
    wheel_dev: 1,
@@ -138,6 +142,7 @@ var owrx = {
    optbar_last_scrollpos: [],
    rec_init: false,
    resize_seq: 0,
+   rx_photo_state: 1,
    
    last_freq: -1,
    last_mode: '',
@@ -529,7 +534,6 @@ function kiwi_main_ready()
 	freq_memory_init();
 	init_top_bar();
 	init_rx_photo();
-	right_click_menu_init();
 	freq_memory_menu_init();
 	keyboard_shortcut_init();
 	confirmation_panel_init();
@@ -540,9 +544,11 @@ function kiwi_main_ready()
 	confirmation_panel_init2();
 	smeter_init();
 	time_display_setup('id-topbar-R-container');
-	
+   right_click_menu_init();
+
 	window.setInterval(send_keepalive, 5000);
 	window.addEventListener('resize', openwebrx_resize, w3.BUBBLING);
+	//window.addEventListener('scroll', openwebrx_scroll, w3.BUBBLING);
         
    if (param_nocache) {
       //msg_send("SET nocache="+ (nocache? 1:0));
@@ -775,20 +781,29 @@ function mdev_log_resize()
 
 function openwebrx_resize(from, delay)
 {
+   //console.log('openwebrx_resize delay='+ delay);
    if (isNumber(delay)) {
       setTimeout(function() { openwebrx_resize(from); }, delay);
+      return;
    }
    
    from = (isString(from) && from.startsWith('orient'))? from : 'event';
 	resize_wf_canvases();
-	resize_waterfall_container(true);
+	resize_waterfall_container();
    extint_environment_changed( { resize:1, passband_screen_location:1 } );
 	resize_scale(from);
 	position_top_bar();
 	owrx.resize_seq++;
 	mdev_log_resize();
    //console.log('resize_seq='+ owrx.resize_seq);
+	spectrum_dB_bands();
 }
+
+/*
+function openwebrx_scroll(ev)
+{
+}
+*/
 
 /*
 var orient = { cnt:0 };
@@ -818,7 +833,7 @@ try {
 function position_top_bar()
 {
    var w = window.innerWidth;
-   var w_min = kiwi.WIN_WIDTH_MIN;
+   var w_min = kiwi.MIN_WIDTH_TOPBAR;
    var narrow = (w < w_min);
    
 	var info = w3_boundingBox_children('id-topbar-L-container');
@@ -920,15 +935,14 @@ function init_rx_photo()
 	}
 }
 
-var rx_photo_state=1;
-
 function open_rx_photo()
 {
    //console.log('$open_rx_photo '+ w3_el('id-top-photo-clip').style.maxHeight +' => '+ owrx.rx_photo_total_height);
-	rx_photo_state=1;
+	owrx.rx_photo_state = 1;
 	w3_opacity("id-rx-photo-desc", 1);
 	w3_opacity("id-rx-photo-title", 1);
-	animate_to("id-top-photo-clip", "maxHeight", "px", owrx.rx_photo_total_height, 0.93, kiwi_isMobile()? 1:1000, 60, function(){resize_waterfall_container(true);});
+	animate_to("id-top-photo-clip", "maxHeight", "px", owrx.rx_photo_total_height, 0.93, kiwi_isMobile()? 1:1000, 60,
+	   function() { resize_waterfall_container(); });
 	w3_hide('id-topbar-arrow-down');
 	w3_show_block('id-topbar-arrow-up');
 }
@@ -936,8 +950,9 @@ function open_rx_photo()
 function close_rx_photo()
 {
    //console.log('$close_rx_photo '+ w3_el('id-top-photo-clip').style.maxHeight +' => '+ owrx.top_bar_cur_height);
-	rx_photo_state=0;
-	animate_to("id-top-photo-clip", "maxHeight", "px", owrx.top_bar_cur_height, 0.93, kiwi_isMobile()? 1:1000, 60, function(){resize_waterfall_container(true);});
+	owrx.rx_photo_state = 0;
+	animate_to("id-top-photo-clip", "maxHeight", "px", owrx.top_bar_cur_height, 0.93, kiwi_isMobile()? 1:1000, 60,
+	   function() { resize_waterfall_container(); });
 	w3_show_block('id-topbar-arrow-down');
 	w3_hide('id-topbar-arrow-up');
 }
@@ -952,7 +967,7 @@ function dont_toggle_rx_photo()
 function toggle_rx_photo()
 {
 	if (dont_toggle_rx_photo_flag) { dont_toggle_rx_photo_flag=0; return; }
-	if (rx_photo_state)
+	if (owrx.rx_photo_state)
 		close_rx_photo();
 	else
 		open_rx_photo();
@@ -1671,9 +1686,12 @@ function mkenvelopes(visible_range)    // called from mkscale etc
 	scale_ctx.textBaseline = 'top';
 	scale_ctx.fillStyle = 'white';
    scale_ctx.textAlign = "left";
+   
    var s = dx.db_short_s[dx.db];
    if (kiwi.mdev) s += '  '+ kiwi.mdev_s;
-   scale_ctx.fillText('database: '+ s, 20, 7);
+   if (!phone()) s = 'database: '+ s;
+   w3_innerHTML('id-dx-db', s);
+   
    if (demodulators.length)
 	   demodulators[0].envelope.draw(visible_range);
 }
@@ -1815,25 +1833,29 @@ function scale_setup()
 	add_scale_listener(scale_canvas);
 
 	pb_adj_car = w3_el("id-pb-adj-car");
-	pb_adj_car.innerHTML = '<span id="id-pb-adj-car-ttip" class="class-passband-adjust-car-tooltip class-tooltip-text"></span>';
+	pb_adj_car.innerHTML = '<span id="id-pb-adj-car-ttip" class="class-passband-adjust-car-tooltip cl-tooltip-text cl-tooltip-down"></span>';
+   w3_title(pb_adj_car, 'shift for BFO');
 	pb_adj_car_ttip = w3_el("id-pb-adj-car-ttip");
 	add_scale_listener(pb_adj_car);
 	add_shift_listener(pb_adj_car);
 
 	pb_adj_lo = w3_el("id-pb-adj-lo");
-	pb_adj_lo.innerHTML = '<span id="id-pb-adj-lo-ttip" class="class-passband-adjust-cut-tooltip class-tooltip-text"></span>';
+	pb_adj_lo.innerHTML = '<span id="id-pb-adj-lo-ttip" class="class-passband-adjust-cut-tooltip cl-tooltip-text cl-tooltip-down"></span>';
+   w3_title(pb_adj_lo, 'shift for PBT');
 	pb_adj_lo_ttip = w3_el("id-pb-adj-lo-ttip");
 	add_scale_listener(pb_adj_lo);
 	add_shift_listener(pb_adj_lo);
 
 	pb_adj_hi = w3_el("id-pb-adj-hi");
-	pb_adj_hi.innerHTML = '<span id="id-pb-adj-hi-ttip" class="class-passband-adjust-cut-tooltip class-tooltip-text"></span>';
+	pb_adj_hi.innerHTML = '<span id="id-pb-adj-hi-ttip" class="class-passband-adjust-cut-tooltip cl-tooltip-text cl-tooltip-down"></span>';
+   w3_title(pb_adj_hi, 'shift for PBT');
 	pb_adj_hi_ttip = w3_el("id-pb-adj-hi-ttip");
 	add_scale_listener(pb_adj_hi);
 	add_shift_listener(pb_adj_hi);
 
 	pb_adj_cf = w3_el("id-pb-adj-cf");
-	pb_adj_cf.innerHTML = '<span id="id-pb-adj-cf-ttip" class="class-passband-adjust-cf-tooltip class-tooltip-text"></span>';
+	pb_adj_cf.innerHTML = '<span id="id-pb-adj-cf-ttip" class="class-passband-adjust-cf-tooltip cl-tooltip-text cl-tooltip-down"></span>';
+   w3_title(pb_adj_cf, 'shift for PBT');
 	pb_adj_cf_ttip = w3_el("id-pb-adj-cf-ttip");
 	add_scale_listener(pb_adj_cf);
 	add_shift_listener(pb_adj_cf);
@@ -1849,6 +1871,14 @@ function scale_setup()
 	dx_ctx = dx_canvas.getContext("2d");
 	add_canvas_listener(dx_canvas);
 	
+	owrx.dx_database = w3_el("id-dx-database");
+	w3_add(owrx.dx_database, 'w3-width-zero');   // needed to not interfere with id-pb-adj-*
+	w3_innerHTML(owrx.dx_database,
+	   w3_button('id-dx-db w3-padding-tiny w3-grey-white w3-font-12px' +
+	      '||title="click to change dx label database"',
+	      '', 'dx_database_cycle_cb')
+	);
+
 	resize_scale('setup');
 }
 
@@ -1934,19 +1964,37 @@ function scale_canvas_start_drag(evt, isMouse)
    if (isMouse) scale_canvas_mousemove(evt);
 }
 
-function scale_carfreq_from_px(x, visible_range)
+function scale_carfreq_from_px(x, incl_PBO)
 {
-	if (isUndefined(visible_range)) visible_range = get_visible_freq_range();
-	var offset = passband_offset();
+	var visible_range = get_visible_freq_range();
+	var offset = incl_PBO? passband_offset() : 0;
 	var f = visible_range.start + visible_range.bw * (x / wf_container.clientWidth);
 	//console.log("SOCFFPX f="+f+" off="+offset+" f-o="+(f-offset)+" rtn="+(f - center_freq - offset));
 	return f - offset;
 }
 
-function canvas_freq_upd(from, x)
+function canvas_freq_upd(from, evt, x)
 {
-   var area;
-   var fnew = Math.round(scale_carfreq_from_px(x));
+   var area, fnew, snap = false;
+
+   // select waterfall on nearest appropriate boundary (1, 5 or 9/10 kHz depending on band & mode)
+   if ((evt.shiftKey && !(evt.ctrlKey || evt.altKey)) || owrx.wf_snap) {
+      var fold = canvas_get_dspfreq(x);
+      var b = find_band(fold);
+      //if (b) console.log(b)
+      var rv = freq_step_amount(b);
+      var step_Hz = rv.step_Hz;
+      var trunc = fold / step_Hz;
+      fnew = Math.round(trunc) * step_Hz;
+      //console.log('SCALE SNAP *click* '+ cur_mode +' fold='+ fold +' step='+ step_Hz +' trunc='+ trunc +' fnew='+ fnew +' '+ rv.s);
+      freqmode_set_dsp_kHz(fnew/1000, null);
+      snap = true;
+   } else {
+      var incl_PBO = (owrx.rcm_snap_sel != owrx.RCM_CAR || ext_mode(cur_mode).CW);
+      fnew = Math.round(scale_carfreq_from_px(x, incl_PBO));
+      //console.log('SCALE *click* '+ cur_mode +' incl_PBO='+ TF(incl_PBO) +' car='+ (fnew/1000).toFixed(2));
+   }
+
    var pb = freq_passband(fnew);
    //console.log('>'+ pb.lo +'|'+ pb.pbc +'|'+ pb.hi);
    var margin = Math.round(g_range.bw * 0.05);
@@ -1966,7 +2014,7 @@ function canvas_freq_upd(from, x)
    //
    // If called from FSET_SCALE_END and cursor (x value) positioned in margins don't let freq update
    // so passband doesn't jump into margin
-   if (from != owrx.FSET_SCALE_END || (from == owrx.FSET_SCALE_END && area == 0))
+   if (!snap && (from != owrx.FSET_SCALE_END || (from == owrx.FSET_SCALE_END && area == 0)))
       demodulator_set_frequency(from, fnew);
    return area;
 }
@@ -2004,7 +2052,7 @@ function scale_canvas_drag(evt, x, y)
 		if (!event_handled || rv.fset != owrx.FSET_PB_CHANGE) {
 		   //jksx FIXME "backwards" fScale scroll for small movements
          var deltaX = scale_canvas_params.last_x - x;
-		   var area = canvas_freq_upd(owrx.FSET_SCALE_DRAG, x);
+		   var area = canvas_freq_upd(owrx.FSET_SCALE_DRAG, evt, x);
          //console_log_dbgUs('SC area='+ area +' x='+ x +'|'+ scale_canvas_params.last_x +'|'+ deltaX);
 
 		   if (area != owrx.NOT_MARGIN && mobileOpt()) {
@@ -2069,7 +2117,7 @@ function scale_canvas_end_drag(evt, x, canvas_mouse_up)
       event_handled |= demodulators[0].envelope.drag_end(x);
       //console.log("MED evh? "+event_handled);
       if (!event_handled) {
-         canvas_freq_upd(owrx.FSET_SCALE_END, x);
+         canvas_freq_upd(owrx.FSET_SCALE_END, evt, x);
       }
    }
 
@@ -2105,9 +2153,9 @@ function touch_hide_tooltip(evt, state)
 	var unHover = '';
    var pe = state.target;     // parent is the pb adjust elem detected at the touchStart
 
-   if (w3_contains(pe, 'class-tooltip')) {
+   if (w3_contains(pe, 'cl-tooltip')) {
       var ce = pe.childNodes[0];    // child is the tooltip itself
-      if (w3_contains(ce, 'class-tooltip-text')) {
+      if (w3_contains(ce, 'cl-tooltip-text')) {
          unHover += '-T';
          state.restore_visibility_timeout = setTimeout(function() {
             ce.style.visibility = 'hidden';
@@ -2475,7 +2523,7 @@ function resize_scale(from)
 	dx_ctx.stroke();
 	dx_ctx.fillStyle = "yellow";
 	dx_ctx.fill();
-
+	
 	scale_ctx.canvas.width  = window.innerWidth;
 	scale_ctx.canvas.height = scale_canvas_h;
 	mkscale();	
@@ -2610,7 +2658,6 @@ function passband_visible()
 // #canvas
 ////////////////////////////////
 
-var window_width;
 var waterfall_width;
 
 var main_container;
@@ -2622,6 +2669,9 @@ var annotation_div;
 
 // NB: canvas data width is wf_fft_size, but displayed style width is waterfall_width (likely different),
 // so image is stretched to fit when rendered by browser.
+
+// NB: A canvas "click" event is inferred indirectly in canvas_end_drag() when canvas_dragging is not set
+// as a result of insufficient x-axis movement (as opposed to registering for an actual mouse click event).
 
 function create_canvas(id, w, h, style_w, style_h)
 {	
@@ -2637,10 +2687,8 @@ function create_canvas(id, w, h, style_w, style_h)
 
 function init_wf_container()
 {
-	window_width = window.innerWidth;		// window width minus any scrollbar
-
 	wf_container = w3_el("id-waterfall-container");
-	waterfall_width = wf_container.clientWidth;
+	waterfall_width = wf_container.clientWidth;     // clientWidth is without scrollbar
 	//console.log("init_wf_container ww="+waterfall_width);
 
 	// annotation canvas for FSK shift markers etc.
@@ -2664,17 +2712,28 @@ function init_wf_container()
 	// the first one to get started
 	add_wf_canvas();
 
-   spec.canvas = create_canvas('id-spectrum-canvas', wf_fft_size, spec.height_spectrum_canvas, waterfall_width, spec.height_spectrum_canvas);
-	w3_el('id-spectrum-container').appendChild(spec.canvas);
+   spec.container = w3_el('id-spec-container');
+	var spec_width = waterfall_width;   // because otherwise the spec and waterfall peaks won't line up
+
+   spec.canvas = create_canvas('id-spec-canvas', wf_fft_size, spec.height_spectrum_canvas, spec_width, spec.height_spectrum_canvas);
+	spec.container.appendChild(spec.canvas);
 	spec.ctx = spec.canvas.ctx;
 	add_canvas_listener(spec.canvas);
 	spec.ctx.font = "10px sans-serif";
 	spec.ctx.textBaseline = "middle";
 	spec.ctx.textAlign = "left";
 
-   spec.pb_canvas = create_canvas('id-spectrum-pb-canvas', wf_fft_size, spec.height_spectrum_canvas, waterfall_width, spec.height_spectrum_canvas);
-	w3_el('id-spectrum-container').appendChild(spec.pb_canvas);
-	spec.pb_canvas.style.position = "absolute";
+   // spectrum dB-scale text
+   // this is a 1:1 aspect ratio canvas w.r.t screen width so drawn text is correctly x/y proportioned
+   // i.e. use of spec_width below instead of wf_fft_size
+   spec.text_canvas = create_canvas('id-spec-text-canvas', spec_width, spec.height_spectrum_canvas, spec_width, spec.height_spectrum_canvas);
+	spec.container.appendChild(spec.text_canvas);
+	spec.text_ctx = spec.text_canvas.ctx;
+	add_canvas_listener(spec.text_canvas);
+
+   // RF spectrum passband marker
+   spec.pb_canvas = create_canvas('id-spec-pb-canvas', wf_fft_size, spec.height_spectrum_canvas, spec_width, spec.height_spectrum_canvas);
+	spec.container.appendChild(spec.pb_canvas);
 	spec.pb_ctx = spec.pb_canvas.ctx;
 	add_canvas_listener(spec.pb_canvas);
 	spec.pb_ctx.font = "10px sans-serif";
@@ -2685,20 +2744,31 @@ function init_wf_container()
 
    spec.af_left = 50;
    spec.af_margins = spec.af_left * 2;
-   spec.af_canvas = create_canvas('id-spectrum-af-canvas', wf_fft_size, spec.height_spectrum_canvas, waterfall_width - spec.af_margins, spec.height_spectrum_canvas);
-	w3_el('id-spectrum-container').appendChild(spec.af_canvas);
+   spec.af_canvas = create_canvas('id-spec-af-canvas', wf_fft_size, spec.height_spectrum_canvas, spec_width - spec.af_margins, spec.height_spectrum_canvas);
+	spec.container.appendChild(spec.af_canvas);
 	spec.af_canvas.style.left = px(spec.af_left);
 	spec.af_canvas.style.position = 'absolute';
 	spec.af_ctx = spec.af_canvas.ctx;
 	add_canvas_listener(spec.af_canvas);
 
-	spec.dB = w3_el('id-spectrum-dB');
+	var s = '<span id="id-spec-dB-ttip" class="class-spectrum-dB-tooltip cl-tooltip-text cl-tooltip-down"></span>';
+   spec.dB = w3_create_appendElement(spec.container, 'div', s, 'id-spec-dB');
+   w3_add(spec.dB, 'class-spectrum-dB cl-tooltip');
 	spec.dB.style.height = px(spec.height_spectrum_canvas);
-	spec.dB.style.width = px(waterfall_width);
-	spec.dB.innerHTML = '<span id="id-spectrum-dB-ttip" class="class-spectrum-dB-tooltip class-tooltip-text"></span>';
+	spec.dB.style.width = px(spec_width);
 	add_canvas_listener(spec.dB);
 
-	w3_do_when_rendered('id-spectrum-dB-ttip',
+   s =
+      w3_div('id-spec-size w3-flex-col||title="adjust spectrum size"',
+         w3_icon('w3-custom-events w3-pointer w3-margin-B-1 w3-halign-center', 'fa-arrow-up', 15, 'orange'),
+         w3_icon('w3-custom-events w3-pointer w3-margin-T-1 w3-halign-center', 'fa-arrow-down', 15, 'cyan')
+      );
+   spec.size = w3_create_appendElement(spec.container, 'div', s, 'id-spec-size-container');
+   if (kiwi_isMobile()) {
+      spec.size.style.width = '50px';
+   }
+
+	w3_do_when_rendered('id-spec-dB-ttip',
 	   function(el) {
 	      spec.dB_ttip = el;
 	   }
@@ -2777,18 +2847,13 @@ function canvas_mouseout(evt)
 
    // must also end dragging when mouse leaves canvas while still down
 	if (canvas_dragging) {
-	   var ignore = evt.target.id.startsWith('id-spectrum-dB');
+	   var ignore = evt.target.id.startsWith('id-spec-dB');
       if (owrx.debug_drag) canvas_log('C-MOUT '+ evt.target.id + (ignore? ' SPEC-IGNORE':''));
       if (!ignore)
          canvas_end_drag2();
    }
    
    mouse_freq_remove(evt);
-}
-
-function canvas_get_carfreq(relativeX, incl_PBO)
-{
-   return canvas_get_carfreq_offset(relativeX, incl_PBO) + center_freq;
 }
 
 function canvas_get_carfreq_offset(relativeX, incl_PBO)
@@ -2812,6 +2877,11 @@ function canvas_get_carfreq_offset(relativeX, incl_PBO)
 	var cfo = f - (bandwidth/2);
 	//console.log("CGCFO f="+f+" off="+offset+" cfo="+cfo);
 	return cfo;
+}
+
+function canvas_get_carfreq(relativeX, incl_PBO)
+{
+   return canvas_get_carfreq_offset(relativeX, incl_PBO) + center_freq;
 }
 
 function canvas_get_dspfreq(relativeX)
@@ -2862,7 +2932,8 @@ function canvas_start_drag(evt, x, y)
 	if (evt.shiftKey && (evt.ctrlKey || evt.altKey)) {
 		canvas_ignore_mouse_event = true;
 		if (owrx.debug_drag) console.log('CSD-lookup IME=set-true');
-		freq_database_lookup(canvas_get_dspfreq(x), evt.ctrlKey? owrx.rcm_lookup : owrx.rcm_cluster);
+		//freq_database_lookup(canvas_get_dspfreq(x), evt.ctrlKey? owrx.rcm_lookup : owrx.rcm_cluster);
+		freq_database_lookup(canvas_get_dspfreq(x), owrx.rcm_lookup);
 	} else
 	
 	// page scrolling via ctrl & alt-key click
@@ -2887,7 +2958,7 @@ function canvas_start_drag(evt, x, y)
    owrx.canvas.target = evt.target;
 	spectrum_tooltip_update(owrx.EV_START, evt, x, y);
    
-	// must always cancel even so system context menu doesn't appear
+	// must always cancel event so system context menu doesn't appear
 	return cancelEvent(evt);
 }
 
@@ -2917,7 +2988,7 @@ function canvas_touchStart(evt)
 
    if (touches == 1) {
       // don't drag the WF on a spectrum display touch/drag -- just update the tooltip
-      if (evt.target.id.startsWith('id-spectrum')) {
+      if (evt.target.id.startsWith('id-spec')) {
          owrx.canvas.drag_last_x = owrx.canvas.drag_start_x = x;
          owrx.canvas.drag_last_y = owrx.canvas.drag_start_y = y;
 	      if (owrx.debug_drag) canvas_log('*SPEC* -x'+ x +'-y'+ y);
@@ -2969,7 +3040,9 @@ function canvas_touchStart(evt)
 function canvas_drag(evt, idx, x, y, clientX, clientY)
 {
 	if (!waterfall_setup_done) return;
-	if (spectrum_tooltip_update(owrx.EV_DRAG, evt, clientX, clientY)) return;
+	if (spectrum_tooltip_update(owrx.EV_DRAG, evt, clientX, clientY)) {
+	   return;
+	}
 	owrx.drag_count = !isNumber(owrx.drag_count)? 0 : (owrx.drag_count + 1);
 	
 	if (owrx.scale_canvas.mouse_out) {
@@ -3001,10 +3074,10 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
 			wf_container.style.cursor = "move";
 		}
 
+      var deltaX = owrx.canvas.drag_last_x - x;
+      var deltaY = owrx.canvas.drag_last_y - y;
 		if (canvas_dragging) {
 		   var update_x = true;
-			var deltaX = owrx.canvas.drag_last_x - x;
-			var deltaY = owrx.canvas.drag_last_y - y;
 
          if (owrx.double_touch_start) {
             if (owrx.double_touch_swipe) {
@@ -3034,7 +3107,7 @@ function canvas_drag(evt, idx, x, y, clientX, clientY)
                   // For desktop see below.
                   // Same behavior as double-touch tune above.
                   // Different than mousewheel / trackpad scroll which jumps by 1/2 width.
-		            var area = canvas_freq_upd(owrx.FSET_TOUCH_DRAG, x);
+		            var area = canvas_freq_upd(owrx.FSET_TOUCH_DRAG, evt, x);
                   var deltaAllX = owrx.canvas.drag_all_x - x;
                   //console.log('WF area='+ area +' x='+ x +'|'+ owrx.canvas.drag_all_x +'|'+ owrx.canvas.drag_last_x +' dx='+ deltaAllX +'|'+ deltaX);
                   if (area != owrx.NOT_MARGIN) {
@@ -3216,10 +3289,13 @@ function canvas_end_drag(evt, x)
                var step_Hz = rv.step_Hz;
                var trunc = fold / step_Hz;
                var fnew = Math.round(trunc) * step_Hz;
-               //console.log('SFT-CLICK '+cur_mode+' fold='+fold+' step='+step_Hz+' trunc='+trunc+' fnew='+fnew +' '+ rv.s);
+               //console.log('WF SNAP *click* '+ cur_mode +' fold='+ fold +' step='+ step_Hz +' trunc='+ trunc +' fnew='+ fnew +' '+ rv.s);
                freqmode_set_dsp_kHz(fnew/1000, null);
             } else {
-               demodulator_set_frequency(owrx.FSET_MOUSE_CLICK, canvas_get_carfreq(x, true));
+               var incl_PBO = (owrx.rcm_snap_sel != owrx.RCM_CAR || ext_mode(cur_mode).CW);
+               var car_freq = canvas_get_carfreq(x, incl_PBO);
+               //console.log('WF *click* '+ cur_mode +' incl_PBO='+ TF(incl_PBO) +' car='+ (car_freq/1000).toFixed(2));
+               demodulator_set_frequency(owrx.FSET_MOUSE_CLICK, car_freq);
             }
          }
       }
@@ -3568,18 +3644,21 @@ function right_click_menu_init()
 
    m.push('database lookup'); owrx.rcm_lookup = i; i++;
    //m.push('Utility database lookup'); owrx.rcm_util = i; i++;
-   m.push('DX Cluster lookup'); owrx.rcm_cluster = i; i++;
+   //m.push('DX Cluster lookup'); owrx.rcm_cluster = i; i++;
    m.push('<hr>'); i++;
 
-   m.push('mouse wheel zooms'); owrx.rcm_wheel = i; i++;
-
-   m.push('snap to nearest'); owrx.rcm_snap = i; i++;
-
-	owrx.show_cursor_freq = +kiwi_storeInit('wf_showCurF', 0);
-   m.push((owrx.show_cursor_freq? 'hide' : 'show') +' cursor frequency'); owrx.rcm_cur_freq = i; i++;
+	owrx.rcm_snap_sel = +kiwi_storeInit('wf_snap');
+   wf_snap(owrx.rcm_snap_sel == owrx.RCM_SNAP);
+   m.push(''); owrx.rcm_snap = i; i++;
+   //console.log('INIT rcm_snap_sel='+ owrx.rcm_snap_sel +' wf_snap='+ owrx.wf_snap);
 
 	owrx.freq_dsp_1Hz = +kiwi_storeInit('freq_dsp_1Hz', 0);
-   m.push((owrx.freq_dsp_1Hz? '10' : '1') +' Hz frequency display'); owrx.rcm_freq_dsp = i; i++;
+   m.push((owrx.freq_dsp_1Hz? '⚪🟢 10' : '🟢⚪ 1') +' Hz frequency display'); owrx.rcm_freq_dsp = i; i++;
+
+	owrx.show_cursor_freq = +kiwi_storeInit('wf_showCurF', 0);
+   m.push((owrx.show_cursor_freq? '⚪🟢 hide' : '🟢⚪ show') +' cursor frequency'); owrx.rcm_cur_freq = i; i++;
+
+   m.push('🟢⚪ mouse wheel zooms'); owrx.rcm_wheel = i; i++;
 
    m.push('🔒 lock tuning'); owrx.rcm_lock = i; i++;
    m.push('restore passband'); owrx.rcm_pb = i; i++;
@@ -3625,9 +3704,21 @@ function right_click_menu(x, y, which)
       db = 'SWBC';
 
    owrx.right_click_menu_content[owrx.rcm_lookup] = db + ' database lookup';
-   owrx.right_click_menu_content[owrx.rcm_wheel] = owrx.wheel_tunes? 'mouse wheel zooms' : 'mouse wheel tunes';
-   owrx.right_click_menu_content[owrx.rcm_snap] = owrx.wf_snap? 'no snap' : 'snap to nearest';
-   owrx.right_click_menu_content[owrx.rcm_freq_dsp] = (owrx.freq_dsp_1Hz? '10' : '1') +' Hz frequency display';
+   owrx.right_click_menu_content[owrx.rcm_wheel] = owrx.wheel_tunes? '🟢⚪ mouse wheel zooms' : '⚪🟢 mouse wheel tunes';
+   
+   // Menu shows the *next* state a selection will switch to.
+   // Colored circles show current state.
+   // 0: tune to pb center => 1: snap => 2: tune tocarrier
+   var s;
+   switch (owrx.rcm_snap_sel) {
+      case 0: s = '🟢⚪⚪ snap to nearest'; break;   // select => snap on
+      case 1: s = '⚪🟢⚪ tune to carrier'; break;    // select => snap off
+      case 2: s = '⚪⚪🟢 tune to passband center'; break;
+   }
+   console.log('rcm_snap_sel='+ owrx.rcm_snap_sel +' '+ s);
+   owrx.right_click_menu_content[owrx.rcm_snap] = s;
+
+   owrx.right_click_menu_content[owrx.rcm_freq_dsp] = (owrx.freq_dsp_1Hz? '⚪🟢 10' : '🟢⚪ 1') +' Hz frequency display';
    owrx.right_click_menu_content[owrx.rcm_lock] = (owrx.tuning_locked? '🔓 unlock' : '🔒 lock') +' tuning';
    
    w3_menu_items('id-right-click-menu', owrx.right_click_menu_content);
@@ -3661,7 +3752,7 @@ function right_click_menu_cb(idx, x, cbp)
       break;
 
    case owrx.rcm_lookup:   // database lookups
-   case owrx.rcm_cluster:
+   //case owrx.rcm_cluster:
 		freq_database_lookup(canvas_get_dspfreq(x), idx);
       break;
    
@@ -3669,21 +3760,23 @@ function right_click_menu_cb(idx, x, cbp)
       canvas_mouse_wheel_set();
       break;
 
-   case owrx.rcm_snap:  // snap to nearest
-      wf_snap();
+   case owrx.rcm_snap:  // snap to nearest et al
+      owrx.rcm_snap_sel = (owrx.rcm_snap_sel + 1) % 3;
+      wf_snap(owrx.rcm_snap_sel == owrx.RCM_SNAP);
+      //console.log('SNAP rcm_snap_sel='+ owrx.rcm_snap_sel +' wf_snap='+ owrx.wf_snap);
       break;
 
    case owrx.rcm_cur_freq:  // cursor freq
       owrx.show_cursor_freq ^= 1;
       kiwi_storeWrite('wf_showCurF', owrx.show_cursor_freq);
-      owrx.right_click_menu_content[owrx.rcm_cur_freq] = (owrx.show_cursor_freq? 'hide' : 'show') +' cursor frequency';
+      owrx.right_click_menu_content[owrx.rcm_cur_freq] = (owrx.show_cursor_freq? '⚪🟢 hide' : '🟢⚪ show') +' cursor frequency';
       break;
       
    case owrx.rcm_freq_dsp:  // freq display resolution
       owrx.freq_dsp_1Hz ^= 1;
       kiwi_storeWrite('freq_dsp_1Hz', owrx.freq_dsp_1Hz);
       freqset_update_ui(owrx.FSET_NOP);
-      owrx.right_click_menu_content[owrx.rcm_freq_dsp] = (owrx.freq_dsp_1Hz? '10' : '1') +' Hz frequency display';
+      owrx.right_click_menu_content[owrx.rcm_freq_dsp] = (owrx.freq_dsp_1Hz? '⚪🟢 10' : '🟢⚪ 1') +' Hz frequency display';
       break;
       
    case owrx.rcm_lock:  // tuning lock
@@ -3803,11 +3896,14 @@ function freq_database_lookup(Hz, utility)
          f = Math.round(kHz_r1k/5) * 5;	// 5kHz windows on 5 kHz boundaries -- intended for SWBC
          url = "http://www.short-wave.info/index.php?freq="+ f.toFixed(0) +"&timbus=NOW&ip="+ client_public_ip +"&porm=4";
       }
-   } else
+   }
+   /* no longer available, but we have kiwisdr dx cluster extension now
+   else
    if (utility == owrx.rcm_cluster) {
       f = Math.floor(Hz) / 1000;	// kHz for ve3sun dx cluster lookup
       url = 'http://ve3sun.com/KiwiSDR/DX.php?Search='+f.toFixed(1);
    }
+   */
    
    console.log('LOOKUP '+ kHz +' -> '+ f +' '+ url);
    var win = kiwi_open_or_reload_page({ url:url, tab:1 });
@@ -3835,7 +3931,7 @@ function export_waterfall() {
    var h = legendH;
 
    // include spectrum if selected and visible
-   var specC = w3_el('id-spectrum-canvas');
+   var specC = w3_el('id-spec-canvas');
    var specH = (specC && spec.source == spec.RF)? specC.height : 0;
 
    var e_canvas = document.createElement("canvas");
@@ -4228,6 +4324,7 @@ function mobileOptNew() { return (mobileOpt() && kiwi.mnew); }
 function phone() { return (kiwi_isMobile() && owrx.mobile && owrx.mobile.phone); }
 function tablet() { return (kiwi_isMobile() && owrx.mobile && owrx.mobile.tablet); }
 function iPad() { return (kiwi_isMobile() && owrx.mobile && owrx.mobile.iPad); }
+function width() { return window.innerWidth; }
 
 function mobile_init()
 {
@@ -4283,7 +4380,14 @@ function mobile_init()
       }
 
       mobile_scale_control_panel(mobile);
+      mobile_orientation_adjustments(mobile);
 	}, 500);
+}
+
+function mobile_orientation_adjustments(mobile)
+{
+	//canvas_log(TF(mobile.phone) + mobile.width);
+   w3_el('id-dx-database').style.left = mobile.phone? '0' : '16px';
 }
 
 function mobile_scale_control_panel(mobile, noScale)
@@ -4328,6 +4432,13 @@ var spec = {
    last_update: 0,
    need_update: 0,
    
+   size_drag: false,
+   size_icon_h: 8+15+15+8,
+   
+   dB_SCALE_WIDTH: 30,
+   dB_scale_w: 0,
+   dB_scale_timer: null,
+   
    need_clear_avg: 0,
    clear_avg: 0,
    avg: [[], []],
@@ -4367,16 +4478,25 @@ var spec = {
 
 function spectrum_init()
 {
+   //if (kiwi_isMobile()) alert(window.innerWidth);
+   spec.dB_scale_w = kiwi_isMobile()? 0 : spec.dB_SCALE_WIDTH;
 	spec.colormap = spec.ctx.createImageData(1, spec.canvas.height);
 	spec.colormap_transparent = spec.ctx.createImageData(1, spec.canvas.height);
 	update_maxmindb_sliders();
 	spectrum_dB_bands();
-	var spectrum_update_rate_Hz = kiwi_isMobile()? 10:10;  // limit update rate since rendering spectrum is currently expensive
+   // limit update rate since rendering spectrum is currently expensive (not anymore on mobile devices)
+	var spectrum_update_rate_Hz = /* kiwi_isMobile()? 10:10 */ 10;
 	//if (kiwi_isMobile()) alert('spectrum_update_rate_Hz = '+ spectrum_update_rate_Hz +' Hz');
 	setInterval(function() { spec.update++; }, 1000 / spectrum_update_rate_Hz);
 
    spec.spectrum_image = spec.ctx.createImageData(spec.canvas.width, spec.canvas.height);
    
+   //spec.size.addEventListener('dragstart', preventDefault, w3.CAPTURING);  // stop browser default image drag
+   spec.size.addEventListener('mousedown', spectrum_resize_mousedown, w3.CAPTURING);
+	if (kiwi_isMobile()) {
+      spec.size.addEventListener('touchstart', spectrum_resize_mousedown, w3.CAPTURING);
+	}
+
    if (!wf.audioFFT_active && rx_chan >= wf_chans && !kiwi.wf_share) {
 		// clear entire spectrum canvas to black
 		var sw = spec.canvas.width;
@@ -4405,9 +4525,90 @@ function spectrum_init()
    );
 }
 
+function spectrum_set_height(h)
+{
+   // don't allow size icon to leave screen
+   if (h <= spec.size_icon_h || h > window.innerHeight) return;
+   console.log('spectrum_set_height '+ h);
+
+   spec.height_spectrum_canvas = h;
+	spec.colormap = spec.ctx.createImageData(1, h);
+	spec.colormap_transparent = spec.ctx.createImageData(1, h);
+   spec.spectrum_image = spec.ctx.createImageData(spec.canvas.width, h);
+
+   var h_px = px(h);
+   spec.container.style.height = h_px;
+   spec.dB.style.height = h_px;
+   spec.canvas.height = h;
+   spec.canvas.style.height = h_px;
+   spec.text_canvas.height = h;
+   spec.text_canvas.style.height = h_px;
+   spec.pb_canvas.height = h;
+   spec.pb_canvas.style.height = h_px;
+   spec.af_canvas.height = h;
+   spec.af_canvas.style.height = h_px;
+
+   openwebrx_resize();
+}
+
+function spectrum_resize_mousedown(ev)
+{
+   //console.log('spectrum_resize_mousedown');
+   spec.size_drag = true;
+   w3_add(spec.dB_ttip, 'w3-panel-override-hide');    // defeat the tooltip visibility mechanism
+	window.addEventListener('mousemove', spectrum_resize_mousemove, w3.CAPTURING);
+	if (kiwi_isMobile()) {
+      window.addEventListener('touchmove', spectrum_resize_touchmove, w3.CAPTURING);
+	}
+
+   // NB: once:true does auto remove of spectrum_resize_mouseup() and spectrum_resize_touchend()
+	window.addEventListener('mouseup', spectrum_resize_mouseup, {capture:true, once:true});
+	if (kiwi_isMobile()) {
+      window.addEventListener('touchend', spectrum_resize_touchend, {capture:true, once:true});
+	}
+}
+
+function spectrum_resize_move(y)
+{
+   if (!spec.size_drag) return;     // safety net
+   //console.log(y);
+   //event_dump(ev, '', false);
+   spectrum_set_height(y + spec.size_icon_h/2);    // keeps pointer cursor in middle of size icon
+}
+
+function spectrum_resize_mousemove(ev)
+{
+   spectrum_resize_move(ev.clientY);
+}
+
+function spectrum_resize_touchmove(ev)
+{
+   var y = Math.round(ev.targetTouches[0].pageY);
+   //canvas_log(y);
+   spectrum_resize_move(y);
+}
+
+function spectrum_resize_mouseup(ev)
+{
+   //console.log('spectrum_resize_mouseup');
+	spectrum_dB_bands();
+   spec.size_drag = false;
+   w3_remove(spec.dB_ttip, 'w3-panel-override-hide');
+	window.removeEventListener('mousemove', spectrum_resize_mousemove, w3.CAPTURING);
+	if (kiwi_isMobile()) {
+      window.removeEventListener('touchmove', spectrum_resize_touchmove, w3.CAPTURING);
+	}
+}
+
+function spectrum_resize_touchend(ev)
+{
+   spectrum_resize_mouseup(ev);
+}
+
 // based on WF max/min range, compute color banding each 10 dB for spectrum display
 function spectrum_dB_bands()
 {
+   //console.log('spectrum_dB_bands');
 	spec.dB_bands = [];
 	var i=0;
 	//var color_shift_dB = -8;	// give a little floor room to the spectrum colormap
@@ -4442,8 +4643,10 @@ function spectrum_dB_bands()
 		var ypos = ypos_f(norm);
 		if (ypos_last == 0 && ypos == 0) continue;
 		spec.dB_bands[i] = { dB:dB, y1:ypos_last, y2:ypos, norm:norm.toFixed(2), color:color_name };
+
 		for (var y = ypos_last; y < ypos; y++) {
-			for (var j=0; j<4; j++) {
+			for (var j=0; j<4; j++) {     // rgba
+			   // reminder: ">>>0" means convert to unsigned
 				spec.colormap.data[y*4+j] = ((color>>>0) >> ((3-j)*8)) & 0xff;
 				spec.colormap_transparent.data[y*4+j] = ((color_transparent>>>0) >> ((3-j)*8)) & 0xff;
 			}
@@ -4456,8 +4659,29 @@ function spectrum_dB_bands()
       if (anti_looping++ > 8192) break;
 	}
 
-	spec.redraw_dB_scale = true;
+   //console.log('spectrum_dB_bands: redraw_dB_scale TRUE');
+	spec.redraw_dB_scale = spec.clear_avg = true;
+   spectrum_show_dB_scale();
 	w3_call('colormap_aper');
+}
+
+function spectrum_show_dB_scale()
+{
+   if (kiwi_isMobile()) {
+      //console.log('dB_scale ON');
+      spec.dB_scale_w = spec.dB_SCALE_WIDTH;
+      console.log('spectrum_dB_bands: MOBILE dB_scale ON redraw_dB_scale TRUE');
+	   spec.redraw_dB_scale = spec.clear_avg = true;
+      kiwi_clearTimeout(spec.dB_scale_timer);
+      spec.dB_scale_timer = setTimeout(
+         function() {
+            //console.log('dB_scale OFF');
+            spec.dB_scale_w = 0;
+            console.log('spectrum_dB_bands: MOBILE dB_scale OFF redraw_dB_scale TRUE');
+	         spec.redraw_dB_scale = spec.clear_avg = true;
+         }, 2000
+      );
+   }
 }
 
 
@@ -4484,6 +4708,7 @@ function spectrum_tooltip_cancel(from)
 
 function spectrum_tooltip_update(type, evt, clientX, clientY)
 {
+   //canvas_log(type);
    // needed because owrx.allow_pb_adj can become false as pb is adjusted to be very small
    var mouse_L = (evt && evt.buttons & mouse.BUTTONS_L);
    if (!mouse_L) owrx.allow_pb_adj_at_start = owrx.allow_pb_adj;     // latch val when button still up
@@ -4519,7 +4744,9 @@ function spectrum_tooltip_update(type, evt, clientX, clientY)
    if (owrx.debug_drag) canvas_log('*STTU*');
    //event_dump(evt, 'SPEC');
    var h = spec.height_spectrum_canvas;
-   if (clientY < 0 || clientY >= h) return false;
+   if (clientY < 0 || clientY >= h) {
+      return false;
+   }
 
    var adj_pb = false, show_dB = true;
    var cx = clientX - (kiwi_isMobile()? spec.tooltip_offset : 0);
@@ -4575,31 +4802,44 @@ function spectrum_tooltip_update(type, evt, clientX, clientY)
       spec.dB_ttip.style.width = px(140);
    }
    
+   spectrum_show_dB_scale();
    return adj_pb;
 }
 
 function spectrum_update(data)
 {
-   // because of audio pipeline delay need to check
-   if (spec.source == spec.NONE) {
-      //console.log('spectrum_update: spec.NONE');
+   // Because of audio pipeline delay need to check source.
+   // Also, don't update while spectrum size is being adjusted.
+   if (spec.source == spec.NONE || spec.size_drag) {
+      //console.log('spectrum_update: spec.NONE or dragging');
       return;
    }
-
+   
 	var i, trace, x, y, z, band;
    spec.last_update = spec.update;
+	var spec_width = w3_el("id-waterfall-container").clientWidth;     // clientWidth is without scrollbar
    
    // clear entire spectrum canvas to black
    var ctx = spec.ctx;
-   var dBtext_w = 25;
-   var sw2 = spec.canvas.width;   // spec.AF width, 1024, spec.af_canvas
-   var sw1 = sw2 - dBtext_w;      // spec.RF width,  999, spec.canvas
+   var sw2 = spec.canvas.width;  // spec.AF width, spec.af_canvas
+//jksx
+   //var ratio = kiwi.NOM_WIDTH / Math.min(spec_width, kiwi.NOM_WIDTH);
+   //var ratio = kiwi.NOM_WIDTH_SPEC / Math.min(spec_width, kiwi.NOM_WIDTH_SPEC);
+   var ratio = (spec_width - spec.dB_scale_w) / Math.min(spec_width, kiwi.NOM_WIDTH_SPEC);
+   var text_w = spec.dB_scale_w * ratio;
+   //var text_w = spec.dB_scale_w;
+   var sw1 = Math.round(sw2 * ratio);    // spec.RF width, spec.canvas
+
+   //console.log('spectrum_update '+ kiwi_JSON({Wpx: spec.dB_scale_w, W:spec_width, WmWpx: spec_width-spec.dB_scale_w,
+   //   R:ratio.toFixed(4), C1024:1, CWpx:text_w.toFixed(2), sw1:sw1, sw2:sw2, d:sw2-sw1, RR:(sw1/sw2).toFixed(4)}));
+
    var sw = (spec.source == spec.RF)? sw1 : sw2;
    var sh = spec.canvas.height;
-   w3_visible('id-spectrum-af-canvas', spec.source == spec.AF);
+   //console.log('$sw1='+ w3_sbc('|', sw1, spec.canvas.width, spec_width, ratio, text_w, TF(spec.redraw_dB_scale)));
+   w3_visible('id-spec-af-canvas', spec.source == spec.AF);
 
    ctx.fillStyle = "black";
-   ctx.fillRect(0,0, sw1,sh);
+   ctx.fillRect(0,0, sw2,sh);
    spec.af_ctx.fillStyle = "black";
    spec.af_ctx.fillRect(0,0, spec.canvas.width,sh);
    
@@ -4697,21 +4937,62 @@ function spectrum_update(data)
    
    // if necessary, draw scale on right side
    if (spec.redraw_dB_scale) {
+      if (spec.dB_scale_w != 0) {
+      var txc, txw, tbs, txs;
+//jksx
+var old = 0;
+if (old) {
+         txc = spec.ctx;
+         txw = spec.canvas.width;
+         tbs = sw;
+         txs = sw1+3;
+} else {
+         txc = spec.text_ctx;
+         txw = spec_width;      // window width less wf scrollbar
+         var ratio_i = 1/ratio;
+         //tbs = txw - Math.round((spec.dB_scale_w +11) * ratio_i);
+         tbs = txw - spec.dB_scale_w;
+         //txs = txw - Math.round(32 * ratio_i);
+         txs = tbs+1;
+}
+         //console.log('redraw_dB_scale '+ kiwi_JSON({sw1:sw1, sw2:sw2, d:sw2-sw1,
+         //   r1:sw1/sw2.toFixed(4), r2:(tbs/txw).toFixed(4), ratio:ratio.toFixed(4),
+         //   txw:txw, tbs:tbs, txs:txs, w:txw-tbs}));
+         //kiwi_trace();
    
-      // set sidebar background where the dB text will go
-      for (x = sw1; x < spec.canvas.width; x++) {
-         ctx.putImageData(spec.colormap_transparent, x, 0, 0, 0, 1, sh);
+         txc.clearRect(0,0, txw,sh);
+   
+         // set sidebar background where the dB text will go
+         for (x = tbs; x < txw; x++) {
+            txc.putImageData(spec.colormap_transparent, x, 0, 0, 0, 1, sh);
+         }
+         
+         // the dB-scale text
+         if (old) {
+            txc.save();
+            txc.font = sprintf("%dpx sans-serif", Math.floor(10 * ratio));
+         } else {
+            txc.font = '13px sans-serif';
+         }
+         txc.textBaseline = "middle";
+         txc.textAlign = "left";
+         txc.textBaseline = 'alphabetic';
+         txc.fillStyle = 'white';
+         var prev_y = 0;
+         var len = spec.dB_bands.length;
+         for (i=0; i < len; i++) {
+            band = spec.dB_bands[i];
+            y = Math.round(band.norm * sh);
+            //console.log('txs|y='+ txs +'|'+ (y-4) +' '+ band.dB);
+            if (i < (len-1) || (y - prev_y) > 12)     // prevent text from bottom two bands overlapping
+               txc.fillText(band.dB, txs, y-4);
+            prev_y = y;
+         }
+         if (old) txc.restore();
+      } else {
+         spec.text_ctx.clearRect(0,0, spec_width,sh);
       }
-      
-      // the dB scale text
-      ctx.fillStyle = "white";
-      for (i=0; i < spec.dB_bands.length; i++) {
-         band = spec.dB_bands[i];
-         y = Math.round(band.norm * sh);
-         ctx.fillText(band.dB, sw1+3, y-4);
-         //console.log("SP x="+sw1+" y="+y+' '+dB);
-      }
-      spec.redraw_dB_scale = false;
+   spec.redraw_dB_scale = false;
    }
 	
 	// Add line to spectrum image
@@ -4724,6 +5005,9 @@ function spectrum_update(data)
 
    for (x=0; x < sw; x++) {
       z = color_index(wf_gnd? wf_gnd_value : data[x]);
+      // test
+      //if (x==(sw-2)) z = color_index(0);
+      //if (x==(sw-1)) z = color_index(255);
 
       switch (spec_filter) {
       
@@ -4804,7 +5088,7 @@ function spectrum_update(data)
    }
 
    if (spec.switch_container) {
-      w3_show_hide('id-spectrum-container', true);
+      w3_show_hide('id-spec-container', true);
       w3_show_hide('id-top-container', false);
       spec.switch_container = false;
    }
@@ -4849,7 +5133,7 @@ function wf_init_ready()
 	init_wf_container();
 
    wf.audioFFT_active = ((rx_chan >= wf_chans && !kiwi.wf_share) || wf.no_wf);
-	resize_waterfall_container(false);
+	resize_waterfall_container(/* no_check_init */ true);
 	resize_wf_canvases();
 	bands_init();
 	panels_setup();
@@ -4876,8 +5160,6 @@ function wf_init_ready()
 	
 	canvas_mouse_wheel_set(kiwi_storeInit('wheel_tunes'));
 
-	wf_snap(kiwi_storeInit('wf_snap'));
-
    mobile_init();
    
    dx_init();
@@ -4903,6 +5185,31 @@ function wf_init_ready()
 
 	openwebrx_resize();
 	waterfall_setup_done = 1;
+	
+	// add scroll marker to non-persistent scrollbars
+	if(0)
+	w3_func_by_selector('.w3-scroll-mkr',
+	   function(el,a,b,c) {
+	      console.error(el);
+	      console.log(kiwi_JSON([a,b,c]));
+	      
+	      //w3_add(el, 'w3-relative');
+	      if(0)
+	      w3_create_appendElement(el, 'div',
+            w3_icon('w3-custom-events w3-pointer w3-margin-B-1', 'fa-arrow-down', 15, 'cyan'),
+            'id-jks', 'w3-icon-fixed'
+	      );
+	      
+	   }, 11,22,33
+	);
+if(0){
+   w3_add('id-control', 'w3-relative');
+   w3_innerHTML('id-control-overlay',
+      w3_icon('id-jks2 w3-icon-fixed w3-custom-events|top:170px; left:360px', 'fa-arrow-up', 15, 'cyan'),
+      w3_div('w3-aqua w3-absolute|width:3px; height:119px; top:183px; left:365.5px'),
+      w3_icon('id-jks2 w3-icon-fixed w3-custom-events|top:300px; left:360px', 'fa-arrow-down', 15, 'cyan')
+   );
+}
 }
 
 function add_wf_canvas()
@@ -4970,9 +5277,8 @@ function wf_shift_canvases()
 
 function resize_wf_canvases()
 {
-	window_width = wf_container.innerWidth;
-	waterfall_width = wf_container.clientWidth;
-	//console.log("RESIZE winW="+window_width+" wfW="+waterfall_width);
+	waterfall_width = wf_container.clientWidth;     // clientWidth is without scrollbar
+	//console.log('WF RESIZE width='+ waterfall_width +' wfW='+ waterfall_width);
 
 	new_width = px(waterfall_width);
 	var zoom_value = 0;
@@ -4989,9 +5295,15 @@ function resize_wf_canvases()
 	canvas_phantom.style.width = new_width;
 	canvas_phantom.style.left = zoom_value;
 
-	spec.canvas.style.width = new_width;
-	spec.pb_canvas.style.width = new_width;
+   // spectrum is always same width as waterfall
+   var spec_w = px(waterfall_width);
+	spec.canvas.style.width = spec_w;
+	spec.pb_canvas.style.width = spec_w;
 	spec.af_canvas.style.width = px(waterfall_width - spec.af_margins);
+
+   // spectrum dB-scale text canvas is always 1:1 with screen size
+	spec.text_canvas.width = waterfall_width;
+	spec.text_canvas.style.width = spec_w;
 
    // above width change clears canvas, so redraw
    if (wf.audioFFT_active && !kiwi_isMobile()) {
@@ -5102,7 +5414,7 @@ function wf_snap(set)
    owrx.wf_snap = isUndefined(set)? (owrx.wf_snap ^ 1) : (isNull(set)? 0 : (+set));
    //console.log('wf_snap new='+ owrx.wf_snap);
    w3_el('id-waterfall-container').style.cursor = owrx.wf_cursor = owrx.wf_snap? 'col-resize' : 'crosshair';
-   kiwi_storeWrite('wf_snap', owrx.wf_snap);
+   kiwi_storeWrite('wf_snap', owrx.rcm_snap_sel);
 }
 
 var page_scroll_amount = 0.8;
@@ -5668,9 +5980,9 @@ function waterfall_height()
 // With certain screen sizes it is possible for wf_height to be negative for a period of time, so very
 // important to set waterfall_scrollable_height = 0 in that case.
 
-function resize_waterfall_container(check_init)
+function resize_waterfall_container(no_check_init)
 {
-	if (check_init && !waterfall_setup_done) return;
+	if (!no_check_init && !waterfall_setup_done) return;
 
 	var wf_height = waterfall_height();
 
@@ -5954,7 +6266,7 @@ function mkcolormap()
 		b = Math.round(b); b = w3_clamp(b, 0, 255);
 
       // composite colormap used by spectrum
-		color_map[i] = (r<<24) | (g<<16) | (b<<8) | 0xff;
+		color_map[i]             = (r<<24) | (g<<16) | (b<<8) | 0xff;     // opacity = 1
 		color_map_transparent[i] = (r<<24) | (g<<16) | (b<<8) | spectrum_scale_color_map_transparency;
 		
 		// component colormap for waterfall (also used by some extensions)
@@ -8958,12 +9270,12 @@ function dx_label_render_cb(arr)
 		console_log_lbl(dx.list[gid]);
 		var has_ext = (params != '');
 		
-	   var _class = w3_sb('w3-custom-events w3-hold cl-dx-label', has_ext? 'dx-has-ext':'',
+	   var prop = w3_sb('w3-custom-events w3-hold cl-dx-label', has_ext? 'dx-has-ext':'',
 	      filtered? 'cl-dx-label-filtered':'', (has_ext && !filtered)? 'cl-dx-label-ext':'');
-	   var _style_attr = sprintf('|left:%s; z-index:%d; background:%s|id="id-dx-label_%s"',
+	   var style_attr = sprintf('|left:%s; z-index:%d; background:%s|id="id-dx-label_%s"',
 	      px(x-10), dx_z, color, dx_idx);
 		s_a[dx_idx] =
-		   w3_button_path(_class + _style_attr, 'dx-'+ gid, '', 'dx_evt', w3_sbc(',', gid, cmkr_x)) +
+		   w3_button_path(prop + style_attr, 'dx-'+ gid, '', 'dx_evt', w3_sbc(',', gid, cmkr_x)) +
 		   w3_div(sprintf('cl-dx-line|left:%s; z-index:110|id="id-dx-line_%s"', px(x), dx_idx));
 		
 		dx_z++;
@@ -9679,24 +9991,33 @@ function dx_show_edit_panel2()
 
 function dx_database_cb(path, idx, first, opt, from_shortcut)
 {
+   var opt_s = kiwi_JSON(opt);
+   if (opt == 0 || opt_s == '[object Object]') {
+      opt = {menu:1};
+      opt_s = '{menu:1}';
+   } else {
+      opt = opt || {};
+   }
    //console.log('first='+ first +' ctrlAlt='+ ctrlAlt);
    if (first) return;
    dx.list = [];
-   console_log_dbgUs('DX DB-SWITCHED db='+ idx +'|'+ dx.db +' opt='+ kiwi_JSON(opt) +' from_shortcut='+ from_shortcut);
+   console_log_dbgUs('DX DB-SWITCHED db='+ idx +'|'+ dx.db +' opt='+ opt_s +' from_shortcut='+ from_shortcut);
 
    if (w3_opt(opt, 'toggle')) {
       dx.filter_tod[dx.db] ^= 1;
       dx_time_dow_cb(dx.db.toString() +'-filter-tod', dx.filter_tod[dx.db]);
    } else {
       dx.db = +idx;
-      var called_from_menu = (opt == '0');
       if (w3_opt(opt, 'open')) {
          dx_show_edit_panel(null, -1, from_shortcut);
       } else {
-         if (!called_from_menu && ext_panel_displayed('dx')) {
+         var displayed = ext_panel_displayed('dx');
+         if (!opt.menu && displayed) {
+            console.log('opt.menu 1');
             dx_close_edit_panel();
          }
-         if (called_from_menu) {
+         if (opt.menu || (opt.cycle && displayed)) {
+            console.log('opt.menu 2');
             dx_show_edit_panel(null, -1, from_shortcut);    // show new panel contents
          }
       }
@@ -9708,6 +10029,13 @@ function dx_database_cb(path, idx, first, opt, from_shortcut)
    mkscale();
    mk_band_menu();
 	dx_schedule_update();
+}
+
+function dx_database_cycle_cb()
+{
+   dx.db = (dx.db + 1) % dx.DB_N;
+   console.log('dx_database_cycle_cb '+ dx.db);
+   dx_database_cb('', dx.db, false, {cycle:1});
 }
 
 function dx_eibi_all_cb(path, checked, first)
@@ -10985,7 +11313,7 @@ function test_audio_suspended()
 
    if (cfg.require_id && ident_illegal(ident)) {
       snd_send('SET require_id=1');
-      s1 = w3_input('w3-flex w3-flex-col w3-valign-center//w3-custom-events w3-margin-T-10 w3-font-18px w3-normal w3-padding-1'+
+      s1 = w3_input('w3-valign-center//w3-custom-events w3-margin-T-10 w3-font-18px w3-normal w3-padding-1'+
          '|width:300px|size=20'+
          ' onchange="ident_complete(\'el\', 3)" onkeyup="ident_keyup(this, event, 3)"',
          'Enter your name or callsign <br> to start KiwiSDR', 'ident-input3');
@@ -11066,8 +11394,8 @@ function panels_setup()
 		   'Your name or callsign:', 'ident-input1');
 
 	// Need to capture click event to override parent (id-topbar) click event.
-	// Otherwise when the ident input field is click freqset_select() is called and the focus is taken away.
-	el.addEventListener('click', function(evt) { return cancelEvent(evt); }, w3.CAPTURING);
+	// Otherwise when the ident input field is clicked freqset_select() is called and the focus is taken away.
+	el.addEventListener('click', cancelEvent, w3.CAPTURING);
 	
 	var mobile = kiwi_isMobile()?
 	   (' inputmode='+ dq(kiwi_is_iOS()? 'decimal' : 'tel') +' ontouchstart="popup_keyboard_touchstart(event)" onclick="this.select()"') : '';
@@ -11099,12 +11427,6 @@ function panels_setup()
          ) +
 
          w3_div('id-select-band-container') +
-
-/*
-         '<select id="id-select-ext" class="w3-pointer w3-select-menu" onchange="freqset_select(); extint_select(this.value)">' +
-            '<option value="-1" selected disabled>extension</option>' +
-            extint_select_build_menu() +
-         '</select>'*/
          w3_select('id-select-ext w3-pointer||onchange="freqset_select(); extint_select(this.value)"', '', '', '', 0)
       );
    mk_band_menu();
@@ -12576,18 +12898,21 @@ function setpb_cb(path, val, done, first, which)
 
 function toggle_or_set_hide_bars(set)
 {
+   var data_container_or_spec = (extint.using_data_container || spec.source != spec.NONE);
 	if (isNumber(set))
       owrx.hide_bars = set;
    else {
 	   owrx.hide_bars = (owrx.hide_bars + 1) & owrx.HIDE_ALLBARS;
 	   
 	   // there is no top container to hide if data container or spectrum in use
-      if ((owrx.hide_bars & owrx.HIDE_TOPBAR) && (extint.using_data_container || spec.source != spec.NONE))
+      if ((owrx.hide_bars & owrx.HIDE_TOPBAR) && data_container_or_spec)
 	      owrx.hide_bars = (owrx.hide_bars + 1) & owrx.HIDE_ALLBARS;
 	}
    //console.log('toggle_or_set_hide_bars set='+ set +' hide_bars='+ owrx.hide_bars);
    w3_set_props('id-top-container', 'w3-panel-override-hide', owrx.hide_bars & owrx.HIDE_TOPBAR);
    w3_set_props('id-band-container', 'w3-panel-override-hide', owrx.hide_bars & owrx.HIDE_BANDBAR);
+   var bottom = (!data_container_or_spec && (owrx.hide_bars == owrx.HIDE_BANDBAR || owrx.hide_bars == owrx.HIDE_ALLBARS));
+   w3_remove_then_add_cond_by_selector('.cl-tooltip-text', bottom, 'cl-tooltip-bottom cl-tooltip-up', 'cl-tooltip-down');
    openwebrx_resize();
 }
 
@@ -13260,12 +13585,16 @@ function toggle_or_set_spec(set, val, dir, ev)
 	   // delay switching container visibility until data update to prevent flash of previous spectrum
 	   spec.switch_container = true;
 	} else {
-      w3_show_hide('id-spectrum-container', false);
+      w3_show_hide('id-spec-container', false);
       w3_show_hide('id-top-container', true);
    }
+
+   var bottom = (!isSpec && (owrx.hide_bars == owrx.HIDE_BANDBAR || owrx.hide_bars == owrx.HIDE_ALLBARS));
+   w3_remove_then_add_cond_by_selector('.cl-tooltip-text', bottom, 'cl-tooltip-bottom cl-tooltip-up', 'cl-tooltip-down');
    freqset_select();
    snd_send('SET spc_='+ spec.source);
-   openwebrx_resize('spec', 500);   // delay a bit until visibility stabilizes
+   //openwebrx_resize('spec', 500);   // delay a bit until visibility stabilizes
+   openwebrx_resize('spec');
 }
 
 function mode_over(evt, el)
@@ -13488,6 +13817,10 @@ function panel_setup_control(el)
 {
 	divControl = el;
 	el.style.marginBottom = '0';
+	
+	// to make the positioning of the w3-scroll-mkr work
+	// the div needs to have the height of its enclosing div
+	var scroll_mkr = ' w3-hide w3-scroll-y w3-relative w3-scroll-mkr|height:'+ px(kiwi.OPTBAR_CONTENT_HEIGHT);
 
    var el2 = w3_el('id-control-inner');
    w3_add(el2, 'w3-no-copy-popup');    // so popup won't appear when touching anywhere in the panel
@@ -13499,10 +13832,12 @@ function panel_setup_control(el)
          w3_div('id-control-zoom w3-margin-T-6'),
          w3_div('id-optbar w3-margin-T-4')
       ) +
+      
+      // 
 	   w3_div('id-optbar-content w3-margin-T-6 w3-scroll-y|height:'+ px(kiwi.OPTBAR_CONTENT_HEIGHT),
-	      w3_div('id-optbar-rf w3-hide w3-scroll-y'),
-	      w3_div('id-optbar-wf w3-hide w3-scroll-y'),
-	      w3_div('id-optbar-audio w3-hide w3-scroll-y'),
+	      w3_div('id-optbar-rf'+ scroll_mkr),
+	      w3_div('id-optbar-wf'+ scroll_mkr),
+	      w3_div('id-optbar-audio'+ scroll_mkr),
 	      w3_div('id-optbar-agc w3-hide'),
 	      w3_div('id-optbar-user w3-hide w3-scroll-x'),
 	      w3_div('id-optbar-stat w3-hide')

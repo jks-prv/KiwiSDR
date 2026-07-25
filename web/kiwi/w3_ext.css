@@ -217,6 +217,35 @@ input[type=range]::-moz-range-thumb {
     box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
+.w3-scroll-overlay
+{
+}
+
+.w3-icon-sticky
+{
+    /* stick it to the viewport */
+    position: sticky;
+    bottom: 24px;
+    float: right;
+    pointer-events: auto;
+}
+
+.cl-control-overlay
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: 10px;
+    left: 0;
+}
+
+.w3-icon-fixed
+{
+    position: absolute;
+    top: 300px;
+    left: 360px;
+}
+
 .w3-ext-icon
 {
 	/* mobile */
@@ -620,6 +649,11 @@ input[type=range]::-moz-range-thumb {
     margin-top: 0
 }
 
+.w3-margin-T-1
+{
+    margin-top: 1px
+}
+
 .w3-margin-T-2
 {
     margin-top: 2px
@@ -781,7 +815,7 @@ input[type=range]::-moz-range-thumb {
         w3-padding-small    4px 8px
         w3-padding-smaller  3px 6px
         w3-padding-tiny     2px 4px
-        w3-padding-{4,8,12,16,24,32,48,64,128, top,bottom,left,right}
+        w3-padding-{0,1,4,8,12,16,24,32,48,64,128, top,bottom,left,right}
         w3-padding-L-{8,16}
         w3-padding-LR-{2,3,4,6,8,10}
         w3-padding-R-0
@@ -982,40 +1016,41 @@ input[type=range]::-moz-range-thumb {
 .w3-flex-row, w3-flex-ltr { display: flex; flex-direction: row }
 .w3-flex-row-rev, w3-flex-rtl { display: flex; flex-direction: row-reverse }
 
-.w3-flex-wrap { flex-wrap: wrap }
-.w3-flex-nowrap { flex-wrap: nowrap }
-.w3-flex-wrap-rev { flex-wrap: wrap-reverse }
+.w3-flex-wrap { display: flex; flex-wrap: wrap }
+.w3-flex-nowrap { display: flex; flex-wrap: nowrap }
+.w3-flex-wrap-rev { display: flex; flex-wrap: wrap-reverse }
 
-.w3-halign-center { justify-content: center }
-.w3-halign-start { justify-content: flex-start }
-.w3-halign-end { justify-content: flex-end }
-.w3-halign-space-around, .w3-halign-around { justify-content: space-around }
-.w3-halign-space-between, .w3-halign-between { justify-content: space-between }
-.w3-halign-space-evenly, .w3-halign-evenly { justify-content: space-evenly }
+.w3-halign-center { display: flex; justify-content: center }
+.w3-halign-start { display: flex; justify-content: flex-start }
+.w3-halign-end { display: flex; justify-content: flex-end }
+.w3-halign-space-around, .w3-halign-around { display: flex; justify-content: space-around }
+.w3-halign-space-between, .w3-halign-between { display: flex; justify-content: space-between }
+.w3-halign-space-evenly, .w3-halign-evenly { display: flex; justify-content: space-evenly }
 
-.w3-valign-center { align-items: center }
-.w3-valign-start { align-items: flex-start }
-.w3-valign-end { align-items: flex-end }
-.w3-valign-stretch { align-items: stretch }
-.w3-valign-baseline { align-items: baseline }
+.w3-valign-center { display: flex; align-items: center }
+.w3-valign-start { display: flex; align-items: flex-start }
+.w3-valign-end { display: flex; align-items: flex-end }
+.w3-valign-stretch { display: flex; align-items: stretch }
+.w3-valign-baseline { display: flex; align-items: baseline }
 
 /* i.e. like halign when more then one line */
-.w3-calign-center { align-content: center }
-.w3-calign-start { align-content: flex-start }
-.w3-calign-end { align-content: flex-end }
-.w3-calign-space-around { align-content: space-around }
-.w3-calign-space-between { align-content: space-between }
+.w3-calign-center { display: flex; align-content: center }
+.w3-calign-start { display: flex; align-content: flex-start }
+.w3-calign-end { display: flex; align-content: flex-end }
+.w3-calign-space-around { display: flex; align-content: space-around }
+.w3-calign-space-between {display: flex; align-content: space-between }
 
-.w3-gap-8 { gap: 8px }
-.w3-gap-10 { gap: 10px }
-.w3-gap-12 { gap: 12px }
-.w3-gap-15 { gap: 15px }
-.w3-gap-16 { gap: 16px }
-.w3-gap-20 { gap: 20px }
-.w3-gap-32 { gap: 32px }
+.w3-gap-8 { display: flex; gap: 8px }
+.w3-gap-10 { display: flex; gap: 10px }
+.w3-gap-12 { display: flex; gap: 12px }
+.w3-gap-15 { display: flex; gap: 15px }
+.w3-gap-16 { display: flex; gap: 16px }
+.w3-gap-20 { display: flex; gap: 20px }
+.w3-gap-32 { display: flex; gap: 32px }
 
 .w3-perfect-center, .w3-perfect-centering, .w3-perfectly-centered
 {
+	display: flex;
     justify-content: center;
     align-items: center;
 }
@@ -1051,15 +1086,15 @@ input[type=range]::-moz-range-thumb {
 */
 
 /* per-item override of container w3-valign-* */
-.w3-ialign-auto { align-self: auto }
-.w3-ialign-center { align-self: center }
-.w3-ialign-start { align-self: flex-start }
-.w3-ialign-end { align-self: flex-end }
-.w3-ialign-stretch { align-self: stretch }
-.w3-ialign-baseline { align-self: baseline }
-.w3-ialign-right { margin-left: auto }      /* medium.com/@iamryanyu/how-to-align-last-flex-item-to-right-73512e4e5912 */
-.w3-ialign-bottom { margin-top: auto }
-.w3-ialign-top { margin-bottom: auto }
+.w3-ialign-auto { display: flex; align-self: auto }
+.w3-ialign-center { display: flex; align-self: center }
+.w3-ialign-start { display: flex; align-self: flex-start }
+.w3-ialign-end { display: flex; align-self: flex-end }
+.w3-ialign-stretch { display: flex; align-self: stretch }
+.w3-ialign-baseline { display: flex; align-self: baseline }
+.w3-ialign-right { display: flex; margin-left: auto }      /* medium.com/@iamryanyu/how-to-align-last-flex-item-to-right-73512e4e5912 */
+.w3-ialign-bottom { display: flex; margin-top: auto }
+.w3-ialign-top { display: flex; margin-bottom: auto }
 
 
 .w3-hcenter, .w3-halign
@@ -1306,6 +1341,39 @@ input[type=range]::-moz-range-thumb {
 	overflow-y: auto;
 }
 
+/* iOS / WebKit Scrollbar */
+/* doesn't fix the iphone Safari scrollbar lack-of-persistence problem
+.w3-iphone-scroll-2 {
+    scrollbar-width: none;
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+    
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.6) transparent;
+}
+
+.w3-iphone-scroll-2::-webkit-scrollbar {
+    width: 8px !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    -webkit-appearance: none;
+}
+
+.w3-iphone-scroll-2::-webkit-scrollbar-thumb {
+    background-color: rgba(60, 60, 60, 0.9) !important;
+    border-radius: 20px;
+}
+
+.w3-iphone-scroll-2::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.w3-iphone-scroll-2::-webkit-scrollbar-track-piece {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+}
+*/
+
 .w3-nowrap
 {
 	white-space: nowrap;
@@ -1529,6 +1597,10 @@ input[type=range]::-moz-range-thumb {
 .w3-font-fixed {
     font-family: Consolas, "courier new";
     font-size: 18px;
+}
+
+.w3-font-10px {
+    font-size: 10px;
 }
 
 .w3-font-11px {
