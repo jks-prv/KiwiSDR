@@ -2078,6 +2078,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
     GITDIFF_EXCLUDE := --exclude=.DS_Store --exclude=.git \
         --exclude=k --exclude=d --exclude=g --exclude=n --exclude=ng
     GITDIFF_EXCLUDE2 := $(GITDIFF_EXCLUDE) --exclude="*.min.*" --exclude=EiBi.h
+    GITDIFF_EXCLUDE3 := $(GITDIFF_EXCLUDE2) --exclude=extensions
 
     gitdiff:
 	    colordiff -br $(GITDIFF_EXCLUDE2) $(GITAPP)/$(REPO_NAME) . || true
@@ -2089,6 +2090,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 	    colordiff -br $(GITDIFF_EXCLUDE2) --exclude="*.json" --exclude=EiBi.h --exclude=sked-current.csv $(GITAPP)/$(REPO_NAME) . || true
     gitdiff2:
 	    colordiff -br $(GITDIFF_EXCLUDE2) ../../../sdr/KiwiSDR/$(REPO_NAME) . || true
+    gitdiff3:
+	    colordiff -br $(GITDIFF_EXCLUDE3) $(GITAPP)/$(REPO_NAME) . || true
 endif
 
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))

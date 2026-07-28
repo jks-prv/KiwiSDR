@@ -1457,6 +1457,12 @@ input[type=range]::-moz-range-thumb {
     background-color: #575757;
 }
 
+.w3-575757-white
+{
+    background-color: #575757;
+    color: white;
+}
+
 /* e.g. to override black text of a w3-* color */
 .w3-text-css-white
 {
