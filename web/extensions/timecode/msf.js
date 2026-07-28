@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 //
 // TODO
@@ -16,20 +16,15 @@ var msf = {
    dcnt: 0,
    line: 0,
    phase: 0,
+   prev: [],
    
    end: null
 };
 
-function msf_dmsg(s)
-{
-   w3_innerHTML('id-tc-msf', s);
-}
-
 // see: en.wikipedia.org/wiki/Time_from_NPL_(MSF)
 function msf_legend()
 {
-   if ((msf.line++ & 3) == 0)
-      tc_dmsg('1 uuuuuuuuuuuuuuuu yyyyyyyy mmmmm dddddd www hhhhhh mmmmmmm 01111110<br>');
+   tc_legend(msf, '1 uuuuuuuuuuuuuuuu yyyyyyyy mmmmm dddddd www hhhhhh mmmmmmm 01111110');
 }
 
 function msf_decode(bits)
@@ -41,6 +36,7 @@ function msf_decode(bits)
    var day  = tc_bcd(bits, 35, 6, -1);
    var wday = tc_bcd(bits, 38, 3, -1);
    var mo   = tc_bcd(bits, 29, 5, -1) - 1;
+   if (mo < 0 || mo > 11) mo = 12;
    var yr   = tc_bcd(bits, 24, 8, -1) + 2000;
 
    var s = day +' '+ tc.mo[mo] +' '+ yr +' '+ hour.leadingZeros(2) +':'+ min.leadingZeros(2) +' UTC';
@@ -112,21 +108,25 @@ function msf_ampl(ampl)
 	      tc.state = tc.ACQ_DATA;
 	   }
 
-      if (1) {
-         //tc_dmsg(m.sec.toFixed(0) + b.toFixed(0) +'|');
-         tc_dmsg(b);
-         if ([0,16,24,29,35,38,44,51].includes(m.dcnt)) tc_dmsg(' ');
+      // highlight differences from last period
+      var s;
+      if (b != m.prev[m.dcnt] && m.line) {
+         s = '<span style="color:lime">'+ b +'</span>';
       } else {
-         tc_dmsg(m.zero_width +' ');
+         s = b;
       }
+      m.prev[m.dcnt] = b;
+      tc_dmsg(s);
+      if ([0,16,24,29,35,38,44,51].includes(m.dcnt)) tc_dmsg(' ');
 
       m.dcnt++;
       if (m.dcnt == 60) {
          msf_decode(tc.raw);   // for the minute just reached
-         msf_legend();
          tc.raw = [];
          m.sec = -1;
          m.dcnt = 0;
+         m.line++;
+         msf_legend();
       }
    }
 
@@ -138,24 +138,4 @@ function msf_ampl(ampl)
    }
 
    tc.data = m.data;
-}
-
-function msf_focus()
-{
-}
-
-
-function msf_blur()
-{
-   var el;
-	el = w3_el('id-tc-bits');
-	if (el) el.innerHTML = '';
-	el = w3_el('id-tc-msf');
-	if (el) el.innerHTML = '';
-}
-
-
-function msf_init()
-{
-   w3_el('id-tc-addon').innerHTML += w3_div('id-tc-bits') + w3_div('id-tc-msf');
 }

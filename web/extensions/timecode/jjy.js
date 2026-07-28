@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 //
 // TODO
@@ -20,21 +20,15 @@ var jjy = {
    time0: 0,
    time0_copy: 0,
    line: 0,
+   prev: [],
    
    end: null
 };
 
-function jjy_dmsg(s)
-{
-   w3_innerHTML('id-tc-jjy', s);
-}
-
 // see: en.wikipedia.org/wiki/JJY
 function jjy_legend()
 {
-   if ((jjy.line++ & 3) == 0) {
-      tc_dmsg('M mmm0mmmm M00 hh0hhhh M00 dd0ddddMdddd 00 ppU MU yyyyyyyy M www LS 0000 M<br>');
-   }
+   tc_legend(jjy, 'M mmm0mmmm M00 hh0hhhh M00 dd0ddddMdddd 00 ppU MU yyyyyyyy M www LS 0000 M');
 }
 
 function jjy_ampl_decode(bits)
@@ -52,7 +46,9 @@ function jjy_ampl_decode(bits)
    d = new Date(d.getTime() - 9*60*60*1000);  // convert JST to UTC (-9 hours)
    var st = d.toLocaleString("en-US", {timeZone:"Japan"});
    st = st.split('/');
-   var mo = tc.mo[+st[0]-1];
+   var mo = +st[0]-1;
+   if (mo < 0 || mo > 11) mo = 12;
+   mo = tc.mo[mo];
    var day = st[1].fieldWidth(2);
 
    var s = day +' '+ mo +' '+ yr +' '+ hour.leadingZeros(2) +':'+ min.leadingZeros(2) +' JST';
@@ -112,8 +108,17 @@ function jjy_ampl(ampl)
 	if (tc.state == tc.MIN_MARK || (tc.state == tc.ACQ_DATA && tc.sample_point == tc.trig)) {
 	   var b = (tc.state == tc.MIN_MARK || w.one_width <= 60)? 1:0;
       //tc_dmsg(b.toFixed(0) + w.one_width.toFixed(0) +'|');
-      tc_dmsg(b);
       tc.raw[w.sec] = b;    // raw, not inversion-corrected data
+
+      // highlight differences from last period
+      var s;
+      if (b != w.prev[w.dcnt] && w.line) {
+         s = '<span style="color:lime">'+ b +'</span>';
+      } else {
+         s = b;
+      }
+      w.prev[w.dcnt] = b;
+      tc_dmsg(s);
       if ([0,8,11,18,21,33,35,38,40,48,49,52,54,58].includes(w.dcnt)) tc_dmsg(' ');
 
       if (tc.state == tc.MIN_MARK) {
@@ -124,10 +129,11 @@ function jjy_ampl(ampl)
       w.dcnt++;
       if (w.dcnt == 60) {
          jjy_ampl_decode(tc.raw);   // for the minute just reached
-         jjy_legend();
          tc.raw = [];
          w.sec = -1;
          w.dcnt = 0;
+         w.line++;
+         jjy_legend();
       }
    }
 
@@ -139,24 +145,4 @@ function jjy_ampl(ampl)
    }
 
    tc.data = w.data;
-}
-
-function jjy_focus()
-{
-}
-
-
-function jjy_blur()
-{
-   var el;
-	el = w3_el('id-tc-bits');
-	if (el) el.innerHTML = '';
-	el = w3_el('id-tc-jjy');
-	if (el) el.innerHTML = '';
-}
-
-
-function jjy_init()
-{
-   w3_el('id-tc-addon').innerHTML += w3_div('id-tc-bits') + w3_div('id-tc-jjy');
 }

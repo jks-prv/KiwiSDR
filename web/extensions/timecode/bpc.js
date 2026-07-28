@@ -1,9 +1,11 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 //
+// See: en.wikipedia.org/wiki/BPC_(time_signal)
+//
 // TODO
-//    phase decoding
-//    The protocol is unpublished, so some of the data bit values are still unknown.
+//    undecoded bits, parity
+//    phase decoding?
 //
 
 var bpc = {
@@ -31,25 +33,21 @@ var bpc = {
    end: null
 };
 
-function bpc_dmsg(s)
-{
-   w3_innerHTML('id-tc-bpc', s);
-}
-
-// see: en.wikipedia.org/wiki/BPC_(time_signal)
 function bpc_legend()
 {
-   if ((bpc.line & 3) == 0) {
-      //tc_dmsg('         ');
-      tc_dmsg('ss hhhhhh mmmmmm ?????? dddddd mmmm yyyyyy ?? <br>');
-   }
+   tc_legend(bpc, 'ss uu hhhh mmmmmm uDMSHP dddddd mmmm yyyyyy yp');
 }
 
 function bpc_decode(b)
 {
    // bits are what time the 20 second frame _was_ at the previous sync boundary
    
-   var hour = b[1]*16 + b[2]*4 + b[3];
+   var sec = b[0];   // 0..2
+   sec = (sec > 2)? '??' : (sec*20).leadingZeros(2);
+   
+   // b[1] unused
+
+   var hour = b[2]*4 + b[3];
    if (hour <= 11) {
       var pm = b[9] & 2;
       if (pm) hour += 12;
@@ -59,16 +57,13 @@ function bpc_decode(b)
    var min = b[4]*16 + b[5]*4 + b[6];
    min = (min > 59)? '??' : min.leadingZeros(2);
 
-   var sec = b[0];   // 0..2
-   sec = (sec > 2)? '??' : (sec*20).leadingZeros(2);
-   
    var day = b[10]*16 + b[11]*4 + b[12];
    day = (day == 0 || day > 31)? '??' : day.fieldWidth(2);
 
    var mo = b[13]*4 + b[14];  // 1..12
    mo = (mo == 0 || mo > 12)? '???' : tc.mo[mo-1];
 
-   var yr = b[15]*16 + b[16]*4 + b[17] + 2000;
+   var yr = b[15]*16 + b[16]*4 + b[17] + (b[18]>>1)*64 + 2000;
    
    var s = day +' '+ mo +' '+ yr +' '+ hour +':'+ min +':'+ sec +' CST';
 
@@ -155,12 +150,18 @@ function bpc_ampl(ampl)
    		      if (t >= 4) t = 0;
    		      b.raw[b.dcnt] = t;
    		      var s = b.dibit[t];
+   		      
+   		      // highlight differences from last period
                if (t != b.prev[b.dcnt] && b.line) {
                   s = '<span style="color:lime">'+ s +'</span>';
                }
                b.prev[b.dcnt] = t;
                tc_dmsg(s);
-               if ([0,3,6,9,12,14,17].includes(b.dcnt)) tc_dmsg(' ');
+               
+               // ss uu hhhh mmmmmm uDMSHP dddddd mmmm yyyyyy yP
+               //   0  0    0      0      0      1    1      1
+               //   0  1    3      6      9      2    4      7
+               if ([0,1,3,6,9,12,14,17].includes(b.dcnt)) tc_dmsg(' ');
                //b.chr += s.length;
                //if (b.chr > 80) { tc_dmsg('<br>'); b.chr = 0; }
                b.dcnt++;
@@ -205,24 +206,4 @@ function bpc_ampl(ampl)
    }
 
    tc.data = b.data;
-}
-
-function bpc_focus()
-{
-}
-
-
-function bpc_blur()
-{
-   var el;
-	el = w3_el('id-tc-bits');
-	if (el) el.innerHTML = '';
-	el = w3_el('id-tc-bpc');
-	if (el) el.innerHTML = '';
-}
-
-
-function bpc_init()
-{
-   w3_el('id-tc-addon').innerHTML += w3_div('id-tc-bits') + w3_div('id-tc-bpc');
 }

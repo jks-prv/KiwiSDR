@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 //
 // TODO
@@ -21,20 +21,15 @@ var dcf77 = {
    dcnt: 0,
    tick: 0,
    line: 0,
+   prev: [],
    
    end: null
 };
 
-function dcf77_dmsg(s)
-{
-   w3_innerHTML('id-tc-dcf77', s);
-}
-
 // see: en.wikipedia.org/wiki/DCF77
 function dcf77_legend()
 {
-   if ((dcf77.line++ & 3) == 0)
-      tc_dmsg('0 civil/weather  EASNL 1 mmmmmmm p hhhhhh p dddddd www mmmmm yyyyyyyy p 0<br>');
+   tc_legend(dcf77, '0 civil/weather  EASNL 1 mmmmmmm p hhhhhh p dddddd www mmmmm yyyyyyyy p 0');
 }
 
 function dcf77_decode(bits)
@@ -46,6 +41,7 @@ function dcf77_decode(bits)
    var day  = tc_bcd(bits, 36, 6, 1);
    var wday = tc_bcd(bits, 42, 3, 1);
    var mo   = tc_bcd(bits, 45, 5, 1) - 1;
+   if (mo < 0 || mo > 11) mo = 12;
    var yr   = tc_bcd(bits, 50, 8, 1) + 2000;
    var tz   = bits[17]? 'CEST' : (bits[18]? 'CET' : 'TZ?');
 
@@ -121,33 +117,25 @@ function dcf77_ampl(ampl)
 
 	if (tc.state == tc.ACQ_DATA && tc.sample_point == tc.trig) {
 	   var b = (d.zero_width > 15)? 1:0;
-      tc_dmsg(b);
       tc.raw[d.sec] = b;
+
+      // highlight differences from last period
+      var s;
+      if (b != d.prev[d.dcnt] && d.line) {
+         s = '<span style="color:lime">'+ b +'</span>';
+      } else {
+         s = b;
+      }
+      d.prev[d.dcnt] = b;
+      tc_dmsg(s);
       if ([0,14,19,20,27,28,34,35,41,44,49,57,58].includes(d.dcnt)) tc_dmsg(' ');
       //tc_dmsg(d.zero_width +' ');
       d.dcnt++;
-      if (d.dcnt == 60) d.dcnt = 0;
+      if (d.dcnt == 60) {
+         d.dcnt = 0;
+         d.line++;
+      }
    }
 
    tc.data = d.data;
-}
-
-function dcf77_focus()
-{
-}
-
-
-function dcf77_blur()
-{
-   var el;
-	el = w3_el('id-tc-bits');
-	if (el) el.innerHTML = '';
-	el = w3_el('id-tc-dcf77');
-	if (el) el.innerHTML = '';
-}
-
-
-function dcf77_init()
-{
-   w3_el('id-tc-addon').innerHTML += w3_div('id-tc-bits') + w3_div('id-tc-dcf77');
 }

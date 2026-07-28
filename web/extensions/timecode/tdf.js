@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 var tdf = {
    arm: 0,
@@ -11,36 +11,20 @@ var tdf = {
    msec: 0,
    line: 0,
    dcnt: 0,
+   prev: [],
    
    end: null
 };
 
-function tdf_dmsg(s)
-{
-   w3_innerHTML('id-tc-tdf', s);
-}
-
 // see: en.wikipedia.org/wiki/TDF_time_signal
 function tdf_legend()
 {
-   if ((tdf.line++ & 3) == 0)
-      tc_dmsg('0 LS hhhh 000000 HH 0 ASN 01 mmmmmmm p hhhhhh p dddddd www mmmmm yyyyyyyy p 0<br>');
+   tc_legend(tdf, '0 LS hhhh 000000 HH 0 ASN 01 mmmmmmm p hhhhhh p dddddd www mmmmm yyyyyyyy p 0');
 }
 
 function tdf_decode(bits)
 {
-   // bits are what the minute _will be_ at the approaching minute boundary
-   
-   var min  = tc_bcd(bits, 21, 7, 1);
-   var hour = tc_bcd(bits, 29, 6, 1);
-   var day  = tc_bcd(bits, 36, 6, 1);
-   var wday = tc_bcd(bits, 42, 3, 1);
-   var mo   = tc_bcd(bits, 45, 5, 1) - 1;
-   var yr   = tc_bcd(bits, 50, 8, 1) + 2000;
-   var tz   = bits[17]? 'CEST' : (bits[18]? 'CET' : 'TZ?');
-
-   tc_dmsg('  '+ day +' '+ tc.mo[mo] +' '+ yr +' '+ hour.leadingZeros(2) +':'+ min.leadingZeros(2) +' '+ tz +'<br>');
-   tc_stat('lime', 'Time: '+ day +' '+ tc.mo[mo] +' '+ yr +' '+ hour.leadingZeros(2) +':'+ min.leadingZeros(2) +' '+ tz);
+   dcf77_decode(bits);     // yes they really are the same format!
 }
 
 function tdf_clr()
@@ -76,10 +60,12 @@ function tdf_phase(ampl)
             t.msec = 0;
             if (tc.state == tc.ACQ_SYNC) {
                tc_stat('cyan', 'Found sync');
+               tdf_legend();
             } else {
                tdf_decode(tc.raw);   // for the minute just reached
+               t.line++;
+               tdf_legend();
             }
-            tdf_legend();
             tc.raw = [];
             t.dcnt = 0;
             tc.state = tc.ACQ_DATA;
@@ -106,26 +92,19 @@ function tdf_phase(ampl)
       var b = (t.modct >= t.slice_threshold)? 1:0;
       tc.trig = b+2;
       tc.raw[t.sec] = b;
-      tc_dmsg(b);
+
+      // highlight differences from last period
+      var s;
+      if (b != t.prev[t.dcnt] && t.line) {
+         s = '<span style="color:lime">'+ b +'</span>';
+      } else {
+         s = b;
+      }
+      t.prev[t.dcnt] = b;
+      tc_dmsg(s);
       if ([0,2,6,12,14,15,18,20,27,28,34,35,41,44,49,57,58].includes(t.dcnt)) tc_dmsg(' ');
       t.dcnt++;
       if (t.dcnt == 60) t.dcnt = 0;
    } else
       tc.trig = 1;
-}
-
-function tdf_focus()
-{
-}
-
-function tdf_blur()
-{
-   var el;
-	el = w3_el('id-tc-tdf');
-	if (el) el.innerHTML = '';
-}
-
-function tdf_init()
-{
-   w3_el('id-tc-addon').innerHTML += w3_div('id-tc-tdf');
 }

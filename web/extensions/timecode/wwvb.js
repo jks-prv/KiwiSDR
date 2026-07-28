@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 //
 // TODO
@@ -28,24 +28,19 @@ var wwvb = {
    time0: 0,
    time0_copy: 0,
    line: 0,
+   prev: [],
    
    end: null
 };
 
-function wwvb_dmsg(s)
-{
-   w3_innerHTML('id-tc-wwvb', s);
-}
-
 // see: en.wikipedia.org/wiki/WWVB
 function wwvb_legend(phase)
 {
-   if ((wwvb.line++ & 3) == 0) {
-      if (phase)
-         tc_dmsg('sync           ppppp m d mmmmmmmmm r mmmmmmmmm r mmmmmmm LL N LLL dddddd<br>');
-      else
-         tc_dmsg('M mmm0mmmm M00 hh0hhhh M00 dd0ddddMdddd 00 +-+ M DDDD 0 yyyyMyyyy 0 YSDD M<br>');
-   }
+   var s = phase?
+      'sync           ppppp m d mmmmmmmmm r mmmmmmmmm r mmmmmmm LL N LLL dddddd'
+   :
+      'M mmm0mmmm M00 hh0hhhh M00 dd0ddddMdddd 00 +-+ M DDDD 0 yyyyMyyyy 0 YSDD M';
+   tc_legend(wwvb, s);
 }
 
 function wwvb_ampl_decode(bits)
@@ -120,9 +115,18 @@ function wwvb_ampl(ampl)
 
 	if (tc.state == tc.MIN_MARK || (tc.state == tc.ACQ_DATA && tc.sample_point == tc.trig)) {
 	   var b = (tc.state == tc.MIN_MARK || w.one_width <= 60)? 1:0;
-      //tc_dmsg(b.toFixed(0) + w.one_width.toFixed(0) +'|');
-      tc_dmsg(b);
       tc.raw[w.sec] = b;
+      //tc_dmsg(b.toFixed(0) + w.one_width.toFixed(0) +'|');
+
+      // highlight differences from last period
+      var s;
+      if (b != w.prev[w.dcnt] && w.line) {
+         s = '<span style="color:lime">'+ b +'</span>';
+      } else {
+         s = b;
+      }
+      w.prev[w.dcnt] = b;
+      tc_dmsg(s);
       if ([0,8,11,18,21,33,35,38,39,43,44,53,54,58].includes(w.dcnt)) tc_dmsg(' ');
 
       if (tc.state == tc.MIN_MARK) {
@@ -133,6 +137,7 @@ function wwvb_ampl(ampl)
       w.dcnt++;
       if (w.dcnt == 60) {
          wwvb_ampl_decode(tc.raw);   // for the minute just reached
+         w.line++;
          wwvb_legend(0);
          tc.raw = [];
          w.sec = -1;
@@ -214,7 +219,7 @@ function wwvb_phase(ampl_sgn)
 	   w.data_last = w.data;
 	}
 	
-	//wwvb_dmsg('sp='+ tc.sample_point +' trig='+ tc.trig);
+	//console.log('sp='+ tc.sample_point +' trig='+ tc.trig);
 
 	if (tc.sample_point == tc.trig) {
 		if (tc.state == tc.ACQ_SYNC) {
@@ -252,7 +257,17 @@ function wwvb_phase(ampl_sgn)
 			tc.raw.push(w.data);
 			data = w.data ^ w.phase_inv;
 			//tc_dmsg(w.phase_inv? (data? 'i':'o') : data.toString());
-			tc_dmsg(data.toString());
+
+         // highlight differences from last period
+         var b = data.toString();
+         var s;
+         if (b != w.prev[w.dcnt] && w.line) {
+            s = '<span style="color:lime">'+ b +'</span>';
+         } else {
+            s = b;
+         }
+         w.prev[w.dcnt] = b;
+			tc_dmsg(s);
          if ([12,17,18,19,28,29,38,39,46,48,49,52].includes(w.dcnt)) tc_dmsg(' ');
 			
 			if (w.dcnt == 18 || (w.dcnt >= 20 && w.dcnt <= 46 && w.dcnt != 29 && w.dcnt != 39)) {
@@ -337,6 +352,7 @@ function wwvb_phase(ampl_sgn)
 				}
 				
 				tc_dmsg('<br>');
+            w.line++;
 				wwvb_legend(1);
 				tc.raw = [];
 				w.min = 0;
@@ -372,24 +388,4 @@ function wwvb_phase(ampl_sgn)
 	}
 	
 	return w.data;
-}
-
-function wwvb_focus()
-{
-}
-
-
-function wwvb_blur()
-{
-   var el;
-	el = w3_el('id-tc-bits');
-	if (el) el.innerHTML = '';
-	el = w3_el('id-tc-wwvb');
-	if (el) el.innerHTML = '';
-}
-
-
-function wwvb_init()
-{
-   w3_el('id-tc-addon').innerHTML += w3_div('id-tc-bits') + w3_div('id-tc-wwvb');
 }

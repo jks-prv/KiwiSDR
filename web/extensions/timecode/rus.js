@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 //
 // TODO
@@ -24,22 +24,16 @@ var rus = {
    time0_copy: 0,
    line: 0,
    dcnt: 0,
+   prev: [],
    
    end: null
 };
-
-function rus_dmsg(s)
-{
-   w3_innerHTML('id-tc-rus', s);
-}
 
 // see: en.wikipedia.org/wiki/RBU_(radio_station)
 // see: en.wikipedia.org/wiki/RTZ_(radio_station)
 function rus_legend()
 {
-   if ((rus.line++ & 3) == 0) {
-      tc_dmsg('M 00 UUUUU 000 UUUUU 00 TTTTTT 0 yyyyyyyy mmmmm www dddddd hhhhhh mmmmmmm <br>');
-   }
+   tc_legend(rus, 'M 00 UUUUU 000 UUUUU 00 TTTTTT 0 yyyyyyyy mmmmm www dddddd hhhhhh mmmmmmm');
 }
 
 function rus_ampl_decode(bits)
@@ -50,6 +44,7 @@ function rus_ampl_decode(bits)
    var hour = tc_bcd(bits, 52, 6, -1);
    var day  = tc_bcd(bits, 46, 6, -1);
    var mo   = tc_bcd(bits, 37, 5, -1) - 1;
+   if (mo < 0 || mo > 11) mo = 12;
    var yr   = tc_bcd(bits, 32, 8, -1) + 2000;
 
    var s = day +' '+ tc.mo[mo] +' '+ yr +' '+ hour.leadingZeros(2) +':'+ min.leadingZeros(2) +' MSK';
@@ -120,7 +115,16 @@ function rus_ampl(ampl)
                   //if (r.dat0 > 3) r.dat0 = 1;
                   var b = (r.dat0 >= 2)? 1:0;      // only decodes data bit 1
                   tc.raw[r.rcnt] = b;
-                  tc_dmsg(b);
+
+                  // highlight differences from last period
+                  var s;
+                  if (b != r.prev[r.rcnt] && r.line) {
+                     s = '<span style="color:lime">'+ b +'</span>';
+                  } else {
+                     s = b;
+                  }
+                  r.prev[r.rcnt] = b;
+                  tc_dmsg(s);
                   if ([0,2,7,10,15,17,23,24,32,37,40,46,52].includes(r.rcnt)) tc_dmsg(' ');
                   r.rcnt++;
                   r.wait = 700;
@@ -145,10 +149,11 @@ function rus_ampl(ampl)
 
    if (r.rcnt == 60) {
       rus_ampl_decode(tc.raw);   // for the minute just reached
-      rus_legend();
       tc.raw = [];
       r.rcnt = 0;
       r.sec = -1;
+      r.line++;
+      rus_legend();
    }
 
    r.msec += 10;
@@ -159,24 +164,4 @@ function rus_ampl(ampl)
    }
 
    tc.data = r.data;
-}
-
-function rus_focus()
-{
-}
-
-
-function rus_blur()
-{
-   var el;
-	el = w3_el('id-tc-bits');
-	if (el) el.innerHTML = '';
-	el = w3_el('id-tc-rus');
-	if (el) el.innerHTML = '';
-}
-
-
-function rus_init()
-{
-   w3_el('id-tc-addon').innerHTML += w3_div('id-tc-bits') + w3_div('id-tc-rus');
 }

@@ -5,11 +5,11 @@
 #include "types.h"
 #include "rx.h"
 #include "mode.h"
-#include "printf.h"
 #include "clk.h"
 #include "cuteSDR.h"
 #include "pll.h"
 #include "misc.h"
+#include "mem.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -20,7 +20,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+// NB: this doesn't allow for simultaneous, different test files
 static s2_t *testStart, *testEnd;
+static off_t test_fsize;
 
 class timecode {
 
@@ -88,6 +90,9 @@ public:
         _pll.init(_pll_bandwidth, _pll_offset, _fs);
     }
 
+    bool test;
+    s2_t *testP;
+
     bool process_msg(const char* msg) {
 
         int gain = 0;
@@ -139,39 +144,37 @@ public:
             return true;
         }
 
-        if (strcmp(msg, "SET test") == 0) {
-            static bool test_init;
-            if (!test_init) {
-                char *file;
-                int fd;
-                #define TIMECODE_FNAME DIR_CFG "/samples/timecode.test.au"
-                printf("timecode: mmap " TIMECODE_FNAME "\n");
-                fd = open(TIMECODE_FNAME, O_RDONLY);
-                if (fd >= 0) {
-                    off_t fsize = kiwi_file_size(TIMECODE_FNAME);
-                    printf("timecode: size=%ld\n", fsize);
-                    file = (char *) mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
-                    if (file == MAP_FAILED) sys_panic("timecode mmap");
-                    close(fd);
-                    int words = fsize / sizeof(s2_t);
-                    testStart = (s2_t *) file;
-                    testEnd = testStart + words;
-                    test_init = true;
-                }
+        char *test_file = NULL;
+        if (sscanf(msg, "SET test=%ms", &test_file) == 1) {
+            char *fname;
+            asprintf(&fname, DIR_CFG "/samples/%s.au", test_file);
+            int fd = open(fname, O_RDONLY);
+            if (fd >= 0) {
+                if (testStart != NULL) munmap(testStart, test_fsize);
+                test_fsize = kiwi_file_size(fname);
+                printf("timecode: %s size=%ld\n", fname, test_fsize);
+                char *file = (char *) mmap(NULL, test_fsize, PROT_READ, MAP_PRIVATE, fd, 0);
+                if (file == MAP_FAILED) sys_panic("timecode mmap");
+                close(fd);
+                int words = test_fsize / sizeof(s2_t);
+                testStart = (s2_t *) file;
+                testEnd = testStart + words;
             }
 
-            if (test_init) {
-                testP = testStart;
-                test = true;
-            }
+            testP = testStart;
+            test = true;
+            kiwi_asfree(test_file);
+            kiwi_asfree(fname);
+            return true;
+        }
+
+        if (strcmp(msg, "SET test_reset") == 0) {
+            testP = testStart;
             return true;
         }
 
         return false;
     }
-
-    bool test;
-    s2_t *testP;
 
 protected:
     int rx_chan() const { return _rx_chan; }
