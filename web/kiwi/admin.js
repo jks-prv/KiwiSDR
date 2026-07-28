@@ -3136,7 +3136,7 @@ function gps_sbas_init()
 	);
    console.log('GET gps_SBAS: '+ s.join(','));
 
-   w3_menu('id-gps-sbas-menu', 'gps_sbas_menu_item_cb');
+   w3_menu('id-gps-sbas-menu w3-slide-over', 'gps_sbas_menu_item_cb');
 }
 
 function gps_sbas_menu_item_cb(idx, x, cb_param, ev)

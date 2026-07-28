@@ -26,7 +26,7 @@ var hfdl = {
    SHOW_MSGS: 0,
    SHOW_MAP: 1,
    SHOW_SPLIT: 2,
-   show: 0,
+   show: 2,
    show_s: [ 'messages', 'map', 'split' ],
 
    ALL: 0,
@@ -559,11 +559,11 @@ function hfdl_place_gs_marker(gs_n)
             console.log('*click*');
             console.log(ev);
             var mkr = ev.target;
-            //var cf = parseInt(mkr.textContent);
-            var cf = w3_match_wildcard(mkr, 'id-hfdl-AFT-f-');
-            if (cf == false) return;
+            var rv = w3_match_wildcard(mkr, 'id-hfdl-AFT-f-');
+            if (rv == false) return;
+            var cf = rv.prop;
             console.log('click cf1='+ dq(cf));
-            cf = cf.split('f-')[1];
+            cf = rv.suffix;
             cf = cf.toLowerCase().replace(/_/g, ' ');
             console.log('click cf2='+ dq(cf));
             var rv = hfdl_menu_match(null, cf);

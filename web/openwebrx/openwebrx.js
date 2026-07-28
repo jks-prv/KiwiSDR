@@ -3264,7 +3264,7 @@ function canvas_end_drag(evt, x)
       // Also, don't set freq if mouseup if after a spectrum tooltip operation.
       if (owrx.debug_drag) canvas_log('CMDT'+ (canvas_mouse_down_or_touch? 1:0) +' TL'+ owrx.tuning_locked);
       if (canvas_mouse_down_or_touch && !canvas_ignore_mouse_event && !tooltip_complete) {
-         if (owrx.tuning_locked) canvas_log('TLOCK='+ owrx.tuning_locked);
+         if (owrx.debug_drag && owrx.tuning_locked) canvas_log('TLOCK='+ owrx.tuning_locked);
          if (owrx.tuning_locked) {
             var el = w3_el('id-tuning-lock-container');
             el.style.opacity = 0.8;
@@ -3715,7 +3715,7 @@ function right_click_menu(x, y, which)
       case 1: s = '⚪🟢⚪ tune to carrier'; break;    // select => snap off
       case 2: s = '⚪⚪🟢 tune to passband center'; break;
    }
-   console.log('rcm_snap_sel='+ owrx.rcm_snap_sel +' '+ s);
+   //console.log('rcm_snap_sel='+ owrx.rcm_snap_sel +' '+ s);
    owrx.right_click_menu_content[owrx.rcm_snap] = s;
 
    owrx.right_click_menu_content[owrx.rcm_freq_dsp] = (owrx.freq_dsp_1Hz? '⚪🟢 10' : '🟢⚪ 1') +' Hz frequency display';
@@ -7726,6 +7726,7 @@ function freq_memory_menu_item_cb(idx, x, cb_param, ev)
          break;
    }
       
+   //console.log(f_m);
    if (f_m) {
       ext_tune(f_m.freq, f_m.mode, ext_zoom.CUR);
    } else {
@@ -9273,7 +9274,7 @@ function dx_label_render_cb(arr)
 		console_log_lbl(dx.list[gid]);
 		var has_ext = (params != '');
 		
-	   var prop = w3_sb('w3-custom-events w3-hold cl-dx-label', has_ext? 'dx-has-ext':'',
+	   var prop = w3_sb('w3-custom-events w3-hold-250 cl-dx-label', has_ext? 'dx-has-ext':'',
 	      filtered? 'cl-dx-label-filtered':'', (has_ext && !filtered)? 'cl-dx-label-ext':'');
 	   var style_attr = sprintf('|left:%s; z-index:%d; background:%s|id="id-dx-label_%s"',
 	      px(x-10), dx_z, color, dx_idx);

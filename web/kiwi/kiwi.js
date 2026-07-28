@@ -2943,7 +2943,7 @@ function user_cb(obj)
 
 function dx_freq_list_init()
 {
-   w3_menu('id-dx-freq-list-menu', 'dx_freq_list_menu_item_cb');
+   w3_menu('id-dx-freq-list-menu w3-slide-over', 'dx_freq_list_menu_item_cb');
 }
 
 function dx_freq_list(label, extname)
@@ -3000,7 +3000,8 @@ function dx_freq_list_cb(list)
 function dx_freq_list_menu_item_cb(idx, x, cb_param, ev)
 {
    idx = +idx;
-   //console.log('freq_memory_menu_item_cb idx='+ idx);
+   //console.log('dx_freq_list_menu_item_cb idx='+ idx);
+   //event_dump(ev, 'dx_list', true);
    if (idx != -1) {
       var item = kiwi.dx_freq_list[idx];
       //console.log(item);
@@ -3009,8 +3010,9 @@ function dx_freq_list_menu_item_cb(idx, x, cb_param, ev)
          //console.log(kiwi.dx_cur_label);
          //kiwi.dx_cur_el.click();     // NB: doesn't work in mobile Safari, so use below
          dx_click({ type: 'open_ext', label: kiwi.dx_cur_label });
-      } else {
-         //console.log('freq_memory_menu_item_cb f_dial_kHz='+ item);
+      } else
+      if (isNumber(item)) {
+         //console.log('dx_freq_list_menu_item_cb f_dial_kHz='+ item);
          ext_tune(item, /* keep current passband */ null, ext_zoom.CUR);
       }
    }

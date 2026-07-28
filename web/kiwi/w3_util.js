@@ -1180,10 +1180,14 @@ function w3_match_wildcard(el_id, prefix)
 	//console.log('w3_match_wildcard <'+ prefix +'>');
 	if (!el) return null;
 	for (var i = 0; i < el.classList.length; i++) {    // el.classList is a collection, can't use forEach()
-	   var cl = el.classList.item(i);
-	   //console.log('w3_match_wildcard CONSIDER <'+ cl +'>');
-	   if (cl.startsWith(prefix))
-	      return cl;
+	   var prop = el.classList.item(i);
+	   //console.log('w3_match_wildcard CONSIDER <'+ prop +'>');
+	   if (prop.startsWith(prefix)) {
+	      var a = prop.split(prefix);
+	      //console.log(a);
+	      var suffix = (a.length >= 2)? a[1] : '';
+	      return { prop:prop, suffix:suffix, num:suffix.filterInt() };
+	   }
 	}
 	return false;
 }
@@ -1194,8 +1198,8 @@ function w3_remove_wildcard(el_id, prefix)
 	//console.log('w3_remove_wildcard <'+ prefix +'>');
 	if (!el) return null;
 	for (var i = 0; i < el.classList.length; i++) {    // el.classList is a collection, can't use forEach()
-	   var cl = el.classList.item(i);
-	   if (cl.startsWith(prefix)) el.classList.remove(cl);
+	   var prop = el.classList.item(i);
+	   if (prop.startsWith(prefix)) el.classList.remove(prop);
 	}
 	return el;
 }
@@ -2692,14 +2696,24 @@ function w3int_btn_evt(ev, path, cb, cb_param)
       
       w3_check_restart_reboot(ev.currentTarget);
       
-      var hold = w3_contains(el, 'w3-hold');
+      var hold = w3_match_wildcard(el, 'w3-hold');    // matches w3-hold and w3-hold-<delay>
       var hold_done = w3_contains(el, 'w3-hold-done');
-      //canvas_log(ev.type + (hold? ' w3H':'') + (hold_done? '+w3D':''));
+      /*
+      if (hold != false && cb == 'freq_memory_menu_icon_cb') {
+         console.error('w3-hold');
+         //console.log('path='+ path +' cb='+ cb);
+         console.log(hold);
+         console.log('hold_done='+ hold_done);
+      }
+      */
+      //canvas_log(ev.type + ((hold != false)? ' w3H':'') + (hold_done? '+w3D':''));
 
-      if (hold) {
+      if (hold != false) {
          //console.log('w3int_btn_evt HOLD '+ ev.type);
          if (ev.type == 'mousedown' || ev.type == 'touchstart') {
             el.hold_triggered = false;
+            var delay = isNumberElse(Math.abs(hold.num), 500);
+            //console.error('w3-hold: '+ hold.prop +' '+ hold.num +' delay='+ delay);
             el.hold_timeout = setTimeout(function() {
                //canvas_log('HSU');
                el.hold_triggered = true;
@@ -2708,7 +2722,7 @@ function w3int_btn_evt(ev, path, cb, cb_param)
                   //canvas_log('EvHOLD');
                   w3_call(cb, path, cb_param, /* first */ false, { type: 'hold' });
                }
-            }, 500);
+            }, delay);
             return ignore(ev);   // don't run callback below
          } else {
             //canvas_log('HT='+ el.hold_timeout);
@@ -4021,7 +4035,10 @@ function w3_menu(psa, cb)
    cb = cb || '';
    //console.log('w3_menu id='+ id +' psa='+ psa);
 
-   var onclick = 'onclick="w3int_menu_onclick(event, '+ sq(id) +', '+ sq(cb) +')"' +
+   // including mouseup here allows the button to continue to be pressed after the hold
+   // and slid over the menu item to make a selection
+   var slide_over = psa.includes('w3-slide-over')? 'onmouseup' : 'onclick';
+   var onclick = slide_over +'="w3int_menu_onclick(event, '+ sq(id) +', '+ sq(cb) +')"' +
       ' oncontextmenu="w3int_menu_onclick(event, '+ sq(id) +', '+ sq(cb) +')"';
 	var p = w3_psa(psa, 'w3-menu w3-menu-container w3-round-large', '', onclick);
    var s = '<div '+ p +'></div>';
@@ -4201,9 +4218,9 @@ function w3_menu_active()
 function w3int_menu_onclick(ev, id, cb, cb_param)
 {
    if (w3int.menu_debug)
-      canvas_log('menu_onclick '+ id +' from='+ (cb_param || ev.type));
-   //console.log('w3int_menu_onclick id='+ id +' cb='+ cb);
-   //if (ev != null) event_dump(ev, "MENU");
+      canvas_log('menu_onclick '+ id +' from='+ (cb_param || ev.type) +' cb='+ cb);
+   //console.info('w3int_menu_onclick id='+ id +' cb='+ cb);
+   //if (ev != null) event_dump(ev, "MENU", false);
    var el = w3_el(id);
 
    // ignore false click from menu re-alignment (only if click is recent enough)
@@ -4219,6 +4236,7 @@ function w3int_menu_onclick(ev, id, cb, cb_param)
       if (w3int.menu_debug) canvas_log('XOK'+ when);
    }
 
+   //if (cb == null) kiwi_trace('w3int_menu_onclick');
    if (ev != null && cb != null) {
       var _id = ev.target.id;
       var idx = +_id;
@@ -4233,6 +4251,7 @@ function w3int_menu_onclick(ev, id, cb, cb_param)
    }
 
    w3_visible(el, false);
+   //console.log('w3int_menu_onclick NOT_VIS');
    if (w3int.menu_debug)
       canvas_log('NOT_VIS');
    w3int.menu_active = false;
@@ -4253,12 +4272,14 @@ function w3int_menu_event(evt)
 {
    if (w3int.menu_debug) canvas_log('ME '+ evt.type);
    var el = w3_el(w3int.menu_cur_id);
+   //console.info('w3int_menu_event');
    //console.log(el);
-   //event_dump(evt, 'MENU-CLOSE', true);
+   //event_dump(evt, 'MENU-EVT', true);
 
    if (el && w3int.menu_close_func) {
       //console.log(w3int.menu_close_func);
       var close = w3int.menu_close_func(evt, w3int.menu_first);
+      //console.log('w3int_menu_event CLOSE close='+ close +' first='+ w3int.menu_first);
       w3int.menu_first = false;
       if (w3int.menu_debug) canvas_log('CLOSE='+ close);
       if (close) w3_menu_close(evt.type);
@@ -4268,6 +4289,7 @@ function w3int_menu_event(evt)
 
 function w3_menu_close(from)
 {
+   //console.info('w3_menu_close');
    if (w3int.menu_debug) canvas_log('w3_menu_close '+ from +' id='+ w3int.menu_cur_id);
    if (!w3int.menu_cur_id) return;
    var el = w3_el(w3int.menu_cur_id);
