@@ -197,7 +197,7 @@ SSTV_REAL sstv_sync_find(sstv_chan_t *e, int *Skip)
 
     printf("SSTV: sync returns %.1f\n", Rate);
   
-    ext_send_msg_encoded(e->rx_chan, false, "EXT", "status", "%s, %s, %.1f Hz (hdr %+d), skip %d smp (%.1f ms)",
+    ext_send_msg_encoded(e->rx_chan, false, "EXT", "status", "%s, %s, %.1f Hz (hdr %+d),<br>skip %d smp (%.1f ms)",
         e->pic.modespec->ShortName, result, Rate, e->pic.HeaderShift, *Skip, *Skip * (1e3 / Rate));
   
     return Rate;

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2026 John Seamons, ZL4VO/KF6VO
 
 var sstv = {
    ext_name: 'SSTV',    // NB: must match example.c:example_ext.name
@@ -155,12 +155,6 @@ function sstv_recv(data)
 				sstv_status_cb(sstv.status);
 				break;
 
-			case "result":
-			   sstv.result = decodeURIComponent(param[1]);
-				//console.log('result='+ sstv.result);
-				sstv_result_cb(sstv.result);
-				break;
-
 			case "fsk_id":
 			   sstv.fsk_id = decodeURIComponent(param[1]);
 				//console.log('fsk_id='+ sstv.fsk_id);
@@ -249,37 +243,38 @@ function sstv_controls_setup()
 	var controls_html =
 		w3_div('id-test-controls w3-text-white',
 			w3_divs('/w3-tspace-8',
-            w3_col_percent('',
-				   w3_div('w3-medium w3-text-aqua', '<b>SSTV decoder</b>'), 30,
-					w3_div('', 'From <b><a href="http://windytan.github.io/slowrx" target="_blank">slowrx</a></b> by Oona Räisänen, OH2EIQ')
+            w3_inline('w3-halign-space-between|width:70%/',
+				   w3_div('w3-medium w3-text-aqua', '<b>SSTV decoder</b>'),
+					w3_div('', 'From <b><a href="http://windytan.github.io/slowrx" target="_blank">slowrx</a></b>')
 				),
+
 				w3_inline('',
                w3_select('id-sstv-freq-menu w3-text-red', '', 'freq', 'sstv.freq', W3_SELECT_SHOW_TITLE, sstv.freqs_s, 'sstv_freq_cb'),
+				   w3_button('w3-margin-left w3-padding-smaller w3-css-yellow', 'Reset', 'sstv_reset_cb'),
+				   w3_button('w3-margin-left w3-padding-smaller w3-blue', 'Save images', 'sstv_save_cb')
+				),
+
+				w3_inline('',
                w3_checkbox('id-sstv-cbox-auto w3-margin-left w3-label-inline w3-label-not-bold', 'auto adjust', 'sstv.auto', true, 'sstv_auto_cbox_cb'),
 				   w3_button('id-sstv-btn-auto w3-margin-left w3-padding-smaller', 'Undo adjust', 'sstv_auto_cb'),
-				   w3_button('w3-margin-left w3-padding-smaller w3-css-yellow', 'Reset', 'sstv_reset_cb'),
-				   w3_button('w3-margin-left w3-padding-smaller w3-blue', 'Save images', 'sstv_save_cb'),
 				   w3_button('id-sstv-test1 w3-margin-left w3-padding-smaller w3-aqua', 'Test', 'sstv_test_cb', 0),
 				   dbgUs?
 				         w3_button('id-sstv-test2 w3-margin-L-8 w3-padding-smaller w3-aqua', 'T2', 'sstv_test_cb', 1)
 				      :
 				         ''
 				),
-            w3_half('', '',
-               w3_div('id-sstv-mode-name'),
-               w3_div('id-sstv-fsk-id')
-            ),
-            w3_div('id-sstv-status'),
-            w3_div('id-sstv-result w3-hide')
+				
+            w3_div('id-sstv-mode-name'),
+            w3_div('id-sstv-fsk-id'),
+            w3_div('id-sstv-status w3-valign-center')
 			)
 		);
 
 	ext_panel_show(controls_html, data_html, null);
-	ext_set_controls_width_height(565, 135);
+	ext_set_controls_width_height(350, 200);
 	sstv.saved_setup = ext_save_setup();
 	sstv_mode_name_cb("");
 	sstv_status_cb("");
-	sstv_result_cb("");
 	sstv_fsk_id_cb("");
    time_display_setup('sstv');
 
@@ -401,13 +396,15 @@ function sstv_touchstart(evt)
 
 function sstv_shift(evt, requireShiftKey)
 {
-	var x = (evt.clientX? evt.clientX : (evt.offsetX? evt.offsetX : evt.layerX));
-	var y = (evt.clientY? evt.clientY : (evt.offsetY? evt.offsetY : evt.layerY));
+	var x = evt.offsetX;
+	var y = evt.offsetY;
 	x -= sstv.startx;
-	//console.log('sstv_shift xy '+ x +' '+ y);
+	console.log('sstv_shift xy '+ x +' '+ y);
+	//event_dump(evt, 'sstv_shift', false);
 	if (x < 0 || sstv.page == -1) { sstv.shift_second = false; return; }
 	var xmin = sstv.page * sstv.iws;
 	var xmax = xmin + sstv.iw;
+	console.log({t:'sstv_shift', min:xmin, x:x, max:xmax, second:sstv.shift_second});
 	if (x < xmin || x > xmax) { sstv.shift_second = false; return; }
 	x -= xmin;
 	if (!sstv.shift_second) {
@@ -416,7 +413,7 @@ function sstv_shift(evt, requireShiftKey)
 	   return;
 	}
    sstv.shift_second = false;
-	//console.log('sstv_shift page='+ sstv.page +' xy '+ sstv.x0 +','+ sstv.y0 +' -> '+ x +','+ y);
+	console.log('sstv_shift page='+ sstv.page +' xy '+ sstv.x0 +','+ sstv.y0 +' -> '+ x +','+ y);
 	ext_send('SET shift x0='+ sstv.x0 +' y0='+ sstv.y0 +' x1='+ x +' y1='+ y);
 }
 
@@ -428,14 +425,8 @@ function sstv_mode_name_cb(mode_name)
 
 function sstv_status_cb(status)
 {
-	w3_el('id-sstv-status').innerHTML = 'Status: ' +
+	w3_el('id-sstv-status').innerHTML = 'Status:&nbsp;' +
 	   w3_div('w3-show-inline-block w3-text-black w3-background-pale-aqua w3-padding-LR-8', status);
-}
-
-function sstv_result_cb(result)
-{
-	w3_el('id-sstv-result').innerHTML = 'Result: ' +
-	   w3_div('w3-show-inline-block w3-text-black w3-background-pale-aqua w3-padding-LR-8', result);
 }
 
 function sstv_fsk_id_cb(fsk_id)
@@ -448,7 +439,6 @@ function sstv_reset_cb(path, val, first)
 {
 	sstv_mode_name_cb("");
 	sstv_status_cb("");
-	sstv_result_cb("");
 	sstv_fsk_id_cb("");
 	ext_send('SET reset');
 }
@@ -457,7 +447,6 @@ function sstv_test_cb(path, val, first)
 {
    // mode_name & status fields set in cpp code
    if (ext_nom_sample_rate() != 12000) return;
-	sstv_result_cb("");
 	sstv_fsk_id_cb("");
 	console.log('sstv_test_cb '+ val);
 	ext_send('SET test='+ val);
@@ -491,6 +480,8 @@ function SSTV_help(show)
          w3_text('w3-medium w3-bold w3-text-aqua', 'SSTV decoder help') +
          w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
             w3_div('w3-margin-R-8',
+               'From <b><a href="http://windytan.github.io/slowrx" target="_blank">slowrx</a></b> by Oona Räisänen OH2EIQ &copy;2007-2013<br><br>' +
+
                'Select an entry from the SSTV freq menu and wait for a signal to begin decoding.<br>' +
                'Sometimes activity is +/- the given frequencies. Try the "test" button.<br>' +
                '<br>Supported modes:' +

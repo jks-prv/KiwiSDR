@@ -215,7 +215,7 @@ bool sstv_msgs(char *msg, int rx_chan)
         }
 
         printf("SSTV: manual adjust @ %.1f Hz, Skip %d\n", e->pic.Rate, e->pic.Skip);
-        ext_send_msg_encoded(rx_chan, false, "EXT", "status", "%s, man adj, %.1f Hz (hdr %+d), skip %d smp (%.1f ms)",
+        ext_send_msg_encoded(rx_chan, false, "EXT", "status", "%s, man adj, %.1f Hz (hdr %+d),<br>skip %d smp (%.1f ms)",
             m->ShortName, e->pic.Rate, e->pic.HeaderShift, e->pic.Skip, e->pic.Skip * (1e3 / e->pic.Rate));
         sstv_video_get(e, "man-redraw", e->pic.Skip, true);
 
