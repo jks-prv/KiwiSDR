@@ -7,8 +7,8 @@ var hfdl = {
    test_flight: false,  // requires test audio file to be played
    dataH: 445,
    dataW: 1024,
-   ctrlW: 600,
-   ctrlH: 185,
+   ctrlW: 350,
+   ctrlH: 260,
    freq: 0,
    sfmt: 'w3-text-red',
    pb: { lo: 300, hi: 2600 },
@@ -342,14 +342,16 @@ function hfdl_controls_setup()
 	var controls_html =
 		w3_div('id-hfdl-controls w3-text-white',
          w3_col_percent('w3-tspace-8 w3-valign/',
-            w3_div('w3-medium w3-text-aqua', '<b>HFDL decoder</b>'), 25,
-            w3_div('', 'From <b><a href="https://github.com/szpajder/dumphfdl" target="_blank">dumphfdl</a></b> by Tomasz Lemiech &copy;2021</b>')
+            w3_div('w3-medium w3-text-aqua', '<b>HFDL decoder</b>'), 40,
+            w3_div('', 'From <b><a href="https://github.com/szpajder/dumphfdl" target="_blank">dumphfdl</a></b>')
          ),
 
          w3_inline('w3-tspace-4 w3-halign-space-between/',
             w3_div('id-hfdl-msg')
          ),
          
+         w3_inline('id-hfdl-menus w3-tspace-6 w3-gap-16/'),
+
          w3_inline('w3-margin-T-16/w3-margin-between-16',
             w3_inline('w3-valign-end w3-round-large w3-padding-small w3-text-white w3-grey/',
                w3_select(hfdl.sfmt, 'Display', '', 'hfdl.dsp', hfdl.dsp, hfdl.dsp_s, 'hfdl_display_cb'),
@@ -357,22 +359,23 @@ function hfdl_controls_setup()
                   w3_checkbox('/w3-label-inline w3-label-not-bold', 'Uplink', 'hfdl.uplink', hfdl.uplink, 'w3_bool_cb'),
                   w3_checkbox('/w3-label-inline w3-label-not-bold', 'Downlink', 'hfdl.downlink', hfdl.downlink, 'w3_bool_cb')
                )
-            ),
-            w3_inline('id-hfdl-menus w3-tspace-6 w3-gap-16/')
+            )
          ),
 
          w3_inline('w3-tspace-8 w3-valign/w3-margin-between-12',
             w3_button('w3-padding-smaller', 'Next', 'w3_select_next_prev_cb', { dir:w3_MENU_NEXT, id:'hfdl.menu', isNumeric:true, func:'hfdl_np_pre_select_cb' }),
             w3_button('w3-padding-smaller', 'Prev', 'w3_select_next_prev_cb', { dir:w3_MENU_PREV, id:'hfdl.menu', isNumeric:true, func:'hfdl_np_pre_select_cb' }),
-            w3_button('id-hfdl-clear-button w3-padding-smaller w3-css-yellow', 'Clear', 'hfdl_clear_button_cb'),
+            w3_button('id-hfdl-clear-button w3-padding-smaller w3-css-yellow', 'Clear', 'hfdl_clear_button_cb')
+         ),
+
+         w3_inline('w3-tspace-8 w3-valign/w3-margin-between-12',
             w3_button('id-hfdl-log w3-padding-smaller w3-blue', 'Log', 'hfdl_log_cb'),
+            w3_input('id-hfdl-log-mins/w3-label-not-bold/|padding:0;width:auto|size=4',
+               'log min', 'hfdl.log_mins', hfdl.log_mins, 'hfdl_log_mins_cb'),
             w3_button('id-hfdl-test w3-padding-smaller w3-aqua', 'Test', 'hfdl_test_cb', 1),
             w3_div('id-hfdl-bar-container w3-progress-container w3-round-large w3-white w3-hide|width:70px; height:16px',
                w3_div('id-hfdl-bar w3-progressbar w3-round-large w3-light-green|width:0%', '&nbsp;')
-            ),
-            
-            w3_input('id-hfdl-log-mins/w3-label-not-bold/|padding:0;width:auto|size=4',
-               'log min', 'hfdl.log_mins', hfdl.log_mins, 'hfdl_log_mins_cb')
+            )
          )
       );
 
@@ -566,7 +569,7 @@ function hfdl_place_gs_marker(gs_n)
             cf = rv.suffix;
             cf = cf.toLowerCase().replace(/_/g, ' ');
             console.log('click cf2='+ dq(cf));
-            var rv = hfdl_menu_match(null, cf);
+            rv = hfdl_menu_match(null, cf);
             if (rv.found_menu_match) {
                var b = hfdl_freq_2_band(parseInt(cf));
                var rv2 = hfdl_menu_match(b, b.toString());
@@ -898,7 +901,7 @@ function hfdl_render_menus()
    for (i = 0; i < hfdl.bf.length; i++) {
       band[i].sort(kiwi_sort_numeric_reverse);
       var o = {};
-      o.name = 'x, '+ hfdl.bf[i] + ' MHz';
+      o.name = 'x, '+ hfdl.bf[i] + ' MHz';   // preface with 'x, ' to prevent number matching
       o.frequencies = [ i ];
       band[i].forEach(function(f) { o.frequencies.push(f); });
       bands[i.toString()] = o;
@@ -928,6 +931,8 @@ function hfdl_msg(color, s)
 function hfdl_clear_menus(except)
 {
    // reset frequency menus
+   //console.log('hfdl_clear_menus except='+ except);
+   //if (!isArg(except)) kiwi_trace();
    for (var i = 0; i < hfdl.menu_n; i++) {
       if (isNoArg(except) || i != except)
          w3_select_value('hfdl.menu'+ i, -1);
@@ -992,24 +997,20 @@ function hfdl_pre_select_cb(path, val, first)
       var j = +id[1];
       if (d) console.log('hfdl_pre_select_cb i='+ i +' j='+ j);
       var o1 = w3_obj_seq_el(hfdl.menus[menu_n], i);
-      //console.log(hfdl.menus[menu_n]);
-      //console.log('o1=...');
-      //console.log(o1);
-      if (d) w3_console.log(o1, 'o1');
+      if (d) console.log('o1 ', kiwi_JSON(o1));
       o2 = w3_obj_seq_el(o1.frequencies, j);
-      //console.log('o2=...');
-      //console.log(o2);
-      if (d) w3_console.log(o2, 'o2');
+      if (d) console.log('o2 ', kiwi_JSON(o2));
    
       var s = null, show_msg = 0;
       o2 = parseInt(o2);
       if (isNumber(o2)) {
          if (d) console.log(o2);
          
+         // if the number is small it's not a frequency but a band index
          if (o2 < hfdl.bf.length) {
             var znew = hfdl.bf_z[o2];
             var cf = hfdl.bf_cf[o2];
-            //console.log('$show band '+ o2 +' cf='+ cf +' z='+ znew);
+             if (d) console.log('$show band '+ o2 +' cf='+ cf +' z='+ znew);
             if (zoom_level == znew)
                zoom_step(ext_zoom.OUT);   // force ext_tune() to re-center waterfall on cf
             ext_tune(cf, 'iq', ext_zoom.ABS, znew);
@@ -1020,6 +1021,7 @@ function hfdl_pre_select_cb(path, val, first)
                dx_set_type(dx.DX_HFDL);
                dx_database_cb('', dx.DB_EiBi);
             }
+            hfdl.band_cf = cf;
             show_msg = 1;
          } else {
             hfdl_tune(o2);
@@ -1136,24 +1138,30 @@ function HFDL_environment_changed(changed)
       var f_kHz = (+ext_get_freq_kHz()).toFixed(0);
       var hfdl_f_kHz = (+hfdl.freq).toFixed(0);
       var mode = ext_get_mode();
-      //console.log('HFDL_environment_changed: TEST ext_open='+ TF(changed.ext_open) +' freq='+ hfdl_f_kHz +' f_kHz='+ f_kHz +' mode='+ mode);
+      //console.log('HFDL_environment_changed: ext_open='+ TF(changed.ext_open) +' hfdl='+ hfdl_f_kHz +' dial='+ f_kHz +' band_cf='+ hfdl.band_cf +' mode='+ mode);
 	   if (mode != 'iq') {
 	      //console.log('hfdl_clear_menus()');
 	      hfdl_clear_menus();
 	      hfdl_msg('w3-text-css-yellow', '&nbsp;');
 	   } else
 	   if ((changed.ext_open || hfdl_f_kHz != f_kHz) && mode == 'iq') {
-	      // try and match new freq to one of the menu entries
-	      //console.log('HFDL_environment_changed: TRUE f='+ f_kHz);
-	      var rv = hfdl_menu_match(+f_kHz, f_kHz);
-         if (rv.found_menu_match) {
-            //console.log('HFDL MATCH f_kHz='+ f_kHz);
-            hfdl_pre_select_cb(rv.match_menu, rv.match_val, false);
-         } else {
-	         //console.log('hfdl_clear_menus()');
-	         hfdl_clear_menus();
-	         hfdl_msg('w3-text-css-yellow', '&nbsp;');
-	      }
+
+	      if (hfdl.band_cf == f_kHz) {
+	         // if we just selected a band entry on the bands menu -- don't change anything
+	         hfdl.band_cf = 0;
+	      } else {
+            // try and match new freq to one of the menu entries
+            //console.log('HFDL_environment_changed: TRUE f='+ f_kHz);
+            var rv = hfdl_menu_match(+f_kHz, f_kHz);
+            if (rv.found_menu_match) {
+               //console.log('HFDL MATCH f_kHz='+ f_kHz);
+               hfdl_pre_select_cb(rv.match_menu, rv.match_val, false);
+            } else {
+               //console.log('hfdl_clear_menus()');
+               hfdl_clear_menus();
+               hfdl_msg('w3-text-css-yellow', '&nbsp;');
+            }
+         }
       } else {
 	         //console.log('HFDL no freq change');
       }
@@ -1205,6 +1213,8 @@ function HFDL_help(show)
          w3_text('w3-medium w3-bold w3-text-aqua', 'HFDL decoder help') +
          w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
             w3_div('w3-margin-R-8',
+               'From <b><a href="https://github.com/szpajder/dumphfdl" target="_blank">dumphfdl</a></b> by Tomasz Lemiech &copy;2021<br><br>' +
+
                'Periodic downloading of the HFDL message log to a file can be specified via the <i>log min</i> value. ' +
                'Adjust your browser settings so these files are downloaded ' +
                'and saved automatically without causing a browser popup window for each download.' +
