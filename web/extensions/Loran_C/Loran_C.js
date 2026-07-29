@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2023 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 /*
 
@@ -472,10 +472,10 @@ function Loran_C_environment_changed(changed)
 
 function loran_c_mousedown(evt)
 {
-	//console.log("MDN evt: offX="+evt.offsetX+" pageX="+evt.pageX+" clientX="+evt.clientX+" layerX="+evt.layerX );
-	//console.log("MDN evt: offY="+evt.offsetY+" pageY="+evt.pageY+" clientY="+evt.clientY+" layerY="+evt.layerY );
-	var x = evt.clientX? evt.clientX : (evt.offsetX? evt.offsetX : evt.layerX);
-	var y = evt.clientY? evt.clientY : (evt.offsetY? evt.offsetY : evt.layerY);
+	var x = evt.offsetX;
+	var y = evt.offsetY;
+	//console.log('loran_c_mousedown xy '+ x +' '+ y);
+	//event_dump(evt, 'loran_c_mousedown', false);
 	var ch = (y < loran_c.scope.height/2)? 0:1;
 	var offset = x - loran_c.left - loran_c_startx;
 	//console.log('ch='+ ch +' offset='+ offset +' x='+ x +' left='+ loran_c.left +' nbuckets='+ loran_c_nbuckets[ch]);
@@ -586,7 +586,7 @@ function Loran_C_help(show)
       var s = 
          w3_text('w3-medium w3-bold w3-text-aqua', 'Loran-C viewer help') + '<br><br>' +
          'You can manually align the master station (the one with the 9th pulse) ' +
-         'to the left "M" slot by shift-clicking (touch on mobile devices) ' +
+         'to the left "M" slot by clicking (touch on mobile devices) ' +
          'at the location in the display you want moved to the left edge. <br><br>' +
 
          'URL parameters: <br>' +

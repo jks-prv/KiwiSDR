@@ -1,4 +1,4 @@
-// Copyright (c) 2016 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2016-2026 John Seamons, ZL4VO/KF6VO
 
 #include "ext.h"	// all calls to the extension interface begin with "ext_", e.g. ext_register()
 
@@ -121,6 +121,11 @@ static void loran_c_data(int rx_chan, int instance, int nsamps, TYPEMONO16 *samp
 				e->redraw_legend = false;
 			}
 			c->dsp_samps++;
+			
+			//#define LORAN_C_TEST
+			#ifdef LORAN_C_TEST
+			    if (bn == MAX(0, (100 - c->offset))) pwr = CUTESDR_MAX_VAL * CUTESDR_MAX_VAL;
+			#endif
 
 			if (c->avg_algo == AVG_CMA) {
 				if (bn == 0 && (c->restart || (c->avg_samps > (e->i_srate * c->avg_param_i)))) {
