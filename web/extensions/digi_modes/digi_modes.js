@@ -116,11 +116,9 @@ function digi_controls_setup()
 	var controls_html =
 		w3_div('id-digi-controls w3-text-white',
 			w3_divs('',
-            w3_col_percent('w3-valign/',
-               w3_div('',
-				      w3_div('w3-medium w3-text-aqua', '<b>Digital modes decoder</b>')
-				   ), 40,
-					w3_div('', 'From <b><a href="https://sourceforge.net/p/fldigi/wiki/Home/" target="_blank">fldigi</a></b> by Dave, W1HKJ et al.'), 45
+            w3_inline('w3-valign w3-halign-space-between|width:75%/',
+				   w3_div('w3-medium w3-text-aqua', '<b>Digital modes decoder</b>'),
+					w3_div('', 'From <b><a href="https://sourceforge.net/p/fldigi/wiki/Home/" target="_blank">Fldigi</a></b>')
 				),
 				w3_div('id-digi-err w3-margin-T-10 w3-padding-small w3-css-yellow w3-width-fit w3-hide'),
 				w3_inline('id-digi-container w3-margin-T-6/w3-margin-between-16',
@@ -131,7 +129,8 @@ function digi_controls_setup()
                      w3_select('w3-text-red', '', 'mode', 'digi.mode', digi.mode, digi.mode_s, 'digi_mode_cb')
                   )
                ),
-
+            ),
+            w3_inline('w3-margin-T-8/w3-margin-between-12',
                w3_button('w3-padding-smaller w3-css-yellow', 'Clear', 'digi_clear_button_cb'),
                (dbgUs? w3_button('w3-padding-smaller w3-aqua', 'Test', 'digi_test_cb') : '')
             )
@@ -142,7 +141,7 @@ function digi_controls_setup()
 	time_display_setup('digi');
 
    ext_set_data_height(300);
-	ext_set_controls_width_height(525, 90);
+	ext_set_controls_width_height(400, 100);
    digi_clear_button_cb();
 
 	ext_send('SET digi_start');
@@ -235,14 +234,11 @@ function digi_modes_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'Digital modes decoder help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8 w3-margin-bottom',
-               'To be supplied...'
-            )
-         );
-      confirmation_show_content(s, 600, 300);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+         'From <b><a href="https://sourceforge.net/p/fldigi/wiki/Home" target="_blank">Fldigi</a></b> by Dave Freese W1HKJ et al. &copy;2006-2026<br><br>' +
+         
+         'To be supplied...';
+
+      confirmation_show_scrolling_content('Digital modes decoder help', s, 610, 200);
    }
    return true;
 }

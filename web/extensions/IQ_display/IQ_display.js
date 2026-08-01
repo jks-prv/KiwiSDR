@@ -103,10 +103,10 @@ function iq_display_update()
          if (!gps_correcting) {
             w3_innerHTML('iq-fcal-p',
                w3_button('w3-css-yellow|margin-left:12px; padding:6px 10px;', 'Fcal '+ w3_icon('', 'fa-repeat'), 'iq_display_IQ_cal_jog_cb', 1)
-            )
+            );
             w3_innerHTML('iq-fcal-m',
                w3_button('w3-css-yellow|margin-left:12px; padding:6px 10px;', 'Fcal '+ w3_icon('', 'fa-undo'), 'iq_display_IQ_cal_jog_cb', -1)
-            )
+            );
          } else {
             w3_innerHTML('iq-fcal-p', 'GPS is correcting');
             w3_innerHTML('iq-fcal-m', '');
@@ -122,6 +122,7 @@ function iq_display_update()
 
 function iq_display_recv(data)
 {
+   var i, j, c, q;
 	var firstChars = arrayBufferToStringLen(data, 3);
 	
 	// process data sent from server/C by ext_send_msg_data()
@@ -132,10 +133,9 @@ function iq_display_recv(data)
 		var len = ba.length-1;
 
 		if (cmd == iq.cmd_e.IQ_POINTS) {
-			var c = iq_display_canvas.ctx;
-			var i, q;
+			c = iq_display_canvas.ctx;
 
-			for (var j=1; j < len; j += 4) {
+			for (j=1; j < len; j += 4) {
 				i = ba[j+0];
 				q = ba[j+1];
 				c.fillStyle = 'black';
@@ -150,10 +150,9 @@ function iq_display_recv(data)
 		
 		if (cmd == iq.cmd_e.IQ_DENSITY) {
 			//console.log('IQ_DENSITY '+ len);
-			var c = iq_display_canvas.ctx;
-			var i, q;
+			c = iq_display_canvas.ctx;
 
-			for (var j=1; j < len; j += 2) {
+			for (j=1; j < len; j += 2) {
 				i = ba[j+0];
 				q = ba[j+1];
 				var m = iq_display_map[q*256 + i];
@@ -176,7 +175,7 @@ function iq_display_recv(data)
 	var stringData = arrayBufferToString(data);
 	var params = stringData.substring(4).split(" ");
 
-	for (var i=0; i < params.length; i++) {
+	for (i=0; i < params.length; i++) {
 		var param = params[i].split("=");
 
 		if (0 && param[0] != "keepalive") {
@@ -319,8 +318,8 @@ function iq_display_controls_setup()
 	ext_send('SET run=1');
 	
 	// give the PLL time to settle on startup
-	setTimeout(function() { iq_display_clear() }, 500);
-	setTimeout(function() { iq_display_clear() }, 2000);
+	setTimeout(function() { iq_display_clear(); }, 500);
+	setTimeout(function() { iq_display_clear(); }, 2000);
 }
 
 function iq_display_gain_cb(path, val, complete, first)
@@ -410,7 +409,7 @@ function iq_display_bw_cb(path, val)
 {
    var hbw = +val/2;
    ext_set_passband(-hbw, hbw);
-	setTimeout(function() { iq_display_clear() }, 500);
+	setTimeout(function() { iq_display_clear(); }, 500);
 }
 
 function iq_display_IQ_balance_cb(path, val)
@@ -440,7 +439,7 @@ function iq_display_IQ_balance_cb(path, val)
             w3_button('w3-green w3-margin-left', 'Confirm', 'iq_balance_confirm'),
             w3_button('w3-red w3-margin-left', 'Cancel', 'confirmation_panel_close')
          ) +
-         w3_button('w3-css-yellow w3-margin-left w3-tspace-8', 'Reset to default values', 'iq_balance_default')
+         w3_button('w3-css-yellow w3-margin-left w3-tspace-8', 'Reset to default values', 'iq_balance_default');
       
       confirmation_show_content(s, 550, 230);
 
@@ -502,25 +501,24 @@ function IQ_display_blur()
 	ext_set_mode(iq.saved_mode);
 }
 
-// called to display HTML for configuration parameters in admin interface
-function IQ_display_config_html()
-{
-   ext_config_html(iq, 'iq_display', 'IQ', 'IQ display configuration');
-}
-
 function IQ_display_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'IQ display help') +
-         '<br><br>URL parameters: <br>' +
+         'URL parameters: <br>' +
          w3_text('|color:orange', 'gain:<i>num</i> &nbsp; density|points &nbsp; IQ|carrier &nbsp; off|on|BPSK|QPSK|8PSK|MSK100|MSK200 <br>' +
          'cmax:<i>num</i> &nbsp; cmin:<i>num</i> &nbsp; pll_bw:<i>num</i>') +
          '<br> Non-numeric values are those appearing in their respective menus. <br>' +
          'Keywords are case-insensitive and can be abbreviated. <br>' +
-         'So for example this is valid: <i>ext=iq,g:75,poi,car,q,pll:8</i> <br>' +
-         '';
-      confirmation_show_content(s, 610, 175);
+         'So for example this is valid: <i>ext=iq,g:75,poi,car,q,pll:8</i> <br>';
+
+      confirmation_show_scrolling_content('IQ display help', s, 610, 175);
    }
    return true;
+}
+
+// called to display HTML for configuration parameters in admin interface
+function IQ_display_config_html()
+{
+   ext_config_html(iq, 'iq_display', 'IQ', 'IQ display configuration');
 }

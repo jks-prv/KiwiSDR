@@ -73,19 +73,16 @@ function ibp_controls_setup()
    });
 
    var controls_html =
-      w3_div('id-tc-controls w3-text-white',
-         w3_div('w3-medium w3-text-aqua',
-            '<b><a href="http://www.ncdxf.org/beacon/index.html">International Beacon Project</a> (IBP) Scanner</b>'
+      w3_div('id-IBP-controls w3-text-white',
+         w3_inline('w3-halign-space-between|width:75%/',
+            w3_div('w3-medium w3-text-aqua w3-bold', 'IBP Scanner'),
+            w3_div('w3-small w3-text-white',
+               'From '+ w3_link('w3-bold', 'http://ve3sun.com/KiwiSDR/IBP.html', 'VE3SUN IBP')
+            )
          ),
-
-         w3_col_percent('w3-margin-T-4',
-            w3_div('', 'by VE3SUN'), 25,
-            w3_div('', 'Info: <b><a href="http://ve3sun.com/KiwiSDR/IBP.html" target="_blank">ve3sun.com/KiwiSDR/IBP</a></b>'), 55,
-            '', 10
-         ),
-         
-         w3_inline('w3-halign-space-between w3-margin-T-8|width:90%;/',
-            w3_select('id-IBP-menu w3-left w3-margin-right w3-show-inline', '', '', '', 0, select, 'IBP_menu_cb'),
+         w3_link('w3-bold', 'http://www.ncdxf.org/beacon/index.html', 'International Beacon Project'),
+         w3_select('id-IBP-menu w3-margin-T-8 w3-margin-right w3-show-inline', '', '', '', 0, select, 'IBP_menu_cb'),
+         w3_inline('w3-halign-space-between|width:85%;/w3-margin-T-8',
             w3_checkbox('id-IBP-annotate w3-label-inline w3-label-not-bold', 'Annotate Waterfall', 'ibp.annotate', true, 'w3_bool_cb'),
             w3_checkbox('id-IBP-autosave w3-label-inline w3-label-not-bold', 'Autosave PNG', 'ibp.autosave', false, 'IBP_Autosave')
          )
@@ -93,7 +90,7 @@ function ibp_controls_setup()
    
    //console.log('ibp_controls_setup');
    ext_panel_show(controls_html, data_html, null);
-   ext_set_controls_width_height(475, 90);
+   ext_set_controls_width_height(350, 125);
    time_display_setup('IBP_scan');
 	IBP_environment_changed( {resize:1} );
    
@@ -374,21 +371,15 @@ function IBP_scan_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'IBP scanner help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               '<br>URL parameters: <br>' +
-               'First parameter can be an entry from the IBP menu: One of the station callsigns. <br>' +
-               'Or a band or frequency (MHz) entry, e.g. "20m", "28". Or "all" or "cycle" to scan all bands. ' +
-               'The two checkbox values can also be set. Use a num value of "1" to set the checkbox. <br>' +
-               w3_text('|color:orange', 'annotate:<i>num</i> &nbsp; autosave:<i>num</i>') +
-               '<br>Keywords are case-insensitive and can be abbreviated (except for callsigns). <br>' +
-               'So for example these are valid: <i>ext=ibp,all</i> &nbsp; <i>ext=ibp,zl6b,auto:1</i> &nbsp; <i>ext=ibp,15m</i>  &nbsp; <i>ext=ibp,28</i> <br>' +
-               ''
-            )
-         );
-      confirmation_show_content(s, 630, 225);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+         'URL parameters: <br>' +
+         'First parameter can be an entry from the IBP menu: One of the station callsigns. <br>' +
+         'Or a band or frequency (MHz) entry, e.g. "20m", "28". Or "all" or "cycle" to scan all bands. ' +
+         'The two checkbox values can also be set. Use a num value of "1" to set the checkbox. <br>' +
+         w3_text('|color:orange', 'annotate:<i>num</i> &nbsp; autosave:<i>num</i>') +
+         '<br>Keywords are case-insensitive and can be abbreviated (except for callsigns). <br>' +
+         'So for example these are valid: <i>ext=ibp,all</i> &nbsp; <i>ext=ibp,zl6b,auto:1</i> &nbsp; <i>ext=ibp,15m</i>  &nbsp; <i>ext=ibp,28</i> <br>';
+
+      confirmation_show_scrolling_content('IBP scanner help', s, 630, 225);
    }
    return true;
 }

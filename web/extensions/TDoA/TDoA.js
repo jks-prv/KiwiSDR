@@ -2580,104 +2580,100 @@ function tdoa_sample_time_cb(path, idx, first)
 function TDoA_help(show)
 {
    if (show) {
-      var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'TDoA Help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'See the <a href="https://forum.kiwisdr.com/categories/kiwisdr-tdoa-topics" target="_blank">Kiwi forum</a> for more information. <br><br>' +
-               
-               '<b>Very important:</b> If the TDoA computation cannot converge on a solution within 3 minutes it will timeout. ' +
-               'Start with 2 or 3 sampling stations and if you get reasonable solutions add additional stations one-at-a-time. ' +
-               'If you begin with 4 or more stations that have no correlation of the signal the computation will timeout and ' +
-               'you\'ll be wasting your time as well as the servers time. <br><br>' + 
-               
-               'If you are getting errors check these common problems:<ul>' +
-                  '<li>Not zoomed-in far enough. The TDoA process will run out of memory or have problems plotting the maps.</li>' +
-   
-                  '<br><li>Not all Kiwis used for sampling have good reception of target signal. ' +
-                  'Open a connection to each Kiwi by double clicking on its marker to check the reception ' +
-                  'or by clicking on the speaker icon in the sampling station list.</li>' +
-   
-                  '<br><li><span class="w3-css-yellow">New</span> Shift-click the host marker or speaker icon to temporarily switch the waterfall to display ' +
-                  'what the sampling Kiwi is receiving.</li>' +
-   
-                  '<br><li><span class="w3-css-yellow">New</span> The numbers in the markers after the host name is the HF SNR.</li>' +
-   
-                  '<br><li><span class="w3-css-yellow">New</span> Hosts can be filtered by minimum SNR.</li>' +
-   
-                  '<br><li>Don\'t use Kiwis that are spaced too far apart (i.e. many thousands of km).</li>' +
-   
-                  '<br><li>Use minimum IQ-mode passband. Just enough to capture the signal. ' +
-                  'Use the "p" and "P" keys to narrow/widen the passband. Or use the sliders on the control panel <x1>Audio</x1> tab. ' +
-                  'For AM broadcast signals try a narrow passband that only passes the carrier.</li> ' +
-               '</ul>' +
-
-               'Once you configure this extension, and click the "Submit" button, ' +
-               'information is sent to the kiwisdr.com server. The server then records ' +
-               '15 to 60 seconds (configurable) of IQ data from the two to six sampling Kiwis specified. ' +
-               'The frequency and passband of <b><i>this</i></b> Kiwi will be used for all recording. ' +
-               'So make sure it is set correctly before proceeding. Always use the minimum necessary passband and ' +
-               'make sure it is symmetrical about the carrier. The current mode (e.g. AM) is ignored as all ' +
-               'recording is automatically done in IQ mode.' +
-               '<br><br>' +
-               
-               'After sampling, the TDoA process will be run on the server. After it finishes a result map will appear. ' +
-               'Additional maps may be viewed with the TDoA result menu. ' +
-               'You can pan and zoom the resulting maps and click submit again after making any changes. ' +
-               //'Or use the rerun button to get new maps without resampling. The checkboxes exclude stations during a rerun.' +
-               '<br><br>' +
+      var s =
+         'From <b><a href="https://github.com/hcab14/TDoA" target="_blank">TDoA</a></b> Christoph Mayer DL1CH &copy;2017-2026<br><br>' +
          
-               'The <i>Show all results</i> checkbox, if checked, will cause the most likely position markers to accumulate for ' +
-               'successive runs. The <i>clear old</i> button will erase all but the most recent likely position marker.<br><br>' +
-               
-               'The <i>Show "TDoA map with hosts"</i> checkbox, if checked, will cause the map menu to select "TDoA map with hosts" when a run is finished ' +
-               'as opposed to the default "TDoA map no hosts". See below for a URL parameter to set the checkbox.<br><br>' +
-               
-               'To begin zoom into the general area of interest on the Kiwi map (note the "zoom to" menu). ' +
-               'Click on the desired blue Kiwi sampling stations. If they are not responding or have ' +
-               'had no recent GPS solutions an error message will appear. ' +
-               '<br><b>Important:</b> the position and zooming of the Kiwi map determines the same for the resulting TDoA maps. ' +
-               'Double click on the blue markers (or speaker icon) to open that Kiwi in a new tab to check if it is receiving the target signal well. ' +
-               'You can also manually edit the sampling station list (white fields). ' +
-               '<br><br>' +
+         'See the <a href="https://forum.kiwisdr.com/categories/kiwisdr-tdoa-topics" target="_blank">Kiwi forum</a> for more information. <br><br>' +
          
-               'You can click on the green map markers to set the frequency/passband of some well-known reference stations. ' +
-               'The known locations of these stations will be shown in the result maps ' +
-               'so you can see how well it agrees with the TDoA solution. ' +
-               'Practice with VLF/LF references stations as their ground-wave signals usually give good results. ' +
-               'Start with only two sampling stations and check the quality of the solution before adding more. ' +
-               'Of course you need three or more stations to generate a localized solution. ' +
-               '<br><br>' +
+         '<b>Very important:</b> If the TDoA computation cannot converge on a solution within 3 minutes it will timeout. ' +
+         'Start with 2 or 3 sampling stations and if you get reasonable solutions add additional stations one-at-a-time. ' +
+         'If you begin with 4 or more stations that have no correlation of the signal the computation will timeout and ' +
+         'you\'ll be wasting your time as well as the servers time. <br><br>' + 
+         
+         'If you are getting errors check these common problems:<ul>' +
+            '<li>Not zoomed-in far enough. The TDoA process will run out of memory or have problems plotting the maps.</li>' +
+      
+            '<br><li>Not all Kiwis used for sampling have good reception of target signal. ' +
+            'Open a connection to each Kiwi by double clicking on its marker to check the reception ' +
+            'or by clicking on the speaker icon in the sampling station list.</li>' +
+      
+            '<br><li><span class="w3-css-yellow">New</span> Shift-click the host marker or speaker icon to temporarily switch the waterfall to display ' +
+            'what the sampling Kiwi is receiving.</li>' +
+      
+            '<br><li><span class="w3-css-yellow">New</span> The numbers in the markers after the host name is the HF SNR.</li>' +
+      
+            '<br><li><span class="w3-css-yellow">New</span> Hosts can be filtered by minimum SNR.</li>' +
+      
+            '<br><li>Don\'t use Kiwis that are spaced too far apart (i.e. many thousands of km).</li>' +
+      
+            '<br><li>Use minimum IQ-mode passband. Just enough to capture the signal. ' +
+            'Use the "p" and "P" keys to narrow/widen the passband. Or use the sliders on the control panel <x1>Audio</x1> tab. ' +
+            'For AM broadcast signals try a narrow passband that only passes the carrier.</li> ' +
+         '</ul>' +
+      
+         'Once you configure this extension, and click the "Submit" button, ' +
+         'information is sent to the kiwisdr.com server. The server then records ' +
+         '15 to 60 seconds (configurable) of IQ data from the two to six sampling Kiwis specified. ' +
+         'The frequency and passband of <b><i>this</i></b> Kiwi will be used for all recording. ' +
+         'So make sure it is set correctly before proceeding. Always use the minimum necessary passband and ' +
+         'make sure it is symmetrical about the carrier. The current mode (e.g. AM) is ignored as all ' +
+         'recording is automatically done in IQ mode.' +
+         '<br><br>' +
+         
+         'After sampling, the TDoA process will be run on the server. After it finishes a result map will appear. ' +
+         'Additional maps may be viewed with the TDoA result menu. ' +
+         'You can pan and zoom the resulting maps and click submit again after making any changes. ' +
+         //'Or use the rerun button to get new maps without resampling. The checkboxes exclude stations during a rerun.' +
+         '<br><br>' +
+      
+         'The <i>Show all results</i> checkbox, if checked, will cause the most likely position markers to accumulate for ' +
+         'successive runs. The <i>clear old</i> button will erase all but the most recent likely position marker.<br><br>' +
+         
+         'The <i>Show "TDoA map with hosts"</i> checkbox, if checked, will cause the map menu to select "TDoA map with hosts" when a run is finished ' +
+         'as opposed to the default "TDoA map no hosts". See below for a URL parameter to set the checkbox.<br><br>' +
+         
+         'To begin zoom into the general area of interest on the Kiwi map (note the "zoom to" menu). ' +
+         'Click on the desired blue Kiwi sampling stations. If they are not responding or have ' +
+         'had no recent GPS solutions an error message will appear. ' +
+         '<br><b>Important:</b> the position and zooming of the Kiwi map determines the same for the resulting TDoA maps. ' +
+         'Double click on the blue markers (or speaker icon) to open that Kiwi in a new tab to check if it is receiving the target signal well. ' +
+         'You can also manually edit the sampling station list (white fields). ' +
+         '<br><br>' +
+      
+         'You can click on the green map markers to set the frequency/passband of some well-known reference stations. ' +
+         'The known locations of these stations will be shown in the result maps ' +
+         'so you can see how well it agrees with the TDoA solution. ' +
+         'Practice with VLF/LF references stations as their ground-wave signals usually give good results. ' +
+         'Start with only two sampling stations and check the quality of the solution before adding more. ' +
+         'Of course you need three or more stations to generate a localized solution. ' +
+         '<br><br>' +
+      
+         'Mouse over the '+ w3_icon('w3-text-css-lime', 'fa-external-link-square', 16) +' pin to get a link to ' +
+         'the current session with all current parameters (e.g. host list, map lat/lon/zoom, etc). ' +
+         'Right click this link and copy/bookmark it, making an easier return to these specific settings in the future.' +
+         '<br><br>' +
+      
+         'URL parameters: <br>' +
+         w3_text('|color:orange', '(samp/ref station list) lat:<i>num</i> lon:<i>num</i> z|zoom:<i>num</i> sample:<i>secs</i> <br>' +
+            'all: result_hosts: hosts: snr:<i>num</i> refs:0 refs:[1-8] submit:') +
+         '<br> List of sampling stations and/or reference station IDs. Case-insensitive and can be abbreviated ' +
+         '(e.g. "dcf" matches "DCF77", "cyp2" matches "OTHR/CYP2") <br>' +
+         '<span class="w3-css-yellow">New</span> Custom/private sampling hosts can be entered into the station table by using the url parameter: ' +
+         w3_text('|color:orange', 'url:<i>id</i>:<i>url</i>') + 'For example <i>ext=tdoa,host1,url:my_tdoa_kiwi:my_kiwi:8073,host2</i>' +
+         '<br><br>' +
+         
+         'sample:<i>secs</i> (one of the time values from the "sample" menu) <br>' +
+         'all: (check <i>Show all results</i> checkbox) <br>' +
+         'result_hosts: (check <i>Show "TDoA map with hosts"</i> checkbox) <br>' +
+         'hosts: (uncheck <i>Kiwi hosts</i> checkbox) <br>' +
+         'snr: (filter hosts by minimum SNR) <br>' +
+         'refs:0 (uncheck <i>Reference locations</i> checkbox) <br>' +
+         'refs:[1-8] (cumulatively check/uncheck <i>Reference locations</i> checkboxes e.g. <i>refs:2:3</i>) <br>' +
+         'submit: (start TDoA process) <br><br>' +
+         
+         'Examples: <i>ext=tdoa,lat:35,lon:35,z:6,cyp2,ur5vib,kuwait,all:,refs:0:2:3,submit:</i> <br>';
 
-               'Mouse over the '+ w3_icon('w3-text-css-lime', 'fa-external-link-square', 16) +' pin to get a link to ' +
-               'the current session with all current parameters (e.g. host list, map lat/lon/zoom, etc). ' +
-               'Right click this link and copy/bookmark it, making an easier return to these specific settings in the future.' +
-               '<br><br>' +
-
-               'URL parameters: <br>' +
-               w3_text('|color:orange', '(samp/ref station list) lat:<i>num</i> lon:<i>num</i> z|zoom:<i>num</i> sample:<i>secs</i> <br>' +
-                  'all: result_hosts: hosts: snr:<i>num</i> refs:0 refs:[1-8] submit:') +
-               '<br> List of sampling stations and/or reference station IDs. Case-insensitive and can be abbreviated ' +
-               '(e.g. "dcf" matches "DCF77", "cyp2" matches "OTHR/CYP2") <br>' +
-               '<span class="w3-css-yellow">New</span> Custom/private sampling hosts can be entered into the station table by using the url parameter: ' +
-               w3_text('|color:orange', 'url:<i>id</i>:<i>url</i>') + 'For example <i>ext=tdoa,host1,url:my_tdoa_kiwi:my_kiwi:8073,host2</i>' +
-               '<br><br>' +
-               
-               'sample:<i>secs</i> (one of the time values from the "sample" menu) <br>' +
-               'all: (check <i>Show all results</i> checkbox) <br>' +
-               'result_hosts: (check <i>Show "TDoA map with hosts"</i> checkbox) <br>' +
-               'hosts: (uncheck <i>Kiwi hosts</i> checkbox) <br>' +
-               'snr: (filter hosts by minimum SNR) <br>' +
-               'refs:0 (uncheck <i>Reference locations</i> checkbox) <br>' +
-               'refs:[1-8] (cumulatively check/uncheck <i>Reference locations</i> checkboxes e.g. <i>refs:2:3</i>) <br>' +
-               'submit: (start TDoA process) <br><br>' +
-               
-               'Examples: <i>ext=tdoa,lat:35,lon:35,z:6,cyp2,ur5vib,kuwait,all:,refs:0:2:3,submit:</i> <br>' +
-               ''
-            )
-         );
-      confirmation_show_content(s, 625, 650);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+      confirmation_show_scrolling_content('TDoA Help', s, 625, 650);
    }
    return true;
 }

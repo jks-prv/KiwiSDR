@@ -271,7 +271,7 @@ function ale_2g_controls_setup()
 		w3_div('id-ale_2g-controls w3-text-white',
          w3_col_percent('w3-tspace-8 w3-valign/',
             w3_div('w3-medium w3-text-aqua', '<b>ALE 2G decoder</b>'), 30,
-            w3_div('', 'Based on <b><a href="https://github.com/gat3way/gr-ale" target="_blank">gr-ale</a></b> by Milen Rangelov et al.</b>')
+            w3_div('', 'From <b><a href="https://github.com/gat3way/gr-ale" target="_blank">gr-ale</a></b>')
          ),
 
          w3_inline('w3-tspace-4 w3-halign-space-between/',
@@ -1259,57 +1259,52 @@ function ALE_2G_blur()
 function ALE_2G_help(show)
 {
    if (show) {
-      var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'ALE 2G decoder help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'The menu content is fetched from ' +
-               '<a href="http://kiwisdr.com/ale/ALE_nets.cjson" target="_blank">kiwisdr.com</a> each time the extension is opened.' +
-               '<br><br>' +
-               'Because the menus can be long (many frequency entries) the <i>format</i> setting can be used to collapse them ' +
-               'to show just their net names followed by the <i>scan</i> entry (or single frequency). ' +
-               'Menus can also be sorted by high-to-low frequency since this is optimal for some types of ALE monitoring.' +
-               '<br><br>' +
-               'The <i>display</i> setting controls the ALE message detail shown. ' +
-               'The <i>DX</i> setting limits the information displayed per ALE transaction. ' +
-               'The <i>scan time</i> setting has preset entries and supports custom scan rates from ' +
-               ' 0.75 to 600 secs.' +
-               '<br><br>' +
-               'The frequencies of a scan list can be limited by the <i>frequency limit</i> setting. ' +
-               'This is useful when the scan list covers a wide range of HF frequencies but propagation ' +
-               'makes scanning some of them pointless (e.g. > 12 MHz at night).' +
-               '<br><br>' +
-               '<i>record</i> settings: Automatic audio recording can be setup when an ALE call between two stations is established. ' +
-               'Also periodic downloading of the ALE message log to a file. Adjust your browser settings so these files are downloaded ' +
-               'and saved automatically without causing a browser popup window for each download.' +
-               '<br><br>' +
-               'The Kiwi owner/admin can define the contents of the <i>Local</i> menu on the <br>' +
-               '<i>Admin > Extensions > ALE_2G</i> page. JSON format is used. Users cannot currently define '+
-               'their own menus (except via URL parameters, see below) but suggestions for the downloaded menus on extension startup can be made on the Kiwi forum.' +
+      var s =
+         'From <b><a href="https://github.com/gat3way/gr-ale" target="_blank">gr-ale</a></b> by Milen Rangelov et al &copy;2000-2001<br><br>' +
          
-               '<br><br>URL parameters: <br>' +
-               w3_text('|color:orange', '(menu match or frequency list) &nbsp; lsb &nbsp; format:[<i>0123</i>] &nbsp; display:[<i>0123</i>] &nbsp; scan[:<i>secs</i>] &nbsp; <br>' +
-               'limit_le:<i>freq</i> &nbsp; limit_ge:<i>freq</i> &nbsp; rec:[<i>0123</i>] &nbsp; rec_time:<i>secs</i> &nbsp; log_time:<i>mins</i> &nbsp; test') +
-               '<br><br>' +
-               'The first URL parameter can be a frequency entry from one of the menus (e.g. "3596") ' +
-               'or the name of a menu scan list (e.g. "MARS" in the Amateur menu). ' +
-               'Or it can be a list of frequencies separated by commas. Such a list will appear as the first entry in the ' +
-               '<i>Local</i> menu for subsequent selection. The parameter <i>lsb</i> will make this list use LSB mode ' +
-               'and should appear <i>after</i> the list.' +
-               '<br><br>' +
-               'Frequencies can use the suffixes \'k\' and \'M\'. [0123] refers to the order of selections in the corresponding menu.' +
-               '<br><br>' +
-               'Keywords are case-insensitive and can be abbreviated. So for example these are valid: <br>' +
-               '<i>ext=ale,3596</i> &nbsp;&nbsp; ' +
-               '<i>ext=ale,mars,scan</i> &nbsp;&nbsp; <i>ext=ale,cothen,s:0.75</i> &nbsp;&nbsp; <i>ext=ale,4M,5M,6M,lsb</i> <br>' +
-               '<i>ext=ale,7102,14.1M,18106,s</i> &nbsp;&nbsp; <i>ext=ale,ham,s,disp:1,limit_le:10M,rec,rec_t:10</i><br>' +
-               '<i>ext=ale,mars,scan,rec:3,rec_t:60,log_t:10</i> &nbsp; (i.e. <i>rec:3</i> is the "r+l" record menu entry)<br>' +
-               ''
-            )
-         );
+         'The menu content is fetched from ' +
+         '<a href="http://kiwisdr.com/ale/ALE_nets.cjson" target="_blank">kiwisdr.com</a> each time the extension is opened.' +
+         '<br><br>' +
+         'Because the menus can be long (many frequency entries) the <i>format</i> setting can be used to collapse them ' +
+         'to show just their net names followed by the <i>scan</i> entry (or single frequency). ' +
+         'Menus can also be sorted by high-to-low frequency since this is optimal for some types of ALE monitoring.' +
+         '<br><br>' +
+         'The <i>display</i> setting controls the ALE message detail shown. ' +
+         'The <i>DX</i> setting limits the information displayed per ALE transaction. ' +
+         'The <i>scan time</i> setting has preset entries and supports custom scan rates from ' +
+         ' 0.75 to 600 secs.' +
+         '<br><br>' +
+         'The frequencies of a scan list can be limited by the <i>frequency limit</i> setting. ' +
+         'This is useful when the scan list covers a wide range of HF frequencies but propagation ' +
+         'makes scanning some of them pointless (e.g. > 12 MHz at night).' +
+         '<br><br>' +
+         '<i>record</i> settings: Automatic audio recording can be setup when an ALE call between two stations is established. ' +
+         'Also periodic downloading of the ALE message log to a file. Adjust your browser settings so these files are downloaded ' +
+         'and saved automatically without causing a browser popup window for each download.' +
+         '<br><br>' +
+         'The Kiwi owner/admin can define the contents of the <i>Local</i> menu on the <br>' +
+         '<i>Admin > Extensions > ALE_2G</i> page. JSON format is used. Users cannot currently define '+
+         'their own menus (except via URL parameters, see below) but suggestions for the downloaded menus on extension startup can be made on the Kiwi forum.' +
+   
+         '<br><br>URL parameters: <br>' +
+         w3_text('|color:orange', '(menu match or frequency list) &nbsp; lsb &nbsp; format:[<i>0123</i>] &nbsp; display:[<i>0123</i>] &nbsp; scan[:<i>secs</i>] &nbsp; <br>' +
+         'limit_le:<i>freq</i> &nbsp; limit_ge:<i>freq</i> &nbsp; rec:[<i>0123</i>] &nbsp; rec_time:<i>secs</i> &nbsp; log_time:<i>mins</i> &nbsp; test') +
+         '<br><br>' +
+         'The first URL parameter can be a frequency entry from one of the menus (e.g. "3596") ' +
+         'or the name of a menu scan list (e.g. "MARS" in the Amateur menu). ' +
+         'Or it can be a list of frequencies separated by commas. Such a list will appear as the first entry in the ' +
+         '<i>Local</i> menu for subsequent selection. The parameter <i>lsb</i> will make this list use LSB mode ' +
+         'and should appear <i>after</i> the list.' +
+         '<br><br>' +
+         'Frequencies can use the suffixes \'k\' and \'M\'. [0123] refers to the order of selections in the corresponding menu.' +
+         '<br><br>' +
+         'Keywords are case-insensitive and can be abbreviated. So for example these are valid: <br>' +
+         '<i>ext=ale,3596</i> &nbsp;&nbsp; ' +
+         '<i>ext=ale,mars,scan</i> &nbsp;&nbsp; <i>ext=ale,cothen,s:0.75</i> &nbsp;&nbsp; <i>ext=ale,4M,5M,6M,lsb</i> <br>' +
+         '<i>ext=ale,7102,14.1M,18106,s</i> &nbsp;&nbsp; <i>ext=ale,ham,s,disp:1,limit_le:10M,rec,rec_t:10</i><br>' +
+         '<i>ext=ale,mars,scan,rec:3,rec_t:60,log_t:10</i> &nbsp; (i.e. <i>rec:3</i> is the "r+l" record menu entry)<br>';
 
-      confirmation_show_content(s, 610, 375);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+      confirmation_show_scrolling_content('ALE 2G decoder help', s, 610, 375);
    }
    return true;
 }

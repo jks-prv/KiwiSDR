@@ -1947,58 +1947,53 @@ function FFT_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'Audio FFT help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'Remember that on KiwiSDR the audio and waterfall channels are completely separate. ' +
-               'For example you can pan the waterfall frequency without effecting the audio. ' +
-               'By contrast this extension allows visualization of the <i>audio</i> channel itself by using ' +
-               'an FFT, waterfall and integrator (summing waterfall) for weak signals.' +
-               
-               '<br><br>The waterfall function computes its FFT in the browser directly from the audio ' +
-               'sample stream. The FFT size (hence frequency resolution), FFT overlap (time resolution) ' +
-               'and display zoom are selectable. Use IQ mode for the full bandwidth centered on the ' +
-               'tuned frequency and the best resolution (IQ audio is never compressed). ' +
-               'When there are more FFT bins than display pixels each pixel shows the strongest bin ' +
-               '(so narrow carriers are never lost); increase the zoom to see the full resolution. ' +
-               'A frequency scale is drawn above the waterfall and hovering the mouse shows ' +
-               'frequency and level. Click near a peak to monitor it in the Peaks table to the ' +
-               'right (precise frequency with sub-bin interpolation, level, Δf in <b>Hz</b> = drift from ' +
-               'the initial lock, and ḟ in <b>Hz/s</b> = Kalman drift-rate estimate). Retuning clears the peak list. ' +
-               'Shift-click replaces the selected row; up to 16 peaks can be ' +
-               'tracked. The <i>Auto scale</i> button sets the max/min sliders from the current ' +
-               'signal statistics.' +
-               
-               '<br><br>The status line shows the resulting bin width and update rate ' +
-               '(from FFT size, overlap and decimation). Large size or decimation slows the ' +
-               'waterfall; raise overlap to compensate. If it says <i>N:1 shown</i>, there are ' +
-               'more bins than display pixels and each column shows the strongest of N bins; ' +
-               'zoom in for a 1:1 view.' +
-               
-               '<br><br>The <i>Decim</i> menu decimates the sample stream ahead of the FFT (zoom FFT): ' +
-               'the displayed span shrinks by the decimation factor and the resolution improves by ' +
-               'the same factor without a larger FFT. E.g. IQ mode, FFT 16k, decim 32: span 375 Hz ' +
-               'centered on the tuned frequency at ~0.023 Hz/bin &mdash; sub-Hz MW carrier work. ' +
-               'In IQ mode the span is centered on the tuned frequency. In USB/LSB/CW modes it is ' +
-               'centered on the <i>passband center</i>: drag the passband (or use a /pb URL suffix) ' +
-               'to steer the zoomed span.' +
-               
-               '<br><br>URL parameters: <br>' +
-               w3_text('|color:orange', 'itime:<i>num</i> &nbsp; maxdb:<i>num</i> &nbsp; mindb:<i>num</i> &nbsp; ' +
-                  'size:<i>num</i> &nbsp; overlap:<i>num</i> &nbsp; decim:<i>num</i> &nbsp; zoom:<i>num</i>') +
-               '<br> Non-numeric values are those appearing in their respective menus. <br>' +
-               'Keywords are case-insensitive and can be abbreviated. <br>' +
-               'So for example these are valid: <br>' +
-               '<i>ext=fft,integ,itime:5</i> &nbsp;&nbsp; ' +
-               '<i>ext=fft,water,min:-130,max:-40,size:16,overlap:4</i> &nbsp;&nbsp; <i>ext=fft,alpha</i> <br>' +
-               '(<i>size</i> values &le; 16 mean k units, e.g. size:16 = 16384) <br>' +
-               '<br>' +
-               'Clicking on integrate display will restart it such that the click-point is ' +
-               'moved to top of the display (i.e. vertical timing can be realigned).'
-            )
-         );
-      confirmation_show_content(s, 610, 350);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+         'Remember that on KiwiSDR the audio and waterfall channels are completely separate. ' +
+         'For example you can pan the waterfall frequency without effecting the audio. ' +
+         'By contrast this extension allows visualization of the <i>audio</i> channel itself by using ' +
+         'an FFT, waterfall and integrator (summing waterfall) for weak signals.' +
+         
+         '<br><br>The waterfall function computes its FFT in the browser directly from the audio ' +
+         'sample stream. The FFT size (hence frequency resolution), FFT overlap (time resolution) ' +
+         'and display zoom are selectable. Use IQ mode for the full bandwidth centered on the ' +
+         'tuned frequency and the best resolution (IQ audio is never compressed). ' +
+         'When there are more FFT bins than display pixels each pixel shows the strongest bin ' +
+         '(so narrow carriers are never lost); increase the zoom to see the full resolution. ' +
+         'A frequency scale is drawn above the waterfall and hovering the mouse shows ' +
+         'frequency and level. Click near a peak to monitor it in the Peaks table to the ' +
+         'right (precise frequency with sub-bin interpolation, level, Δf in <b>Hz</b> = drift from ' +
+         'the initial lock, and ḟ in <b>Hz/s</b> = Kalman drift-rate estimate). Retuning clears the peak list. ' +
+         'Shift-click replaces the selected row; up to 16 peaks can be ' +
+         'tracked. The <i>Auto scale</i> button sets the max/min sliders from the current ' +
+         'signal statistics.' +
+         
+         '<br><br>The status line shows the resulting bin width and update rate ' +
+         '(from FFT size, overlap and decimation). Large size or decimation slows the ' +
+         'waterfall; raise overlap to compensate. If it says <i>N:1 shown</i>, there are ' +
+         'more bins than display pixels and each column shows the strongest of N bins; ' +
+         'zoom in for a 1:1 view.' +
+         
+         '<br><br>The <i>Decim</i> menu decimates the sample stream ahead of the FFT (zoom FFT): ' +
+         'the displayed span shrinks by the decimation factor and the resolution improves by ' +
+         'the same factor without a larger FFT. E.g. IQ mode, FFT 16k, decim 32: span 375 Hz ' +
+         'centered on the tuned frequency at ~0.023 Hz/bin &mdash; sub-Hz MW carrier work. ' +
+         'In IQ mode the span is centered on the tuned frequency. In USB/LSB/CW modes it is ' +
+         'centered on the <i>passband center</i>: drag the passband (or use a /pb URL suffix) ' +
+         'to steer the zoomed span.' +
+         
+         '<br><br>URL parameters: <br>' +
+         w3_text('|color:orange', 'itime:<i>num</i> &nbsp; maxdb:<i>num</i> &nbsp; mindb:<i>num</i> &nbsp; ' +
+            'size:<i>num</i> &nbsp; overlap:<i>num</i> &nbsp; decim:<i>num</i> &nbsp; zoom:<i>num</i>') +
+         '<br> Non-numeric values are those appearing in their respective menus. <br>' +
+         'Keywords are case-insensitive and can be abbreviated. <br>' +
+         'So for example these are valid: <br>' +
+         '<i>ext=fft,integ,itime:5</i> &nbsp;&nbsp; ' +
+         '<i>ext=fft,water,min:-130,max:-40,size:16,overlap:4</i> &nbsp;&nbsp; <i>ext=fft,alpha</i> <br>' +
+         '(<i>size</i> values &le; 16 mean k units, e.g. size:16 = 16384) <br>' +
+         '<br>' +
+         'Clicking on integrate display will restart it such that the click-point is ' +
+         'moved to top of the display (i.e. vertical timing can be realigned).';
+
+      confirmation_show_scrolling_content('Audio FFT help', s, 610, 350);
    }
    return true;
 }

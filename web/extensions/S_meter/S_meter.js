@@ -346,6 +346,17 @@ function S_meter_blur()
 	kiwi_clearInterval(S_meter.update_interval);
 }
 
+function S_meter_help(show)
+{
+   if (show) {
+      var s = 
+         'To be supplied...';
+
+      confirmation_show_scrolling_content('S-meter help', s, 610, 200);
+   }
+   return true;
+}
+
 // called to display HTML for configuration parameters in admin interface
 function S_meter_config_html()
 {

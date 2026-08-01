@@ -366,35 +366,29 @@ function sig_gen_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'Signal generator help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'The signal generator has three modes:' +
-               '<ul><li><x1>RF tone</x1> mode replaces the data from the Kiwi ADC with ' +
-               'an RF tone from a digital oscillator. This oscillator has limited SFDR, so some distortion products ' +
-               'will be noted especially at large attenuation levels.</li>' +
-               
-               '<li><x1>AF noise</x1> replaces the audio channel with broadband noise with variable attenuation. ' +
-               'It is useful for testing some of the internal Kiwi features such as de-emphasis.' +
-               
-               '<li><x1>Self test</x1> (KiwiSDR 2 and later) The digital oscillator described above is routed as an ' +
-               'output to the <x1>EXT CLK &amp; TEST</x1> SMA connector. It is intended to be looped-back to the RF antenna input SMA ' +
-               'via a short SMA-to-SMA cable. In this way the Kiwi\'s RF front end and ADC prior to the FPGA can be tested ' +
-               'against the known signal source. ' +
-               '<a href="http://kiwisdr.com/info#id-self-test" target="_blank">Test result images</a></li></ul>' +
-                        
-               'URL parameters: <br>' +
-               w3_text('|color:orange', '<i>kHz</i> or freq:<i>kHz</i>&nbsp; &nbsp; mode:[<i>0123</i>] or &nbsp; off &nbsp; rf &nbsp; af &nbsp; self <br>' +
-                  'attn:<i>dB</i> &nbsp; stop:<i>kHz</i> &nbsp; ' +
-                  'step:<i>kHz</i> &nbsp; dwell:<i>msecs</i> &nbsp; sweep') +
-               
-               '<br><br>Frequencies are in kHz and can use the <x1>k</x1> and <x1>M</x1> suffix notation (e.g. 7.1M). ' +
-               'The mode numbers 0-3 correspond to the four Mode menu entries or use the names off, rf, af, self.'
-            )
-         );
+         'The signal generator has three modes:' +
+         '<ul><li><x1>RF tone</x1> mode replaces the data from the Kiwi ADC with ' +
+         'an RF tone from a digital oscillator. This oscillator has limited SFDR, so some distortion products ' +
+         'will be noted especially at large attenuation levels.</li>' +
+         
+         '<li><x1>AF noise</x1> replaces the audio channel with broadband noise with variable attenuation. ' +
+         'It is useful for testing some of the internal Kiwi features such as de-emphasis.' +
+         
+         '<li><x1>Self test</x1> (KiwiSDR 2 and later) The digital oscillator described above is routed as an ' +
+         'output to the <x1>EXT CLK &amp; TEST</x1> SMA connector. It is intended to be looped-back to the RF antenna input SMA ' +
+         'via a short SMA-to-SMA cable. In this way the Kiwi\'s RF front end and ADC prior to the FPGA can be tested ' +
+         'against the known signal source. ' +
+         '<a href="http://kiwisdr.com/info#id-self-test" target="_blank">Test result images</a></li></ul>' +
+                  
+         'URL parameters: <br>' +
+         w3_text('|color:orange', '<i>kHz</i> or freq:<i>kHz</i>&nbsp; &nbsp; mode:[<i>0123</i>] or &nbsp; off &nbsp; rf &nbsp; af &nbsp; self <br>' +
+            'attn:<i>dB</i> &nbsp; stop:<i>kHz</i> &nbsp; ' +
+            'step:<i>kHz</i> &nbsp; dwell:<i>msecs</i> &nbsp; sweep') +
+         
+         '<br><br>Frequencies are in kHz and can use the <x1>k</x1> and <x1>M</x1> suffix notation (e.g. 7.1M). ' +
+         'The mode numbers 0-3 correspond to the four Mode menu entries or use the names off, rf, af, self.';
 
-      confirmation_show_content(s, 610, 425);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+      confirmation_show_scrolling_content('Signal generator help', s, 610, 425);
    }
    return true;
 }

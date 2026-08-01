@@ -549,57 +549,52 @@ function wspr_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'WSPR viewer help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'The WSPR viewer was the first Kiwi extension developed. ' +
-               'It\'s more of a demonstration than a serious WSPR decoding utility. ' +
-               'An older version of the WSJT-X <i>wsprd</i> decoder is used. Together with the limited ' +
-               'processing power of the Beagle this means fewer decodes occur compared to the current WSJT-X. ' +
-               'For serious decoding try <a href="http://wsprdaemon.org/index.html" target="_blank">wsprdaemon</a> ' +
-               'which runs on a separate computer and makes connections to the Kiwi. ' +
-               '<br><br>' +
+         'From <b><a href="https://wsjtx.github.io/wsjtx/index.html" target="_blank">WSPR</a></b> Joe Taylor K1JT and contributors &copy;2001-2026<br><br>' +
          
-               'The <i>band</i> menu contains the standard <a href="http://www.wsprnet.org" target="_blank">ham band frequencies</a> ' +
-               'plus the ISM 6/13 MHz bands. Frequency hopping specified by the ' +
-               '<a href="https://github.com/HB9VQQ/WSPRBeacon" target="_blank">International WSPR Beacon Project</a> (IWBP) is also supported. '+
-               '<br><br>' +
+         'The WSPR viewer was the first Kiwi extension developed. ' +
+         'It\'s more of a demonstration than a serious WSPR decoding utility. ' +
+         'An older version of the WSJT-X <i>wsprd</i> decoder is used. Together with the limited ' +
+         'processing power of the Beagle this means fewer decodes occur compared to the current WSJT-X. ' +
+         'For serious decoding try <a href="http://wsprdaemon.org/index.html" target="_blank">wsprdaemon</a> ' +
+         'which runs on a separate computer and makes connections to the Kiwi. ' +
+         '<br><br>' +
+   
+         'The <i>band</i> menu contains the standard <a href="http://www.wsprnet.org" target="_blank">ham band frequencies</a> ' +
+         'plus the ISM 6/13 MHz bands. Frequency hopping specified by the ' +
+         '<a href="https://github.com/HB9VQQ/WSPRBeacon" target="_blank">International WSPR Beacon Project</a> (IWBP) is also supported. '+
+         '<br><br>' +
 
-               'About dial frequencies: By default the WSPR extension uses a BFO value of 750 Hz instead of the more traditional 1500 Hz ' +
-               '(this value is set by the Kiwi owner on the admin page). ' +
-               'This lower tone gives less listening fatigue. But it means the number shown in the Kiwi frequency entry box (dial frequency) ' +
-               'must be reduced by 750 Hz to match the dial frequencies mentioned in the references above. ' +
-               'The BFO value and center frequency (CF) of the passband are displayed in the WSPR control panel. ' +
-               '<br><br>' +
-               
-               'Before spots will be uploaded to wsprnet.org the reporter <i>call</i> and <i>grid</i> must be set on the ' +
-               'admin page (Extensions > WSPR) and <i>upload spots</i> checked. ' +
-               'WSPR decoding still occurs even though spots are not being uploaded. ' +
-               '<br><br>' +
+         'About dial frequencies: By default the WSPR extension uses a BFO value of 750 Hz instead of the more traditional 1500 Hz ' +
+         '(this value is set by the Kiwi owner on the admin page). ' +
+         'This lower tone gives less listening fatigue. But it means the number shown in the Kiwi frequency entry box (dial frequency) ' +
+         'must be reduced by 750 Hz to match the dial frequencies mentioned in the references above. ' +
+         'The BFO value and center frequency (CF) of the passband are displayed in the WSPR control panel. ' +
+         '<br><br>' +
+         
+         'Before spots will be uploaded to wsprnet.org the reporter <i>call</i> and <i>grid</i> must be set on the ' +
+         'admin page (Extensions > WSPR) and <i>upload spots</i> checked. ' +
+         'WSPR decoding still occurs even though spots are not being uploaded. ' +
+         '<br><br>' +
 
-               'Test button: First, select a band from the band menu. It doesn\'t matter which one. ' +
-               'Then click the <i>test</i> button when the time clock just becomes fully blue (i.e. at the beginning of an even minute). ' +
-               'A two minute test recording will be played back containing 8 spots. These spots will <b>not</b> be uploaded to wsprnet.org ' +
-               '&nbsp;The recording was made with a BFO of 750 Hz, but will still decode even if the extension is configured for another BFO value. ' +
-               '<br><br>' +
-               
-               'The decoder column values are the same as with other WSPR programs:' +
-               '<ul>' +
-                  '<li><i>dB</i> is signal-to-noise ratio (SNR), negative values meaning below the noise floor.</li>' +
-                  '<li><i>dt</i> and <i>dF</i> indicate how far off the signal is in time and frequency.</li>' +
-                  '<li><i>Freq</i> is the signal\'s passband frequency as seen in the spectrum display.</li>' +
-                  '<li><i>km</i> is the signal\'s distance from the receiving Kiwi.</li>' +
-                  '<li><i>dBm</i> is the transmit power reported by the WSPR beacon.</li>' +
-               '</ul>' +
+         'Test button: First, select a band from the band menu. It doesn\'t matter which one. ' +
+         'Then click the <i>test</i> button when the time clock just becomes fully blue (i.e. at the beginning of an even minute). ' +
+         'A two minute test recording will be played back containing 8 spots. These spots will <b>not</b> be uploaded to wsprnet.org ' +
+         '&nbsp;The recording was made with a BFO of 750 Hz, but will still decode even if the extension is configured for another BFO value. ' +
+         '<br><br>' +
+         
+         'The decoder column values are the same as with other WSPR programs:' +
+         '<ul>' +
+            '<li><i>dB</i> is signal-to-noise ratio (SNR), negative values meaning below the noise floor.</li>' +
+            '<li><i>dt</i> and <i>dF</i> indicate how far off the signal is in time and frequency.</li>' +
+            '<li><i>Freq</i> is the signal\'s passband frequency as seen in the spectrum display.</li>' +
+            '<li><i>km</i> is the signal\'s distance from the receiving Kiwi.</li>' +
+            '<li><i>dBm</i> is the transmit power reported by the WSPR beacon.</li>' +
+         '</ul>' +
 
-               'URL parameters: <br>' +
-               'First parameter can be an entry from the band menu, e.g. <i>ext=wspr,40m</i> <br>' +
-               '<br>'
-            )
-         );
+         'URL parameters: <br>' +
+         'First parameter can be an entry from the band menu, e.g. <i>ext=wspr,40m</i>';
 
-      confirmation_show_content(s, 610, 300);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+      confirmation_show_scrolling_content('WSPR viewer help', s, 610, 300);
    }
    return true;
 }
@@ -669,50 +664,44 @@ function wspr_config_html()
 {
    var s =
       w3_div('w3-show-inline-block w3-width-full',
-         w3_col_percent('w3-container/w3-margin-bottom',
+         w3_inline('w3-container w3-halign-space-between/w3-margin-bottom',
             w3_divs('w3-restart',
                w3_input_get('', 'Reporter callsign', 'WSPR.callsign', 'w3_string_set_cfg_cb', '')
-            ), 22,
-            '', 3,
+            ),
             w3_div('',
                w3_inline('w3-halign-space-between/',
                   w3_label('w3-bold', 'Reporter grid square '),
                   w3_button('id-wspr-grid-set cl-admin-check w3-blue w3-btn w3-round-large w3-margin-B-2 w3-hide', 'set from GPS')
                ),
                w3_input_get('', '', 'WSPR.grid', 'wspr_input_grid_cb', '', '4 or 6-character grid square location')
-            ), 30,
-            '', 3,
+            ),
             w3_div('w3-restart',
                w3_input_get('', 'BFO Hz (multiple of 375 Hz)', 'WSPR.BFO', 'w3_num_set_cfg_cb', '', 'typically 750 Hz')
-            ), 22,
-            '', 3,
+            ),
             w3_div('w3-restart',
                w3_input_get('', 'Test filename', 'WSPR.test_file', 'w3_string_set_cfg_cb', 'WSPR.test.au')
-            ), 14,
-            ''
+            )
          ),
 
-         w3_col_percent('w3-container w3-margin-T-8 w3-margin-B-16/',
+         w3_inline('w3-container w3-halign-space-between w3-margin-T-8 w3-margin-B-16/',
             w3_divs('w3-center w3-tspace-8',
                w3_switch_label('w3-center', 'Update grid continuously<br>from GPS?', 'Yes', 'No', 'cfg.WSPR.GPS_update_grid', cfg.WSPR.GPS_update_grid, 'wspr_GPS_update_grid_cb'),
                w3_text('w3-text-black w3-center',
                   'Useful for Kiwis in motion <br> (e.g. marine mobile)'
                )
-            ), 22,
-            '&nbsp;', 3,
+            ),
             w3_divs('w3-center w3-tspace-8',
                w3_switch_label('w3-center', 'Log decodes to<br>syslog?', 'Yes', 'No', 'cfg.WSPR.syslog', cfg.WSPR.syslog, 'admin_radio_YN_cb'),
                w3_text('w3-text-black w3-center',
                   'Use with care as over time <br> filesystem can fill up.'
                )
-            ), 22,
-            '&nbsp;', 3,
+            ),
             w3_divs('w3-center w3-tspace-8',
                w3_switch_label('w3-center', 'Log spot debug<br>info?', 'Yes', 'No', 'cfg.WSPR.spot_log', cfg.WSPR.spot_log, 'admin_radio_YN_cb'),
                w3_text('w3-text-black w3-center',
                   'Logs the actual upload commands<br>used to assist in spot debugging.'
                )
-            ), 22
+            )
          ),
          
          '<hr>',

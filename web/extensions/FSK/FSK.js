@@ -547,7 +547,7 @@ function fsk_controls_setup()
                w3_div('',
 				      w3_div('w3-show-inline-block w3-medium w3-text-aqua', '<b><a href="https://en.wikipedia.org/wiki/Frequency-shift_keying" target="_blank">FSK</a> decoder</b>')
 				   ),
-					w3_div('', 'From <b><a href="https://arachnoid.com/JNX/index.html" target="_blank">JNX</a></b> by P. Lutus &copy; 2011')
+					w3_div('', 'From <b><a href="https://arachnoid.com/JNX/index.html" target="_blank">JNX</a></b>')
 				),
 				
             w3_col_percent('',
@@ -1194,35 +1194,31 @@ function FSK_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'FSK decoder help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               '<br>Decoding FSK is not always easy because of the many signal parameters involved. <br>' +
-               'Try the stations listed in the menus. Most of these are best heard from Kiwis in Europe. <br><br>' +
+         'From <b><a href="https://arachnoid.com/JNX/index.html" target="_blank">JNX</a></b> by P. Lutus &copy;2011<br><br>' +
 
-               'The frequency shift can be set by zooming in sufficiently, centering the passband between <br>' +
-               'the two tones, and selecting a menu shift (or setting a custom shift) so that the <br>' +
-               'checkered crosshairs align on the tones. The scope and framing modes are to assist ' +
-               'in setting the correct baud rate and framing. <br><br>' +
-         
-               'URL parameters: <br>' +
-               'First parameter can be a frequency matching an entry in station menus. <br>' +
-               w3_text('|color:orange', 'shift:<i>num</i> &nbsp; baud:<i>num</i> &nbsp; framing:<i>value</i> &nbsp; encoding:<i>value</i> &nbsp; inverted<i>[:0|1]</i> <br> log_time:<i>mins</i>') +
-               '<br> Values are those appearing in their respective menus. <br>' +
-               'Any number for shift and baud can be used. Not just the preset values in the menus. <br>' +
-               'Keywords are case-insensitive and can be abbreviated. <br>' +
-               'So for example this is valid: <i>ext=fsk,147.3,sh:425,b:200,a,i:0</i> &nbsp; <i>ext=fsk,2474,log:5</i> <br>' +
-               '<br> There are several aliases that combine the settings: <br>' +
-               w3_text('|color:orange', 'sitor-b') + ' &nbsp; <i>sh:170,b:100,4/7,i:0,CCIR476</i> <br>' +
-               w3_text('|color:orange', 'wx') + ' &nbsp; <i>sh:450,b:50,5N1.5,i:1,ITA2</i> <br>' +
-               w3_text('|color:orange', 'dsc') + ' &nbsp; <i>sh:170,b:100,7/3,i:1,DSC</i> <br>' +
-               w3_text('|color:orange', 'selcall') + ' &nbsp; <i>sh:170,b:100,7/3,i:0,Selcall</i> <br>' +
-               w3_text('|color:orange', 'ham') + ' &nbsp; <i>sh:170,b:45.45,5N1.5,i:0,ITA2</i> <br>' +
-               ''
-            )
-         );
-      confirmation_show_content(s, 620, 450);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+         'Decoding FSK is not always easy because of the many signal parameters involved. <br>' +
+         'Try the stations listed in the menus. Most of these are best heard from Kiwis in Europe. <br><br>' +
+   
+         'The frequency shift can be set by zooming in sufficiently, centering the passband between <br>' +
+         'the two tones, and selecting a menu shift (or setting a custom shift) so that the <br>' +
+         'checkered crosshairs align on the tones. The scope and framing modes are to assist ' +
+         'in setting the correct baud rate and framing. <br><br>' +
+   
+         'URL parameters: <br>' +
+         'First parameter can be a frequency matching an entry in station menus. <br>' +
+         w3_text('|color:orange', 'shift:<i>num</i> &nbsp; baud:<i>num</i> &nbsp; framing:<i>value</i> &nbsp; encoding:<i>value</i> &nbsp; inverted<i>[:0|1]</i> <br> log_time:<i>mins</i>') +
+         '<br> Values are those appearing in their respective menus. <br>' +
+         'Any number for shift and baud can be used. Not just the preset values in the menus. <br>' +
+         'Keywords are case-insensitive and can be abbreviated. <br>' +
+         'So for example this is valid: <i>ext=fsk,147.3,sh:425,b:200,a,i:0</i> &nbsp; <i>ext=fsk,2474,log:5</i> <br>' +
+         '<br> There are several aliases that combine the settings: <br>' +
+         w3_text('|color:orange', 'sitor-b') + ' &nbsp; <i>sh:170,b:100,4/7,i:0,CCIR476</i> <br>' +
+         w3_text('|color:orange', 'wx') + ' &nbsp; <i>sh:450,b:50,5N1.5,i:1,ITA2</i> <br>' +
+         w3_text('|color:orange', 'dsc') + ' &nbsp; <i>sh:170,b:100,7/3,i:1,DSC</i> <br>' +
+         w3_text('|color:orange', 'selcall') + ' &nbsp; <i>sh:170,b:100,7/3,i:0,Selcall</i> <br>' +
+         w3_text('|color:orange', 'ham') + ' &nbsp; <i>sh:170,b:45.45,5N1.5,i:0,ITA2</i> <br>';
+
+      confirmation_show_scrolling_content('FSK decoder help', s, 620, 400);
    }
    return true;
 }

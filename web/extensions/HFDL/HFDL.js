@@ -1210,35 +1210,28 @@ function HFDL_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'HFDL decoder help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'From <b><a href="https://github.com/szpajder/dumphfdl" target="_blank">dumphfdl</a></b> by Tomasz Lemiech &copy;2021<br><br>' +
+         'From <b><a href="https://github.com/szpajder/dumphfdl" target="_blank">dumphfdl</a></b> by Tomasz Lemiech &copy;2021<br><br>' +
 
-               'Periodic downloading of the HFDL message log to a file can be specified via the <i>log min</i> value. ' +
-               'Adjust your browser settings so these files are downloaded ' +
-               'and saved automatically without causing a browser popup window for each download.' +
+         'Periodic downloading of the HFDL message log to a file can be specified via the <i>log min</i> value. ' +
+         'Adjust your browser settings so these files are downloaded ' +
+         'and saved automatically without causing a browser popup window for each download.' +
 
-               '<br><br>URL parameters: <br>' +
-               w3_text('|color:orange', '(menu match) &nbsp; map|split &nbsp; display:[<i>012</i>] &nbsp; ' +
-               'log_time:<i>mins</i> &nbsp; gs:0 &nbsp; test') +
-               '<br><br>' +
-               'The first URL parameter can be a frequency entry from the "Bands" menu (e.g. "8977") or the ' +
-               'numeric part of the blue "full band" entry (e.g. "5" part of "5 MHz" entry). <br>' +
-               '<i>map</i> will initially show the map instead of the message panel. ' +
-               '<i>split</i> will show both. <br>' +
-               '[012] refers to the order of selections in the corresponding menu. <br>' +
-               '<i>gs:0</i> initially disables display of the ground stations.' +
-               '<br><br>' +
-               'Keywords are case-insensitive and can be abbreviated. So for example these are valid: <br>' +
-               '<i>ext=hfdl,8977</i> &nbsp;&nbsp; ' +
-               '<i>ext=hfdl,8977,d:1</i> &nbsp;&nbsp; <i>ext=hfdl,8977,l:10</i> &nbsp;&nbsp; <i>ext=hfdl,5,map</i><br>' +
-               ''
-            )
-         );
+         '<br><br>URL parameters: <br>' +
+         w3_text('|color:orange', '(menu match) &nbsp; map|split &nbsp; display:[<i>012</i>] &nbsp; ' +
+         'log_time:<i>mins</i> &nbsp; gs:0 &nbsp; test') +
+         '<br><br>' +
+         'The first URL parameter can be a frequency entry from the "Bands" menu (e.g. "8977") or the ' +
+         'numeric part of the blue "full band" entry (e.g. "5" part of "5 MHz" entry). <br>' +
+         '<i>map</i> will initially show the map instead of the message panel. ' +
+         '<i>split</i> will show both. <br>' +
+         '[012] refers to the order of selections in the corresponding menu. <br>' +
+         '<i>gs:0</i> initially disables display of the ground stations.' +
+         '<br><br>' +
+         'Keywords are case-insensitive and can be abbreviated. So for example these are valid: <br>' +
+         '<i>ext=hfdl,8977</i> &nbsp;&nbsp; ' +
+         '<i>ext=hfdl,8977,d:1</i> &nbsp;&nbsp; <i>ext=hfdl,8977,l:10</i> &nbsp;&nbsp; <i>ext=hfdl,5,map</i><br>';
 
-      confirmation_show_content(s, 610, 300);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+      confirmation_show_scrolling_content('HFDL decoder help', s, 610, 300);
    }
    return true;
 }

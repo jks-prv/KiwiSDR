@@ -876,6 +876,17 @@ function NAVTEX_blur()
    kiwi_map_blur(nt.kmap);
 }
 
+function NAVTEX_help(show)
+{
+   if (show) {
+      var s = 
+         'To be supplied...';
+
+      confirmation_show_scrolling_content('Timecode decoder help', s, 610, 200);
+   }
+   return true;
+}
+
 // called to display HTML for configuration parameters in admin interface
 function NAVTEX_config_html()
 {

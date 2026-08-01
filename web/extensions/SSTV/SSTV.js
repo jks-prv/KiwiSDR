@@ -477,48 +477,41 @@ function SSTV_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'SSTV decoder help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'From <b><a href="http://windytan.github.io/slowrx" target="_blank">slowrx</a></b> by Oona Räisänen OH2EIQ &copy;2007-2013<br><br>' +
+         'From <b><a href="http://windytan.github.io/slowrx" target="_blank">slowrx</a></b> by Oona Räisänen OH2EIQ &copy;2007-2013<br><br>' +
+   
+         'Select an entry from the SSTV freq menu and wait for a signal to begin decoding.<br>' +
+         'Sometimes activity is +/- the given frequencies. Try the "test" button.<br>' +
+         '<br>Supported modes:' +
+         '<ul>' +
+            '<li>Martin: M1 M2 M3 M4</li>' +
+            '<li>Scottie: S1 S2 SDX</li>' +
+            '<li>Robot: R12 R24 R36 R72 R8-BW R12-BW R24-BW R36-BW</li>' +
+            '<li>Wraase: SC60 SC120 SC180</li>' +
+            '<li>Pasokon: P3 P5 P7</li>' +
+            '<li>PD: PD50 PD90 PD120 PD160 PD180 PD240</li>' +
+            '<li>MMSSTV: MR73 MR90 MR115 MR140 MR175 MP73 MP115 MP140 MP175</li>' +
+            '<li>MMSSTV: ML180 ML240 ML280 ML320</li>' +
+            '<li>FAX480</li>' +
+         '</ul>' +
+         'Unsupported modes:' +
+         '<ul>' +
+            '<li>PD: PD290</li>' +
+            '<li>MMSSTV: MN73 MN110 MN140 MC110 MC140 MC180</li>' +
+            '<li>Amiga: AVT24 AVT90 AVT94</li>' +
+         '</ul>' +
+         'If the image is still slanted or offset after auto adjustment you can make a manual ' +
+         'correction. If you see what looks like an edge in the image then click in two places along ' +
+         'the edge. The image will then auto adjust. You can repeat this procedure multiple times ' +
+         'if necessary.' +
+         '<br><br>URL parameters: <br>' +
+         w3_text('|color:orange', '(freq menu match) &nbsp; noadj &nbsp; test') +
+         '<br><br>' +
+         'The first URL parameter can be the number from an entry of the freq menu (e.g. "3730"). ' +
+         '<i>noadj</i> un-checks the <i>auto adjust</i> box. <br>' +
+         '<br>Keywords are case-insensitive and can be abbreviated. So for example these are valid: <br>' +
+         '<i>ext=sstv,14230</i> &nbsp;&nbsp; <i>ext=sstv,7171,no &nbsp;&nbsp; <i>ext=sstv,t</i>';
 
-               'Select an entry from the SSTV freq menu and wait for a signal to begin decoding.<br>' +
-               'Sometimes activity is +/- the given frequencies. Try the "test" button.<br>' +
-               '<br>Supported modes:' +
-               '<ul>' +
-                  '<li>Martin: M1 M2 M3 M4</li>' +
-                  '<li>Scottie: S1 S2 SDX</li>' +
-                  '<li>Robot: R12 R24 R36 R72 R8-BW R12-BW R24-BW R36-BW</li>' +
-                  '<li>Wraase: SC60 SC120 SC180</li>' +
-                  '<li>Pasokon: P3 P5 P7</li>' +
-                  '<li>PD: PD50 PD90 PD120 PD160 PD180 PD240</li>' +
-                  '<li>MMSSTV: MR73 MR90 MR115 MR140 MR175 MP73 MP115 MP140 MP175</li>' +
-                  '<li>MMSSTV: ML180 ML240 ML280 ML320</li>' +
-                  '<li>FAX480</li>' +
-               '</ul>' +
-               'Unsupported modes:' +
-               '<ul>' +
-                  '<li>PD: PD290</li>' +
-                  '<li>MMSSTV: MN73 MN110 MN140 MC110 MC140 MC180</li>' +
-                  '<li>Amiga: AVT24 AVT90 AVT94</li>' +
-               '</ul>' +
-               'If the image is still slanted or offset after auto adjustment you can make a manual ' +
-               'correction. If you see what looks like an edge in the image then click in two places along ' +
-               'the edge. The image will then auto adjust. You can repeat this procedure multiple times ' +
-               'if necessary.' +
-               '<br><br>URL parameters: <br>' +
-               w3_text('|color:orange', '(freq menu match) &nbsp; noadj &nbsp; test') +
-               '<br><br>' +
-               'The first URL parameter can be the number from an entry of the freq menu (e.g. "3730"). ' +
-               '<i>noadj</i> un-checks the <i>auto adjust</i> box. <br>' +
-               '<br>Keywords are case-insensitive and can be abbreviated. So for example these are valid: <br>' +
-               '<i>ext=sstv,14230</i> &nbsp;&nbsp; <i>ext=sstv,7171,no &nbsp;&nbsp; <i>ext=sstv,t</i>' +
-               ''
-            )
-         );
-
-      confirmation_show_content(s, 610, 380);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+      confirmation_show_scrolling_content('SSTV decoder help', s, 610, 380);
    }
    return true;
 }

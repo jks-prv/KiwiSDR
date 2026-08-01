@@ -785,15 +785,9 @@ function timecode_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'Timecode decoder help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'To be supplied...'
-            )
-         );
+         'To be supplied...';
 
-      confirmation_show_content(s, 610, 300);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+      confirmation_show_scrolling_content('Timecode decoder help', s, 610, 200);
    }
    return true;
 }

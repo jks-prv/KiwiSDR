@@ -223,8 +223,7 @@ function freedv_controls_setup()
       
       w3_div('id-freedv-data w3-display-container|left:0px; '+ wh,
          w3_div('|'+ wh +'|id="id-freedv-map"' , ''),
-         w3_div('w3-hide|'+ wh +'|id="id-freedv-map-result"', ''),
-         w3_div('id-freedv-png w3-display-topleft w3-scroll-y w3-hide|left:0px; '+ wh, '')
+         w3_div('w3-hide|'+ wh +'|id="id-freedv-map-result"', '')
       ) +
       
       w3_div('id-freedv-options w3-display-right w3-text-white w3-light-greyx|top:200px; right:16px; width:250px; height:200px',
@@ -1709,7 +1708,6 @@ function freedv_ui_reset(reset_map)
    
    if (reset_map) {
       freedv_show_maps({ kiwi: true, result: false });
-      w3_hide('id-freedv-png');
    }
 
    freedv_update_link();
@@ -2626,6 +2624,7 @@ function FreeDV_help(show)
          'To setup, position the map as you want it to appear. ' +
          'Then use the current lat/lon/zoom info shown to the right of the help button as the values for the URL parameters.' +
          '<br>e.g. <i>my_kiwi:8073/?ext=freedv,14236,lat:-37.3,lon:175,z:8,ZL4VO,start</i>';
+
       confirmation_show_scrolling_content('FreeDV decoder Help', s, 610, 650);
    }
    return true;

@@ -21,6 +21,12 @@ var loran_c = {
    first_time: true,
    setup_init: true,
    
+   ctrlW: 325,
+   ctrlH: 275,
+   padH: 20,      // id-ext-controls padding * 2
+   topH: 20,
+   marginH: 8,
+   
 	gri0:0, gri_sel0:0, gain0:0, offset0:0, avg_algo0:0, avg_param0:0,
 	gri1:0, gri_sel1:0, gain1:0, offset1:0, avg_algo1:0, avg_param1:0,
 	
@@ -376,30 +382,31 @@ function loran_c_controls_setup()
 
 	//console.log('loran_c_controls_setup: gri0='+ gri0 +' gri1='+ gri1);
 
+   var scrollH = loran_c.ctrlH - loran_c.padH- loran_c.topH - loran_c.marginH;
+   var s =
+      w3_inline('w3-halign-space-between/',
+         '<b>GRI upper</b>',
+         w3_div('',
+         'See <b><a href="http://df6nm.bplaced.net/LoranView/LoranGrabber.htm" target="_blank">LoranView</a></b> by DF6NM')
+      );
+
+
 	var controls_html =
 		w3_div('id-loran_c-controls w3-text-white',
-			w3_col_percent('',
-				w3_div('w3-medium w3-text-aqua', '<b>Loran-C viewer</b>'), 40,
-				w3_div('',
-					'See also <b><a href="http://df6nm.bplaced.net/LoranView/LoranGrabber.htm" target="_blank">LoranView</a></b> by DF6NM'), 60
-			),
+			w3_div('w3-medium w3-text-aqua', '<b>Loran-C viewer</b>'),
 			
-			w3_half('', '',
-				w3_divs('w3-margin-T-8 w3-margin-R-10',
-					w3_col_percent('',
-						w3_input('w3-padding-smaller', 'GRI', 'loran_c.gri0', loran_c.gri0, 'loran_c_gri_cb'), 25
-					),
-					w3_select('w3-text-red w3-width-auto', 'GRI', 'select', 'loran_c.gri_sel0', 0, gri_s, 'loran_c_gri_select_cb'),
+			w3_div('id-loran_c-scroll w3-margin-T-8 w3-scroll-y|height:'+ px(scrollH),
+				w3_divs('w3-tspace-8 w3-margin-R-10',
+					w3_input('/w3-label-not-bold/w3-padding-smaller|width:25%', s, 'loran_c.gri0', loran_c.gri0, 'loran_c_gri_cb'),
+					w3_select('w3-text-red w3-width-auto', '', 'select', 'loran_c.gri_sel0', 0, gri_s, 'loran_c_gri_select_cb'),
 					w3_slider('', 'Gain (auto-scale)', 'loran_c.gain0', loran_c.gain0, 0, 100, 1, 'loran_c_gain_cb'),
 					w3_select('w3-text-red w3-width-auto', 'Averaging', '', 'loran_c.avg_algo0', loran_c.avg_algo0, loran_c_avg_algo_s, 'loran_c_avg_algo_select_cb'),
 					w3_slider('', '?', 'loran_c.avg_param0', loran_c.avg_param0, 0, 100, 1, 'loran_c_avg_param_cb')
 				),
 	
 				w3_divs('w3-margin-T-8 w3-margin-R-10',
-					w3_col_percent('',
-						w3_input('w3-padding-smaller', 'GRI', 'loran_c.gri1', loran_c.gri1, 'loran_c_gri_cb'), 25
-					),
-					w3_select('w3-text-red w3-width-auto', 'GRI', 'select', 'loran_c.gri_sel1', 0, gri_s, 'loran_c_gri_select_cb'),
+					w3_input('//w3-padding-smaller|width:25%', 'GRI lower', 'loran_c.gri1', loran_c.gri1, 'loran_c_gri_cb'),
+					w3_select('w3-text-red w3-width-auto', '', 'select', 'loran_c.gri_sel1', 0, gri_s, 'loran_c_gri_select_cb'),
 					w3_slider('', 'Gain (auto-scale)', 'loran_c.gain1', loran_c.gain1, 0, 100, 1, 'loran_c_gain_cb'),
 					w3_select('w3-text-red w3-width-auto', 'Averaging', '', 'loran_c.avg_algo1', loran_c.avg_algo1, loran_c_avg_algo_s, 'loran_c_avg_algo_select_cb'),
 					w3_slider('', '?', 'loran_c.avg_param1', loran_c.avg_param1, 0, 100, 1, 'loran_c_avg_param_cb')
@@ -410,7 +417,7 @@ function loran_c_controls_setup()
 	ext_tune(100, 'am', ext_zoom.ABS, 8);
 
 	ext_panel_show(controls_html, data_html, null);
-	ext_set_controls_width_height(525, 290);
+	ext_set_controls_width_height(loran_c.ctrlW, loran_c.ctrlH);
 	time_display_setup('loran_c');
 
 	loran_c.scope = w3_el('id-loran_c-scope');
@@ -584,18 +591,16 @@ function Loran_C_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'Loran-C viewer help') + '<br><br>' +
          'You can manually align the master station (the one with the 9th pulse) ' +
          'to the left "M" slot by clicking (touch on mobile devices) ' +
          'at the location in the display you want moved to the left edge. <br><br>' +
 
          'URL parameters: <br>' +
          'First and second parameters can optionally be GRIs. <br>' +
-         'Example: <i>ext=loran,8970,9960</i> <br>' +
-         '';
-      confirmation_show_content(s, 500, 200);
-   }
+         'Example: <i>ext=loran,8970,9960</i> <br>';
 
+      confirmation_show_scrolling_content('Loran-C viewer help', s, 500, 200);
+   }
    return true;
 }
 

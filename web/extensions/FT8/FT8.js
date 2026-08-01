@@ -229,7 +229,6 @@ function ft8_controls_setup()
 			w3_divs('',
             w3_inline('w3-halign-space-between|width:75%/',
 				   w3_div('w3-medium w3-text-aqua', '<b>FT8/FT4 decoder</b>')
-					//w3_div('', 'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b> Karlis Goba &copy; 2018')
 				),
             
 				w3_divs('w3-margin-T-6/w3-tspace-8',
@@ -411,9 +410,8 @@ function FT8_config_html()
 {
    var s =
       w3_div('w3-show-inline-block w3-width-full',
-         w3_col_percent('w3-container/w3-margin-bottom',
-            w3_input_get('w3-restart', 'Reporter callsign', 'ft8.callsign', 'w3_string_set_cfg_cb', ''), 32,
-            '', 3,
+         w3_inline('w3-container w3-halign-space-between/w3-margin-bottom',
+            w3_input_get('w3-restart', 'Reporter callsign', 'ft8.callsign', 'w3_string_set_cfg_cb', ''),
             w3_div('',
                w3_inline('w3-halign-space-between/',
                   w3_label('w3-bold', 'Reporter grid square '),
@@ -421,27 +419,24 @@ function FT8_config_html()
                ),
                w3_input_get('', '', 'ft8.grid', 'ft8_input_grid_cb', '', '6-character grid square location'
                )
-            ), 30,
-            '', 3,
-            w3_input_get('', 'SNR correction', 'ft8.SNR_adj', 'w3_num_set_cfg_cb', ''), 12,
-            '', 3,
-            w3_input_get('', 'dT correction', 'ft8.dT_adj', 'w3_num_set_cfg_cb', ''), 12
+            ),
+            w3_input_get('', 'SNR correction', 'ft8.SNR_adj', 'w3_num_set_cfg_cb', ''),
+            w3_input_get('', 'dT correction', 'ft8.dT_adj', 'w3_num_set_cfg_cb', '')
          ),
 
-         w3_col_percent('w3-container w3-margin-T-8 w3-margin-B-16/',
+         w3_inline('w3-container w3-halign-space-between w3-margin-T-8 w3-margin-B-16/',
             w3_divs('w3-center w3-tspace-8',
                w3_switch_label('w3-center', 'Update grid continuously<br>from GPS?', 'Yes', 'No', 'cfg.ft8.GPS_update_grid', cfg.ft8.GPS_update_grid, 'ft8_GPS_update_grid_cb'),
                w3_text('w3-text-black w3-center',
                   'Useful for Kiwis in motion <br> (e.g. marine mobile)'
                )
-            ), 23,
-            '&nbsp;', 3,
+            ),
             w3_divs('w3-center w3-tspace-8',
                w3_switch_label('w3-center', 'Log decodes to<br>syslog?', 'Yes', 'No', 'ft8.syslog', cfg.ft8.syslog, 'admin_radio_YN_cb'),
                w3_text('w3-text-black w3-center',
                   'Use with care as over time <br> filesystem can fill up.'
                )
-            ), 23
+            )
          ),
 
          '<hr>',
@@ -668,6 +663,8 @@ function FT8_help(show)
 {
    if (show) {
       var s =
+         'From <b><a href="https://github.com/kgoba/ft8_lib" target="_blank">ft8_lib</a></b> Karlis Goba &copy;2018<br><br>' +
+
          'Spots are uploaded to pskreporter.info if the <x1>reporter call</x1> and <x1>reporter grid</x1> ' +
          'fields on the admin page, extensions tab, FT8 subtab have valid entries. ' +
          'Leave the callsign field blank if you do not want any uploads to pskreporter.info ' +
@@ -689,7 +686,8 @@ function FT8_help(show)
          'e.g. <i>my_kiwi:8073/?ext=ft8,10136</i>' +
          '<i>no_sort</i> unchecks the "freq sort" checkbox.<br>' +
          '<i>no_auto</i> unchecks the "auto zoom" checkbox.<br>';
-      confirmation_show_scrolling_content('FT8/FT4 decoder help', s, 610, 400);
+
+      confirmation_show_scrolling_content('FT8/FT4 decoder help', s, 610, 410);
    }
    return true;
 }

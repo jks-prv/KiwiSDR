@@ -293,24 +293,19 @@ function CW_skimmer_blur()
 	//ext_restore_setup(cws.saved_setup);
 }
 
-// called to display HTML for configuration parameters in admin interface
-function CW_skimmer_config_html()
-{
-   ext_config_html(cws, 'cws', 'CW skimmer', 'CW skimmer configuration');
-}
-
 function CW_skimmer_help(show)
 {
    if (show) {
       var s = 
-         w3_text('w3-medium w3-bold w3-text-aqua', 'CW skimmer help') +
-         w3_div('w3-margin-T-8 w3-scroll-y|height:90%',
-            w3_div('w3-margin-R-8',
-               'Automatically decodes multiple CW signals within the current passband.'
-            )
-         );
-      confirmation_show_content(s, 600, 350);
-      w3_el('id-confirmation-container').style.height = '100%';   // to get the w3-scroll-y above to work
+         'Automatically decodes multiple CW signals within the current passband.';
+
+      confirmation_show_scrolling_content('CW skimmer help', s, 600, 350);
    }
    return true;
+}
+
+// called to display HTML for configuration parameters in admin interface
+function CW_skimmer_config_html()
+{
+   ext_config_html(cws, 'cws', 'CW skimmer', 'CW skimmer configuration');
 }
