@@ -19,6 +19,7 @@ function isEmptyArray(v) { return (!isArray(v) || v.length == 0); }     // NB: !
 function isFunction(v) { return (typeof(v) === 'function'); }
 function isObject(v) { return (typeof(v) === 'object'); }
 function isArg(v) { return (isUndefined(v) || isNull(v))? false:true; }
+function isArgElse(v,e) { return (isArg(v)? v:e); }
 function isNoArg(v) { return (isUndefined(v) || isNull(v))? true:false; }
 function kiwi_typeof(v) { return isNull(v)? 'null' : (isArray(v)? 'array' : typeof(v)); }
 
@@ -139,6 +140,7 @@ document.onreadystatechange = function() {
             kiwi_touch = false;
          }
       }
+      //alert('kiwi_touch='+ kiwi_touch);
 		
 		if (!website) console.log(
 		   'MacOS='+ kiwi_MacOS +

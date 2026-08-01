@@ -1191,10 +1191,13 @@ function kiwi_output_msg(id, id_scroll, p)
 	var appendEmptyLine = function(parent_el) {
 	   var el = w3_create_appendElement(parent_el, 'pre', '');
 	   p.nlines++;
-	   while (p.nlines > p.max_lines) {
-	      parent_el.removeChild(parent_el.firstChild);
-	      p.nlines--;
-	   }
+      p.max_lines = isArgElse(p.max_lines, 1024);
+	   if (p.max_lines != 0) {
+         while (p.nlines > p.max_lines) {
+            parent_el.removeChild(parent_el.firstChild);
+            p.nlines--;
+         }
+      }
 	   return el;
 	};
 
@@ -1506,7 +1509,6 @@ function kiwi_output_msg(id, id_scroll, p)
       removeAllLines(parent_el);
       p.el = appendEmptyLine(parent_el);
       p.cols = p.cols || 140;
-      p.max_lines = p.max_lines || 1024;
       p.NONE = 0;
       p.ESC = 1;
       p.CSI = 2;

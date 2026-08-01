@@ -4130,90 +4130,103 @@ function console_html()
    
    var dbg = (0 && dbgUs);
 
+   var s1 =
+      w3_div('',
+         w3_label('w3-show-inline', 'Beagle Debian console'),
+         w3_button('id-console-connect-btn w3-aqua|margin-left:10px', 'Connect', 'console_connect_cb'),
+
+         (dbg)?
+            w3_button('w3-aqua|margin-left:16px', 'ANSI', 'console_cmd_cb', 'console_input_cb|cd tools;mr')
+            :
+            w3_button('w3-green|margin-left:32px', 'monitor build progress', 'console_cmd_cb',
+               'console_input_cb|tail -fn 500 /root/build.log'),
+
+         w3_button('w3-aqua|margin-left:16px|title="Type \'q\' to stop htop"',
+            'htop', 'console_cmd_cb', 'console_input_cb|htop'),
+         
+         w3_button('w3-yellow|margin-left:16px', 'disk free', 'console_cmd_cb', 'console_input_cb|df -h .'),
+
+         w3_button('w3-red|margin-left:16px|' +
+            'title="CAUTION: This will delete all but\n10 MB of your system log file"',
+            'clean logs', 'console_cmd_cb', 'console_input_cb|df -h .; journalctl --vacuum-size=10M; df -h .'),
+
+         (dbg)?
+            w3_button('w3-aqua|margin-left:16px', 'nano j', 'console_cmd_cb', 'console_input_cb|nano j')
+            :
+            w3_button('id-console-reclone w3-red|margin-left:16px', 're-clone sources', 'console_reclone_confirm'),
+
+         w3_button('w3-blue|margin-left:16px', 'check github', 'console_cmd_cb',
+            'console_input_cb|cdp; git show origin:Makefile &vbar; head -n 2'),
+
+         w3_button('w3-blue|margin-left:16px', 'ping DNS', 'console_cmd_cb',
+            'console_input_cb|ping -c3 1.1.1.1; ping -c3 8.8.8.8'),
+
+         w3_button('w3-blue|margin-left:16px', 'ping kiwisdr', 'console_cmd_cb',
+            'console_input_cb|ping -c3 kiwisdr.com')
+      );
+
+   var s2 =
+      w3_inline('w3-valign',
+         w3_button('w3-aqua', 'Copy', 'console_copy_to_clipboard_cb'),
+      
+         w3_div('w3-margin-L-16',
+            admin.console.always_char_oriented?
+               w3_text('id-console-debug w3-inline w3-text-black w3-margin-T-8',
+                  kiwi_isWindows()?
+                     'Windows: Type <x1>control-v</x1> twice (quickly) for clipboard paste. Once to get a normal <x1>control-v</x1>. ' +
+                     'Control-w alternatives: nano <x1>fn-f6</x1>, bash <x1>esc</x1> <x1>control-h</x1> (see ' +
+                     w3_link('w3-link-darker-color',
+                        'https://forum.kiwisdr.com/index.php?p=/discussion/2927/windows-and-running-nano-text-editor-in-admin-console#p1',
+                        'forum') +')'
+                  :
+                     'Mac: Type <x1>command-v</x1> for clipboard paste.'
+               )
+            :
+               w3_div('id-console-line',
+                  admin.console.isMobile?
+                     w3_inline('w3-margin-T-8/',
+                        w3_input('//id-console-line-input w3-input-any-change',
+                           '', 'console_input', '', 'console_input_cb|console_key_cb', 'enter shell command'),
+                        w3_inline('w3-margin-L-16/',
+                           w3_button('w3-yellow', '^C', 'console_ctrl_button_cb', 'c'),
+                           w3_button('w3-blue|margin-left:10px', '^D', 'console_ctrl_button_cb', 'd'),
+                           w3_button('w3-red|margin-left:10px', '^\\', 'console_ctrl_button_cb', '\x3c'),
+                           w3_button('w3-blue|margin-left:10px', '^P', 'console_ctrl_button_cb', 'p'),
+                           w3_button('w3-blue|margin-left:10px', '^N', 'console_ctrl_button_cb', 'n')
+                        )
+                     )
+                  :
+                     w3_div('w3-margin-T-8',
+                        w3_input('id-console-line-input w3-input-any-key', '', 'console_input', '',
+                           'console_input_cb|console_key_cb', 'enter shell command'),
+                        w3_text('id-console-debug w3-text-black w3-margin-T-8',
+                           'Control characters (^C, ^D, ^\\) and empty lines may now be typed directly into shell command field.')
+                     )
+               )
+         ),
+         
+         w3_checkbox_get_param('w3-margin-L-32//w3-label-inline w3-label-not-bold', 'unlimited<br>scroll back', 'adm.console_unlim_scrollback', 'admin_console_unlim_scroll_cb', false)
+      );
+
 	var s =
 	w3_div('id-console w3-text-teal w3-hide',
 		w3_div('w3-container',
-		   w3_div('',
-            w3_label('w3-show-inline', 'Beagle Debian console'),
-            w3_button('id-console-connect-btn w3-aqua|margin-left:10px', 'Connect', 'console_connect_cb'),
-
-            (dbg)?
-               w3_button('w3-aqua|margin-left:16px', 'ANSI', 'console_cmd_cb', 'console_input_cb|cd tools;mr')
-               :
-               w3_button('w3-green|margin-left:32px', 'monitor build progress', 'console_cmd_cb',
-                  'console_input_cb|tail -fn 500 /root/build.log'),
-
-            w3_button('w3-aqua|margin-left:16px|title="Type \'q\' to stop htop"',
-               'htop', 'console_cmd_cb', 'console_input_cb|htop'),
-            
-            w3_button('w3-yellow|margin-left:16px', 'disk free', 'console_cmd_cb', 'console_input_cb|df -h .'),
-
-            w3_button('w3-red|margin-left:16px|' +
-               'title="CAUTION: This will delete all but\n10 MB of your system log file"',
-               'clean logs', 'console_cmd_cb', 'console_input_cb|df -h .; journalctl --vacuum-size=10M; df -h .'),
-
-            (dbg)?
-               w3_button('w3-aqua|margin-left:16px', 'nano j', 'console_cmd_cb', 'console_input_cb|nano j')
-               :
-               w3_button('id-console-reclone w3-red|margin-left:16px', 're-clone sources', 'console_reclone_confirm'),
-
-            w3_button('w3-blue|margin-left:16px', 'check github', 'console_cmd_cb',
-               'console_input_cb|cdp; git show origin:Makefile &vbar; head -n 2'),
-
-            w3_button('w3-blue|margin-left:16px', 'ping DNS', 'console_cmd_cb',
-               'console_input_cb|ping -c3 1.1.1.1; ping -c3 8.8.8.8'),
-
-            w3_button('w3-blue|margin-left:16px', 'ping kiwisdr', 'console_cmd_cb',
-               'console_input_cb|ping -c3 kiwisdr.com')
-         ),
-         
+		   s1,
 			w3_div('id-console-msg w3-margin-T-8 w3-text-output w3-scroll-always-y w3-scroll-down w3-small w3-text-black ' +
 			   'cl-admin-console-color' + console_msg_psa,
 			   '<pre><code id="id-console-msgs"></code></pre>'
 			),
-
-         w3_inline('w3-valign',
-            w3_button('w3-aqua', 'Copy', 'console_copy_to_clipboard_cb'),
-			
-            w3_div('w3-margin-L-16',
-               admin.console.always_char_oriented?
-                  w3_text('id-console-debug w3-inline w3-text-black w3-margin-T-8',
-                     kiwi_isWindows()?
-                        'Windows: Type <x1>control-v</x1> twice (quickly) for clipboard paste. Once to get a normal <x1>control-v</x1>. ' +
-                        'Control-w alternatives: nano <x1>fn-f6</x1>, bash <x1>esc</x1> <x1>control-h</x1> (see ' +
-                        w3_link('w3-link-darker-color',
-                           'https://forum.kiwisdr.com/index.php?p=/discussion/2927/windows-and-running-nano-text-editor-in-admin-console#p1',
-                           'forum') +')'
-                     :
-                        'Mac: Type <x1>command-v</x1> for clipboard paste.'
-                  )
-               :
-                  w3_div('id-console-line',
-                     admin.console.isMobile?
-                        w3_inline('w3-margin-T-8/',
-                           w3_input('//id-console-line-input w3-input-any-change',
-                              '', 'console_input', '', 'console_input_cb|console_key_cb', 'enter shell command'),
-                           w3_inline('w3-margin-L-16/',
-                              w3_button('w3-yellow', '^C', 'console_ctrl_button_cb', 'c'),
-                              w3_button('w3-blue|margin-left:10px', '^D', 'console_ctrl_button_cb', 'd'),
-                              w3_button('w3-red|margin-left:10px', '^\\', 'console_ctrl_button_cb', '\x3c'),
-                              w3_button('w3-blue|margin-left:10px', '^P', 'console_ctrl_button_cb', 'p'),
-                              w3_button('w3-blue|margin-left:10px', '^N', 'console_ctrl_button_cb', 'n')
-                           )
-                        )
-                     :
-                        w3_div('w3-margin-T-8',
-                           w3_input('id-console-line-input w3-input-any-key', '', 'console_input', '',
-                              'console_input_cb|console_key_cb', 'enter shell command'),
-                           w3_text('id-console-debug w3-text-black w3-margin-T-8',
-                              'Control characters (^C, ^D, ^\\) and empty lines may now be typed directly into shell command field.')
-                        )
-                  )
-            )
-         )
+         s2
 		)
 	);
 	return s;
+}
+
+function admin_console_unlim_scroll_cb(path, checked, first)
+{
+   console.log('admin_console_unlim_scroll_cb checked='+ checked);
+   admin.console.max_lines = checked? /* unlimited */ 0 : /* default */ null;
+   admin_bool_cb(path, checked, first);
 }
 
 function console_reclone_confirm(cmd)
@@ -4518,7 +4531,7 @@ function console_resize()
 {
 	var el = w3_el('id-console-msg');
 	if (!el) return;
-	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight;
+	var hdr_height = w3_el("id-admin-top").clientHeight + w3_el("id-admin-nav").clientHeight + /* margin */ 16;
 	var adj = admin.console.always_char_oriented? 115 : (admin.console.isMobile? 140 : 150);
 	var console_height = window.innerHeight - hdr_height - adj;
    //if (kiwi_isMobile()) alert('cr '+ console_height +'='+ window.innerHeight +'-'+ hdr_height +'-'+ adj);
