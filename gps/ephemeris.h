@@ -18,7 +18,7 @@
 // http://www.aholme.co.uk/GPS/Main.htm
 //////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#include <stdint.h>
 
 class EPHEM {
     int sat;
@@ -39,20 +39,27 @@ class EPHEM {
     unsigned IODE3;
     double C_ic, OMEGA_0, C_is, i_0, C_rc, omega, OMEGA_dot, IDOT;
 
-    // Subframe 4, page 18 - Ionospheric delay
+    // Subframe 4
     double alpha[4], beta[4];
-    void LoadPage18(char *nav);
+    void LoadPage18(const uint8_t *nav);
 
-    void Subframe1(char *nav);
-    void Subframe2(char *nav);
-    void Subframe3(char *nav);
-    void Subframe4(char *nav);
-//  void Subframe5(char *nav);
-
-    double EccentricAnomaly(double t_k) const;
+    void Subframe1(const uint8_t *nav);
+    void Subframe2(const uint8_t *nav);
+    void Subframe3(const uint8_t *nav);
+    void Subframe4(const uint8_t *nav);
+//  void Subframe5(
+    
+    double A() const { return sqrtA*sqrtA; }
 
 public:
-    double A() const { return sqrtA*sqrtA; }     // Semi-major axis
+    void Init(int sat);
+    void Subframe(char *buf);
+    bool Valid();
+    double GetClockCorrection(double t) const;
+    void GetXYZ(double *x, double *y, double *z, double t) const;
+    double TimeOfEphemerisAge(double t) const;
+    double EccentricAnomaly(double t_k) const;
+
     unsigned week, tow;
     
     // debug
@@ -67,18 +74,13 @@ public:
     void PageN(unsigned page);
     void Page1(unsigned IODC, double M0, double e, double sqrtA, unsigned toe=0);
     void Page2(unsigned IODC, double OMG0, double i0, double omg, double idot);
-    void Page3(unsigned IODC, double OMGd, double deln, double cuc, double cus, double crc, double crs);
-    void Page4(unsigned IODC, double cic, double cis, double f0, double f1, double f2, unsigned toc=0);
+    void Page3(unsigned IODC, double OMGd, double deln,
+        double cuc, double cus, double crc, double crs);
+    void Page4(unsigned IODC, double cic, double cis,
+        double f0, double f1, double f2, unsigned toc=0);
     void Page5(unsigned tow, unsigned week, double tgd, double toc, double toe);
     void Page6(unsigned tow, unsigned week);
     void Page0(unsigned tow, unsigned week);
-
-    void   Init(int sat);
-    void   Subframe(char *buf);
-    bool   Valid();
-    double GetClockCorrection(double t) const;
-    void   GetXYZ(double *x, double *y, double *z, double t) const;
-    double TimeOfEphemerisAge(double t) const;
 };
 
-extern EPHEM Ephemeris[];
+extern EPHEM Ephemeris[MAX_SATS];
