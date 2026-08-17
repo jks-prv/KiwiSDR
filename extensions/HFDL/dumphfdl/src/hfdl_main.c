@@ -170,6 +170,7 @@ static bool parse_double(char const *str, double *result) {
 	ASSERT(str != NULL);
 	ASSERT(result != NULL);
 	char *endptr = NULL;
+	errno = 0;
 	double val = strtof(str, &endptr);
 	if(endptr == str || endptr[0] != '\0') {
 		fprintf(stderr, "Parameter error: '%s': not a valid floating-point number\n", str);
@@ -186,6 +187,7 @@ static bool parse_int32(char const *str, int32_t *result) {
 	ASSERT(str != NULL);
 	ASSERT(result != NULL);
 	char *endptr = NULL;
+	errno = 0;
 	long val = strtol(str, &endptr, 10);
 	if(endptr == str || endptr[0] != '\0') {
 		fprintf(stderr, "Parameter error: '%s': not a valid decimal integer number\n", str);
