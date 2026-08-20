@@ -3711,9 +3711,9 @@ function right_click_menu(x, y, which)
    // 0: tune to pb center => 1: snap => 2: tune tocarrier
    var s;
    switch (owrx.rcm_snap_sel) {
-      case 0: s = '🟢⚪⚪ snap to nearest'; break;   // select => snap on
-      case 1: s = '⚪🟢⚪ tune to carrier'; break;    // select => snap off
-      case 2: s = '⚪⚪🟢 tune to passband center'; break;
+      case owrx.RCM_PBC:  s = '🟢⚪⚪ snap to nearest'; break;   // select => snap on
+      case owrx.RCM_SNAP: s = '⚪🟢⚪ tune to carrier'; break;    // select => snap off
+      case owrx.RCM_CAR:  s = '⚪⚪🟢 tune to passband center'; break;
    }
    //console.log('rcm_snap_sel='+ owrx.rcm_snap_sel +' '+ s);
    owrx.right_click_menu_content[owrx.rcm_snap] = s;
@@ -3761,9 +3761,7 @@ function right_click_menu_cb(idx, x, cbp)
       break;
 
    case owrx.rcm_snap:  // snap to nearest et al
-      owrx.rcm_snap_sel = (owrx.rcm_snap_sel + 1) % 3;
-      wf_snap(owrx.rcm_snap_sel == owrx.RCM_SNAP);
-      //console.log('SNAP rcm_snap_sel='+ owrx.rcm_snap_sel +' wf_snap='+ owrx.wf_snap);
+      right_click_menu_snap();
       break;
 
    case owrx.rcm_cur_freq:  // cursor freq
@@ -3842,6 +3840,16 @@ function right_click_menu_cb(idx, x, cbp)
    default:
       break;
    }
+}
+
+function right_click_menu_snap(show_alert)
+{
+   var snap_sel = ['snap to nearest', 'tune to carrier', 'tune to passband center'];
+   if (show_alert)
+      w3_alert('rcm_snap', '', snap_sel[owrx.rcm_snap_sel], null, {width:'max-content', fadeout:1000});
+   owrx.rcm_snap_sel = (owrx.rcm_snap_sel + 1) % 3;
+   wf_snap(owrx.rcm_snap_sel == owrx.RCM_SNAP);
+   console.log('SNAP rcm_snap_sel='+ owrx.rcm_snap_sel +' wf_snap='+ owrx.wf_snap);
 }
 
 
@@ -10841,7 +10849,7 @@ function keyboard_shortcut_init()
             w3_inline_percent('w3-padding-tiny', '$', 25, 'toggle 1 Hz frequency readout'),
             w3_inline_percent('w3-padding-tiny', '%', 25, 'toggle tuning lock'),
             w3_inline_percent('w3-padding-tiny', '^', 25, 'toggle mouse wheel tune/zoom'),
-            w3_inline_percent('w3-padding-tiny', '&', 25, 'toggle snap to nearest'),
+            w3_inline_percent('w3-padding-tiny', '&', 25, 'toggle snap to nearest, tune to carrier / passband center'),
             w3_inline_percent('w3-padding-tiny', '@ alt-@', 25, 'open DX label filter, quick clear'),
             w3_inline_percent('w3-padding-tiny', '\\ |', 25, 'toggle (& open) DX stored/EiBi/community database,<br>alt to toggle <x1>filter by time/day-of-week</x1> checkbox'),
             w3_inline_percent('w3-padding-tiny', 'x y', 25, 'toggle visibility of control panels, top bar'),
@@ -11054,7 +11062,7 @@ function keyboard_shortcut(key, key_mod, ctlAlt, evt)
    case 'E': extension_scroll(-1); break;
    case '~': admin_page_cb(); break;
    case '^': canvas_mouse_wheel_set(owrx.wheel_tunes ^ 1); break;
-   case '&': wf_snap(owrx.wf_snap ^ 1); break;
+   case '&': right_click_menu_snap(true); break;
 
    case '?': case 'h':
       //console.log('inFreqIn='+ TF(inFreqIn) +' inFreqMenu='+ TF(inFreqMenu) +' inDX='+ TF(inDX));
