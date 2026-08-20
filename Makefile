@@ -1630,6 +1630,10 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST) $(BIT_AOUT_FILES)
 	    install -D -o root -g root -m 0644 unix_env/bashrc ~root/.bashrc
 	    install -D -o root -g root -m 0644 unix_env/profile ~root/.profile
 
+# to make non-root console work correctly
+	    install -D -o root -g root -m 0644 unix_env/bashrc /home/debian/.bashrc
+	    install -D -o root -g root -m 0644 unix_env/profile /home/debian/.profile
+
 	    install -D -o root -g root -m 0644 unix_env/gdbinit ~root/.gdbinit
 	    install -D -o root -g root -m 0644 unix_env/gdb_break ~root/.gdb_break
 

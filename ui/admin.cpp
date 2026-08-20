@@ -46,6 +46,7 @@ Boston, MA  02110-1301, USA.
 #include "ip_blacklist.h"
 #include "ant_switch.h"
 #include "rx_snr.h"
+#include "security.h"
 
 #ifdef USE_SDR
  #include "data_pump.h"
@@ -57,6 +58,7 @@ Boston, MA  02110-1301, USA.
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sched.h>
 #include <math.h>
@@ -66,6 +68,8 @@ Boston, MA  02110-1301, USA.
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <pwd.h>
+#include <grp.h>
 
 #ifdef HOST
     #include <sys/prctl.h>
@@ -74,6 +78,7 @@ Boston, MA  02110-1301, USA.
 #ifdef DEVSYS
     //#include <util.h>
     #define forkpty(master_pty_fd, x, y, z) 0
+    #define clearenv()
 #else
     #include <pty.h>
 #endif
@@ -125,6 +130,8 @@ void c2s_admin_shutdown(void *param)
 }
 
 // tunnel task
+// an experiment, not currently used
+#if 0
 static void tunnel(void *param)
 {
 	conn_t *c = (conn_t *) param;
@@ -173,6 +180,7 @@ static void tunnel(void *param)
         system(stprintf("/usr/sbin/sshd -D -p %d >/dev/null 2>&1", port));
     #endif
 }
+#endif
 
 // console task
 static void console_task(void *param)
@@ -189,16 +197,39 @@ static void console_task(void *param)
     char *buf = (char *) kiwi_imalloc("console", NBUF + SPACE_FOR_NULL);
     int i, n, err;
     
-    char *args[] = {(char *) "/bin/bash", (char *) "--login", NULL };
     scall("forkpty", (c->console_child_pid = forkpty(&c->master_pty_fd, NULL, NULL, NULL)));
     
-    if (c->console_child_pid == 0) {     // child
+    if (c->console_child_pid == 0) {    // child
         #ifdef HOST
             // terminate when parent exits
             scall("PR_SET_PDEATHSIG", prctl(PR_SET_PDEATHSIG, SIGTERM));
         #endif
 
-        execve(args[0], args, NULL);
+        #ifdef SECURITY_NON_ROOT_CONSOLE
+            struct passwd *pw = getpwnam("debian");
+            if (pw == NULL) { perror("getpwnam"); child_exit(EXIT_FAILURE); }
+            
+            // set cwd properly because /home/debian/.profile does: export HOME="${PWD:-$(pwd)}"
+            if (chdir(pw->pw_dir) != 0) { perror("chdir"); child_exit(EXIT_FAILURE); }
+            
+            // NB: setgid MUST be set before setuid
+            if (setgroups(0, NULL) != 0) { perror("setgroups"); child_exit(EXIT_FAILURE); }
+            if (setgid(pw->pw_gid) != 0) { perror("setgid"); child_exit(EXIT_FAILURE); }
+            if (setuid(pw->pw_uid) != 0) { perror("setuid"); child_exit(EXIT_FAILURE); }
+
+            char *args[] = { (char *) "/bin/bash", (char *) "--login", NULL };
+            execve("/bin/bash", args, /* envp */ NULL);
+        #else
+            #ifdef SECURITY_DROP_ROOT_PRIVILEGES
+                #error should be using SECURITY_NON_ROOT_CONSOLE above, check security.h
+            #else
+                // SECURITY: CAUTION, this gives a root shell immediately
+                chdir("/root");
+                char *args[] = { (char *) "/bin/bash", (char *) "--login", /* envp */ NULL };
+                execve(args[0], args, NULL);
+            #endif
+        #endif
+        
         child_exit(EXIT_SUCCESS);
     }
     
@@ -295,10 +326,11 @@ static void console_task(void *param)
     kiwi_ifree(buf, "console");
     c->master_pty_fd = 0;
     c->console_child_pid = 0;
+    cprintf(c, "CONSOLE: closed\n");
     
     if (c->mc) {
-        send_msg_encoded(c, "ADM", "console_c2w", "CONSOLE: exited\n");
-        send_msg(c, SM_NO_DEBUG, "ADM console_done");
+        send_msg_encoded(c, "ADM", "console_c2w", "CONSOLE: closed\n\n");
+        send_msg(c, SM_NO_DEBUG, "ADM console_close");
     }
 
     #undef NBUF

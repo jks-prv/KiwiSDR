@@ -21,6 +21,13 @@ Boston, MA  02110-1301, USA.
 
 #include "types.h"
 
+//#define SECURITY_DROP_ROOT_PRIVILEGES
+//#define SECURITY_NON_ROOT_CONSOLE
+
+#if defined(SECURITY_DROP_ROOT_PRIVILEGES) && !defined(SECURITY_NON_ROOT_CONSOLE)
+    #define SECURITY_NON_ROOT_CONSOLE
+#endif
+
 void drop_root_privileges();
 
 //#define CRYPT_PW

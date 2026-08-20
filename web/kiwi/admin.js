@@ -4497,7 +4497,7 @@ function console_open()
 
 function console_connect_cb(id)
 {
-   //console.log('console_connect_cb id='+ id);
+   console.log('console_connect_cb');
    if (admin.console_open) return;
    console_open();
 }
@@ -5285,7 +5285,6 @@ function admin_pwd_unsafe_alert()
 {
    //console.log('admin_pwd_unsafe_alert: adm.admin_password='+ adm.admin_password +' admin.serno='+ admin.serno +' '+ TF(adm.admin_password == admin.serno));   
    if (adm.admin_password == admin.serno) {
-      w3_alert_cancel();
       w3_alert('admin_pwd_unsafe', 'w3-font-15px',
          '<yel>WARNING: ADMIN PASSWORD SAME AS SERIAL NUMBER</yel><br><br>' +
          
@@ -5369,7 +5368,8 @@ function admin_rx83_mode_alert()
          function() {
             //console.log('$admin_rx83_mode_close');
             ext_set_cfg_param('adm.seen_rx83_mode_alert', true, EXT_SAVE);
-         }
+         },
+         {no_cancel:1}
       );
    }
 }
@@ -5635,8 +5635,9 @@ function admin_recv(data)
 				kiwi_output_msg('id-console-msgs', 'id-console-msg', admin.console);
 				break;
 
-			case "console_done":
-			   console.log('## console_done');
+			case "console_close":
+			   console.log('console_close');
+			   admin.console_open = false;
 				break;
 
 			case "config_clone_status":
