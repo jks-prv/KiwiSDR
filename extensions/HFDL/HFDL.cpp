@@ -24,7 +24,7 @@ static void hfdl_pushback_file_data(int rx_chan, int instance, int nsamps, TYPEC
     
     // Pushback 12 kHz sample file so it sounds right.
     // Have hfdl_task() do 12k => 36k resampling before calling decoder (which requires 36 kHz sampling)
-    real_printf("#%d ", nsamps); fflush(stdout);
+    //real_printf("#%d ", nsamps); fflush(stdout);
     for (int i = 0; i < nsamps; i++) {
         if (e->s2p < hfdl.s2p_end) {
             samps->re = (TYPEREAL) (s4_t) *e->s2p;
@@ -192,7 +192,8 @@ static void dumphfdl_task(void *param)
     hfdl_chan_t *e = &hfdl_chan[rx_chan];
 
     #ifdef HFDL
-        dumphfdl_main(ARRAY_LEN(hfdl_argv), (char **) hfdl_argv, rx_chan, e->outputBlockSize * NIQ);
+        int rv = dumphfdl_main(ARRAY_LEN(hfdl_argv), (char **) hfdl_argv, rx_chan, e->outputBlockSize * NIQ);
+        printf("HFDL: dumphfdl_main() returned %d?\n", rv);
     #endif
     e->dumphfdl_tid = 0;
 }

@@ -171,7 +171,7 @@ gpointer hfdl_g_async_queue_pop(const char *id, GAsyncQueue *q)
 // We used to simply "LIBS += -lpthread" in HFDL/Makefile to resolve these
 // pthread routines for libglib. But that doesn't work anymore with macOS versions
 // beyond 10.15 for some reason. So just define null routines here.
-// This is backward compatible with maxOS 10.15 (Catalina).
+// This is backward compatible with macOS 10.15 (Catalina).
 // The routines in glib called by HFDL obviously never use any pthread routines.
 
 #if defined(KIWI) && defined(XC)
