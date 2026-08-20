@@ -913,9 +913,9 @@ function w3_iterate_classList(el_id, func)
 function w3_create_appendElement(el_parent, el_type, html, id, psa)
 {
    var el_child = document.createElement(el_type);
-   if (isString(id)) el_child.id = id;
-   if (isString(psa)) w3_set_psa(el_child, psa);
-   w3_innerHTML(el_child, html);
+   if (isNonEmptyString(id)) el_child.id = id;
+   if (isNonEmptyString(psa)) w3_set_psa(el_child, psa);
+   if (isNonEmptyString(html)) w3_innerHTML(el_child, html);
 	w3_el(el_parent).appendChild(el_child);
 	return el_child;
 }
@@ -1243,6 +1243,12 @@ function w3_remove_then_add_cond_by_selector(selector, cond, t_props, f_props)
 }
 
 // remember selector syntax: #id .class
+function w3_nodes_by_selector(selector)
+{
+   return document.querySelectorAll(selector);
+}
+
+// remember selector syntax: #id .class
 function w3_func_by_selector(selector, func)
 {
    var args = Array.from(arguments);   // works because arguments is iterable
@@ -1250,7 +1256,7 @@ function w3_func_by_selector(selector, func)
    console.log(args);
    var node_list = document.querySelectorAll(selector);
    console.log(node_list);
-   if (isNull(node_list)) return;
+   if (isNull(node_list)) return null;
    node_list.forEach(
       function(el,i) {
          console.log(i +' id='+ el.id);
@@ -1338,6 +1344,19 @@ function w3_attribute(el_id, name, val, cond)
 	   el.setAttribute(name, val);   // repeated sets only update (i.e. don't create duplicate attrs)
 	else
 	   el.removeAttribute(name);
+}
+
+// e.g. 'title="..." onclick="..."'
+function w3_set_attributes_from_string(element, s) {
+    var attrs = s.match(/(\S+)=["']([^"']*)["']/g) || [];
+    
+    attrs.forEach(
+      function (attr) {
+        var [key, value] = attr.split('=');
+        var cleanKey = key.trim();
+        var cleanValue = value.replace(/["']/g, '').trim();
+        element.setAttribute(cleanKey, cleanValue);
+    });
 }
 
 function w3_show_block(el_id)
@@ -1999,7 +2018,7 @@ function w3_set_psa(el, psa)
    var attrs = psa[2];
    if (isArg(props)) w3_add(el, props);
    if (isArg(styles)) el.style = styles;
-   // FIXME: handle attr
+   if (isArg(attrs)) w3_set_attributes_from_string(el, attrs);
 }
 
 function w3int_init()
@@ -2613,7 +2632,7 @@ function w3_switch_label(psa, label, text_0, text_1, path, text_0_selected, cb, 
 	if (centered) spacing += ' w3-halign-center';
 
    var psa3 = w3_psa3(psa);
-   var psa_outer = w3_psa_mix(psa3.left, (inline? 'w3-inline-flex':'') + (centered? ' w3-halign-center w3-center':''));
+   var psa_outer = w3_psa_mix(psa3.left, (inline? 'w3-inline-flex':'') + (centered? ' w3-center':''));
    var psa_label = w3_psa_mix(psa3.middle, (hasLabel && bold)? 'w3-bold':'');
 	var psa_inner = w3_psa();
 
@@ -4043,7 +4062,7 @@ function w3_menu(psa, cb)
 	var p = w3_psa(psa, 'w3-menu w3-menu-container w3-round-large', '', onclick);
    var s = '<div '+ p +'></div>';
    //console.log('w3_menu s='+ s);
-   w3_el('id-w3-misc-container').innerHTML += s;
+   w3_append_innerHTML('id-w3-misc-container', s);
 }
 
 // menu items can be in argument list or passed as an array
