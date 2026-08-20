@@ -2486,7 +2486,8 @@ function kiwi_remove_cjson_comments(s)
 
 function kiwi_scrollbar_width()
 {
-	if (kiwi_isMacOS()) return 10;		// MacOS/iOS browser scrollbars are all narrower
+	//if (kiwi_isMacOS()) return 10;		// MacOS/iOS browser scrollbars are all narrower
+	if (kiwi_is_iOS()) return 10;		// iOS browser scrollbars are narrower
 	return 15;
 }
 

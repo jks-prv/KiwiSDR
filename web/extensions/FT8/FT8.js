@@ -262,7 +262,7 @@ function ft8_controls_setup()
 			)
 		);
 	
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('ft8');
 
    ext_set_data_height(300);

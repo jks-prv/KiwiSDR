@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+# Copyright (c) 2015-2026 John Seamons, ZL4VO/KF6VO
 #
 # For the benefit of KiwiSDR non-tree builds like liquid-dsp that don't want
 # the default of "CC=gcc" but which is otherwise difficult to specify any other way.
@@ -113,6 +113,8 @@ alias df.="/bin/df -h ."
 alias d.="/bin/df -h ."
 alias d.mb="/bin/df --block-size=1048576 . | tail -n 1 | awk '{print \$3}'"
 alias tr="traceroute"
+alias cdr="cd /root"
+alias cdd="cd /home/debian"
 alias cdp="cd \${PROJ}"
 alias cdp2="cd \${PROJ2}"
 alias cd2="cd \${PROJ2}"
@@ -136,6 +138,7 @@ alias catar="tail -vn +1 \`find . -type f -print\`"
 alias catav="tail -vn +1 */v"
 alias du="/usr/bin/du -sh * | sort -h"
 alias du.="/usr/bin/du -sh ."
+alias duf="function _duf () { /usr/bin/du -sh \$1 ; } ; _duf"
 alias sha256sum="shasum -a 256"
 alias sha="sha256sum"
 alias sha256="sha256sum"
@@ -391,6 +394,7 @@ alias pkch="apt-get update --allow-releaseinfo-change"
 alias pkup="apt-get -y ${APT_GET_FORCE} install debian-archive-keyring; apt-get update; apt-get -y ${APT_GET_FORCE} install ca-certificates; apt-get update"
 # update(upgrade) single package
 alias pki="apt-get -y ${APT_GET_FORCE} install"
+alias pkre="apt-get -y ${APT_GET_FORCE} reinstall"
 alias pkc="df; apt-get clean; echo; df"
 alias pksz="dpkg-query -W -f='\${Installed-Size;8}\t\${Status;1}\t\${Package}\n' | gr -v '\\sd\\s' | sort -n | cut -f1,3-"
 alias pkf="apt-file search"
