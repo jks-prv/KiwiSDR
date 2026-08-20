@@ -287,8 +287,9 @@ function tdoa_controls_setup()
 	ext_set_controls_width_height(650, 270);
    ext_set_data_height(tdoa.h_data);
 
-   // so control panel is on top of map when js console open on small-screen laptop
-	if (dbgUs) tdoa.cpanel_zIndex = w3_zIndex('id-ext-controls', 400);
+   // so control panels are on top of map when js console open on small-screen laptop,
+   // but behind help panel
+   ext_set_controls_on_top();
 
    var s = '';
 	for (i = 0; i < tdoa.tfields; i++) {
@@ -2710,7 +2711,7 @@ function TDoA_blur()
    tdoa_clear_all_hosts();
 	ext_set_data_height();     // restore default height
 	zoom_center = 0.5;         // restore
-	if (dbgUs) w3_zIndex('id-ext-controls', tdoa.cpanel_zIndex);
+   ext_restore_controls_on_top();
 	
 	// restore optbar if it wasn't changed
 	if (ext_get_optbar() == 'optbar-off' && tdoa.optbar != 'optbar-off')

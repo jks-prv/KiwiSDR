@@ -295,10 +295,7 @@ function freedv_controls_setup()
 
    // so control panels are on top of map when js console open on small-screen laptop,
    // but behind help panel
-	if (dbgUs) {
-	   freedv.ext_controls_zIndex = w3_zIndex('id-ext-controls', 1000);
-	   freedv.control_zIndex = w3_zIndex('id-control', 1000);
-	}
+   ext_set_controls_on_top();
 
    var s = '';
 	for (i = 0; i < freedv.tfields; i++) {
@@ -2449,11 +2446,7 @@ function freedv_blur_complete()
    kiwi_clearInterval(freedv.log_interval);
    console.log('### SET freedv_close ##########################################');
 	ext_send('SET freedv_close');
-	
-	if (dbgUs) {
-	   w3_zIndex('id-ext-controls', freedv.ext_controls_zIndex);
-	   w3_zIndex('id-control', freedv.control_zIndex);
-	}
+   ext_restore_controls_on_top();
 
 	// NB: This delay is necessary otherwise audio doesn't restart after a
 	// close of the extension panel.

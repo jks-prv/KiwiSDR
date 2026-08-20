@@ -30,6 +30,7 @@ var extint = {
    hide_func: null,
    default_w: 525,
    default_h: 300,
+   control_h: 365,
    prev_mode: null,
    mode_prior_to_dx_click: null,
    seq: 0,
@@ -184,7 +185,27 @@ function ext_set_data_height(height)
 // ext_set_controls_width_height defaults: width=525 height=300
 function ext_set_controls_width_height(width, height)
 {
-	panel_set_width_height('ext-controls', width, height);
+	if (kiwi_isMobile()) {
+	   extint.control_h = isNumberElse(height, 365);
+	} else {
+	   panel_set_width_height('ext-controls', width, height);
+	}
+}
+
+// so control panels are on top of map when js console open on small-screen laptop,
+// but behind help panel
+function ext_set_controls_on_top()
+{
+	if (!dbgUs) return;
+   extint.ext_controls_zIndex = w3_zIndex('id-ext-controls', 1000);
+   extint.control_zIndex = w3_zIndex('id-control', 1000);
+}
+
+function ext_restore_controls_on_top()
+{
+	if (!dbgUs) return;
+   w3_zIndex('id-ext-controls', extint.ext_controls_zIndex);
+   w3_zIndex('id-control', extint.control_zIndex);
 }
 
 var EXT_SAVE = true;
@@ -741,7 +762,8 @@ iPhone 5S	320   568	P
 iPhone 6S   375   667   P
 iPhone X    375   812   P                          595(217)
 iPhone XR   414   896	P
-iPhone 15   430   932   P                          659(273)
+iPhone 13P  390   844   P                          699(145)
+iPhone 15   430   932   P                          699(273)
 
 levono		600   1024	P 7"
 huawei		600   982	P 7"
@@ -992,18 +1014,23 @@ function extint_panel_show(controls_html, data_html, show_func, hide_func, show_
 	w3_el('id-ext-controls').style.zIndex = 150;
    w3_create_attribute('id-ext-controls-close-img', 'src', 'icons/close.24.png');
 	
-	el = w3_el('id-ext-controls-container');
-	el.innerHTML = controls_html;
+	if (kiwi_isMobile()) {
+	   w3_innerHTML('id-control-ext', controls_html);
+	} else {
+	   w3_innerHTML('id-ext-controls-container', controls_html);
+	}
 	//console.log(controls_html);
 	
 	if (show_func) show_func();
 	extint.hide_func = hide_func;
 	
-	el = w3_el('id-ext-controls');
-	el.style.zIndex = 150;
-	w3_visible(el, true);
-	el.panelShown = 1;
-   toggle_or_set_hide_panels(0);    // cancel panel hide mode
+	if (!kiwi_isMobile()) {
+      el = w3_el('id-ext-controls');
+      el.style.zIndex = 150;
+      w3_visible(el, true);
+      el.panelShown = 1;
+      toggle_or_set_hide_panels(0);    // cancel panel hide mode
+   }
 
 	
 	// help button
@@ -1024,7 +1051,8 @@ function ext_panel_displayed(ext_name) {
    return (extint.displayed && (ext_name? (ext_name == extint.current_ext_name) : true));
 }
 
-function ext_panel_redisplay(s) { w3_innerHTML('id-ext-controls-container', s); }
+// currently unused
+//function ext_panel_redisplay(s) { w3_innerHTML('id-ext-controls-container', s); }
 
 function extint_panel_hide(skip_calling_hide_spec)
 {
