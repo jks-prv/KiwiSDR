@@ -213,6 +213,7 @@ var w3 = {
 var w3int = {
    btn_grp_uniq: 0,
    alert: {},
+   alert_seq: 0,
    
    menu_cur_id: null,
    menu_active: false,
@@ -3428,8 +3429,9 @@ function w3_textarea_get_param(psa, label, path, rows, cols, cb, init_val)
 ////////////////////////////////
 
 function w3_alert(id, psa, msg, close, opts) {
-   path = 'id-alert-'+ id;
+   path = 'id-alert-'+ id +'-'+ w3int.alert_seq++;
    opts = opts || {};
+   if (!opts.no_cancel) w3_alert_cancel();
    var width = opts.width || '650px';
    var top = opts.top || '50%';
    var left = opts.left || '50%';
@@ -4712,13 +4714,19 @@ function w3_inline(psa, attr)
          // This solves the "w3_inline() + w3-hide" problem where our extra div
          // added by w3_inline isn't the one with the w3-hide, and causes unwanted spacing when
          // using w3_inline('w3-halign-space-between/').
-         if (psa3.right == '' && !psa_merge && a.startsWith('<div '))
+         if (psa3.right == '' && !psa_merge && a.startsWith('<div ')) {
+            if (dump) console.log('FINAL-1 '+ a);
             s += a;
-         else
-            if (enclosing)
-               s += '<'+ div_or_span +' w3d-inli-'+ w3_sb(i-1, psa) +'>'+ a + '</'+ div_or_span +'>';
-            else
+         } else {
+            if (enclosing) {
+               a = '<'+ div_or_span +' w3d-inli-'+ w3_sb(i-1, psa) +'>'+ a + '</'+ div_or_span +'>';
+               if (dump) console.log('FINAL-2 '+ a);
                s += a;
+            } else {
+               if (dump) console.log('FINAL-3 '+ a);
+               s += a;
+            }
+         }
       }
       s += '</'+ div_or_span +'>';
       if (dump) console.log(s);
