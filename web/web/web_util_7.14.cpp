@@ -71,6 +71,17 @@ void mg_free_header(const char *header)
     kiwi_asfree((char *) header);
 }
 
+void mg_show_headers(struct mg_http_message *hm)
+{
+    for (int i = 0; i < ARRAY_LEN(hm->headers) && hm->headers[i].name.len > 0; i++) {
+        struct mg_str *name  = &hm->headers[i].name;
+        struct mg_str *value = &hm->headers[i].value;
+        printf("mg_show_headers %.*s: %.*s\n",
+            (int) name->len,  name->buf,
+            (int) value->len, value->buf);
+    }
+}
+
 void mg_http_send_header(struct mg_connection *mc, const char *name, const char *v, int which, size_t len)
 {
     if (which == MG_FIRST_HEADER) mg_printf(mc, "HTTP/1.1 200 OK\r\n");

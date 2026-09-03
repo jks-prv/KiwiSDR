@@ -94,6 +94,7 @@ char *mg_str_to_cstr(mg_str *mgs);
 const char *mg_get_mime_type(const char *path, const char *default_mime_type);
 const char *mg_get_header(struct mg_connection *mc, const char *name);
 void mg_free_header(const char *header);
+void mg_show_headers(struct mg_http_message *hm);
 void mg_http_send_standard_headers(struct mg_connection *mc, const char *path, cache_info_t *cache, const char *msg);
 void mg_response_complete(struct mg_connection *mc);
 void mg_connection_close(struct mg_connection *mc);

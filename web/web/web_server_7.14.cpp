@@ -325,11 +325,18 @@ static void ev_handler_http(struct mg_connection *mc, int ev, void *ev_data)
                 ) {
                 mg_ws_upgrade(mc, hm, NULL);
                 //ev_http_prf("ev_handler_http WEBSOCKET upgrade <%s>\n", mc->uri);
+                //ev_http_prf("ev_handler_http WEBSOCKET upgrade UA=\"%s\"\n", mg_str_to_cstr(mg_http_get_header(hm, "User-Agent")));
             } else {
                 web_ev_request(mc, ev, ev_data);
             }
             kiwi_asfree(type_m);
             kiwi_asfree(uri_m);
+            return;
+        }
+            
+        case MG_EV_WS_OPEN: {
+            //struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+            //printf("ev_handler_http %s WEBSOCKET UA=\"%s\"\n", mg_ev_names[ev], mg_str_to_cstr(mg_http_get_header(hm, "User-Agent")));
             return;
         }
             
