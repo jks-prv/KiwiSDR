@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 		if (ARG("-gps")) p_gps = -1; else
 		if (ARG("+sdr")) do_sdr = 1; else
 		if (ARG("-sdr")) do_sdr = 0; else
-		if (ARG("-root")) { ARGL(drop_root); drop_root = drop_root/10 - 1; printf("drop_root %d\n", drop_root); } else
+		if (ARG("-root")) { ARGL(drop_root); drop_root = drop_root/10 - 1; printf("drop_root in %d secs\n", drop_root); } else
 		if (ARG("-d")) gen_debug = true; else
 		if (ARG("-debug")) debug_printfs = true; else
 		if (ARG("-gps_debug")) { gps_debug = -1; ARGL(gps_debug); } else
@@ -631,7 +631,10 @@ int main(int argc, char *argv[])
 		
 		if (drop_root) {
             static u4_t dropped;
-            if (dropped == drop_root) drop_root_privileges();
+            if (dropped == (drop_root/10 - 1)) {
+                drop_root = 0;
+                drop_root_privileges();
+            }
             dropped++;
         }
 		
