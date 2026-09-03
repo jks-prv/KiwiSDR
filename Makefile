@@ -2109,7 +2109,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	    -(cd /root; rm -f .bashrc.local.common build.log _FLASHED_FROM_SD_)
 	    -touch unix_env/reflash_delay_update
 	    -cp unix_env/shadow /etc/shadow
-	    sum *.bit
+	    sum *.bit *.aout
 
     JA := jq "." /root/kiwi.config/admin.json
     JK := jq "." /root/kiwi.config/kiwi.json
