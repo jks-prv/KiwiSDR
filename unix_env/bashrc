@@ -652,6 +652,19 @@ alias ift="iftop -nNBP -m 1G -f '!port 22 and !port 80 and !port 5353 and !port 
 alias iftl="iftop -nNBP -m 4M -f '!port 22 and !port 80 and !port 5353 and !port 53 and !port 137'"
 alias ift80="iftop -nNBP -m 4M -f '!port 22 and !port 5353 and !port 53 and !port 137 and !port 8073 and !port 7000'"
 
+# iptables
+alias ipth='echo "iptables aliases:"; \
+            echo "ipt: show all iptables"; \
+            echo "iptn: show rule counts in all chains"; \
+            echo "ips: ipset list (when available)"; \
+            echo "ipti: ipt INPUT chain"; \
+            echo "iptio: ipt INPUT and OUTPUT chains"; \
+            echo "iptz: zero INPUT stats, optional rule number"; \
+            echo "iptc: clear named chain stats"; \
+            echo "ip[un]ban: [un]ban an ip"; \
+            echo "ip[un]banmsg: [un]ban an ip with message comment"; \
+            echo "iptm: ipt + more"; \
+            echo "iptm: ipt + more";'
 alias ipt="function _ipt () { iptables -n -v -L \$* ; } ; _ipt"
 alias iptm="function _ipt () { iptables -n -v -L \$* | more; } ; _ipt"
 alias ips="ipset list"
