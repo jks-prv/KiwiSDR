@@ -229,17 +229,17 @@ bool sstv_msgs(char *msg, int rx_chan)
 		return true;
 	}
 	
-	int test;
-	if (sscanf(msg, "SET test=%d", &test) == 1) {
-        test = CLAMP(test, 0, sstv.n_test-1);
-		printf("SSTV: test=%d\n", test);
+	int test_n;
+	if (sscanf(msg, "SET test=%d", &test_n) == 1) {
+        test_n = CLAMP(test_n, 0, sstv.n_test-1);
 
         #ifdef SSTV_TEST_FILE
-            int tn = e->test_n = test;
-            e->s2p[tn] = e->s22p[tn] = sstv.s2p_start[tn];
+            e->test_n = test_n;
+            e->s2p[test_n] = e->s22p[test_n] = sstv.s2p_start[test_n];
 		#endif
 
 		e->test = (snd_rate != SND_RATE_3CH);
+		printf("SSTV: test=%d test_n=%d\n", e->test, e->test_n);
 		if (e->test) ext_send_msg_encoded(rx_chan, false, "EXT", "mode_name", "");
         ext_send_msg_encoded(rx_chan, false, "EXT", "status",
             e->test? "test image" : "test image not available in 3-channel/20 kHz mode");
