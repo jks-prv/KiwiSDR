@@ -91,6 +91,7 @@ proc help {} {
 }
 
 if { $::argc > 0 } {
+  puts "${argv}"
   for {set i 0} {$i < $::argc} {incr i} {
     set option [string trim [lindex $::argv $i]]
     switch -regexp -- $option {
@@ -135,7 +136,7 @@ set obj [current_project]
 set_property \
     -dict [list corecontainer.enable {1} \
                default_lib {xil_defaultlib} \
-               dsa.num_compute_units {60} \
+               platform.num_compute_units {60} \
                ip_cache_permissions {read write} \
                ip_output_repo "$proj_dir/${project_name}.cache/ip" \
                part ${part} \
@@ -371,18 +372,24 @@ current_run -implementation [get_runs impl_1]
 
 puts "INFO: Project created: ${project_name} ${part}"
 
-proc set_rx_cfg {proj rx_cfg} {
+proc set_rx_cfg {proj rx_cfg mode_id} {
     # the following doesn't seem to work, so do it via kiwi.cfg.vh file included by kiwi.gen.vh
     #set_property generic {RX_CFG=4} [current_fileset]
+    puts "setup ${proj}/import_srcs/kiwi.cfg.vh"
     set fdw [open "${proj}/import_srcs/kiwi.cfg.vh" "w"]
+    puts "localparam RX_CFG = ${rx_cfg};"
     puts $fdw "localparam RX_CFG = ${rx_cfg};"
+    puts "localparam MODE_ID = \"${mode_id}\";"
+    puts $fdw "localparam MODE_ID = \"${mode_id}\";"
     # NB: These are needed here because they are equivalently generated in the
     # e_cpu assembler (asm.cpp). There is no reasonable way to generate "`define"
     # with any other mechanism.
     if { ${rx_cfg} == 83 } {
+        puts "`define USE_CICF_83"
         puts $fdw "`define USE_CICF_83"
     }
     if { ${rx_cfg} != 14 } {
+        puts "`define USE_WF"
         puts $fdw "`define USE_WF"
     }
     close $fdw
@@ -392,7 +399,7 @@ set impl_dir "${project_name}/${project_name}.runs/impl_1"
 
 proc build_rx8_wf3 {proj s_dir d_dir} {
     puts "================ ${proj} rx83 ================"
-    set_rx_cfg $proj 83
+    set_rx_cfg $proj 83 "rx8.wf3"
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
@@ -406,7 +413,7 @@ proc build_rx8_wf3 {proj s_dir d_dir} {
 
 proc build_rx4_wf4 {proj s_dir d_dir} {
     puts "================ ${proj} rx44 ================"
-    set_rx_cfg $proj 44
+    set_rx_cfg $proj 44 "rx4.wf4"
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
@@ -420,7 +427,7 @@ proc build_rx4_wf4 {proj s_dir d_dir} {
 
 proc build_rx8_wf2 {proj s_dir d_dir} {
     puts "================ ${proj} rx82 ================"
-    set_rx_cfg $proj 82
+    set_rx_cfg $proj 82 "rx8.wf2"
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
@@ -434,7 +441,7 @@ proc build_rx8_wf2 {proj s_dir d_dir} {
 
 proc build_rx3_wf3 {proj s_dir d_dir} {
     puts "================ ${proj} rx33 ================"
-    set_rx_cfg $proj 33
+    set_rx_cfg $proj 33 "rx3.wf3"
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
@@ -448,7 +455,7 @@ proc build_rx3_wf3 {proj s_dir d_dir} {
 
 proc build_rx14_wf0 {proj s_dir d_dir} {
     puts "================ ${proj} rx14 ================"
-    set_rx_cfg $proj 14
+    set_rx_cfg $proj 14 "rx14.wf0"
     update_compile_order -fileset sources_1
     reset_run -quiet synth_1
     reset_run -quiet impl_1
