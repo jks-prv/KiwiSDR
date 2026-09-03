@@ -226,11 +226,14 @@ function sstv_clear_display(mode_name)
    ct.fillRect(x,0, sstv.iw,sstv.h);
    sstv.image_y = 0;
    sstv.shift_second = false;
+
+   // on narrow screens jump to receiving panel
+   if (kiwi_isMobile())
+      w3_el('id-ext-data-container').scrollTo({ left: x - sstv.isp/2, behavior: 'smooth' });
 }
 
 function sstv_controls_setup()
 {
-   if (kiwi_isMobile()) sstv.startx = 0;
    sstv.tw = sstv.w;
 
    var data_html =
@@ -273,6 +276,7 @@ function sstv_controls_setup()
 	ext_panel_show(controls_html, data_html, null);
 	ext_set_controls_width_height(350, 200);
 	sstv.saved_setup = ext_save_setup();
+	ext_set_mode('usb');    // won't decode if started while in IQ mode
 	sstv_mode_name_cb("");
 	sstv_status_cb("");
 	sstv_fsk_id_cb("");
