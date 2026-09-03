@@ -64,6 +64,8 @@ void kiwi_chrrep(char *str, const char from, const char to);
 bool kiwi_str_begins_with(char *s, const char *cs);
 char *kiwi_str_ends_with(char *s, const char *cs);
 char *kiwi_skip_over(char *s, const char *skip);
+//bool kiwi_last_4_are_digits(char *s);
+//int kiwi_count_char_occurrence(int c, const char *s);
 char *kstr_sp_less_trailing_nl(char *s_kstr_cstr);
 char *kiwi_overlap_strcpy(char *dst, const char *src);
 u1_t *kiwi_overlap_memcpy(u1_t *dst, const u1_t *src, int n);

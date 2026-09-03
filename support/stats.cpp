@@ -344,11 +344,11 @@ static void called_every_second()
             bool not_ok = (ext_api_users > ext_api_ch);
             cprintf(c, "API: ext_api_users=%d >? ext_api_ch=%d %s\n", ext_api_users, ext_api_ch,
                 not_ok? "T(DENY)":"F(OKAY)");
-            bool kick = false;
+            int kick = -1;
             if (not_ok) {
                 clprintf(c, "API: non-Kiwi app was denied connection: %d/%d %s \"%s\"\n",
                     ext_api_users, ext_api_ch, c->remote_ip, kiwi_nonEmptyStr(c->ident_user)? c->ident_user : "(no identity)");
-                kick = true;
+                kick = 0;
             } else {
                 #ifdef OPTION_DENY_APP_FINGERPRINT_CONN
                     float f_kHz = (float) c->freqHz / kHz + freq.offset_kHz;
@@ -361,22 +361,31 @@ static void called_every_second()
                     clprintf(c, "API: TRIG=%s %s(T%d) f_kHz=%.3f freq_trig=%d hasDelimiter=%d z=%d\n",
                         trig? "T":"F", rx_conn_type(c), c->type, f_kHz, freq_trig, hasDelimiter, c->zoom);
                     if (trig) {
-                        clprintf(c, "API: non-Kiwi app fingerprint was denied connection: %s\n", c->remote_ip);
-                        kick = true;
+                        kick = 1;
                     } else {
-                        if (kiwi_str_begins_with(c->ident_user, "TDoA_service")) {
-                            int f = (int) floor_kHz;
-                            if (rx_in_HFDL_bands(f)) {
-                                clprintf(c, "API: non-Kiwi app fingerprint-2 was denied connection: %s\n", c->remote_ip);
-                                c->kick = true;
-                            }
+                        int f = (int) floor_kHz;
+                        bool inHFDL = rx_in_HFDL_bands(f);
+                        if (inHFDL && kiwi_str_begins_with(c->ident_user, "TDoA_service")) {
+                            kick = 2;
                         }
+                        /* not yet
+                            else {
+                                bool last_4d = kiwi_last_4_are_digits(c->ident_user);
+                                int dash_ct = kiwi_count_char_occurrence('-', c->ident_user);
+                                if (f == 8825 && (last_4d || (last_4d && dash_ct == 2))) {
+                                    kick = 5;
+                                }
+                            }
+                        */
                     }
                 #endif
             }
             
-            if (kick) {
-                send_msg(c, SM_NO_DEBUG, "MSG too_busy=%d", ext_api_ch);
+            if (kick != -1) {
+                if (kick >= 1)
+                    clprintf(c, "API: non-Kiwi app fingerprint-%d was denied connection: %s\n", kick, c->remote_ip);
+                if (kick != 1)
+                    send_msg(c, SM_NO_DEBUG, "MSG too_busy=%d", ext_api_ch);
                 c->kick = true;
             }
         }

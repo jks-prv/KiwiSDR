@@ -991,6 +991,30 @@ char *kiwi_skip_over(char *s, const char *skip)
     return match? (s + slen) : s;
 }
 
+/*
+bool kiwi_last_4_are_digits(char *s)
+{
+    if (kiwi_emptyStr(s)) return false;
+    const char *p = s + strlen(s);
+    return (p-s >= 4 &&
+        isdigit((u1_t) p[-4]) &&
+        isdigit((u1_t) p[-3]) &&
+        isdigit((u1_t) p[-2]) &&
+        isdigit((u1_t) p[-1]));
+}
+
+int kiwi_count_char_occurrence(int c, const char *s)
+{
+    int count = 0;
+    while (*s) {
+        if (*s == (char) c)
+            count++;
+        s++;
+    }
+    return count;
+}
+*/
+
 // library strcpy() with overlapping args will trigger clang asan
 char *kiwi_overlap_strcpy(char *dst, const char *src)
 {
