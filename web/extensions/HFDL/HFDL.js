@@ -7,6 +7,7 @@ var hfdl = {
    test_flight: false,  // requires test audio file to be played
    dataH: 445,
    dataW: 1024,
+   dataT: 1024 + 16 + 250,    // including spacer + options
    ctrlW: 350,
    ctrlH: 260,
    freq: 0,
@@ -381,6 +382,7 @@ function hfdl_controls_setup()
 
 	ext_panel_show(controls_html, data_html, null);
    ext_set_data_height(hfdl.dataH);
+   ext_set_data_width(hfdl.dataT);
 	ext_set_controls_width_height(hfdl.ctrlW, hfdl.ctrlH);
 
 	time_display_setup('hfdl');
@@ -1196,6 +1198,7 @@ function HFDL_blur()
 {
    // anything that needs to be done when extension blurred (closed)
 	ext_set_mode(hfdl.saved_mode);
+	console.log('HFDL: restore saved_mode='+ hfdl.saved_mode);
    ext_agc_delay(hfdl.save_agc_delay);
    kiwi_clearInterval(hfdl.log_interval);
    kiwi_clearInterval(hfdl.locations_age_interval);
