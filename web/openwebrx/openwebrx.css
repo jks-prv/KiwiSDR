@@ -516,12 +516,17 @@ html, body
 	background-repeat: no-repeat;
 	background-color: #1e5f7f;
 	cursor: crosshair;
+	/* isolate scrolling waterfall from rest of page layout */
+	contain: content;
 }
 
 #id-waterfall-container canvas
 {
 	position: absolute;
 	border-style: none;
+	/* promote each waterfall canvas to its own compositor layer;
+	   actual motion is driven via transform in js (no layout) */
+	will-change: transform;
 }
 
 #id-phantom-canvas
