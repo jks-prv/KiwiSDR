@@ -4371,9 +4371,12 @@ function spectrum_init()
 	spec.colormap_transparent = spec.ctx.createImageData(1, spec.canvas.height);
 	update_maxmindb_sliders();
 	spectrum_dB_bands();
-	var spectrum_update_rate_Hz = kiwi_isMobile()? 10:10;  // limit update rate since rendering spectrum is currently expensive
+	// spectrum is driven by actual waterfall data arrival via waterfall_add()
+	// rather than a fixed timer, to avoid waking the main thread when no new
+	// RF data is available. Keep a low-rate fallback for AF spectrum etc.
+	var spectrum_update_rate_Hz = kiwi_isMobile()? 4:4;
 	//if (kiwi_isMobile()) alert('spectrum_update_rate_Hz = '+ spectrum_update_rate_Hz +' Hz');
-	setInterval(function() { spec.update++; }, 1000 / spectrum_update_rate_Hz);
+	setInterval(function() { if (!document.hidden) spec.update++; }, 1000 / spectrum_update_rate_Hz);
 
    spec.spectrum_image = spec.ctx.createImageData(spec.canvas.width, spec.canvas.height);
    
