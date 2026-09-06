@@ -4866,9 +4866,27 @@ function wf_init_ready()
    
 	audioFFT_setup();
 
+	// use rAF for waterfall delivery so it syncs to display refresh and
+	// avoids firing when compositor has not painted; also allows background
+	// tab throttling via requestAnimationFrame + document.hidden
 	waterfall_ms = 900/wf_fps_max;
-	waterfall_timer = window.setInterval(waterfall_dequeue, waterfall_ms);
-	//console.log('waterfall_dequeue @ '+ waterfall_ms +' msec');
+	var waterfall_last_rAF = 0;
+	function waterfall_dequeue_rAF_loop(now) {
+		// rAF timestamp is monotonic; ensure waterfall_dequeue semantics
+		// respect original 900/wf_fps spacing when possible
+		if (!waterfall_last_rAF) waterfall_last_rAF = now;
+		var elapsed = now - waterfall_last_rAF;
+
+		// if tab hidden, heavily throttle: Chrome already throttles rAF to ~1Hz
+		var nominal_ms = document.hidden? 900 : waterfall_ms;
+		if (elapsed >= nominal_ms || document.hidden) {
+			waterfall_last_rAF = now;
+			waterfall_dequeue();
+		}
+		waterfall_timer = window.requestAnimationFrame(waterfall_dequeue_rAF_loop);
+	}
+	waterfall_timer = window.requestAnimationFrame(waterfall_dequeue_rAF_loop);
+	//console.log('waterfall_dequeue via rAF, waterfall_ms nominal '+ waterfall_ms +' msec');
 	
 	// if extension going to be opened delay applying keys
    if (isNonEmptyArray(shortcut.keys) && !override_ext)
