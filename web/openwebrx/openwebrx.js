@@ -4371,9 +4371,12 @@ function spectrum_init()
 	spec.colormap_transparent = spec.ctx.createImageData(1, spec.canvas.height);
 	update_maxmindb_sliders();
 	spectrum_dB_bands();
-	var spectrum_update_rate_Hz = kiwi_isMobile()? 10:10;  // limit update rate since rendering spectrum is currently expensive
+	// spectrum is driven by actual waterfall data arrival via waterfall_add()
+	// rather than a fixed timer, to avoid waking the main thread when no new
+	// RF data is available. Keep a low-rate fallback for AF spectrum etc.
+	var spectrum_update_rate_Hz = kiwi_isMobile()? 4:4;
 	//if (kiwi_isMobile()) alert('spectrum_update_rate_Hz = '+ spectrum_update_rate_Hz +' Hz');
-	setInterval(function() { spec.update++; }, 1000 / spectrum_update_rate_Hz);
+	setInterval(function() { if (!document.hidden) spec.update++; }, 1000 / spectrum_update_rate_Hz);
 
    spec.spectrum_image = spec.ctx.createImageData(spec.canvas.width, spec.canvas.height);
    
@@ -4866,9 +4869,27 @@ function wf_init_ready()
    
 	audioFFT_setup();
 
+	// use rAF for waterfall delivery so it syncs to display refresh and
+	// avoids firing when compositor has not painted; also allows background
+	// tab throttling via requestAnimationFrame + document.hidden
 	waterfall_ms = 900/wf_fps_max;
-	waterfall_timer = window.setInterval(waterfall_dequeue, waterfall_ms);
-	//console.log('waterfall_dequeue @ '+ waterfall_ms +' msec');
+	var waterfall_last_rAF = 0;
+	function waterfall_dequeue_rAF_loop(now) {
+		// rAF timestamp is monotonic; ensure waterfall_dequeue semantics
+		// respect original 900/wf_fps spacing when possible
+		if (!waterfall_last_rAF) waterfall_last_rAF = now;
+		var elapsed = now - waterfall_last_rAF;
+
+		// if tab hidden, heavily throttle: Chrome already throttles rAF to ~1Hz
+		var nominal_ms = document.hidden? 900 : waterfall_ms;
+		if (elapsed >= nominal_ms || document.hidden) {
+			waterfall_last_rAF = now;
+			waterfall_dequeue();
+		}
+		waterfall_timer = window.requestAnimationFrame(waterfall_dequeue_rAF_loop);
+	}
+	waterfall_timer = window.requestAnimationFrame(waterfall_dequeue_rAF_loop);
+	//console.log('waterfall_dequeue via rAF, waterfall_ms nominal '+ waterfall_ms +' msec');
 	
 	// if extension going to be opened delay applying keys
    if (isNonEmptyArray(shortcut.keys) && !override_ext)
@@ -4914,8 +4935,10 @@ function add_wf_canvas()
 	new_canvas.openwebrx_height = wf_canvas_default_height;	
 
 	// initially the canvas is one line "above" the top of the container
-	new_canvas.openwebrx_top = (-wf_canvas_default_height+1);	
-	new_canvas.style.top = px(new_canvas.openwebrx_top);
+	new_canvas.openwebrx_top = (-wf_canvas_default_height+1);
+	// use transform for movement (compositor-only); keep top=0 and drive via translateY
+	new_canvas.style.top = px(0);
+	new_canvas.style.transform = 'translate3d(0,'+ new_canvas.openwebrx_top +'px,0)';
 
 	new_canvas.oneline_image = new_canvas.ctx.createImageData(wf_fft_size, 1);
 
@@ -4930,8 +4953,11 @@ function add_wf_canvas()
 function wf_shift_canvases()
 {
 	// shift the canvases downward by increasing their individual top offsets
+	// use transform instead of top to avoid layout thrash: top is layout-triggering,
+	// transform is composite-only (promoted via will-change in css)
 	wf_canvases.forEach(function(p) {
-		p.style.top = px(p.openwebrx_top++);
+		p.openwebrx_top++;
+		p.style.transform = 'translate3d(0,'+ p.openwebrx_top +'px,0)';
 	});
 	
 	// retire canvases beyond bottom of scroll-back window
@@ -5221,6 +5247,11 @@ function waterfall_add(data_raw, audioFFT)
 
    // waterfall
 	var oneline_image = canvas.oneline_image;
+	var oneline_u32 = canvas.oneline_image_u32;
+	if (!oneline_u32 || oneline_u32.length != w) {
+		canvas.oneline_image_u32 = oneline_u32 = new Uint32Array(oneline_image.data.buffer);
+	}
+	var cmap_u32 = color_map_rgba_u32;
 
    for (x=0; x<w; x++) {
       z = color_index(wf_gnd? wf_gnd_value : data[x], wf.sqrt);
@@ -5275,11 +5306,14 @@ function waterfall_add(data_raw, audioFFT)
          oneline_image.data[x*4+2] = 0;
       } else {
       */
-         oneline_image.data[x*4  ] = color_map_r[z];
-         oneline_image.data[x*4+1] = color_map_g[z];
-         oneline_image.data[x*4+2] = color_map_b[z];
-      //}
-      oneline_image.data[x*4+3] = 0xff;
+         if (cmap_u32) {
+            oneline_u32[x] = cmap_u32[z];
+         } else {
+            oneline_image.data[x*4  ] = color_map_r[z];
+            oneline_image.data[x*4+1] = color_map_g[z];
+            oneline_image.data[x*4+2] = color_map_b[z];
+            oneline_image.data[x*4+3] = 0xff;
+         }
    }
    
    if (clear_wfavg) clear_wfavg = false;
@@ -5736,6 +5770,13 @@ var wf_dq_onesec = 0;
 
 function waterfall_dequeue()
 {
+	// if queue grew large (e.g. after background throttling or GC pause), drop stale lines
+	if (waterfall_queue.length > wf_fps_max*2) {
+		var _keep = wf_fps_max;
+		waterfall_queue.splice(0, waterfall_queue.length - _keep);
+		if (kiwi_gc_wf) { /* gc */ }
+	}
+
 	/*
       wf_dq_onesec += waterfall_ms;
       if (wf_dq_onesec >= 1000) {
@@ -5799,6 +5840,8 @@ var color_map_transparent = new Uint32Array(256);
 var color_map_r = new Uint8Array(256);
 var color_map_g = new Uint8Array(256);
 var color_map_b = new Uint8Array(256);
+// precomputed little-endian RGBA for fast ImageData Uint32 store: r | g<<8 | b<<16 | 0xff<<24
+var color_map_rgba_u32 = new Uint32Array(256);
 
 function mkcolormap()
 {
@@ -5961,6 +6004,8 @@ function mkcolormap()
 		color_map_r[i] = r;
 		color_map_g[i] = g;
 		color_map_b[i] = b;
+		// little-endian RGBA u32 for ImageData: bytes are r,g,b,a in memory order
+		color_map_rgba_u32[i] = r | (g<<8) | (b<<16) | (0xff<<24);
 	}
 }
 
