@@ -5767,6 +5767,13 @@ var wf_dq_onesec = 0;
 
 function waterfall_dequeue()
 {
+	// if queue grew large (e.g. after background throttling or GC pause), drop stale lines
+	if (waterfall_queue.length > wf_fps_max*2) {
+		var _keep = wf_fps_max;
+		waterfall_queue.splice(0, waterfall_queue.length - _keep);
+		if (kiwi_gc_wf) { /* gc */ }
+	}
+
 	/*
       wf_dq_onesec += waterfall_ms;
       if (wf_dq_onesec >= 1000) {
