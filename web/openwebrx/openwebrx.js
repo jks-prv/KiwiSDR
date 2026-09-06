@@ -4914,8 +4914,10 @@ function add_wf_canvas()
 	new_canvas.openwebrx_height = wf_canvas_default_height;	
 
 	// initially the canvas is one line "above" the top of the container
-	new_canvas.openwebrx_top = (-wf_canvas_default_height+1);	
-	new_canvas.style.top = px(new_canvas.openwebrx_top);
+	new_canvas.openwebrx_top = (-wf_canvas_default_height+1);
+	// use transform for movement (compositor-only); keep top=0 and drive via translateY
+	new_canvas.style.top = px(0);
+	new_canvas.style.transform = 'translate3d(0,'+ new_canvas.openwebrx_top +'px,0)';
 
 	new_canvas.oneline_image = new_canvas.ctx.createImageData(wf_fft_size, 1);
 
@@ -4930,8 +4932,11 @@ function add_wf_canvas()
 function wf_shift_canvases()
 {
 	// shift the canvases downward by increasing their individual top offsets
+	// use transform instead of top to avoid layout thrash: top is layout-triggering,
+	// transform is composite-only (promoted via will-change in css)
 	wf_canvases.forEach(function(p) {
-		p.style.top = px(p.openwebrx_top++);
+		p.openwebrx_top++;
+		p.style.transform = 'translate3d(0,'+ p.openwebrx_top +'px,0)';
 	});
 	
 	// retire canvases beyond bottom of scroll-back window
