@@ -5244,6 +5244,11 @@ function waterfall_add(data_raw, audioFFT)
 
    // waterfall
 	var oneline_image = canvas.oneline_image;
+	var oneline_u32 = canvas.oneline_image_u32;
+	if (!oneline_u32 || oneline_u32.length != w) {
+		canvas.oneline_image_u32 = oneline_u32 = new Uint32Array(oneline_image.data.buffer);
+	}
+	var cmap_u32 = color_map_rgba_u32;
 
    for (x=0; x<w; x++) {
       z = color_index(wf_gnd? wf_gnd_value : data[x], wf.sqrt);
@@ -5298,11 +5303,14 @@ function waterfall_add(data_raw, audioFFT)
          oneline_image.data[x*4+2] = 0;
       } else {
       */
-         oneline_image.data[x*4  ] = color_map_r[z];
-         oneline_image.data[x*4+1] = color_map_g[z];
-         oneline_image.data[x*4+2] = color_map_b[z];
-      //}
-      oneline_image.data[x*4+3] = 0xff;
+         if (cmap_u32) {
+            oneline_u32[x] = cmap_u32[z];
+         } else {
+            oneline_image.data[x*4  ] = color_map_r[z];
+            oneline_image.data[x*4+1] = color_map_g[z];
+            oneline_image.data[x*4+2] = color_map_b[z];
+            oneline_image.data[x*4+3] = 0xff;
+         }
    }
    
    if (clear_wfavg) clear_wfavg = false;
@@ -5822,6 +5830,8 @@ var color_map_transparent = new Uint32Array(256);
 var color_map_r = new Uint8Array(256);
 var color_map_g = new Uint8Array(256);
 var color_map_b = new Uint8Array(256);
+// precomputed little-endian RGBA for fast ImageData Uint32 store: r | g<<8 | b<<16 | 0xff<<24
+var color_map_rgba_u32 = new Uint32Array(256);
 
 function mkcolormap()
 {
@@ -5984,6 +5994,8 @@ function mkcolormap()
 		color_map_r[i] = r;
 		color_map_g[i] = g;
 		color_map_b[i] = b;
+		// little-endian RGBA u32 for ImageData: bytes are r,g,b,a in memory order
+		color_map_rgba_u32[i] = r | (g<<8) | (b<<16) | (0xff<<24);
 	}
 }
 
