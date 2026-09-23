@@ -74,6 +74,7 @@ function devl_num_cb(path, val)
 
 function devl_controls_setup()
 {
+	console.error('devl_controls_setup');
 	var controls_html =
 		w3_div('id-devl-controls w3-text-white',
 			w3_divs('/w3-tspace-8',
@@ -91,7 +92,7 @@ function devl_controls_setup()
 			)
 		);
 
-	ext_panel_show(controls_html, null, null);
+	ext_panel_show(controls_html);
 	ext_set_controls_width_height(null, 350);
 }
 
@@ -99,6 +100,6 @@ function devl_controls_setup()
 // called to display HTML for configuration parameters in admin interface
 function devl_display_config_html()
 {
-   ext_config_html(devl, 'devl', 'devl', 'development controls configuration');
+   ext_config_html(devl, {'cfg':'devl', 'nav':'devl', 'enable_only':1}, 'development controls configuration');
 }
 */

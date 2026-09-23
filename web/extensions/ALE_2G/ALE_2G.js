@@ -4,7 +4,9 @@
 var ale = {
    ext_name: 'ALE_2G',     // NB: must match ALE_2G.cpp:ale_2g_ext.name
    first_time: true,
-   dataH: 300,
+   dataH_desktop: 300,
+   dataH_phone:  250,
+   dataW: 1024,
    ctrlW: 615,
    //ctrlH: 215,
    ctrlH: 185,
@@ -258,11 +260,13 @@ function ale_2g_decoder_output_chars(c)
 
 function ale_2g_controls_setup()
 {
+   ale.dataH = kiwi_isPhone()? ale.dataH_phone : ale.dataH_desktop;
+
    var data_html =
       time_display_html('ale_2g') +
 
-      w3_div('id-ale_2g-data|left:150px; width:1044px; height:'+ px(ale.dataH) +'; overflow:hidden; position:relative; background-color:mediumBlue;',
-			w3_div('id-ale_2g-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|left: 10px; width:1024px; position:absolute; overflow-x:hidden;',
+      w3_div('id-ale_2g-data w3-display-container w3-no-scroll|width:'+ px(ale.dataW) +'; height:'+ px(ale.dataH),
+         w3_div(sprintf('id-ale_2g-console-msg w3-absolute w3-no-scroll-x w3-text-output w3-scroll-down w3-small w3-text-black|width:%dpx', ale.dataW),
 			   '<pre><code id="id-ale_2g-console-msgs"></code></pre>'
 			)
       );
@@ -319,8 +323,9 @@ function ale_2g_controls_setup()
          )
       );
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
    ext_set_data_height(ale.dataH);
+   ext_set_data_width(ale.dataW);
 	ext_set_controls_width_height(ale.ctrlW, ale.ctrlH);
 	time_display_setup('ale_2g');
 	ale_2g_msg('w3-text-css-yellow', '&nbsp;');
@@ -1225,9 +1230,7 @@ function ALE_2G_environment_changed(changed)
    }
 
    if (changed.resize) {
-      var el = w3_el('id-ale_2g-data');
-      var left = (window.innerWidth - 1024 - kiwi.time_display_width) / 2;
-      el.style.left = px(left);
+      ext_set_data_left('id-ale_2g-data', ale.dataW);
    }
 }
 
@@ -1381,5 +1384,5 @@ function ALE_2G_config_html()
          w3_text('w3-margin-top w3-text-black', 'Note: Line numbers in JSON.parse error messages do not include comment lines. Adjust accordingly.')
       );
 
-   ext_config_html(ale, 'ale_2g', 'ALE_2G', 'ALE_2G configuration', s);
+   ext_config_html(ale, {'cfg':'ale_2g', 'nav':'ALE_2G'}, 'ALE_2G configuration', s);
 }

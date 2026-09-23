@@ -16,6 +16,12 @@
 var wspr = {
    ext_name: 'wspr',    // NB: must match wspr.c:wspr_ext.name
    first_time: true,
+   dataHP:  30,      // peaks
+   dataHS:  150,     // spectrum
+   dataHS:  20,      // scale
+   dataH:   200,     // total
+   dataW:   1024,
+   ctrlH:   525,
    focus_interval: null,
    server_time_ms: 0,
    local_time_epoch_ms: 0,
@@ -120,7 +126,6 @@ var wspr = {
    last_last: 0
 };
 
-var wspr_canvas_width = 1024;
 //var wspr_canvas_height = 150;		// not currently used
 
 function wspr_main()
@@ -295,14 +300,14 @@ function wspr_recv(data)
 					bin0 &= WSPR_F_BIN;
 					if (flags & WSPR_F_DELETE) continue;
 					var x = wspr_startx + bin0*xscale;
-					if (x > wspr_canvas_width) break;
+					if (x > wspr.dataW) break;
 					var nextx;
 					if (i < npk-1)
 						nextx = wspr_startx + parseInt(p[(i+1)*2])*xscale;
 					else
-						nextx = wspr_canvas_width;
-					if (nextx >= wspr_canvas_width)
-						nextx = wspr_canvas_width + 256;
+						nextx = wspr.dataW;
+					if (nextx >= wspr.dataW)
+						nextx = wspr.dataW + 256;
 					var snr_call = p[i*2+1];
 					var snr = snr_call.filterInt();
 					var color;
@@ -320,7 +325,7 @@ function wspr_recv(data)
 								w3_div('cl-wspr-snr '+ color, snr_call)
 							)
 						) +
-						w3_div('cl-wspr-line '+ color +'|width:1px; height:10px; position:absolute; left:'+ x +'px; bottom:0px;');
+						w3_div('cl-wspr-line w3-absolute '+ color +'|width:1px; height:10px; left:'+ x +'px; bottom:0px;');
 				}
 				
 				w3_el('id-wspr-peaks-labels').innerHTML = s;
@@ -332,7 +337,7 @@ function wspr_recv(data)
 				// starting x position given that wspr display is centered in canvas
 				// typically (1024 - 411*4)/2 = 101
 				// remember that wspr_canvas is scaled to fit screen width
-				wspr_startx = Math.round((wspr_canvas_width - wspr_bins*2)/2);
+				wspr_startx = Math.round((wspr.dataW - wspr_bins*2)/2);
 				break;
 
 			case "bar_pct":
@@ -379,18 +384,20 @@ function wspr_controls_setup()
    var data_html =
       time_display_html('wspr') +
 
-      w3_div('id-wspr-peaks|width:1024px; height:30px; background-color:black; position:relative;',
-      	w3_div('id-wspr-peaks-labels|width:1024px; height:30px; position:absolute;')
-      ) +
-
-   	w3_div('id-wspr-spectrum|width:1024px; height:150px; overflow:hidden; position:relative;',
-			// two overlapping canvases to implement scrolling
-   		'<canvas id="id-wspr-spectrum-A" width="1024" height="150" style="position:absolute">test</canvas>',
-   		'<canvas id="id-wspr-spectrum-B" width="1024" height="150" style="position:absolute">test</canvas>'
-   	) +
-   	
-      w3_div('id-wspr-scale|width:1024px; height:20px; background-color:black; position:relative;',
-   		'<canvas id="id-wspr-scale-canvas" width="1024" height="20" style="position:absolute"></canvas>'
+      w3_div('id-wspr-data w3-display-container|width:'+ px(wspr.dataW),
+         w3_div('id-wspr-peaks w3-relative|width:1024px; height:30px; background-color:black',
+            w3_div('id-wspr-peaks-labels w3-absolute|width:1024px; height:30px')
+         ),
+   
+         w3_div('id-wspr-spectrum w3-relative w3-no-scroll|width:1024px; height:150px',
+            // two overlapping canvases to implement scrolling
+            '<canvas id="id-wspr-spectrum-A" width="1024" height="150" style="position:absolute">test</canvas>',
+            '<canvas id="id-wspr-spectrum-B" width="1024" height="150" style="position:absolute">test</canvas>'
+         ),
+         
+         w3_div('id-wspr-scale w3-relative|width:1024px; height:20px; background-color:black',
+            '<canvas id="id-wspr-scale-canvas" width="1024" height="20" style="w3-absolute"></canvas>'
+         )
       );
    
    var call = ext_get_cfg_param_string('WSPR.callsign', '', EXT_NO_SAVE);
@@ -438,12 +445,12 @@ function wspr_controls_setup()
             w3_checkbox('id-wspr-upload-container cl-upload-checkbox/w3-label-inline w3-label-not-bold/',
                'upload<br>spots', 'wspr.upload', true, 'wspr_set_upload_cb'),
             w3_div('id-wspr-bar-container w3-progress-container w3-round-large w3-white w3-hide|width:70px; height:16px',
-               w3_div('id-wspr-bar w3-progressbar w3-round-large w3-light-green|width:0%', '&nbsp;')
+               w3_div('id-wspr-bar w3-progressbar w3-round-large w3-light-green w3-width-zero', '&nbsp;')
             )
          ),
 
          w3_inline('w3-halign-space-between/',
-            w3_div('cl-wspr-pie|background-color:#575757',
+            w3_div('cl-wspr-pie w3-575757',
                kiwi_pie('id-wspr-pie', wspr.pie_size, '#eeeeee', 'deepSkyBlue')
             ),
             w3_div('',
@@ -459,27 +466,22 @@ function wspr_controls_setup()
             w3_div('id-wspr-rgrid cl-wspr-text', 'reporter grid '+ grid)
          ),
       
-         w3_div('|background-color:lightGray; overflow:auto; width:100%; margin-top:5px; margin-bottom:0px; font-family:monospace; font-size:100%',
+         w3_div('w3-margin-T-5 w3-margin-B-0 w3-font-monospace w3-css-lightGray w3-width-full w3-scroll',
             '<pre style="display:inline"> UTC  dB   dT      Freq dF  Call   Grid    km  dBm</pre>'
             //                                                   dd  cccccc GGGG ddddd  nnn (n W)
          )
       ),
       
-      w3_div('id-wspr-console-msg w3-text-output w3-padding-0 w3-scroll-down w3-text-black w3-font-12_75px' +
-         '|height:100px; width:100%; position:absolute; font-family:monospace; font-size:100%; overflow-x:hidden;',
+      w3_div('id-wspr-console-msg w3-text-output w3-padding-0 w3-no-scroll-x w3-scroll-down w3-text-black w3-font-12_75px' +
+         'w3-width-full w3-height-full w3-font-monospace',
          w3_code('id-wspr-console-msgs w3-text-output-striped/')
       )
 	);
 
-	ext_panel_show(controls_html, data_html, null);
-   var wh = waterfall_height();
-   //var ch = (wh <= 546)? 240 : Math.round(wh * 0.44);    // scale control panel height on larger screens
-   //var ch = Math.round(wh * 0.9);   // scale control panel height on larger screens
-   var ch = (wh <= 225)? 203 : Math.round(wh * 0.9);     // scale control panel height on larger screens
-   ext_set_controls_width_height(null, ch);
-   var dh = ch - w3_el('id-wspr-controls-top').clientHeight - /* borders */ 20;
-   w3_el('id-wspr-console-msg').style.height = px(dh);
-   //console.log('WSPR wh='+ wh +' ch='+ ch +' dh='+ dh);
+	ext_panel_show(controls_html, data_html);
+   ext_set_data_height(wspr.dataH);
+   ext_set_data_width(wspr.dataW);
+   wspr_environment_changed({resize:1});
 	time_display_setup('wspr');
 	wspr.saved_mode = ext_get_mode();
 	//wspr_resize();
@@ -623,9 +625,27 @@ function wspr_band_select_cb(path, idx, first)
 // automatically called on changes in the environment
 function wspr_environment_changed(changed)
 {
-   //w3_console.log(changed, 'wspr_environment_changed');
+   //console.log({ t:'wspr_environment_changed', changed:changed });
 
    // don't do anything for changes.freq or changed.mode
+   if (changed.resize) {
+      ext_set_data_left('id-wspr-data', wspr.dataW);
+
+      var wh = waterfall_height();
+      var ch;
+      if (kiwi_isPhone()) {
+         ch = wh - kiwi.HEIGHT_CONTROL_ARROWS;     // keep arrows in waterfall area
+      } else {
+         ch = Math.round(wh * 0.9);    // scale control panel height on larger screens
+      }
+      ext_set_controls_width_height(wspr.ctrlH, ch);
+      var el = w3_el('id-wspr-controls-top');
+      if (el) {
+         var dh = ch - el.clientHeight - /* borders */ 20;
+         w3_el('id-wspr-console-msg').style.height = px(dh);
+      }
+      //console.log('WSPR wh='+ wh +' ch='+ ch +' dh='+ dh);
+   }
    if (changed.ext_open) {
       wspr_process_params(extint.param);
    }
@@ -737,7 +757,7 @@ function wspr_config_html()
          )
       );
 
-   ext_config_html(wspr, 'WSPR', 'WSPR', 'WSPR configuration', s);
+   ext_config_html(wspr, {'cfg':'WSPR', 'nav':'WSPR'}, 'WSPR configuration', s);
 
 	s = '';
 	for (var i=0; i < rx_chans;) {

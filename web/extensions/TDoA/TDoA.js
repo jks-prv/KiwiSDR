@@ -9,10 +9,11 @@ var tdoa = {
    spiderfied: false,
    spiderfy_deferred: false,
    orange_rect: false,
-   above_snr: 12,
+   above_snr:  12,
    ii:         0,
-   w_data:     1024,
-   h_data:     445,
+   dataW:      1024,
+   dataT:      1024 + 16 + 300,     // including spacer + options
+   dataH:      445,
    
    hosts_sel: 0,
    hosts_sel_s: [ 'all', '&le;1.646', '&ge;1.653' ],
@@ -194,7 +195,7 @@ function tdoa_controls_setup()
    
    for (i = 0; i < tdoa.tfields; i++) tdoa.field[i] = {};
    
-   var wh = 'width:'+ px(tdoa.w_data) +'; height:'+ px(tdoa.h_data);
+   var wh = 'width:'+ px(tdoa.dataW) +'; height:'+ px(tdoa.dataH);
    var cbox = '/w3-label-inline w3-label-not-bold/';
    
 	var data_html =
@@ -206,7 +207,7 @@ function tdoa_controls_setup()
          w3_div('id-tdoa-png w3-display-topleft w3-scroll-y w3-hide|left:0px; '+ wh, '')
       ) +
       
-      w3_div('id-tdoa-options w3-display-right w3-text-white w3-light-greyx|top:200px; right:32px; height:200px',
+      w3_div('id-tdoa-options w3-display-right w3-text-white w3-light-greyx|top:200px; right:0; width:300px; height:200px',
          w3_text('w3-text-aqua w3-bold', 'TDoA options'),
          w3_checkbox(cbox, 'Show heatmap', 'tdoa.heatmap_visible', true, 'tdoa_heatmap_visible_cb'),
          w3_checkbox(cbox, 'Show day/night', 'tdoa.day_night_visible', true, 'tdoa_day_night_visible_cb'),
@@ -281,11 +282,12 @@ function tdoa_controls_setup()
          )
       );
 
-	ext_panel_show(control_html, data_html, null);
+	ext_panel_show(control_html, data_html);
 	time_display_setup('tdoa');
 
 	ext_set_controls_width_height(650, 270);
-   ext_set_data_height(tdoa.h_data);
+   ext_set_data_height(tdoa.dataH);
+   ext_set_data_width(tdoa.dataT, {timeW:0});
 
    // so control panels are on top of map when js console open on small-screen laptop,
    // but behind help panel
@@ -362,7 +364,7 @@ function tdoa_info_cb()
 {
    var m = tdoa.kmap.map;
    var c = m.getCenter();
-   w3_innerHTML('id-tdoa-info', 'map center: '+ tdoa_lat(c).toFixed(2) +', '+ tdoa_lon(c).toFixed(2) +' z'+ m.getZoom());
+   w3_innerHTML('id-tdoa-info', 'map center: '+ tdoa_lat(c).toFixed(2) +', '+ tdoa_lon(c).toFixed(2) +' z'+ m.getZoom().toFixed(0));
    tdoa_update_link();
 }
 
@@ -392,10 +394,11 @@ function tdoa_update_link()
    var pb = ext_get_passband();
    url += '&pbw='+ (pb.high * 2).toFixed(0) +'&ext=tdoa';
 
+   if (!tdoa.kmap) return;
    var m = tdoa.kmap.map;
    if (!m) return;
    var c = m.getCenter();
-   url += ',lat:'+ tdoa_lat(c).toFixed(2) +',lon:'+ tdoa_lon(c).toFixed(2) +',z:'+ m.getZoom();
+   url += ',lat:'+ tdoa_lat(c).toFixed(2) +',lon:'+ tdoa_lon(c).toFixed(2) +',z:'+ m.getZoom().toFixed(0);
    if (tdoa.sample_time != 30) url += ',sample:'+ tdoa.sample_time;
 
    tdoa.field.forEach(function(f, i) {
@@ -1350,12 +1353,7 @@ function tdoa_get_hosts_cb(hosts)
 function TDoA_environment_changed(changed)
 {
    if (changed.resize) {
-      var el = w3_el('id-tdoa-data');
-      if (!el) return;
-      var left = Math.max(0, (window.innerWidth - tdoa.w_data - kiwi.time_display_width) / 2);
-      //console.log('tdoa_resize wiw='+ window.innerWidth +' tdoa.w_data='+ tdoa.w_data +' time_display_width='+ kiwi.time_display_width +' left='+ left);
-      el.style.left = px(left);
-      //canvas_log(window.innerHeight);
+      ext_set_data_left('id-tdoa-data', tdoa.dataT, {timeW:0});
       if (zoom_center != 0.5)
          zoom_step(ext_zoom.CUR);      // initial offset
       return;
@@ -2682,14 +2680,10 @@ function TDoA_help(show)
 function TDoA_focus()
 {
    //console.log('TDoA_focus');
-	tdoa.optbar = ext_get_optbar();
 
 	if (window.innerHeight < 970)
 	   zoom_center = 0.6;      // places waterfall signal half way between control panels
 
-   // switch optbar off to not obscure map on smaller screens
-   ext_set_optbar('optbar-off', 'init');
-   
    tdoa.pie_size = 10;
    tdoa.pie_cnt = 0;
    tdoa.pie_max = tdoa.sample_time;
@@ -2712,11 +2706,6 @@ function TDoA_blur()
 	ext_set_data_height();     // restore default height
 	zoom_center = 0.5;         // restore
    ext_restore_controls_on_top();
-	
-	// restore optbar if it wasn't changed
-	if (ext_get_optbar() == 'optbar-off' && tdoa.optbar != 'optbar-off')
-	   ext_set_optbar(tdoa.optbar);
-
    kiwi_clearInterval(tdoa.pie_interval);
    //kiwi_clearInterval(tdoa.retry_interval);
    kiwi_map_blur(tdoa.kmap);
@@ -2787,7 +2776,7 @@ function TDoA_config_html()
          w3_div()
       );      
 
-   ext_config_html(tdoa, 'tdoa', 'TDoA', 'TDoA configuration', s);
+   ext_config_html(tdoa, {'cfg':'tdoa', 'nav':'TDoA'}, 'TDoA configuration', s);
 }
 
 function tdoa_id_cb(path, val)

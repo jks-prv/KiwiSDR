@@ -137,7 +137,7 @@ function digi_controls_setup()
 			)
 		);
 	
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('digi');
 
    ext_set_data_height(300);
@@ -219,7 +219,7 @@ function digi_test_cb()
 // called to display HTML for configuration parameters in admin interface
 function digi_modes_config_html()
 {
-   ext_config_html(digi, 'digi_modes', 'digi modes', 'Digital modes configuration', '');
+   ext_config_html(digi, {'cfg':'digi_modes', 'nav':'digi modes'}, 'Digital modes configuration');
 }
 
 function digi_modes_blur()

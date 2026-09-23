@@ -1639,7 +1639,7 @@ function fft_controls_setup()
 			)
 		);
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	fft.saved_mode = ext_get_mode();
 	time_display_setup('fft');
 
@@ -1940,7 +1940,7 @@ function FFT_blur()
 // called to display HTML for configuration parameters in admin interface
 function FFT_config_html()
 {
-   ext_config_html(fft, 'fft', 'FFT', 'FFT configuration');
+   ext_config_html(fft, {'cfg':'fft', 'nav':'FFT'}, 'FFT configuration');
 }
 
 function FFT_help(show)

@@ -114,8 +114,9 @@ var freedv = {
    spiderfy_deferred: false,
    orange_rect: false,
    ii:         0,
-   w_data:     1024,
-   h_data:     445,
+   dataH:      445,
+   dataW:      1024,
+   dataT:      1024 + 16 + 250,     // including spacer + options
    
    hosts_sel: 0,
    hosts_sel_s: [ 'all', '&le;1.646', '&ge;1.653' ],
@@ -215,7 +216,7 @@ function freedv_controls_setup()
    
    for (i = 0; i < freedv.tfields; i++) freedv.field[i] = {};
    
-   var wh = 'width:'+ px(freedv.w_data) +'; height:'+ px(freedv.h_data);
+   var wh = 'width:'+ px(freedv.dataW) +'; height:'+ px(freedv.dataH);
    var cbox = '/w3-label-inline w3-label-not-bold/';
    
 	var data_html =
@@ -226,7 +227,7 @@ function freedv_controls_setup()
          w3_div('w3-hide|'+ wh +'|id="id-freedv-map-result"', '')
       ) +
       
-      w3_div('id-freedv-options w3-display-right w3-text-white w3-light-greyx|top:200px; right:16px; width:250px; height:200px',
+      w3_div('id-freedv-options w3-display-right w3-text-white w3-light-greyx|top:200px; right:0px; width:250px; height:200px',
          w3_text('w3-text-aqua w3-bold w3-margin-B-6', 'FreeDV options'),
          w3_checkbox(cbox, 'Show day/night', 'freedv.day_night_visible', true, 'freedv_day_night_visible_cb'),
          w3_checkbox(cbox, 'Show graticule', 'freedv.graticule_visible', true, 'freedv_graticule_visible_cb'),
@@ -287,11 +288,12 @@ function freedv_controls_setup()
          )
       );
 
-	ext_panel_show(control_html, data_html, null);
+	ext_panel_show(control_html, data_html);
 	time_display_setup('freedv');
 
 	ext_set_controls_width_height(freedv.w_ctrl, 270);
-   ext_set_data_height(freedv.h_data);
+   ext_set_data_height(freedv.dataH);
+   ext_set_data_width(freedv.dataT, {timeW:0});
 
    // so control panels are on top of map when js console open on small-screen laptop,
    // but behind help panel
@@ -458,7 +460,7 @@ function freedv_info_cb()
 {
    var m = freedv.kmap.map;
    var c = m.getCenter();
-   w3_innerHTML('id-freedv-info', freedv_lat(c).toFixed(2) +', '+ freedv_lon(c).toFixed(2) +' z'+ m.getZoom());
+   w3_innerHTML('id-freedv-info', freedv_lat(c).toFixed(2) +', '+ freedv_lon(c).toFixed(2) +' z'+ m.getZoom().toFixed(0));
 }
 
 function freedv_map_move_cb(kmap, ev) { freedv_info_cb(); }
@@ -493,10 +495,11 @@ function freedv_update_link()
       }
    });
 
+   if (!freedv.kmap) return;
    var m = freedv.kmap.map;
    if (!m) return;
    var c = m.getCenter();
-   url += ',lat:'+ freedv_lat(c).toFixed(2) +',lon:'+ freedv_lon(c).toFixed(2) +',z:'+ m.getZoom();
+   url += ',lat:'+ freedv_lat(c).toFixed(2) +',lon:'+ freedv_lon(c).toFixed(2) +',z:'+ m.getZoom().toFixed(0);
 
 	w3_innerHTML('id-freedv-bookmark', w3_link('', url, w3_icon('w3-text-css-lime', 'fa-external-link-square', 16)));
 }
@@ -1982,12 +1985,8 @@ function FreeDV_environment_changed(changed)
    }
    
    if (changed.resize) {
-      var el = w3_el('id-freedv-data');
-      if (!el) return;
-      var left = Math.max(0, (window.innerWidth - freedv.w_data - kiwi.time_display_width) / 2);
-      //console.log('freedv_resize wiw='+ window.innerWidth +' freedv.w_data='+ freedv.w_data +' time_display_width='+ kiwi.time_display_width +' left='+ left);
-      el.style.left = px(left);
-      //canvas_log(window.innerHeight);
+      ext_set_data_left('id-freedv-data', freedv.dataT, {timeW:0});
+
       if (zoom_center != 0.5)
          zoom_step(ext_zoom.CUR);      // initial offset
    }
@@ -2414,14 +2413,10 @@ function FreeDV_focus()
 {
    console.log('FreeDV_focus');
    freedv.save_vol = kiwi.volume_f;
-	freedv.optbar = ext_get_optbar();
 
 	if (window.innerHeight < 970)
 	   zoom_center = 0.6;      // places waterfall signal half way between control panels
 
-   // switch optbar off to not obscure map on smaller screens
-   ext_set_optbar('optbar-off', 'init');
-   
    shortcut.ext_key.a = 'freedv_stop_start_cb';
    shortcut.ext_key.s = 'freedv_hosts_visible_cb';
    shortcut.ext_key.d = 'freedv_spots_visible_cb';
@@ -2433,15 +2428,8 @@ function freedv_blur_complete()
    freedv_clear_all_fields();
    confirmation_panel_close();
 	ext_set_data_height();     // restore default height
-	ext_set_data_height();     // restore default height
 	zoom_center = 0.5;         // restore
 	shortcut.ext_key.s = shortcut.ext_key.s = shortcut.ext_key.d = null;
-
-	// restore optbar if it wasn't changed
-	console.log(ext_get_optbar() +' '+ freedv.optbar);
-	if (ext_get_optbar() == 'optbar-off' && freedv.optbar != 'optbar-off')
-	   ext_set_optbar(freedv.optbar);
-
 	ext_restore_setup(freedv.saved_setup);
    kiwi_clearInterval(freedv.log_interval);
    console.log('### SET freedv_close ##########################################');
@@ -2492,7 +2480,7 @@ function FreeDV_main()
 // called to display HTML for configuration parameters in admin interface
 function FreeDV_config_html()
 {
-   ext_config_html(freedv, 'freedv', 'FreeDV', 'FreeDV configuration');
+   ext_config_html(freedv, {'cfg':'freedv', 'nav':'FreeDV'}, 'FreeDV configuration');
 }
 
 function FreeDV_config_focus()

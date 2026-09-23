@@ -263,5 +263,5 @@ function prefs_help(show)
 // called to display HTML for configuration parameters in admin interface
 function prefs_config_html()
 {
-   ext_config_html(prefs, 'prefs', 'Prefs', 'User preferences configuration');
+   ext_config_html(prefs, {'cfg':'prefs', 'nav':'Prefs'}, 'User preferences configuration');
 }

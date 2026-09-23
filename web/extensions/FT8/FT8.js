@@ -472,7 +472,7 @@ function FT8_config_html()
          )
       );
 
-   ext_config_html(ft8, 'ft8', 'FT8', 'FT8/FT4 configuration', s);
+   ext_config_html(ft8, {'cfg':'ft8', 'nav':'FT8'}, 'FT8/FT4 configuration', s);
 
 	s = '';
 	for (var i=0; i < rx_chans;) {

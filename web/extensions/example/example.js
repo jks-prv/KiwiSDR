@@ -86,7 +86,7 @@ function example_controls_setup()
       	'example extension HTML in ext-controls-container'
       );
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('example');
 	example_environment_changed( {resize:1} );
 }
@@ -133,10 +133,13 @@ function example_help(show)
 //function EXAMPLE_config_html()
 function example_config_html()
 {
-   ext_config_html(example, 'example', 'Example', 'Example configuration', '');
-   //              +         +          +          +                        +-- admin page, extensions tab: optional page content
-   //              +         +          +          +-- admin page, extensions tab: top bar title
-   //              +         +          +-- admin page, extensions tab: nav sidebar text
-   //              +         +-- cfg prefix, e.g. example.enable
-   //              +-- vars struct (above)
+   ext_config_html(
+      example,                   // vars struct (above)
+      {
+         'cfg':'example',        // cfg prefix, e.g. example.enable
+         'nav':'Example'         // admin page, extensions tab: nav sidebar text
+      },
+      'Example configuration',   // admin page, extensions tab: top bar title
+      '...'                      // admin page, extensions tab: optional page content
+   );
 }

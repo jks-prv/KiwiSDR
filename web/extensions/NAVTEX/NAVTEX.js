@@ -8,11 +8,13 @@ var nt = {
    
    //dataH: 300,
    dataH: 445,
+   dataW: 1024,
+   dataW2: 130 + 1024,
+   dataT: 130 + 1024 + 16 + 250,    // including lhs, spacer + options
    ctrlW: 550,
    ctrlH: 175,
    splitH: 100,
    lhs: 130,
-   tw: 1024,
    x: 0,
    last_y: [],
 
@@ -73,6 +75,8 @@ var nt = {
 
    // must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
    console_status_msg_p: { scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true, cols: 135 },
+   
+   baud_error_mma: 0,
 
    last_last: 0
 };
@@ -145,8 +149,11 @@ function navtex_baud_error_init()
    ct.fillText('Error', nt.lhs/2-25, hh+14);
 }
 
-function navtex_baud_error(err)
+function navtex_baud_error(err, periods, scale)
 {
+   nt.baud_error_mma = ((nt.baud_error_mma * (periods-1)) + err) / periods;
+   err = -nt.baud_error_mma * scale;
+
    var max = 8;
    if (err > max) err = max;
    if (err < -max) err = -max;
@@ -244,7 +251,7 @@ function navtex_controls_setup()
       });
    }
 
-   var wh = 'width:'+ px(nt.lhs+1024) +'; height:'+ px(nt.dataH) +';';
+   var wh = 'width:'+ px(nt.dataW2) +'; height:'+ px(nt.dataH) +';';
    var cbox = 'w3-label-inline w3-label-not-bold';
 
    var data_html =
@@ -254,13 +261,13 @@ function navtex_controls_setup()
 
          // re w3-hide: for map to initialize properly it must be initially selected, then it will be hidden if
          // the 'map' URL param was not given.
-         w3_div('id-navtex-msgs w3-hide|'+ wh +'; z-index:1; overflow:hidden; position:absolute;',
-            '<canvas id="id-navtex-canvas" width='+ dq(nt.lhs+1024) +' height='+ dq(nt.dataH) +' style="left:0; position:absolute"></canvas>',
-            w3_div('id-navtex-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|left:'+ px(nt.lhs) +'; width:1024px; position:absolute; overflow-x:hidden;',
+         '<canvas id="id-navtex-canvas" width='+ dq(nt.lhs) +' height='+ dq(nt.dataH) +' style="left:0; position:absolute"></canvas>',
+         w3_div(sprintf('id-navtex-msgs w3-hide|width:%dpx; left:%dpx; z-index:1; overflow:hidden; position:absolute;', nt.dataW, nt.lhs),
+            w3_div(sprintf('id-navtex-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|width:%dpx; position:absolute; overflow-x:hidden;', nt.dataW),
                '<pre><code id="id-navtex-console-msgs"></code></pre>'
             )
          ),
-         w3_div('|left:'+ px(nt.lhs) +'; width:1024px; height:'+ px(nt.dataH) +'; position:absolute; z-index:0|id="id-navtex-map"')
+         w3_div(sprintf('|left:%dpx; width:%dpx; height:%dpx; position:absolute; z-index:0|id="id-navtex-map"', nt.lhs, nt.dataW, nt.dataH))
       ) +
 
       w3_div('id-navtex-options w3-display-right w3-text-white|top:230px; right:0px; width:250px; height:200px',
@@ -325,9 +332,9 @@ function navtex_controls_setup()
 			)
 		);
 	
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('navtex');
-	var el = w3_el('navtex-time-display');
+	var el = w3_el('id-navtex-time-display');
 	el.style.top = px(10);
 	navtex_canvas = w3_el('id-navtex-canvas');
 	navtex_canvas.ctx = navtex_canvas.getContext("2d");
@@ -375,6 +382,7 @@ function navtex_controls_setup()
 	navtex_baud_error_init();
 
    ext_set_data_height(nt.dataH);
+   ext_set_data_width(nt.dataT, {timeW:0});
 	ext_set_controls_width_height(nt.ctrlW, nt.ctrlH);
 	
 	// our sample file is 12k only
@@ -635,17 +643,13 @@ function NAVTEX_environment_changed(changed)
       var delta_fkHz = Math.abs(nt.freq - dsp_freq);
       if (delta_fkHz > 1 || mode != ((nt.type == nt.TYPE_SELCALL)? 'usb' : 'cw')) {
          navtex_clear_menus();
-         w3_el('id-navtex-station').innerHTML = '&nbsp;';
+         var el = w3_el('id-navtex-station');
+         if (el) el.innerHTML = '&nbsp;';
       }
    }
 
-   if (0 && changed.resize) {
-      var el = w3_el('id-navtex-data');
-      if (!el) return;
-      var left = Math.max(0, (window.innerWidth - nt.dataW - kiwi.time_display_width) / 2);
-      //console.log('navtex_resize wiw='+ window.innerWidth +' nt.dataW='+ nt.dataW +' time_display_width='+ kiwi.time_display_width +' left='+ left);
-      el.style.left = px(left);
-      return;
+   if (changed.resize) {
+      ext_set_data_left('id-navtex-data', nt.dataT, {timeW:0});
    }
 }
 
@@ -897,5 +901,5 @@ function NAVTEX_config_html()
          ), 40
       );
 
-   ext_config_html(nt, 'navtex', 'NAVTEX', 'NAVTEX configuration', s);
+   ext_config_html(nt, {'cfg':'navtex', 'nav':'NAVTEX'}, 'NAVTEX configuration', s);
 }

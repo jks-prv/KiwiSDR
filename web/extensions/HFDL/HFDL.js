@@ -9,7 +9,9 @@ var hfdl = {
    dataW: 1024,
    dataT: 1024 + 16 + 250,    // including spacer + options
    ctrlW: 350,
-   ctrlH: 260,
+   ctrlH_desktop: 260,
+   ctrlH_phone: 200,
+   //ctrlH_phone: 260,
    freq: 0,
    sfmt: 'w3-text-red',
    pb: { lo: 300, hi: 2600 },
@@ -305,23 +307,23 @@ function hfdl_controls_setup()
       hfdl.bf[i] = Math.floor(hfdl.bf_cf[i]/1000);
    }
 
-   var wh = sprintf('width:%dpx; height:%dpx;', hfdl.dataW, hfdl.dataH);
+   var wh = sprintf('|width:%dpx; height:%dpx;', hfdl.dataW, hfdl.dataH);
    var cbox = 'w3-label-inline w3-label-not-bold';
    var cbox2 = 'w3-margin-left//'+ cbox;
    
    var data_html =
       time_display_html('hfdl') +
 
-      w3_div('id-hfdl-data w3-display-container|left:0px; '+ wh,
+      w3_div('id-hfdl-data w3-display-container'+ wh,
 
          // re w3-hide: for map to initialize properly it must be initially selected, then it will be hidden if
          // the 'map' URL param was not given.
-         w3_div('id-hfdl-msgs w3-hide|'+ wh +'; z-index:1; overflow:hidden; position:absolute;',
-            w3_div(sprintf('id-hfdl-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|width:%dpx; position:absolute; overflow-x:hidden;', 1024),
+         w3_div('id-hfdl-msgs w3-hide'+ wh +'; z-index:1; overflow:hidden; position:absolute;',
+            w3_div(sprintf('id-hfdl-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|width:%dpx; position:absolute; overflow-x:hidden;', hfdl.dataW),
                '<pre><code id="id-hfdl-console-msgs"></code></pre>'
             )
          ),
-         w3_div('|'+ wh +' position:absolute; z-index:0|id="id-hfdl-map"')
+         w3_div(wh +' position:absolute; z-index:0|id="id-hfdl-map"')
       ) +
       
       w3_div('id-hfdl-options w3-display-right w3-text-white|top:230px; right:0px; width:250px; height:200px',
@@ -380,13 +382,13 @@ function hfdl_controls_setup()
          )
       );
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
    ext_set_data_height(hfdl.dataH);
-   ext_set_data_width(hfdl.dataT);
-	ext_set_controls_width_height(hfdl.ctrlW, hfdl.ctrlH);
+   ext_set_data_width(hfdl.dataT, {timeW:0});
+	ext_set_controls_width_height(hfdl.ctrlW, kiwi_isPhone()? hfdl.ctrlH_phone : hfdl.ctrlH_desktop);
 
 	time_display_setup('hfdl');
-	var el = w3_el('hfdl-time-display');
+	var el = w3_el('id-hfdl-time-display');
 	el.style.top = px(10);
 
 	hfdl_msg('w3-text-css-yellow', '&nbsp;');
@@ -689,7 +691,7 @@ function hfdl_map_move_end_cb(kmap, e)
 {
    //var m = kmap.map;
    //var c = m.getCenter();
-   //w3_innerHTML('id-hfdl-info', 'map center: '+ c.lat.toFixed(2) +', '+ c.lng.toFixed(2) +' z'+ m.getZoom());
+   //w3_innerHTML('id-hfdl-info', 'map center: '+ c.lat.toFixed(2) +', '+ c.lng.toFixed(2) +' z'+ m.getZoom().toFixed(0));
 }
 
 ////////////////////////////////
@@ -1072,10 +1074,14 @@ function hfdl_show_cb(path, idx, first)
 	w3_hide2('id-hfdl-msgs', idx == hfdl.SHOW_MAP);
 	w3_hide2('id-hfdl-map', idx == hfdl.SHOW_MSGS);
 	var splitH = 150;
-	w3_el('id-hfdl-msgs').style.top = px((idx == hfdl.SHOW_SPLIT)? (hfdl.dataH - splitH) : 0);
+	var split_mapH = hfdl.dataH - splitH;
+	w3_el('id-hfdl-msgs').style.top = px((idx == hfdl.SHOW_SPLIT)? split_mapH : 0);
 	w3_el('id-hfdl-msgs').style.height = px((idx == hfdl.SHOW_SPLIT)? splitH : hfdl.dataH);
 	if (idx == hfdl.SHOW_SPLIT)
 	   w3_scrollDown('id-hfdl-console-msg');
+	
+	// adjust map overlay height when split data display
+	kiwi_map_overlay_width_height(null, (idx == hfdl.SHOW_SPLIT)? split_mapH : hfdl.dataH);
 }
 
 function hfdl_display_cb(path, idx, first)
@@ -1170,21 +1176,8 @@ function HFDL_environment_changed(changed)
    }
 
    if (changed.resize) {
-      var el = w3_el('id-hfdl-data');
-      if (!el) return;
-      var left = Math.max(0, (window.innerWidth - hfdl.dataW - kiwi.time_display_width) / 2);
-      //console.log('hfdl_resize wiw='+ window.innerWidth +' hfdl.dataW='+ hfdl.dataW +' time_display_width='+ kiwi.time_display_width +' left='+ left);
-      el.style.left = px(left);
-      return;
+      ext_set_data_left('id-hfdl-data', hfdl.dataT, {timeW:0});
    }
-
-   /*
-      if (changed.resize) {
-         var el = w3_el('id-hfdl-data');
-         var left = (window.innerWidth - 1024 - kiwi.time_display_width) / 2;
-         el.style.left = px(left);
-      }
-   */
 }
 
 function HFDL_focus()
@@ -1242,5 +1235,5 @@ function HFDL_help(show)
 // called to display HTML for configuration parameters in admin interface
 function HFDL_config_html()
 {
-   ext_config_html(hfdl, 'hfdl', 'HFDL', 'HFDL configuration');
+   ext_config_html(hfdl, {'cfg':'hfdl', 'nav':'HFDL'}, 'HFDL configuration');
 }

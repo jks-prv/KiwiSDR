@@ -416,7 +416,7 @@ function loran_c_controls_setup()
 	
 	ext_tune(100, 'am', ext_zoom.ABS, 8);
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	ext_set_controls_width_height(loran_c.ctrlW, loran_c.ctrlH);
 	time_display_setup('loran_c');
 
@@ -447,7 +447,7 @@ function Loran_C_environment_changed(changed)
    var nom_w = (window.innerWidth - kiwi.time_display_width) - margin*2;
 	var el = w3_el('id-loran_c-data');
 	var left = (window.innerWidth - nom_w - kiwi.time_display_width) / 2;
-	w3_show_hide('loran_c-time-display', left > 0);
+	w3_show_hide('id-loran_c-time-display', left > 0);
 
 	if (left > 0) {
 	   w = nom_w;
@@ -617,5 +617,5 @@ function Loran_C_config_html()
          )
       );
 
-   ext_config_html(loran_c, 'loran_c', 'Loran-C', 'Loran-C configuration', s);
+   ext_config_html(loran_c, {'cfg':'loran_c', 'nav':'Loran-C'}, 'Loran-C configuration', s);
 }

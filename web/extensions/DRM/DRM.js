@@ -30,7 +30,10 @@ var drm = {
    controls: { w:375, h:150, scroll:90 },
    w_multi_nom: 675,
    w_multi_min: 400,
-   h_data: 300,
+   dataH:      300,
+   dataW:      1024,
+   dataT:      1024 + 16 + 250,     // including spacer + options
+
    status_tc: [ 'black', 'black', 'white', 'white', 'white' ],
    status_bc: [ 'lime', 'yellow', 'red', 'red', 'grey' ],
    ST_GRN: 0,
@@ -1114,11 +1117,11 @@ function drm_panel_show(controls_inner, data_html)
          )
       );
    
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	ext_set_controls_width_height(drm.controls.w, drm.controls.h);
 }
 
-function drm_mobile_controls_setup(mobile)
+function drm_mobile_controls_setup(m)
 {
 	drm.mobile = drm.mobile || 1;
 	console.log('$ mobile drm mobile_laptop_test='+ kiwi_util.mobile_laptop_test);
@@ -1134,7 +1137,7 @@ function drm_mobile_controls_setup(mobile)
          )
       );
 
-	ext_panel_show(controls_html, null, null);
+	ext_panel_show(controls_html);
 	ext_set_controls_width_height(drm.w_sched + drm.cpanel_margin, drm.h_sched + drm.cpanel_margin);
 	drm_database_cb('drm.database', 0, true);
 
@@ -1154,23 +1157,23 @@ function drm_mobile_controls_setup(mobile)
    drm.fit = '';
 
 	if (drm.interval2 == null) drm.interval2 = setInterval(function() {
-      mobile = ext_mobile_info(drm.last_mobile);
-      drm.last_mobile = mobile;
+      m = ext_mobile_info(drm.last_mobile);
+      drm.last_mobile = m;
 
-      //canvas_log('Dwh='+ mobile.width +','+ mobile.height +' '+ mobile.orient_unchanged +
+      //canvas_log('Dwh='+ m.width +','+ m.height +' '+ m.orient_unchanged +
       //   '<br>r='+ drm.rescale_cnt  +','+ drm.rescale_cnt2 +' '+ drm.fit +' #'+ drm.dseq);
       //drm.dseq++;
 
-      if (mobile.orient_unchanged) return;
+      if (m.orient_unchanged) return;
       drm.rescale_cnt++;
 
       var cwidth = w3_el('id-control').uiWidth;    // typ 365
-      if (drm.w_nom + cwidth <= mobile.width) {    // can fit side-by-side
-         drm.w_sched = mobile.width - cwidth - 60;
+      if (drm.w_nom + cwidth <= m.width) {    // can fit side-by-side
+         drm.w_sched = m.width - cwidth - 60;
 	      w3_el('id-ext-controls').style.zIndex = 125;       // so pinch zoom of id-control takes priority
          drm.fit = 'sbs'+ drm.w_sched;
       } else {
-         drm.w_sched = mobile.width - drm.cpanel_margin*2;  // fit width
+         drm.w_sched = m.width - drm.cpanel_margin*2;  // fit width
          w3_el('id-ext-controls').style.zIndex = 150;       // restore original priority when overlapped
          drm.fit = 'fw'+ drm.w_sched;
       }
@@ -1185,15 +1188,15 @@ function drm_mobile_controls_setup(mobile)
 
       /*
       var el = w3_el('id-ext-controls');
-      console.log('$ id-ext-controls wh='+ mobile.width +','+ mobile.height +' uiw='+ el.uiWidth);
+      console.log('$ id-ext-controls wh='+ m.width +','+ m.height +' uiw='+ el.uiWidth);
    
-      if (mobile.phone) {
+      if (m.phone) {
          // scale control panel up or down to fit width of all narrow screens
-         var scale = mobile.width / el.uiWidth * 0.95;
-         //alert('scnW='+ mobile.width +' cpW='+ el.uiWidth +' sc='+ scale.toFixed(2));
+         var scale = m.width / el.uiWidth * 0.95;
+         //alert('scnW='+ m.width +' cpW='+ el.uiWidth +' sc='+ scale.toFixed(2));
          el.style.transform = 'scale('+ scale.toFixed(2) +')';
          el.style.transformOrigin = 'bottom left';    // panel has left:0 by default
-         console.log('$ id-ext-controls scale='+ scale.toFixed(3) +' wh='+ mobile.width +','+ mobile.height);
+         console.log('$ id-ext-controls scale='+ scale.toFixed(3) +' wh='+ m.width +','+ m.height);
          drm.rescale_cnt2++;
       } else {
          el.style.transform = 'none';
@@ -1206,7 +1209,7 @@ function drm_desktop_controls_setup(w_multi)
 {
    var s;
    var controls_inner, data_html = null;
-   var h = drm.h_data;
+   var h = drm.dataH;
    var w_lhs = 25;
    var w_msg = 500;
    var w_msg2 = 450;
@@ -1266,7 +1269,7 @@ function drm_desktop_controls_setup(w_multi)
       var twidth = w_lhs + w_msg + w_multi;
       var m_ss = 10;
       var w_ss = w_multi - m_ss - kiwi_scrollbar_width();
-      var h_ss = drm.h_data - m_ss - kiwi_scrollbar_width();
+      var h_ss = drm.dataH - m_ss - kiwi_scrollbar_width();
 
       data_html =
          time_display_html('drm') +
@@ -1510,14 +1513,14 @@ function drm_controls_setup()
       });
    }
    
-	var mobile = ext_mobile_info();
-   var w_multi = drm.w_multi_nom - (Math.max(0, 1440 - mobile.width));
+	var m = ext_mobile_info();
+   var w_multi = drm.w_multi_nom - (Math.max(0, 1440 - m.width));
    drm.narrow_listing = (w_multi < drm.w_multi_nom) || (drm.mobile == 2);
-   //console.log('$ whg='+ mobile.width +','+ mobile.height +','+ w_multi);
+   //console.log('$ whg='+ m.width +','+ m.height +','+ w_multi);
 	
-	//alert('mw='+ mobile.width +' w_multi='+ w_multi);
+	//alert('mw='+ m.width +' w_multi='+ w_multi);
 	if (drm.mobile || w_multi <= drm.w_multi_min) {
-	   drm_mobile_controls_setup(mobile);
+	   drm_mobile_controls_setup(m);
 	} else {
 	   drm_desktop_controls_setup(w_multi);
 	}
@@ -1957,5 +1960,5 @@ function DRM_config_html()
          ), 40
       );
 
-   ext_config_html(drm, 'DRM', 'DRM', 'DRM configuration', s);
+   ext_config_html(drm, {'cfg':'DRM', 'nav':'DRM', 'enable_only':1}, 'DRM configuration', s);
 }

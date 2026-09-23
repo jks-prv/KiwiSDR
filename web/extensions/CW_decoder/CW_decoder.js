@@ -249,7 +249,7 @@ function cw_decoder_controls_setup()
 	
 	cw.saved_setup = ext_save_setup();
 	ext_set_mode('cw');
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('cw');
 
 	cw.canvas = w3_el('id-cw-canvas');
@@ -455,7 +455,7 @@ function CW_decoder_blur()
 // called to display HTML for configuration parameters in admin interface
 function CW_decoder_config_html()
 {
-   ext_config_html(cw, 'cw', 'CW decoder', 'CW decoder configuration');
+   ext_config_html(cw, {'cfg':'cw', 'nav':'CW decoder'}, 'CW decoder configuration');
 }
 
 function CW_decoder_help(show)

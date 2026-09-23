@@ -305,7 +305,7 @@ function iq_display_controls_setup()
 			)
 		);
 
-	ext_panel_show(controls_html, null, null);
+	ext_panel_show(controls_html);
 	ext_set_controls_width_height(550, 350);
 	iq.saved_mode = ext_get_mode();
 	iq_display_clk_adj();
@@ -520,5 +520,5 @@ function IQ_display_help(show)
 // called to display HTML for configuration parameters in admin interface
 function IQ_display_config_html()
 {
-   ext_config_html(iq, 'iq_display', 'IQ', 'IQ display configuration');
+   ext_config_html(iq, {'cfg':'iq_display', 'nav':'IQ'}, 'IQ display configuration');
 }

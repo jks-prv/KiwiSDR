@@ -294,7 +294,7 @@ JNX.prototype.process_data = function(samps, nsamps) {
                       //t.sync_delta = 0;
                       // baud_error is persistent -- used by baud error label
                       t.baud_error = _index;
-                      t.baud_error_cb(t.baud_error);
+                      t.baud_error_cb(t.baud_error, /* periods */ 16, /* scale */ 8);
                }
                t.zero_crossing_count = 0;
             }

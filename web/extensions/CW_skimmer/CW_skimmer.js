@@ -198,7 +198,7 @@ function cw_skimmer_controls_setup()
 	
 	//cws.saved_setup = ext_save_setup();
 	//ext_set_mode('cw');
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('cw');
 
    ext_set_data_height(cws.height);
@@ -307,5 +307,5 @@ function CW_skimmer_help(show)
 // called to display HTML for configuration parameters in admin interface
 function CW_skimmer_config_html()
 {
-   ext_config_html(cws, 'cws', 'CW skimmer', 'CW skimmer configuration');
+   ext_config_html(cws, {'cfg':'cws', 'nav':'CW skimmer'}, 'CW skimmer configuration');
 }

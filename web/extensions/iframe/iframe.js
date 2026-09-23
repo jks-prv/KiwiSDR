@@ -138,7 +138,7 @@ function iframe_controls_setup()
    );
    
    // set instance number based on extension menu entry match (defaults to instance 0)
-   var menu_idx = w3_el('id-select-ext').value;
+   var menu_idx = w3_el('id-select-ext').value - (kiwi_isMobile()? 1:0);   // account for (cancel) menu item
    var menu_name = ext_names[menu_idx];
    //console.log('iframe NAME '+ menu_idx +' '+ menu_name);
    iframe.inst = 0;
@@ -188,12 +188,15 @@ function iframe_controls_setup()
          )
       );
 
-   ext_panel_show(controls_html, null, null);
+   ext_panel_show(controls_html);
    ext_set_controls_width_height(iframe.width + margin, iframe.height + margin + top_line);
 
    if (iframe.src == iframe.SRC_URL) {
       if (iframe.url.startsWith('//'))
          iframe.url = 'https:'+ iframe.url;
+      if (iframe.url.includes('spots.kiwisdr.com') && kiwi_isMobile())
+         iframe.url += '/?mobile';  // e.g. for mobile needs to return HTML with scroll-x disabled
+      //console.error('iframe url='+ iframe.url);
       w3_attribute('id-iframe-src', 'src', iframe.url);
    } else {
       w3_attribute('id-iframe-src', 'srcdoc', iframe.html);
@@ -336,7 +339,7 @@ function iframe_admin_html()
 function iframe_config_html()
 {
    console.log('iframe_config_html inst='+ iframe.inst +' src='+ iframe_str('src'));
-   ext_config_html(iframe, 'iframe', 'iframe', 'iframe extension configuration', iframe_admin_html());
+   ext_config_html(iframe, {'cfg':'iframe', 'nav':'iframe'}, 'iframe extension configuration', iframe_admin_html());
 }
 
 function iframe_inst_cb(path, idx, first)

@@ -145,7 +145,7 @@ function S_meter_controls_setup()
 	      )
 		);
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('S_meter');
 
 	S_meter.data = w3_el('id-S_meter-data');
@@ -176,7 +176,7 @@ function S_meter_environment_changed(changed)
    var w;
 	var el = w3_el('id-S_meter-data');
 	var left = (window.innerWidth - sm_tw - kiwi.time_display_width) / 2;
-	w3_show_hide('S_meter-time-display', left > 0);
+	w3_show_hide('id-S_meter-time-display', left > 0);
 
 	if (left > 0) {
 	   w = sm_w;
@@ -384,5 +384,5 @@ function S_meter_config_html()
          )
       );
 
-   ext_config_html(S_meter, 'S_meter', 'S-meter', 'S-meter graph configuration', s);
+   ext_config_html(S_meter, {'cfg':'S_meter', 'nav':'S-meter'}, 'S-meter graph configuration', s);
 }

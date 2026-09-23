@@ -174,7 +174,7 @@ function s4285_controls_setup()
 			)
 		);
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('s4285');
 	s4285_environment_changed( {resize:1} );
 
@@ -250,5 +250,5 @@ function s4285_blur()
 // called to display HTML for configuration parameters in admin interface
 function s4285_config_html()
 {
-   ext_config_html(s4285, 's4285', 'S4285', 'S4285 configuration');
+   ext_config_html(s4285, {'cfg':'s4285', 'nav':'S4285'}, 'S4285 configuration');
 }

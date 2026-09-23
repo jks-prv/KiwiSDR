@@ -187,7 +187,7 @@ function gen_controls_setup()
 			)
 		);
 
-	ext_panel_show(controls_html, null, null);
+	ext_panel_show(controls_html);
 	ext_set_controls_width_height(dbgUs? 575 : 450, 250);
 	if (kiwi.ext_clk)
 	   w3_select_set_disabled('id-gen-mode', gen.SELF_TEST, true, 'no self-test available when ext clk used');
@@ -432,5 +432,5 @@ function sig_gen_config_html()
          )
       : '';
    
-   ext_config_html(gen, 'sig_gen', 'Sig Gen', 'Signal Generator configuration', s);
+   ext_config_html(gen, {'cfg':'sig_gen', 'nav':'Sig Gen', 'enable_only':1}, 'Signal Generator configuration', s);
 }

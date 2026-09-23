@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Peter Jennings, VE3SUN
 
 var ibp = {
-   scan_ext_name: 'IBP_scan',    // NB: must match IBP_scan.c:ibp_scan_ext.name
+   ext_name: 'IBP_scan',   // NB: must match IBP_scan.c:ibp_scan_ext.name
    first_time: true,
 
    SLOTS: 18,     // number of slots/stations
@@ -24,7 +24,7 @@ var ibp = {
 function IBP_scan_main()
 {
    //console.log('IBP_scan_main');
-   ext_switch_to_client(ibp.scan_ext_name, ibp.first_time, ibp_recv_msg);  // tell server to use us (again)
+   ext_switch_to_client(ibp.ext_name, ibp.first_time, ibp_recv_msg);  // tell server to use us (again)
    if (!ibp.first_time)
       ibp_controls_setup();
    ibp.first_time = false;
@@ -89,7 +89,7 @@ function ibp_controls_setup()
       );
    
    //console.log('ibp_controls_setup');
-   ext_panel_show(controls_html, data_html, null);
+   ext_panel_show(controls_html, data_html);
    ext_set_controls_width_height(350, 125);
    time_display_setup('IBP_scan');
 	IBP_environment_changed( {resize:1} );
@@ -382,4 +382,10 @@ function IBP_scan_help(show)
       confirmation_show_scrolling_content('IBP scanner help', s, 630, 225);
    }
    return true;
+}
+
+// called to display HTML for configuration parameters in admin interface
+function IBP_scan_config_html()
+{
+   ext_config_html(ibp, {'cfg':'ibp', 'nav':'IBP_scan'}, 'IBP configuration');
 }

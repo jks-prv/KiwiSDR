@@ -92,6 +92,8 @@ var fsk = {
    // must set "remove_returns" so output lines with \r\n (instead of \n alone) don't produce double spacing
    console_status_msg_p: { scroll_only_at_bottom: true, process_return_alone: false, remove_returns: true, cols: 135 },
 
+   baud_error_mma: 0,
+   
    last_last: 0
 };
 
@@ -380,8 +382,11 @@ function fsk_baud_error_init()
    ct.fillText('Error', fsk.lhs/2-15, hh+14);
 }
 
-function fsk_baud_error(err)
+function fsk_baud_error(err, periods, scale)
 {
+   fsk.baud_error_mma = ((fsk.baud_error_mma * (periods-1)) + err) / periods;
+   err = -fsk.baud_error_mma * scale;
+
    var max = 8;
    if (err > max) err = max;
    if (err < -max) err = -max;
@@ -615,7 +620,7 @@ function fsk_controls_setup()
 			)
 		);
 	
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('fsk');
 	fsk.canvas = w3_el('id-fsk-canvas');
 	fsk.canvas.ctx = fsk.canvas.getContext("2d");
@@ -1187,7 +1192,7 @@ function FSK_config_html()
          ), 40
       );
 
-   ext_config_html(fsk, 'fsk', 'FSK', 'FSK configuration', s);
+   ext_config_html(fsk, {'cfg':'fsk', 'nav':'FSK'}, 'FSK configuration', s);
 }
 
 function FSK_help(show)

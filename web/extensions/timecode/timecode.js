@@ -530,7 +530,7 @@ function timecode_process_params(p) {
 
 function tc_controls_setup()
 {
-   tc.dh = tc.sh + tc.th + tc.oh;
+   tc.dh = tc.sh - (kiwi_isMobile()? 50:0) + tc.th + tc.oh;
    var data_html =
       time_display_html('tc') +
 
@@ -571,7 +571,7 @@ function tc_controls_setup()
          )
 		);
 	
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	time_display_setup('tc');
 	tc.sigid_s.forEach(function(sig) { w3_call(sig +'_init'); });
 	timecode_environment_changed( {resize:1} );
@@ -582,6 +582,7 @@ function tc_controls_setup()
 	
 	ext_set_controls_width_height(300, 145);
 	ext_set_data_height(tc.dh);
+	ext_set_data_width(tc.dw);
 	timecode_process_params(ext_param());
 }
 
@@ -595,15 +596,7 @@ function timecode_environment_changed(changed)
    }
    
    if (changed.resize) {
-      var el = w3_el('id-tc-data');
-      // NB: For large displays this causes the desired effect of data panel centering.
-      // The time display remains on the right side because left is applied to id-tc-data only.
-      var width = tc.dw + kiwi.time_display_width;
-      ext_set_data_width(width);
-      var left = Math.max(0, (window.innerWidth - width) / 2);
-      console.log('timecode resize left='+ left);
-
-      el.style.left = px(left);
+      ext_set_data_left('id-tc-data', tc.dw);
    }
 }
 
@@ -795,5 +788,5 @@ function timecode_help(show)
 // called to display HTML for configuration parameters in admin interface
 function timecode_config_html()
 {
-   ext_config_html(tc, 'timecode', 'Timecode', 'Timecode decoder configuration');
+   ext_config_html(tc, {'cfg':'timecode', 'nav':'Timecode'}, 'Timecode decoder configuration');
 }

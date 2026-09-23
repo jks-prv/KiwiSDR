@@ -176,7 +176,7 @@ function colormap_controls_setup()
          )
 		);
 
-	ext_panel_show(controls_html, null);
+	ext_panel_show(controls_html);
 	ext_set_controls_width_height(440, 430);
 	
    w3_set_highlight_color('id-cmap-btn-red', 'w3-red');

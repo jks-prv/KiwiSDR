@@ -9,8 +9,9 @@ var fax = {
    // visible window (scroll-back buffer is larger)
    w:          1024,
    h:          2048,
-   winH:       400,              
-   winSBW:     15,   // scrollbar width
+   dataH_desktop: 400,
+   dataH_phone:  250,
+   dataT:      1024 + 15,  // scrollbar width
    image_y:    0,
    
    freqs: null,
@@ -87,7 +88,7 @@ function fax_recv(data)
             } else
             */
             
-            /*
+            /**/
             // for shift testing: yellow/blue stripe at center
             if (i >= 500 && i < 510) {
                imd.data[i*4+0] = 255;
@@ -99,7 +100,7 @@ function fax_recv(data)
                imd.data[i*4+1] = 0;
                imd.data[i*4+2] = 255;
             } else
-            */
+            /**/
             
             /*
             if (i == fax.w-1) {
@@ -121,11 +122,11 @@ function fax_recv(data)
          // Otherwise assume user is adjusting scrollbar and we shouldn't disturb.
          // When scroll-back buffer is full it shifts up so this feature doesn't matter at that point.
          var s_topT = w3_el('id-fax-data').scrollTop;
-         var s_topB = s_topT + fax.winH;
+         var s_topB = s_topT + fax.dataH;
          if (fax.image_y >= s_topT && fax.image_y <= s_topB) {
             var adj = (fax.image_y >= s_topB);
             //console.log('Y='+ fax.image_y +' st='+ s_topT +'/'+ s_topB + (adj? ' ADJ':' TRACK'));
-            if (adj) w3_el('id-fax-data').scrollTop = (fax.image_y+1) - fax.winH;
+            if (adj) w3_el('id-fax-data').scrollTop = (fax.image_y+1) - fax.dataH;
          } else {
             //console.log('Y='+ fax.image_y +' st='+ s_topT +'/'+ s_topB +' NO-TRACK');
          }
@@ -192,8 +193,8 @@ function fax_recv(data)
 
 function fax_controls_setup()
 {
-   fax.tw = fax.w + fax.winSBW;
    fax.debug= 0;
+   fax.dataH = kiwi_isPhone()? fax.dataH_phone : fax.dataH_desktop;
 
    // URL params that need to be setup before controls instantiated
 	var p = fax.url_params = ext_param();
@@ -222,10 +223,10 @@ function fax_controls_setup()
    var data_html =
       time_display_html('fax') +
 
-      w3_div('id-fax-data|left:0; width:'+ px(fax.tw) +'; height:'+ px(fax.winH) +
+      w3_div('id-fax-data|left:0; width:'+ px(fax.dataT) +'; height:'+ px(fax.dataH) +
          '; background-color:black; position:relative; overflow-y:scroll; overflow-x:hidden',
-   		'<canvas id="id-fax-data-canvas" width='+ dq(fax.tw)+' style="left:'+ px(0) +'; position:absolute;"></canvas>',
-   		'<canvas id="id-fax-copy-canvas" width='+ dq(fax.tw)+' style="left:'+ px(0) +'; position:absolute;z-index:-1;"></canvas>'
+   		'<canvas id="id-fax-data-canvas" width='+ dq(fax.dataT)+' style="left:'+ px(0) +'; position:absolute;"></canvas>',
+   		'<canvas id="id-fax-copy-canvas" width='+ dq(fax.dataT)+' style="left:'+ px(0) +'; position:absolute;z-index:-1;"></canvas>'
       );
 
 	var controls_html =
@@ -264,7 +265,7 @@ function fax_controls_setup()
          )
       );
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
    time_display_setup('fax');
 
    // URL params that need to be setup after controls instantiated
@@ -284,12 +285,15 @@ function fax_controls_setup()
 	fax.copy_canvas.ctx = fax.copy_canvas.getContext("2d");
 	fax.data_canvas.imd = fax.data_canvas.ctx.createImageData(fax.w, 1);
 	fax.data_canvas.addEventListener("mousedown", fax_mousedown, w3.BUBBLING);
-	if (kiwi_isMobile())
+	if (kiwi_isTouch()) {
 		fax.data_canvas.addEventListener('touchstart', fax_touchstart, w3.BUBBLING);
+		fax.data_canvas.addEventListener('touchend', fax_touchend, w3.BUBBLING);
+	}
 
    fax.data_canvas.height = fax.h.toString();
    fax.copy_canvas.height = fax.h.toString();
-   ext_set_data_height(fax.winH);
+   ext_set_data_height(fax.dataH);
+   ext_set_data_width(fax.dataT);
    w3_scrollTop('id-fax-data');
    fax_clear_display();
 	w3_attribute(fax.data_canvas, 'title', 'shift-click/touch to align horizontally');
@@ -424,16 +428,19 @@ function FAX_environment_changed(changed)
    }
 
    if (changed.resize) {
+      ext_set_data_left('id-fax-data', fax.dataT);
+      /*
       var el = w3_el('id-fax-data');
       if (!el) return;
       // NB: For large displays this causes the desired effect of data panel centering.
       // The time display remains on the right side because left is applied to id-fax-data only.
-      var width = fax.tw + kiwi.time_display_width;
+      var width = fax.dataT + kiwi.time_display_width;
       ext_set_data_width(width);
       var left = Math.max(0, (window.innerWidth - width) / 2);
       console.log('FAX resize left='+ left);
       el.style.left = px(left);
       fax.startx = Math.round(left);
+      */
    }
 }
 
@@ -444,7 +451,19 @@ function fax_mousedown(evt)
 
 function fax_touchstart(evt)
 {
-   fax_shift(evt, false);
+	fax.start_xy = w3_canvas_event_xy(evt, fax.data_canvas);
+	fax.hold_time = Date.now() + 1000;
+}
+
+function fax_touchend(evt)
+{
+   // If a touch for longer than 1 second, with little movement, shift image.
+   // Else it's a regular scroll-x
+	var xy = w3_canvas_event_xy(evt, fax.data_canvas);
+	var stop_time = Date.now();
+   if (w3_xy_within(fax.start_xy, xy, 10) && Date.now() > fax.hold_time) {
+      fax_shift(evt, false);
+   }
 }
 
 function fax_shift(evt, requireShiftKey)
@@ -452,7 +471,7 @@ function fax_shift(evt, requireShiftKey)
 	//event_dump(evt, 'FFT');
 	var xy = w3_canvas_event_xy(evt, fax.data_canvas);
 	var offset = xy.x;
-	if (!requireShiftKey) alert('off='+ offset +' fax.tw='+ fax.tw);
+	//if (!requireShiftKey) alert('off='+ offset +' dataT='+ fax.dataT);
 	if ((requireShiftKey && !evt.shiftKey) || offset < 0 || offset >= fax.w) return;
 	var norm = (offset / fax.w).toFixed(6);     // normalize
 	console.log('FAX offset='+ offset +' shift='+ norm);
@@ -559,6 +578,10 @@ function fax_save_cb(path, val, first)
    document.body.removeChild(dlLink);
 }
 
+function FAX_focus()
+{
+}
+
 function FAX_blur()
 {
 	ext_send('SET fax_stop');
@@ -569,7 +592,7 @@ function FAX_blur()
 // called to display HTML for configuration parameters in admin interface
 function FAX_config_html()
 {
-   ext_config_html(fax, 'fax', 'FAX', 'FAX configuration');
+   ext_config_html(fax, {'cfg':'fax', 'nav':'FAX'}, 'FAX configuration');
 }
 
 function FAX_help(show)

@@ -229,7 +229,7 @@ function sstv_clear_display(mode_name)
 
    // on narrow screens jump to receiving panel
    if (kiwi_isMobile())
-      w3_el('id-ext-data-container').scrollTo({ left: x - sstv.isp/2, behavior: 'smooth' });
+      w3_el('id-ext-data-scroll-container').scrollTo({ left: x - sstv.isp/2, behavior: 'smooth' });
 }
 
 function sstv_controls_setup()
@@ -273,7 +273,7 @@ function sstv_controls_setup()
 			)
 		);
 
-	ext_panel_show(controls_html, data_html, null);
+	ext_panel_show(controls_html, data_html);
 	ext_set_controls_width_height(350, 200);
 	sstv.saved_setup = ext_save_setup();
 	ext_set_mode('usb');    // won't decode if started while in IQ mode
@@ -289,6 +289,7 @@ function sstv_controls_setup()
 	if (kiwi_isMobile())
 		sstv.data_canvas.addEventListener('touchstart', sstv_touchstart, w3.BUBBLING);
    ext_set_data_height(sstv.h);
+   ext_set_data_width(sstv.w);
    sstv.data_canvas.height = sstv.h;
 
 	SSTV_environment_changed( {resize:1} );
@@ -346,15 +347,7 @@ function SSTV_environment_changed(changed)
 {
    //console.log(changed);
    if (changed.resize) {
-      var el = w3_el('id-sstv-data');
-      if (!el) return;
-      // NB: For large displays this causes the desired effect of data panel centering.
-      // The time display remains on the right side because left is applied to id-sstv-data only.
-      var width = sstv.w + kiwi.time_display_width;
-      ext_set_data_width(width);
-      var left = Math.max(0, (window.innerWidth - width) / 2);
-      console.log('SSTV resize left='+ left);
-      el.style.left = px(left);
+      ext_set_data_left('id-sstv-data', sstv.w);
    }
 }
 
@@ -527,15 +520,15 @@ function SSTV_config_html()
    var s =
       w3_inline_percent('w3-container',
          w3_div('w3-margin-T-16 w3-restart',
-            w3_input_get('', 'Test1 filename', 'SSTV.test_file1', 'w3_string_set_cfg_cb', 'SSTV.test.au')
+            w3_input_get('', 'Test1 filename', 'sstv.test_file1', 'w3_string_set_cfg_cb', 'SSTV.test.au')
          ), 40
       ) +
 
       w3_inline_percent('w3-container',
          w3_div('w3-margin-T-16 w3-restart',
-            w3_input_get('', 'Test2 filename', 'SSTV.test_file2', 'w3_string_set_cfg_cb', 'SSTV.test2.au')
+            w3_input_get('', 'Test2 filename', 'sstv.test_file2', 'w3_string_set_cfg_cb', 'SSTV.test2.au')
          ), 40
       );
 
-   ext_config_html(sstv, 'sstv', 'SSTV', 'SSTV configuration', s);
+   ext_config_html(sstv, {'cfg':'sstv', 'nav':'SSTV'}, 'SSTV configuration', s);
 }
