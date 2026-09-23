@@ -39,7 +39,8 @@ var wfext = {    // "wf" is already used elsewhere
 function waterfall_view()
 {
    keyboard_shortcut_nav('wf');
-   w3_scrollTo('id-optbar-content', 0.65);   // empirically measured
+   w3_do_when_clientHeight('id-optbar-wf',
+      function() { w3_el('id-wf-more').scrollIntoView({behavior:'smooth'}); });
 }
 
 function waterfall_controls_setup()

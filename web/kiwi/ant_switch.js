@@ -91,25 +91,9 @@ function ant_switch_view()
    ant_switch_log('ant_switch_view ant_sw.focus='+ ant_sw.focus);
    if (!ant_sw.focus) return;    // don't bring into view unless focused
 
-   // wait for RF tab render
    keyboard_shortcut_nav('rf');
-   var Hrf;
-   w3_do_when_cond(
-      function() {
-         Hrf = w3_el('id-optbar-rf').clientHeight;
-         //console.log('Hrf='+ Hrf);
-         return (Hrf != 0);
-      },
-      function() {
-         var Hopt = kiwi.OPTBAR_CONTENT_HEIGHT;
-         var Hant = w3_el('id-optbar-rf-antsw').clientHeight + /* w3-margin-B-8 */ 8;
-         var pct = w3_clamp(kiwi_round(1 - (Hant - Hopt) / (Hrf - Hopt), 2), 0, 1);
-         //console.log('ant_switch view', {Hant, Hrf, pct});   // 160 233
-         w3_scrollTo('id-optbar-content', pct);
-      }, null,
-      200
-   );
-   // REMINDER: w3_do_when_cond() returns immediately
+   w3_do_when_clientHeight('id-optbar-rf',
+      function() { w3_el('id-optbar-rf-antsw').scrollIntoView({behavior:'smooth'}); });
    
    var p = ext_param();    // will return URL param only once
    if (isNonEmptyString(p)) {
