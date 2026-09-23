@@ -36,6 +36,7 @@ Boston, MA  02110-1301, USA.
 #include "ext_int.h"
 #include "debug.h"
 #include "services.h"
+#include "ansi.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -392,8 +393,8 @@ static const char* edata_with_file_ext(char **o_uri, bool free_o_uri, bool *free
         }
     }
     
-    web_printf_all("%-16s %p %s %s %s%s\n", edata_data? "RTN-FOUND" : "RTN-NIL",
-        edata_data, uri, cache_check? "CACHE_CHECK":"REQUEST", *is_min? "MIN ":"", *is_gzip? "GZIP":"");
+    web_printf_all("%-16s" NORM " %p %s %s" NORM " %s%s\n", edata_data? GREEN "RTN-FOUND" : RED "RTN-NIL",
+        edata_data, uri, cache_check? YELLOW "CACHE_CHECK" : CYAN "REQUEST", *is_min? "MIN ":"", *is_gzip? "GZIP":"");
     if (*is_gzip) uri[strlen(uri) - 3] = '\0';      // remove ".gz" suffix
 
     if (cache_check) {
@@ -806,7 +807,7 @@ int web_request(struct mg_connection *mc, int ev, void *ev_data)
 	    if (web_caching_debug == 0) return MG_TRUE;
 	    
 	    if (cache->cached)
-            web_printf_cached("%-16s %6s %11s %4s %3s %4s %5s %s\n", "webserver", "-", cache->cached? "304-CACHED":"NO_CACHE", "", "", "", "", mc->uri);
+            web_printf_cached("%-16s %6s %11s %4s %3s %4s %5s %s\n", "webserver:", "-", cache->cached? "304-CACHED":"NO_CACHE", "", "", "", "", mc->uri);
 
 		web_printf_all("%-16s %s:%05d %s (etag_match=%c not_mod_since=%c) mtime=[%s]", "MG_EV_CACHE_DONE",
 			ip_forwarded, mc->rem.port,
