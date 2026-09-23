@@ -30,6 +30,7 @@ Boston, MA  02110-1301, USA.
 #include "rx_util.h"
 #include "ext_int.h"
 #include "ant_switch.h"
+#include "ansi.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -199,6 +200,16 @@ void ext_register(ext_t *ext)
 	n_exts++;
 }
 
+bool ext_vars(ext_t *ext, const char *cfg_prefix)
+{
+    bool update_cfg = false;
+    ext->cfg_prefix = strdup(cfg_prefix);
+    cfg_default_object(cfg_prefix, "{}", &update_cfg);
+    cfg_default_int(stprintf("%s.users_m", cfg_prefix), /* no limit */ 1, &update_cfg);
+    cfg_default_bool(stprintf("%s.enable", cfg_prefix), true, &update_cfg);
+    return update_cfg;
+}
+
 int ext_send_msg(int rx_chan, bool debug, const char *msg, ...)
 {
 	char *s;
@@ -273,7 +284,7 @@ extint_t extint;
 
 void extint_setup()
 {
-	extint_init();
+	extint_init();      // calls individual extension main() routines which in turn call ext_register()
 	ant_switch_init();
 }
 
@@ -327,6 +338,7 @@ void extint_load_extension_configs(conn_t *conn)
 	send_msg(conn, false, "ADM ext_configs_done");
 }
 
+// called on receive of "SET ext_blur" or keepalive expired / kick
 void extint_ext_users_init(int rx_chan)
 {
     // so that rx_chan_free_count() doesn't count EXT_FLAGS_HEAVY when extension isn't running
@@ -335,15 +347,21 @@ void extint_ext_users_init(int rx_chan)
     memset(&ext_users[rx_chan], 0, sizeof(ext_users_t));
 }
 
+static void send_status(conn_t *conn_ext)
+{
+	// NB: has to be a 'MSG' and not an 'EXT' due to sequencing of recv_cb setup
+    send_msg(conn_ext, false, "MSG version_maj=%d version_min=%d debian_ver=%d", version_maj, version_min, debian_ver);
+
+    send_msg(conn_ext, false, "MSG ext_client_init=%d", is_locked);
+    //rcprintf(conn_ext->rx_channel, "EXT send_status is_locked=%d\n", is_locked);
+}
+
 void extint_setup_c2s(void *param)
 {
 	conn_t *conn_ext = (conn_t *) param;
 
 	// initialize extension for this connection
-	// NB: has to be a 'MSG' and not an 'EXT' due to sequencing of recv_cb setup
-    rcprintf(conn_ext->rx_channel, "EXT extint_setup_c2s SET: rx%d ext_client_init(is_locked)=%d\n", conn_ext->rx_channel, is_locked);
-    send_msg(conn_ext, false, "MSG version_maj=%d version_min=%d debian_ver=%d", version_maj, version_min, debian_ver);
-	send_msg(conn_ext, false, "MSG ext_client_init=%d", is_locked);
+    send_status(conn_ext);
 }
 
 void extint_c2s(void *param)
@@ -356,6 +374,7 @@ void extint_c2s(void *param)
 	while (TRUE) {
 		int rx_channel, ignored_rx_chan;
 		ext_t *ext = NULL;
+		ext_users_t *eusr;
 	
         if (nb) web_to_app_done(conn_ext, nb);
         n = web_to_app(conn_ext, &nb);
@@ -388,7 +407,7 @@ void extint_c2s(void *param)
                             printf("extint_c2s: FAIL rx_channel=%d rx_chans=%d\n", rx_channel, rx_chans);
                             panic("extint_c2s");
                         } else {
-                            ext_users_t *eusr = &ext_users[rx_channel];
+                            eusr = &ext_users[rx_channel];
                             eusr->valid = TRUE;
                             eusr->ext = ext;
                             eusr->conn_ext = conn_ext;
@@ -413,6 +432,22 @@ void extint_c2s(void *param)
                     //panic("ext_switch_to_client: unknown ext");
                 } else {
                     ext_send_msg(conn_ext->rx_channel, false, "MSG EXT-STOP-FLUSH-INPUT");
+
+                    int users_max = cfg_int_(stprintf("%s.users_m", ext->cfg_prefix));
+                    if (users_max == 1) users_max = -1;     // no limit;
+                    if (users_max > 1) users_max--;
+                    
+                    int users_cur = 0;
+                    for (i = 0; i < rx_chans; i++) {
+                        ext_users_t *extu = &ext_users[i];
+                        if (extu && extu->ext && strcmp(ext->cfg_prefix, extu->ext->name) == 0)
+                            users_cur++;    // count will include current request
+                    }
+                    
+                    eusr->nusers_ok = (users_max == -1 || users_cur <= users_max);
+                    send_msg(conn_ext, false, "MSG ext_client_users=%d,%d,%d", eusr->nusers_ok, users_cur, users_max);
+                    //rcprintf(conn_ext->rx_channel, "%sEXT ext_client_users %s nusers_ok=%d users_cur=%d users_max=%d" NONL,
+                    //    eusr->nusers_ok? GREEN : RED, ext->cfg_prefix, eusr->nusers_ok, users_cur, users_max);
 
                     // Automatically let extension server-side know the connection has been established and
                     // our stream thread is running. Only called ONCE per client session.
@@ -439,9 +474,7 @@ void extint_c2s(void *param)
 
             i = strcmp(cmd, "SET ext_is_locked_status");
             if (i == 0) {
-                printf("EXT ext_is_locked_status SET: rx%d ext_client_init=%d(is_locked)\n", conn_ext->rx_channel, is_locked);
-                send_msg(conn_ext, false, "MSG version_maj=%d version_min=%d debian_ver=%d", version_maj, version_min, debian_ver);
-                send_msg(conn_ext, false, "MSG ext_client_init=%d", is_locked);
+                send_status(conn_ext);
                 continue;
             }
 

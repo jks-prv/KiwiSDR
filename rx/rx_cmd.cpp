@@ -48,6 +48,7 @@ Boston, MA  02110-1301, USA.
 #include "ant_switch.h"
 #include "utf8.h"
 #include "rx_snr.h"
+#include "ansi.h"
 
 #ifdef USE_SDR
  #include "data_pump.h"
@@ -233,6 +234,24 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
         }
 	}
 	
+    if (conn->type == STREAM_EXT) {
+        ext_users_t *extu = &ext_users[chan];
+        if (extu && !extu->nusers_ok) {
+            if (!kiwi_str_begins_with(cmd, "SET options") &&
+                !kiwi_str_begins_with(cmd, "SET auth") && 
+                !kiwi_str_begins_with(cmd, "SET auth") &&
+                !kiwi_str_begins_with(cmd, "SET keepalive") &&
+                !kiwi_str_begins_with(cmd, "SET ext_blur") &&
+                !kiwi_str_begins_with(cmd, "SET ext_switch_to_client") &&
+                !kiwi_str_begins_with(cmd, "SET ext_is_locked_status")) {
+	            cprintf(conn, RED "EXT !nusers_ok <%s>" NONL, cmd);
+                return true;	// fake that we accepted command so it won't be further processed
+	        } else {
+	            cprintf(conn, YELLOW "EXT !nusers_ok <%s>" NONL, cmd);
+	        }
+        }
+    }
+
 	#ifdef OPTION_HONEY_POT
 	    if ((stream_type == STREAM_SOUND || stream_type == STREAM_WATERFALL) &&
 	        (strcmp(cmd, "SET keepalive") && strcmp(cmd, "SET GET_USERS") && !kiwi_str_begins_with(cmd, "SET STATS_UPD"))) {

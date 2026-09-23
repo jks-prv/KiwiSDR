@@ -38,7 +38,8 @@ extern extint_t extint;
 typedef struct {
     bool valid;
 	ext_t *ext;
-	conn_t *conn_ext;                       // used by ext_send_* routines
+	conn_t *conn_ext;       // used by ext_send_* routines
+	bool nusers_ok;
 
     // server-side routine for receiving FFT data
 	int FFT_flags;

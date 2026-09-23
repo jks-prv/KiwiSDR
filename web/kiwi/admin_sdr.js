@@ -1376,10 +1376,10 @@ function kiwi_reg_html()
 
 		'<hr>' +
 
-		w3_divs('w3-margin-bottom w3-container w3-center',
-         w3_switch_label('w3-label-inline w3-label-left w3-center', 'Register on <a href="http://rx.kiwisdr.com" target="_blank">rx.kiwisdr.com</a>?',
+		w3_inline('w3-flex-col/w3-container',
+         w3_switch_label('w3-label-inline w3-label-left', 'Register on <a href="http://rx.kiwisdr.com" target="_blank">rx.kiwisdr.com</a>?',
             'Yes', 'No', 'adm.kiwisdr_com_register', adm.kiwisdr_com_register, 'kiwisdr_com_register_cb'),
-         w3_div('id-kiwisdr_com-reg-status-container',
+         w3_div('id-kiwisdr_com-reg-status-container w3-margin-top',
             w3_div('w3-container',
                w3_label('w3-show-inline-block w3-margin-R-16 w3-text-teal', 'kiwisdr.com registration status:') +
                w3_div('id-kiwisdr_com-reg-status w3-show-inline-block w3-padding-LR-8 w3-text-black', '')
@@ -3120,18 +3120,38 @@ function ext_admin_config(id, nav_text, ext_html, focus_blur_cb)
 	w3_el('id-extensions-config').innerHTML += w3_div('id-'+ id +'-container w3-hide|width:95%', ext_html);
 }
 
-function ext_config_html(vars, cfg_prefix, nav_text, title_text, s)
+function ext_config_html(vars, opt, title_text, s)
 {
-   var id = vars.ext_name;
-   vars.enable = ext_get_cfg_param(cfg_prefix +'.enable', true, EXT_SAVE);
+   opt = opt || {};
+   var cfg_prefix = opt.cfg;
+   var nav_text   = opt.nav;
+   
+   var i, id = vars.ext_name;
+   var enable = ext_get_cfg_param(cfg_prefix +'.enable', true, EXT_SAVE);
    if (!dbgUs && extint.excl_devl.includes(id)) return;
+
+   // Retain values > rx_chans if it was set when another configuration was used.
+   // Just clamp the menu value to the current rx_chans.
+   var users_s = cfg_prefix +'.users_m';
+	var users_m = ext_get_cfg_param(users_s, /* no limit */ 1);
+   //console.log({ t:'ext_config_html', id:id, cfg_prefix:cfg_prefix, users_s:users_s, users_m:users_m });
+	var users_m = Math.min(users_m, rx_chans+1);
+   var users_u = {0:'none', 1:'no limit'};
+   for (i = 1; i <= rx_chans; i++)
+      users_u[i+1] = i;
+   //console.log(users_u);
 
 	ext_admin_config(id, nav_text,
 		w3_div('id-'+ id +' w3-text-teal w3-hide',
          w3_col_percent('w3-valign/',
             w3_div('w3-bold', title_text), 40,
             w3_inline('',
-               w3_switch_label('w3-margin-R-8/w3-label-inline w3-label-left/', 'User enabled?', 'Yes', 'No', cfg_prefix +'.enable', vars.enable, 'admin_radio_YN_cb'),
+               (opt.enable_only)?
+                  w3_switch_label('w3-margin-R-8/w3-label-inline w3-label-left/', 'User enabled?',
+                     'Yes', 'No', cfg_prefix +'.enable', enable, 'admin_radio_YN_cb')
+               :
+                  w3_select('w3-width-auto/w3-label-inline w3-label-left/', 'Simultaneous users',
+                     '', users_s, users_m, users_u, 'ext_config_users_cb', cfg_prefix),
 				   w3_div('w3-text-black w3-margin-L-32', 'Local connections exempt.')
             )
          ) +
@@ -3139,4 +3159,13 @@ function ext_config_html(vars, cfg_prefix, nav_text, title_text, s)
 			(s? s:'')
 		)
 	);
+}
+
+function ext_config_users_cb(path, idx, first, cfg_prefix)
+{
+   if (first) return;
+   var users_m = +idx;
+   console.log({ t:'ext_config_users_cb', path:path, users_m:users_m, first:first, cfg_prefix:cfg_prefix });
+   admin_select_cb(path, users_m, first);
+   ext_set_cfg_param(cfg_prefix +'.enable', users_m? true:false, EXT_SAVE);
 }

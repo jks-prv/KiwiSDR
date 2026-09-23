@@ -51,9 +51,12 @@ typedef struct {
     u4_t version;                       // for backward compatibility with external extensions (e.g. antenna switch)
 	u4_t flags;
 	ext_poll_t poll_cb;                 // periodic callback that cal be used for polling (e.g. shared mem comm)
+
+    const char *cfg_prefix;             // set by ext_vars(), not extension itself
 } ext_t;
 
 void ext_register(ext_t *ext);
+bool ext_vars(ext_t *ext, const char *cfg_prefix);
 
 // call to start/stop receiving raw audio channel IQ samples, pre-passband FIR filter
 void ext_register_receive_iq_samps_raw(ext_receive_iq_samps_t func, int rx_chan);
