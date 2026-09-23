@@ -98,8 +98,6 @@ void navtex_close(int rx_chan)
     ext_unregister_receive_real_samps(e->rx_chan);
 }
 
-bool NAVTEX_vars() { return false; }
-
 void NAVTEX_main();
 
 ext_t navtex_ext = {
@@ -110,6 +108,8 @@ ext_t navtex_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool NAVTEX_vars() { return ext_vars(&navtex_ext, "navtex"); }
 
 void NAVTEX_main()
 {

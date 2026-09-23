@@ -32,8 +32,6 @@ bool ibp_scan_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool IBP_scan_vars() { return false; }
-
 void IBP_scan_main();
 
 ext_t ibp_scan_ext = {
@@ -41,7 +39,10 @@ ext_t ibp_scan_ext = {
 	IBP_scan_main,
 	NULL,
 	ibp_scan_msgs,
+	EXT_NEW_VERSION
 };
+
+bool IBP_scan_vars() { return ext_vars(&ibp_scan_ext, "ibp"); }
 
 void IBP_scan_main()
 {

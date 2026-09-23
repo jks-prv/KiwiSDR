@@ -309,8 +309,6 @@ bool loran_c_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool Loran_C_vars() { return false; }
-
 void Loran_C_main();
 
 ext_t loran_c_ext = {
@@ -321,6 +319,8 @@ ext_t loran_c_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool Loran_C_vars() { return ext_vars(&loran_c_ext, "loran_c"); }
 
 void Loran_C_main()
 {

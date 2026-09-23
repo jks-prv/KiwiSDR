@@ -531,11 +531,22 @@ static s2_t *drm_mmap(char *fn, int *words)
 
 bool DRM_enable;
 
+void DRM_main();
+
+ext_t DRM_ext = {
+	"DRM",
+	DRM_main,
+	DRM_close,
+	DRM_msgs,
+	EXT_NEW_VERSION,
+	EXT_NO_FLAGS,       // don't set EXT_FLAGS_HEAVY for ourselves
+	DRM_poll
+};
+
 bool DRM_vars() {
-    bool up_cfg = false;
+    bool up_cfg = ext_vars(&DRM_ext, "DRM");
 
     // DRM extension related
-    cfg_default_object("DRM", "{}", &up_cfg);
     DRM_enable = cfg_default_bool("DRM.enable", true, &up_cfg);
     drm_nreg_chans = cfg_default_int("DRM.nreg_chans", DRM_NREG_CHANS_DEFAULT, &up_cfg);
 
@@ -554,18 +565,6 @@ bool DRM_vars() {
     cfg_string_free(s);
     return up_cfg;
 }
-
-void DRM_main();
-
-ext_t DRM_ext = {
-	"DRM",
-	DRM_main,
-	DRM_close,
-	DRM_msgs,
-	EXT_NEW_VERSION,
-	EXT_NO_FLAGS,       // don't set EXT_FLAGS_HEAVY for ourselves
-	DRM_poll
-};
 
 void DRM_main()
 {

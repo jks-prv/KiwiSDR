@@ -278,8 +278,6 @@ bool sstv_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool SSTV_vars() { return false; }
-
 void SSTV_main();
 
 ext_t sstv_ext = {
@@ -290,6 +288,8 @@ ext_t sstv_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool SSTV_vars() { return ext_vars(&sstv_ext, "sstv"); }
 
 #ifdef SSTV_TEST_FILE
 static void sstv_testfile(int which)

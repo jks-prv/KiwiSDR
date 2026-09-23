@@ -51,8 +51,6 @@ bool devl_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool devl_vars() { return false; }
-
 void devl_main();
 
 ext_t devl_ext = {
@@ -61,6 +59,8 @@ ext_t devl_ext = {
 	NULL,
 	devl_msgs,
 };
+
+bool devl_vars() { return ext_vars(&devl_ext, "devl"); }
 
 void devl_main()
 {

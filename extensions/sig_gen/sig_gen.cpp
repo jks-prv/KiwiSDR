@@ -129,8 +129,6 @@ bool gen_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool sig_gen_vars() { return false; }
-
 void sig_gen_main();
 
 ext_t gen_ext = {
@@ -141,6 +139,8 @@ ext_t gen_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool sig_gen_vars() { return ext_vars(&gen_ext, "sig_gen"); }
 
 void sig_gen_main()
 {

@@ -297,10 +297,8 @@ bool ft8_update_vars_from_config(bool called_at_init_or_restart)
 {
     int i, n;
     rx_util_t *r = &rx_util;
-    bool update_cfg = false;
     char *s;
-    
-    cfg_default_object("ft8", "{}", &update_cfg);
+    bool update_cfg = false;
     
     // Changing reporter call on admin page requires restart. This is because of
     // conditional behavior at startup, e.g. uploads enabled because valid call is now present
@@ -568,8 +566,6 @@ void FT8_poll(int rx_chan)
     }
 }
 
-bool FT8_vars() { return false; }
-
 void FT8_main();
 
 ext_t ft8_ext = {
@@ -581,6 +577,8 @@ ext_t ft8_ext = {
 	EXT_FLAGS_HEAVY,
 	FT8_poll
 };
+
+bool FT8_vars() { return ext_vars(&ft8_ext, "ft8"); }
 
 void FT8_main()
 {

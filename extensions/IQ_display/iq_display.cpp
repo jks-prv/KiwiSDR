@@ -281,8 +281,6 @@ bool iq_display_msgs(char *msg, int rx_chan)
 }
 
 
-bool IQ_display_vars() { return false; }
-
 void IQ_display_main();
 
 ext_t iq_display_ext = {
@@ -293,6 +291,8 @@ ext_t iq_display_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool IQ_display_vars() { return ext_vars(&iq_display_ext, "iq_display"); }
 
 void IQ_display_main()
 {

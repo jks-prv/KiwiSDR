@@ -43,12 +43,20 @@ void iframe_close(int rx_chan)
     // do nothing
 }
 
+void iframe_main();
+
+ext_t iframe_ext = {
+	"iframe",
+	iframe_main,
+	iframe_close,
+	iframe_msgs,
+};
+
 bool iframe_vars()
 {
-    bool up_cfg = false;
+    bool up_cfg = ext_vars(&iframe_ext, "iframe");
     
     // enable dx spots if no prior configuration
-    cfg_default_object("iframe", "{}", &up_cfg);
     const char *s = cfg_string("iframe.url", NULL, CFG_OPTIONAL);
     const char *s2 = cfg_string("iframe.html", NULL, CFG_OPTIONAL);
     bool enabled = cfg_default_bool("iframe.enable", true, &up_cfg);
@@ -73,15 +81,6 @@ bool iframe_vars()
     
     return up_cfg;
 }
-
-void iframe_main();
-
-ext_t iframe_ext = {
-	"iframe",
-	iframe_main,
-	iframe_close,
-	iframe_msgs,
-};
 
 void iframe_main()
 {

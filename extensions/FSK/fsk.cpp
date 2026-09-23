@@ -129,8 +129,6 @@ void fsk_close(int rx_chan)
     ext_unregister_receive_real_samps(e->rx_chan);
 }
 
-bool FSK_vars() { return false; }
-
 void FSK_main();
 
 ext_t fsk_ext = {
@@ -141,6 +139,8 @@ ext_t fsk_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool FSK_vars() { return ext_vars(&fsk_ext, "fsk"); }
 
 void FSK_main()
 {

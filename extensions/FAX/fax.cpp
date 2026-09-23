@@ -168,8 +168,6 @@ bool fax_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool FAX_vars() { return false; }
-
 void FAX_main();
 
 ext_t fax_ext = {
@@ -180,6 +178,8 @@ ext_t fax_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool FAX_vars() { return ext_vars(&fax_ext, "fax"); }
 
 void FAX_main()
 {

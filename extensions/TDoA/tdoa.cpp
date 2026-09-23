@@ -44,11 +44,21 @@ bool tdoa_msgs(char *msg, int rx_chan)
 	return false;
 }
 
+void TDoA_main();
+
+ext_t tdoa_ext = {
+	"TDoA",
+	TDoA_main,
+	NULL,
+	tdoa_msgs,
+	EXT_NEW_VERSION,
+	EXT_FLAGS_HEAVY
+};
+
 bool TDoA_vars()
 {
-    bool up_cfg = false;
+    bool up_cfg = ext_vars(&tdoa_ext, "tdoa");
 
-    cfg_default_object("tdoa", "{}", &up_cfg);
     // FIXME: switch to using new SSL version of TDoA service at some point: https://tdoa2.kiwisdr.com
     // workaround to prevent collision with 1st-level "server_url" until we can fix cfg code
     const char *s;
@@ -66,17 +76,6 @@ bool TDoA_vars()
 
     return up_cfg;
 }
-
-void TDoA_main();
-
-ext_t tdoa_ext = {
-	"TDoA",
-	TDoA_main,
-	NULL,
-	tdoa_msgs,
-	EXT_NEW_VERSION,
-	EXT_FLAGS_HEAVY
-};
 
 void TDoA_main()
 {

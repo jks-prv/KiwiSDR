@@ -361,8 +361,6 @@ bool ale_2g_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool ALE_2G_vars() { return false; }
-
 void ALE_2G_main();
 
 ext_t ale_2g_ext = {
@@ -371,6 +369,8 @@ ext_t ale_2g_ext = {
 	ale_2g_close,
 	ale_2g_msgs,
 };
+
+bool ALE_2G_vars() { return ext_vars(&ale_2g_ext, "ale_2g"); }
 
 void ALE_2G_main()
 {

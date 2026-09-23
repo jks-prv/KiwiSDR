@@ -298,8 +298,6 @@ bool hfdl_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool HFDL_vars() { return false; }
-
 void HFDL_main();
 
 ext_t hfdl_ext = {
@@ -308,6 +306,8 @@ ext_t hfdl_ext = {
 	hfdl_close,
 	hfdl_msgs,
 };
+
+bool HFDL_vars() { return ext_vars(&hfdl_ext, "hfdl"); }
 
 void HFDL_main()
 {

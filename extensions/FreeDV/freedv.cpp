@@ -182,13 +182,6 @@ bool freedv_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool FreeDV_vars()
-{
-    bool up_cfg = false;
-    cfg_default_object("freedv", "{}", &up_cfg);
-    return up_cfg;
-}
-
 void FreeDV_main();
 
 ext_t freedv_ext = {
@@ -198,6 +191,8 @@ ext_t freedv_ext = {
 	freedv_msgs,
 	EXT_NEW_VERSION
 };
+
+bool FreeDV_vars() { return ext_vars(&freedv_ext, "freedv"); }
 
 void FreeDV_main()
 {

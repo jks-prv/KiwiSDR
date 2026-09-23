@@ -304,8 +304,6 @@ bool timecode_msgs(char *msg, int rx_chan)
     return false;
 }
 
-bool timecode_vars() { return false; }
-
 void timecode_main();
 
 ext_t timecode_ext = {
@@ -316,6 +314,8 @@ ext_t timecode_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool timecode_vars() { return ext_vars(&timecode_ext, "timecode"); }
 
 void timecode_main()
 {

@@ -56,8 +56,6 @@ bool S_meter_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool S_meter_vars() { return false; }
-
 void S_meter_main();
 
 ext_t S_meter_ext = {
@@ -68,6 +66,8 @@ ext_t S_meter_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool S_meter_vars() { return ext_vars(&S_meter_ext, "S_meter"); }
 
 void S_meter_main()
 {

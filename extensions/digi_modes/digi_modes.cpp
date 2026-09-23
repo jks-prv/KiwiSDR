@@ -188,8 +188,6 @@ bool digi_msgs(char *msg, int rx_chan)
 	return false;
 }
 
-bool digi_modes_vars() { return false; }
-
 void digi_modes_main();
 
 ext_t digi_ext = {
@@ -200,6 +198,8 @@ ext_t digi_ext = {
 	EXT_NEW_VERSION,
 	EXT_FLAGS_HEAVY
 };
+
+bool digi_modes_vars() { return ext_vars(&digi_ext, "digi_modes"); }
 
 void digi_modes_main()
 {

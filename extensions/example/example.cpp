@@ -69,8 +69,6 @@ void example_close(int rx_chan)
     ext_unregister_receive_iq_samps(e->rx_chan);
 }
 
-bool example_vars() { return false; }
-
 // NB: To capitalize the name in the extension menu while using lowercase in program code
 // follow the capitalization used below, e.g. EXAMPLE_main()
 // AND capitalize the name of this directory.
@@ -86,6 +84,8 @@ ext_t example_ext = {
 	example_close,
 	example_msgs,
 };
+
+bool example_vars() { return ext_vars(&example_ext, "example"); }
 
 //void EXAMPLE_main()
 void example_main()
