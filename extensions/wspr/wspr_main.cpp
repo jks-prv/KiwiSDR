@@ -465,6 +465,89 @@ static void wspr_update_spot_count(int rx_chan)
     }
 }
 
+#define WSPR_SPOT_FMT "curl -sL 'http://%s/post?function=wspr&" \
+    "rcall=%s&rgrid=%s&rqrg=%.6f&date=%02d%02d%02d&time=%02d%02d&sig=%.0f&" \
+    "dt=%.1f&drift=%d&tqrg=%.6f&tcall=%s&tgrid=%s&dbm=%s&version=1.4A+Kiwi'%s"
+#define CURL_UPLOADS
+//#define TEST_UPLOADS
+
+static void wspr_upload(wspr_t *w, const char *host)
+{
+    int year, month, day; utc_year_month_day(&year, &month, &day);
+    char *cmd;
+
+    double rqrg = w->autorun? w->arun_deco_cf_MHz : w->centerfreq_MHz;
+    wspr_ulprintf("%s UPLOAD %d spots RX%d %.4f START%s\n", w->iwbp? "IWBP" : "WSPR", w->uniques, w->rx_chan, rqrg, w->autorun? " AUTORUN" : "");
+    for (int i = 0; i < w->uniques; i++) {
+        wspr_decode_t *dp = &w->deco[i];
+        if (strcmp(dp->call, "...") == 0) continue;
+        
+        if (w->autorun) {
+            asprintf(&cmd, WSPR_SPOT_FMT, host, wspr_c.rcall, wspr_c.rgrid, rqrg, year%100, month, day,
+                dp->hour, dp->min, dp->snr, dp->dt_print, (int) dp->drift1, dp->freq_print, dp->call, dp->grid, dp->pwr,
+                wspr_c.spot_log? "" : " >/dev/null 2>&1");
+            #ifdef TEST_UPLOADS
+                wspr_printf("WSPR UPLOAD RX%d %d/%d %s\n", w->rx_chan, i+1, w->uniques, cmd);
+            #else
+                if (wspr_c.spot_log) {
+                    non_blocking_cmd_func_forall("wspr.upload", cmd, _upload_task, w->rx_chan, POLL_MSEC(250));
+                    rcprintf(w->rx_chan, "%s UPLOAD: %s\n", w->iwbp? "IWBP" : "WSPR", cmd);
+                    int added = shmem->status_u4[N_SHMEM_ST_WSPR][w->rx_chan][0];
+                    int total = shmem->status_u4[N_SHMEM_ST_WSPR][w->rx_chan][1];
+                    rcprintf(w->rx_chan, "%s UPLOAD %s said: \"%d out of %d spot(s) added\" [%s]\n",
+                        host, w->iwbp? "IWBP" : "WSPR", added, total, dp->call);
+                } else {
+                    non_blocking_cmd_system_child("wspr.upload", cmd, NO_WAIT);
+                }
+            #endif
+            kiwi_asfree(cmd);
+            w->arun_decoded++;
+        } else {
+            #ifdef CURL_UPLOADS
+                wspr_printf("WSPR UPLOAD %02d%02d %3.0f %4.1f %9.6f %2d %s %s\n",
+                    dp->hour, dp->min, dp->snr, dp->dt_print, dp->freq_print, (int) dp->drift1, dp->c_l_p,
+                    w->upload? "" : "(upload disabled)");
+
+                if (w->upload) {
+                    // make the dp->call field invalid so wsprnet.org rejects the upload
+                    #ifdef TEST_UPLOADS
+                        strcpy(dp->call, "...");
+                    #endif
+                    asprintf(&cmd, WSPR_SPOT_FMT, host, wspr_c.rcall, wspr_c.rgrid, rqrg, year%100, month, day,
+                        dp->hour, dp->min, dp->snr, dp->dt_print, (int) dp->drift1, dp->freq_print, dp->call, dp->grid, dp->pwr,
+                        wspr_c.spot_log? "" : " >/dev/null 2>&1");
+                    if (wspr_c.spot_log) {
+                        non_blocking_cmd_func_forall("wspr.upload", cmd, _upload_task, w->rx_chan, POLL_MSEC(250));
+                        rcprintf(w->rx_chan, "%s UPLOAD: %s\n", w->iwbp? "IWBP" : "WSPR", cmd);
+                        int added = shmem->status_u4[N_SHMEM_ST_WSPR][w->rx_chan][0];
+                        int total = shmem->status_u4[N_SHMEM_ST_WSPR][w->rx_chan][1];
+                        rcprintf(w->rx_chan, "%s UPLOAD %s said: \"%d out of %d spot(s) added\" [%s]\n",
+                            host, w->iwbp? "IWBP" : "WSPR", added, total, dp->call);
+                    } else {
+                        non_blocking_cmd_system_child("wspr.upload", cmd, NO_WAIT);
+                    }
+                    kiwi_asfree(cmd);
+                }
+            #else
+                //printf("WSPR #%d skip_upload %d\n", i, w->skip_upload);
+                if (w->upload && w->skip_upload == 0) {
+                    ext_send_msg_encoded(w->rx_chan, WSPR_DEBUG_MSG, "EXT", "WSPR_UPLOAD",
+                        "%02d%02d %3.0f %4.1f %9.6f %2d %s",
+                        dp->hour, dp->min, dp->snr, dp->dt_print, dp->freq_print, (int) dp->drift1, dp->c_l_p);
+                }
+            #endif
+        }
+        wspr_printf("%s UPLOAD U%d/%d %s"
+            "%02d%02d %3.0f %4.1f %9.6f %2d %s" "\n",
+            w->iwbp? "IWBP" : "WSPR", i, w->uniques, w->autorun? "autorun ":"",
+            dp->hour, dp->min, dp->snr, dp->dt_print, dp->freq_print, (int) dp->drift1, dp->c_l_p);
+        TaskSleepMsec(1000);
+    }
+    wspr_ulprintf("%s UPLOAD %d spots RX%d %.4f DONE\n", w->iwbp? "IWBP" : "WSPR", w->uniques, w->rx_chan, rqrg);
+    if (w->skip_upload > 0) w->skip_upload--;
+    //printf("WSPR skip_upload=%d\n", w->skip_upload);
+}
+
 void WSPR_Deco(void *param)
 {
     int rx_chan = (int) FROM_VOID_PARAM(param);
@@ -530,86 +613,10 @@ void WSPR_Deco(void *param)
 		if (w->abort_decode)
 			wspr_aprintf("DECO-P decoder aborted\n");
 	
-        // upload spots at the end of the decoding when there is less load on wsprnet.org
-        // extension: spots uploaded via javascript (see ext_send_msg_encoded() below)
-        // autorun: spots uploaded below via curl
-        #define CURL_UPLOADS
-        //#define TEST_UPLOADS
-        
-        #define WSPR_SPOT "curl -sL 'http://wsprnet.org/post?function=wspr&" \
-            "rcall=%s&rgrid=%s&rqrg=%.6f&date=%02d%02d%02d&time=%02d%02d&sig=%.0f&" \
-            "dt=%.1f&drift=%d&tqrg=%.6f&tcall=%s&tgrid=%s&dbm=%s&version=1.4A+Kiwi'%s"
-        int year, month, day; utc_year_month_day(&year, &month, &day);
-        char *cmd;
-
-        double rqrg = w->autorun? w->arun_deco_cf_MHz : w->centerfreq_MHz;
-        wspr_ulprintf("%s UPLOAD %d spots RX%d %.4f START%s\n", w->iwbp? "IWBP" : "WSPR", w->uniques, w->rx_chan, rqrg, w->autorun? " AUTORUN" : "");
-        for (int i = 0; i < w->uniques; i++) {
-            wspr_decode_t *dp = &w->deco[i];
-            if (strcmp(dp->call, "...") == 0) continue;
-            
-            if (w->autorun) {
-                asprintf(&cmd, WSPR_SPOT, wspr_c.rcall, wspr_c.rgrid, rqrg, year%100, month, day,
-                    dp->hour, dp->min, dp->snr, dp->dt_print, (int) dp->drift1, dp->freq_print, dp->call, dp->grid, dp->pwr,
-                    wspr_c.spot_log? "" : " >/dev/null 2>&1");
-                #ifdef TEST_UPLOADS
-                    wspr_printf("WSPR UPLOAD RX%d %d/%d %s\n", w->rx_chan, i+1, w->uniques, cmd);
-                #else
-                    if (wspr_c.spot_log) {
-                        non_blocking_cmd_func_forall("kiwi.wsprnet.org", cmd, _upload_task, w->rx_chan, POLL_MSEC(250));
-                        rcprintf(w->rx_chan, "%s UPLOAD: %s\n", w->iwbp? "IWBP" : "WSPR", cmd);
-                        int added = shmem->status_u4[N_SHMEM_ST_WSPR][rx_chan][0];
-                        int total = shmem->status_u4[N_SHMEM_ST_WSPR][rx_chan][1];
-                        rcprintf(w->rx_chan, "%s UPLOAD: wsprnet.org said: \"%d out of %d spot(s) added\" [%s]\n", w->iwbp? "IWBP" : "WSPR", added, total, dp->call);
-                    } else {
-                        non_blocking_cmd_system_child("kiwi.wsprnet.org", cmd, NO_WAIT);
-                    }
-                #endif
-                kiwi_asfree(cmd);
-                w->arun_decoded++;
-            } else {
-                #ifdef CURL_UPLOADS
-                    wspr_printf("WSPR UPLOAD %02d%02d %3.0f %4.1f %9.6f %2d %s %s\n",
-                        dp->hour, dp->min, dp->snr, dp->dt_print, dp->freq_print, (int) dp->drift1, dp->c_l_p,
-                        w->upload? "" : "(upload disabled)");
-
-                    if (w->upload) {
-                        // make the dp->call field invalid so wsprnet.org rejects the upload
-                        #ifdef TEST_UPLOADS
-                            strcpy(dp->call, "...");
-                        #endif
-                        asprintf(&cmd, WSPR_SPOT, wspr_c.rcall, wspr_c.rgrid, rqrg, year%100, month, day,
-                            dp->hour, dp->min, dp->snr, dp->dt_print, (int) dp->drift1, dp->freq_print, dp->call, dp->grid, dp->pwr,
-                            wspr_c.spot_log? "" : " >/dev/null 2>&1");
-                        if (wspr_c.spot_log) {
-                            non_blocking_cmd_func_forall("kiwi.wsprnet.org", cmd, _upload_task, w->rx_chan, POLL_MSEC(250));
-                            rcprintf(w->rx_chan, "%s UPLOAD: %s\n", w->iwbp? "IWBP" : "WSPR", cmd);
-                            int added = shmem->status_u4[N_SHMEM_ST_WSPR][rx_chan][0];
-                            int total = shmem->status_u4[N_SHMEM_ST_WSPR][rx_chan][1];
-                            rcprintf(w->rx_chan, "%s UPLOAD: wsprnet.org said: \"%d out of %d spot(s) added\" [%s]\n", w->iwbp? "IWBP" : "WSPR", added, total, dp->call);
-                        } else {
-                            non_blocking_cmd_system_child("kiwi.wsprnet.org", cmd, NO_WAIT);
-                        }
-                        kiwi_asfree(cmd);
-                    }
-                #else
-                    //printf("WSPR #%d skip_upload %d\n", i, w->skip_upload);
-                    if (w->upload && w->skip_upload == 0) {
-                        ext_send_msg_encoded(w->rx_chan, WSPR_DEBUG_MSG, "EXT", "WSPR_UPLOAD",
-                            "%02d%02d %3.0f %4.1f %9.6f %2d %s",
-                            dp->hour, dp->min, dp->snr, dp->dt_print, dp->freq_print, (int) dp->drift1, dp->c_l_p);
-                    }
-                #endif
-            }
-            wspr_printf("%s UPLOAD U%d/%d %s"
-                "%02d%02d %3.0f %4.1f %9.6f %2d %s" "\n",
-                w->iwbp? "IWBP" : "WSPR", i, w->uniques, w->autorun? "autorun ":"",
-                dp->hour, dp->min, dp->snr, dp->dt_print, dp->freq_print, (int) dp->drift1, dp->c_l_p);
-            TaskSleepMsec(1000);
-        }
-        wspr_ulprintf("%s UPLOAD %d spots RX%d %.4f DONE\n", w->iwbp? "IWBP" : "WSPR", w->uniques, w->rx_chan, rqrg);
-        if (w->skip_upload > 0) w->skip_upload--;
-        //printf("WSPR skip_upload=%d\n", w->skip_upload);
+        // Upload spots via curl at the end of the decoding when there is less load on wsprnet.org
+        // Uploading spots via javascript (see ext_send_msg_encoded() below) is no longer used.
+        wspr_upload(w, "wsprnet.org");
+        wspr_upload(w, "wsprnet.eu:3000");
 
 		wspr_status(w, w->status_resume, NONE);
 		
@@ -624,7 +631,7 @@ void WSPR_Deco(void *param)
 		        #define WSPR_STAT "curl -L 'http://wsprnet.org/post?function=wsprstat&rcall=%s&rgrid=%s&rqrg=%.6f&tpct=0&tqrg=%.6f&dbm=0&version=1.4A+Kiwi' >/dev/null 2>&1"
                 asprintf(&w->arun_stat_cmd, WSPR_STAT, wspr_c.rcall, wspr_c.rgrid, w->arun_cf_MHz, w->arun_cf_MHz);
                 //printf("AUTORUN %s\n", w->arun_stat_cmd);
-                non_blocking_cmd_system_child("kiwi.wsprnet.org", w->arun_stat_cmd, NO_WAIT);
+                non_blocking_cmd_system_child("wspr.status", w->arun_stat_cmd, NO_WAIT);
 		    }
 		    if (w->arun_decoded > w->arun_last_decoded) {
 		        wspr_update_spot_count(w->rx_chan);
@@ -990,8 +997,6 @@ bool wspr_update_vars_from_config(bool called_at_init_or_restart)
     bool update_cfg = false;
     char *s;
     
-    cfg_default_object("WSPR", "{}", &update_cfg);
-    
     // Changing reporter call on admin page requires restart. This is because of
     // conditional behavior at startup, e.g. uploads enabled because valid call is now present
     // or autorun tasks starting for the same reason.
@@ -1134,7 +1139,7 @@ void wspr_autorun(int instance, bool initial)
 
     asprintf(&w->arun_stat_cmd, WSPR_STAT, wspr_c.rcall, wspr_c.rgrid, w->arun_cf_MHz, w->arun_cf_MHz);
     //printf("AUTORUN INIT %s\n", w->arun_stat_cmd);
-    non_blocking_cmd_system_child("kiwi.wsprnet.org", w->arun_stat_cmd, NO_WAIT);
+    non_blocking_cmd_system_child("wspr.status", w->arun_stat_cmd, NO_WAIT);
     w->arun_last_status_sent = timer_sec();
 }
 
@@ -1243,8 +1248,6 @@ void wspr_poll(int rx_chan)
     }
 }
 
-bool wspr_vars() { return false; }
-
 void wspr_main();
 
 ext_t wspr_ext = {
@@ -1256,6 +1259,8 @@ ext_t wspr_ext = {
 	EXT_FLAGS_HEAVY,
 	wspr_poll
 };
+
+bool wspr_vars() { return ext_vars(&wspr_ext, "WSPR"); }
 
 void wspr_main()
 {
