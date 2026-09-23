@@ -113,17 +113,10 @@ static void get_TZ(void *param)
 		kiwi.lowres_lat = ((int) roundf(lat)) & ~1;
 		kiwi.lowres_lon = ((int) roundf(lon)) & ~1;
 	
-		#define TIMEZONE_DB_COM
-		#ifdef TIMEZONE_DB_COM
-            #define TZ_SERVER "timezonedb.com"
-            asprintf(&cmd_p, "curl -Lsk --ipv4 \"https://api.timezonedb.com/v2.1/get-time-zone?key=HIHUSGTXYI55&format=json&by=position&lat=%f&lng=%f\" 2>&1",
-                lat, lon);
-        #else
-            #define TZ_SERVER "googleapis.com"
-            time_t utc_sec = utc_time();
-            asprintf(&cmd_p, "curl -Ls --ipv4 \"https://maps.googleapis.com/maps/api/timezone/json?key=&location=%f,%f&timestamp=%lu&sensor=false\" 2>&1",
-                lat, lon, utc_sec);
-        #endif
+	    // NB: need to use a service like this (as opposed to a static .js solution) because of the dynamic nature of DST
+        #define TZ_SERVER "timezonedb.com"
+        asprintf(&cmd_p, "curl -Lsk --ipv4 \"https://api.timezonedb.com/v2.1/get-time-zone?key=HIHUSGTXYI55&format=json&by=position&lat=%f&lng=%f\" 2>&1",
+            lat, lon);
 
         //printf("TIMEZONE: using %s\n", TZ_SERVER);
 		reply = non_blocking_cmd(cmd_p, &status);
@@ -146,20 +139,11 @@ static void get_TZ(void *param)
 	    json_string_free(&cfg_tz, s);
 		if (err) goto retry_tz;
 		
-		#ifdef TIMEZONE_DB_COM
-            utc_offset = json_int(&cfg_tz, "gmtOffset", &err, CFG_OPTIONAL);
-            if (err) goto retry_tz;
-            dst_offset = 0;     // gmtOffset includes dst offset
-            tzone_id = (char *) json_string(&cfg_tz, "abbreviation", NULL, CFG_OPTIONAL);
-            tzone_name = (char *) json_string(&cfg_tz, "zoneName", NULL, CFG_OPTIONAL);
-        #else
-            utc_offset = json_int(&cfg_tz, "rawOffset", &err, CFG_OPTIONAL);
-            if (err) goto retry_tz;
-            dst_offset = json_int(&cfg_tz, "dstOffset", &err, CFG_OPTIONAL);
-            if (err) goto retry_tz;
-            tzone_id = (char *) json_string(&cfg_tz, "timeZoneId", NULL, CFG_OPTIONAL);
-            tzone_name = (char *) json_string(&cfg_tz, "timeZoneName", NULL, CFG_OPTIONAL);
-        #endif
+        utc_offset = json_int(&cfg_tz, "gmtOffset", &err, CFG_OPTIONAL);
+        if (err) goto retry_tz;
+        dst_offset = 0;     // gmtOffset includes dst offset
+        tzone_id = (char *) json_string(&cfg_tz, "abbreviation", NULL, CFG_OPTIONAL);
+        tzone_name = (char *) json_string(&cfg_tz, "zoneName", NULL, CFG_OPTIONAL);
 		
 		lprintf("TIMEZONE: from %s for (%f, %f): utc_offset=%d/%.1f dst_offset=%d/%.1f\n",
 			TZ_SERVER, lat, lon, utc_offset, (float) utc_offset / 3600, dst_offset, (float) dst_offset / 3600);
