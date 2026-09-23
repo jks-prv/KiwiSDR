@@ -139,6 +139,7 @@ struct ctx_t {
 #endif
 	union {
 		jmp_buf jb;
+#ifdef SETUP_TRAMP_USING_JMP_BUF
 		struct {
 			#if defined(__x86_64__)
 				u4_t x1, fp, sp, x2[4], pc;
@@ -147,6 +148,7 @@ struct ctx_t {
 				u4_t v[6], sl, fp, sp, pc;
 			#endif
 		};
+#endif
 	};
 };
 
@@ -1374,6 +1376,15 @@ int _CreateTask(funcP_t funcP, const char *name, void *param, int priority, u4_t
             return -1;
         } else {
             dump_direct();
+            #if 1
+                for (i = TID_FIRST; i < MAX_TASKS; i++) {
+                    t = Tasks + i;
+                    stack_size = t->flags & CTF_STACK_SIZE;
+                    printf("%d v%d ci%d %s %s\n", i, t->valid, ctx[i].init,
+                        (stack_size == CTF_STACK_REG)? "R" : ((stack_size == CTF_STACK_MED)? "M" : "L"),
+                        (t->valid && ctx[i].init)? task_ls(t) : "");
+                }
+            #endif
             lprintf("create_task: stack_size=%s\n",
                 (stack_size == CTF_STACK_REG)? "REG" : ((stack_size == CTF_STACK_MED)? "MED" : "LARGE"));
             panic("create_task: no tasks available");
