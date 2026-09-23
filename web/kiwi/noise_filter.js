@@ -1,4 +1,4 @@
-// Copyright (c) 2017 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 var noise_filter = {
    algo: 0,
@@ -38,22 +38,6 @@ var noise_filter = {
    spec_alpha: 0.95,
    active_snr: 30,
 };
-
-function noise_filter_view()
-{
-   keyboard_shortcut_nav('audio');
-   var total = w3_el('id-optbar-audio').clientHeight;
-   var Hopt = kiwi.OPTBAR_CONTENT_HEIGHT;
-   var hr = 27;   // margins=12 border=3
-   var audio = w3_el('id-audio-content').clientHeight;
-   var nb = w3_el('id-nblank-more').clientHeight;
-   var nf = w3_el('id-nfilter-more').clientHeight;
-   var test = w3_el('id-ntest-more').clientHeight;
-   var Hnf = total - (audio + hr + nb + hr);
-   var pct = w3_clamp(kiwi_round(1 - (Hnf - Hopt) / (total - Hopt), 2), 0, 1);
-   //console.log('noise_blank view', {total, audio, nb, nf, test, Hnf, pct});
-   w3_scrollTo('id-optbar-content', pct);
-}
 
 function noise_filter_controls_html()
 {
@@ -183,7 +167,9 @@ function noise_filter_init()
 	noise_filter.denoise = +kiwi_storeInit('last_nr_de', cfg.nr_de);
 	noise_filter.autonotch = +kiwi_storeInit('last_nr_an', cfg.nr_an);
 	noise_filter.algo = +kiwi_storeInit('last_nr_algo', cfg.nr_algo);
-	nr_algo_cb('nr_algo', noise_filter.algo, false, 'i');
+
+	// don't call if value =0 ("off") so "filter" (via W3_SELECT_SHOW_TITLE) is shown
+	if (noise_filter.algo) nr_algo_cb('nr_algo', noise_filter.algo, false, 'i');
 }
 
 function noise_filter_load_defaults()
@@ -250,55 +236,65 @@ function noise_filter_save_defaults()
 
 function noise_filter_send(type)
 {
-   var p0, p1, p2, p3;
+   var en, p0, p1, p2, p3;
 
-   if (noise_filter.algo == noise_filter.NR_OFF) return;
-   
-   if (noise_filter.algo == noise_filter.NR_WDSP) {
-      if (type == noise_filter.NR_DENOISE) {
-         p0 = noise_filter.wdsp_de_taps;
-         p1 = noise_filter.wdsp_de_delay;
-         p2 = noise_filter.wdsp_de_gain;
-         p2 = 8.192e-2 / Math.pow(2, 20 - p2);
-         p3 = noise_filter.wdsp_de_leakage;
-         p3 = 8192 / Math.pow(2, 23 - p3);
+   if (noise_filter.algo == noise_filter.NR_OFF) {
+      en = false;
+   } else {
+      en = (type == noise_filter.NR_DENOISE)? noise_filter.denoise : noise_filter.autonotch;
+      if (noise_filter.algo == noise_filter.NR_WDSP) {
+         if (type == noise_filter.NR_DENOISE) {
+            p0 = noise_filter.wdsp_de_taps;
+            p1 = noise_filter.wdsp_de_delay;
+            p2 = noise_filter.wdsp_de_gain;
+            p2 = 8.192e-2 / Math.pow(2, 20 - p2);
+            p3 = noise_filter.wdsp_de_leakage;
+            p3 = 8192 / Math.pow(2, 23 - p3);
+         } else
+         if (type == noise_filter.NR_AUTONOTCH) {
+            p0 = noise_filter.wdsp_an_taps;
+            p1 = noise_filter.wdsp_an_delay;
+            p2 = noise_filter.wdsp_an_gain;
+            p2 = 8.192e-2 / Math.pow(2, 20 - p2);
+            p3 = noise_filter.wdsp_an_leakage;
+            p3 = 8192 / Math.pow(2, 23 - p3);
+         }
       } else
-      if (type == noise_filter.NR_AUTONOTCH) {
-         p0 = noise_filter.wdsp_an_taps;
-         p1 = noise_filter.wdsp_an_delay;
-         p2 = noise_filter.wdsp_an_gain;
-         p2 = 8.192e-2 / Math.pow(2, 20 - p2);
-         p3 = noise_filter.wdsp_an_leakage;
-         p3 = 8192 / Math.pow(2, 23 - p3);
-      }
-   } else
-   if (noise_filter.algo == noise_filter.NR_ORIG) {
-      if (type == noise_filter.NR_DENOISE) {
-         p0 = noise_filter.orig_de_delay;
-         p1 = noise_filter.orig_de_beta;
-         p2 = noise_filter.orig_de_decay;
-         p3 = 0;
+      if (noise_filter.algo == noise_filter.NR_ORIG) {
+         if (type == noise_filter.NR_DENOISE) {
+            p0 = noise_filter.orig_de_delay;
+            p1 = noise_filter.orig_de_beta;
+            p2 = noise_filter.orig_de_decay;
+            p3 = 0;
+         } else
+         if (type == noise_filter.NR_AUTONOTCH) {
+            p0 = noise_filter.orig_an_delay;
+            p1 = noise_filter.orig_an_beta;
+            p2 = noise_filter.orig_an_decay;
+            p3 = 0;
+         }
       } else
-      if (type == noise_filter.NR_AUTONOTCH) {
-         p0 = noise_filter.orig_an_delay;
-         p1 = noise_filter.orig_an_beta;
-         p2 = noise_filter.orig_an_decay;
+      if (noise_filter.algo == noise_filter.NR_SPECTRAL) {
+         en = false;
+         p0 = Math.pow(10, noise_filter.spec_gain/20);
+         p1 = noise_filter.spec_alpha;
+         p2 = Math.pow(10, noise_filter.active_snr/10);
          p3 = 0;
       }
-   } else
-   if (noise_filter.algo == noise_filter.NR_SPECTRAL) {
-      p0 = Math.pow(10, noise_filter.spec_gain/20);
-      p1 = noise_filter.spec_alpha;
-      p2 = Math.pow(10, noise_filter.active_snr/10);
-      p3 = 0;
    }
 
-   snd_send('SET nr type='+ type +' param=0 pval='+ p0);
-   snd_send('SET nr type='+ type +' param=1 pval='+ p1);
-   snd_send('SET nr type='+ type +' param=2 pval='+ p2);
-   snd_send('SET nr type='+ type +' param=3 pval='+ p3);
-   var en = (type == noise_filter.NR_DENOISE)? noise_filter.denoise : noise_filter.autonotch;
-   snd_send('SET nr type='+ type +' en='+ en);
+   if (noise_filter.algo != noise_filter.NR_OFF) {
+      snd_send('SET nr type='+ type +' param=0 pval='+ p0);
+      snd_send('SET nr type='+ type +' param=1 pval='+ p1);
+      snd_send('SET nr type='+ type +' param=2 pval='+ p2);
+      snd_send('SET nr type='+ type +' param=3 pval='+ p3);
+      snd_send('SET nr type='+ type +' en='+ en);
+   }
+   
+   if (type == noise_filter.NR_DENOISE)
+      w3_colors('id-nb-de', 'w3-css-lime', '', !en);
+   else
+      w3_colors('id-nf-de', 'w3-css-lime', '', !en);
 }
 
 function nr_algo_cb(path, idx, first, from)
@@ -324,13 +320,13 @@ function nr_algo_cb(path, idx, first, from)
    
    // bring filter controls into view if menu is anything except "off"
    if (idx > 0 && from == 'm')
-      noise_filter_view();
+      w3_el('id-nfilter-more').scrollIntoView({behavior:'smooth'});
 }
 
 function noise_filter_cb(path, checked, first)
 {
    checked = checked? 1:0;
-   console.log('noise_filter_cb '+ checked +' path='+ path);
+   //console.log('noise_filter_cb '+ checked +' path='+ path);
    w3_num_cb(path, checked);
    w3_checkbox_set(path, checked);
 
@@ -343,6 +339,14 @@ function noise_filter_cb(path, checked, first)
       noise_filter_send(noise_filter.NR_AUTONOTCH);
       kiwi_storeWrite('last_nr_an', noise_filter.autonotch.toString());
    }
+}
+
+function noise_filter_autonotch(val, init)
+{
+   if (init && !val) return;     // don't override defaults
+   noise_filter_cb('noise_filter.denoise', 0);
+   noise_filter_cb('noise_filter.autonotch', val);
+   nr_algo_cb('nr_algo', val? noise_filter.NR_ORIG : noise_filter.NR_OFF);
 }
 
 

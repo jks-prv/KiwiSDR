@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2017-2026 John Seamons, ZL4VO/KF6VO
 
 var noise_blank = {
    algo: 0,
@@ -31,22 +31,6 @@ var noise_blank = {
    taps: 10,
    impulse_samples: 7,     // must be odd
 };
-
-function noise_blank_view()
-{
-   keyboard_shortcut_nav('audio');
-   var total = w3_el('id-optbar-audio').clientHeight;
-   var Hopt = kiwi.OPTBAR_CONTENT_HEIGHT;
-   var hr = 27;   // margins=12 border=3
-   var audio = w3_el('id-audio-content').clientHeight;
-   var nb = w3_el('id-nblank-more').clientHeight;
-   var nf = w3_el('id-nfilter-more').clientHeight;
-   var test = w3_el('id-ntest-more').clientHeight;
-   var Hnb = total - (audio + hr);
-   var pct = w3_clamp(kiwi_round(1 - (Hnb - Hopt) / (total - Hopt), 2), 0, 1);
-   //console.log('noise_blank view', {total, audio, nb, nf, test, Hnb, pct});
-   w3_scrollTo('id-optbar-content', pct);
-}
 
 function noise_blank_controls_refresh()
 {
@@ -131,7 +115,9 @@ function noise_blank_init()
 	
 	noise_blank.wf = +kiwi_storeInit('last_nb_wf', cfg.nb_wf);
 	noise_blank.algo = +kiwi_storeInit('last_nb_algo', cfg.nb_algo);
-	nb_algo_cb('nb_algo', noise_blank.algo, false, 'i');
+	
+	// don't call if value =0 ("off") so "blanker" (via W3_SELECT_SHOW_TITLE) is shown
+	if (noise_blank.algo) nb_algo_cb('nb_algo', noise_blank.algo, false, 'i');
 }
 
 function noise_blank_load_defaults()
@@ -205,7 +191,7 @@ function nb_algo_cb(path, idx, first, from)
    
    // bring blanker controls into view if menu is anything except "off"
    if (idx > 0 && from == 'm')
-      noise_blank_view();
+      w3_el('id-nblank-more').scrollIntoView({behavior:'smooth'});
 }
 
 function noise_blank_test_cb(path, idx, first)
