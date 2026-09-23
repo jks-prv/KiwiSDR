@@ -997,6 +997,10 @@ function w3_width_height(el_id, w, h)
 	   if (isNumber(h)) h = px(h);
 	   el.style.height = h;
 	}
+	
+	w = el.style.width;
+	h = el.style.height;
+	return { w:parseInt(w), width:w, h:parseInt(h), height:h };
 }
 
 function w3_border(el_id, s)
@@ -2103,42 +2107,36 @@ function w3_scrollTop(id, cond)
 }
 
 // calls func(arg) when w3_el(id) exists in DOM
-function w3_do_when_rendered(id, func, arg, poll_ms)
+function w3_do_when_rendered(el_id, func, arg, poll_ms)
 {
-   var el = w3_el(id);
-   poll_ms = isNumberElse(poll_ms, 500);
-   rend = isArg(el);
-   //console.log('id='+ id +' ms='+ poll_ms +' rend='+ rend +' arg='+ arg);
-   if (!rend) {
-      setTimeout(function () {
-         w3_do_when_rendered(id, func, arg, poll_ms);
-      }, poll_ms);
-   } else {
-      if (isFunction(func))
-         func(el, arg);
-   }
-   
-   // REMINDER: Other than the FIRST call, returns from here don't go anywhere.
-   // In particular the original caller is returned to:
-   //    1) If the FIRST check of cond_func() is true and after func() runs.
-   //    2) If the FIRST check of cond_func() is false and after the first setTimeout() runs.
-   // But the caller is NOT suspended or somehow waiting for a delayed run of func() when
-   // conf_func() is false for some number of setTimeout() periods.
-   // That's not how javascript works (Web Workers aside). It is event driven and all threads
-   // must complete without conditional delay.
+   w3_do_when_cond(
+      function() { return isArg(w3_el(el_id)); },
+      func, arg, poll_ms
+   );
+}
+
+// calls func(arg) when w3_el(id).clientHeight is non-zero
+function w3_do_when_clientHeight(el_id, func, arg, poll_ms)
+{
+   w3_do_when_cond(
+      function() {
+         var el = w3_el(el_id);
+         if (!el) return false;
+         return (el.clientHeight != 0);
+      }, func, arg, poll_ms
+   );
 }
 
 // calls func(arg) when cond_func() becomes true
 function w3_do_when_cond(cond_func, func, arg, poll_ms)
 {
-   poll_ms = isNumberElse(poll_ms, 500);
+   poll_ms = isNumberElse(poll_ms, 100);
    if (!cond_func(arg)) {
       setTimeout(function () {
          w3_do_when_cond(cond_func, func, arg, poll_ms);
       }, poll_ms);
    } else {
-      if (isFunction(func))
-         func(arg);
+      w3_call(func, arg);
    }
    
    // REMINDER: Other than the FIRST call, returns from here don't go anywhere.
@@ -2206,11 +2204,26 @@ function w3_canvas_event_xy(evt, canvas)
    if (isArg(evt.offsetX) && isArg(evt.offsetY) && evt.target === el) {
       x = evt.offsetX * sx;
       y = evt.offsetY * sy;
+      //console.log('used offsetXY');
    } else {
-      x = (evt.clientX - rect.left) * sx;
-      y = (evt.clientY - rect.top) * sy;
+      x = (evt.pageX - rect.left) * sx;
+      y = (evt.pageY - rect.top) * sy;
+      //console.log('used pageXY');
    }
+   //console.log({ t:'w3_canvas_event_xy', sx:sx, sy:sy, x:x, y:y });
    return { x:x, y:y, rect:rect };
+}
+
+function w3_xy_within(start, stop, delta)
+{
+   //console.log('w3_xy_within');
+   //console.log(start);
+   //console.log(stop);
+   var rv = 
+      (Math.abs(stop.x - start.x) <= delta) &&
+      (Math.abs(stop.y - start.y) <= delta);
+   //console.log('rv='+ rv);
+   return rv;
 }
 
 
@@ -3743,7 +3756,8 @@ function w3_select(psa, label, title, path, sel, opts, cb, cb_param)
 // hierarchical -- menu entries interspersed with disabled (non-selectable) headers
 // { "key0":[fv0, fv1 ...], "key1":[fv0, fv1 ...] ... }
 // object: enumerate sequentially like an array using:
-//    object keys as the disabled menu entries (string only, numeric keys ignored)
+//    object keys as the disabled menu entries (string only, numeric or empty-string keys ignored)
+//       '_' in key => menu header line break
 //    arrays as the menu options
 //       array elements are w3_first_value()'s e.g. int, string, first array value etc.
 function w3int_select_hier(psa, label, title, path, sel, collapse, opts, cb, cb_param)
@@ -3753,7 +3767,7 @@ function w3int_select_hier(psa, label, title, path, sel, collapse, opts, cb, cb_
    if (!isObject(opts)) return;
 
    w3_obj_enum(opts, function(key, i, a) {
-      if (!isNumber(+key)) {
+      if (key != '' && !isNumber(+key)) {
          as = key.split('_');       // '_' => menu header line break
          as.forEach(function(e) {
             if (!e || e != '')
