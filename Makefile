@@ -1632,6 +1632,7 @@ make_install_files: $(DO_ONCE) $(DTS_DEP_DST) $(BIT_AOUT_FILES)
 
 # to make non-root console work correctly
 	    install -D -o root -g root -m 0644 unix_env/bashrc /home/debian/.bashrc
+	    install -D -o root -g root -m 0644 unix_env/bashrc.debian.local /home/debian/.bashrc.local
 	    install -D -o root -g root -m 0644 unix_env/profile /home/debian/.profile
 
 	    install -D -o root -g root -m 0644 unix_env/gdbinit ~root/.gdbinit
@@ -2081,7 +2082,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
     # used by gdiff et al aliases
     GITDIFF_EXCLUDE := --exclude=.DS_Store --exclude=.git \
         --exclude=k --exclude=d --exclude=g --exclude=n --exclude=ng
-    GITDIFF_EXCLUDE2 := $(GITDIFF_EXCLUDE) --exclude="*.min.*" --exclude=EiBi.h
+    GITDIFF_EXCLUDE2 := $(GITDIFF_EXCLUDE) --exclude="*.min.*" --exclude=EiBi.h --exclude=leaflet.js
     GITDIFF_EXCLUDE3 := $(GITDIFF_EXCLUDE2) --exclude=extensions
 
     gitdiff:

@@ -1,0 +1,5 @@
+
+# only for interactive shells so that e.g. ssh doesn't get confused
+if [[ $- == *i* ]]; then
+    echo "For a root shell type \"su\" and give the Linux/Debian root-account password."
+fi
