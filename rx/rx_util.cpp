@@ -1086,7 +1086,7 @@ char *rx_users(bool isAdmin)
                 
                 bool show = show_geo || c->internal_connection;
                 char *geo = show? (c->geo? kiwi_str_encode(c->geo) : NULL) : NULL;
-                char *ext = ext_users[i].ext? kiwi_str_encode((char *) ext_users[i].ext->name) : NULL;
+                char *ext_name = ext_users[i].ext? kiwi_str_encode((char *) ext_users[i].ext->name) : NULL;
                 const char *ip = isAdmin? c->remote_ip : "";
                 asprintf(&sb2, "%s{\"i\":%d,\"n\":\"%s\",\"g\":\"%s\",\"f\":%d,"
                     "\"m\":\"%s\",\"z\":%d,"
@@ -1098,7 +1098,7 @@ char *rx_users(bool isAdmin)
                     rx_enum2mode(c->mode), c->zoom,
                     (c->type == STREAM_WATERFALL)? 1:0, (int) floorf(waterfall_fps[i]),
                     hr, min, sec, rtype, rn, r_hr, r_min, r_sec,
-                    ext? ext:"", ip,
+                    ext_name? ext_name : "", ip,
                     #ifdef USE_SDR
                         wdsp_SAM_carrier(i),
                     #else
@@ -1108,7 +1108,7 @@ char *rx_users(bool isAdmin)
                     extint.notify_chan, extint.notify_seq);
                 kiwi_ifree(user, "rx_users user");
                 kiwi_ifree(geo, "rx_users geo");
-                kiwi_ifree(ext, "rx_users ext");
+                kiwi_ifree(ext_name, "rx_users ext_name");
                 n = 1;
             }
         }

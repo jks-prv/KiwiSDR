@@ -578,7 +578,7 @@ function control_html()
    var i;
    
    // Let cfg.ext_api_nchans retain values > rx_chans if it was set when another configuration
-   // was used. Just clamp the menu value to the current rx_chans;
+   // was used. Just clamp the menu value to the current rx_chans.
 	var ext_api_ch = ext_get_cfg_param('ext_api_nchans', -1);
 	if (ext_api_ch == -1) ext_api_ch = rx_chans;      // has never been set
 	var ext_api_nchans = Math.min(ext_api_ch, rx_chans);
