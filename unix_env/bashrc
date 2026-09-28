@@ -651,8 +651,8 @@ alias nt2="iptraf-ng"
 # -f filter: 5353 is mDNS on multicast
 alias ift="iftop -nNBP -m 1G -f '!port 22 and !port 80 and !port 5353 and !port 53 and !port 137'"
 # for linear display (without "L")
-alias iftl="iftop -nNBP -m 4M -f '!port 22 and !port 80 and !port 5353 and !port 53 and !port 137'"
-alias ift80="iftop -nNBP -m 4M -f '!port 22 and !port 5353 and !port 53 and !port 137 and !port 8073 and !port 7000'"
+alias iftl="iftop -nNBP -m 2M -f '!port 22 and !port 80 and !port 5353 and !port 53 and !port 137'"
+alias ift80="iftop -nNBP -m 2M -f '!port 22 and !port 5353 and !port 53 and !port 137 and !port 8073 and !port 7000'"
 
 # iptables
 alias ipth='echo "iptables aliases:"; \
@@ -666,9 +666,7 @@ alias ipth='echo "iptables aliases:"; \
             echo "iptz: zero INPUT stats, optional rule number"; \
             echo "iptc: clear named chain stats"; \
             echo "ip[un]ban: [un]ban an ip"; \
-            echo "ip[un]banmsg: [un]ban an ip with message comment"; \
-            echo "ipunbansnd: unban an ip from fail2ban-snd-once chain"; \
-            echo "ipunbanosint: unban an ip from fail2ban-osint-once-proxy chain";'
+            echo "ip[un]banmsg: [un]ban an ip with message comment";'
 alias ipt="function _ipt () { iptables -n -v -L \$* ; } ; _ipt"
 alias iptm="function _ipt () { iptables -n -v -L \$* | more; } ; _ipt"
 alias iptg="function _iptg () { iptables -n -v -L | grep \$* ; } ; _iptg"
@@ -685,8 +683,6 @@ alias ipban="function _iptban () { iptables -I INPUT -s \$1 -j DROP ; } ; _iptba
 alias ipunban="function _iptunban () { iptables -D INPUT -s \$1 -j DROP ; } ; _iptunban"
 alias ipbanmsg="function _iptban () { iptables -I INPUT -s \$1 -j DROP -m comment --comment \$2 ; } ; _iptban"
 alias ipunbanmsg="function _iptunban () { iptables -D INPUT -s \$1 -j DROP -m comment --comment \$2 ; } ; _iptunban"
-alias ipunbansnd="function _iptunbansnd () { iptables -D fail2ban-snd-once -s \$1 -j REJECT ; } ; _iptunbansnd"
-alias ipunbanosint="function _iptunbanosint () { iptables -D fail2ban-osint-once-proxy -s \$1 -j REJECT ; } ; _iptunbanosint"
 alias iprtn="function _iprtn () { iptables -I INPUT -s \$1 -j RETURN ; } ; _iprtn"
 alias ipunrtn="function _ipunrtn () { iptables -D INPUT -s \$1 -j RETURN ; } ; _ipunrtn"
 

@@ -234,6 +234,9 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
         }
 	}
 	
+	// Limit commands from ext that can get through when nusers_ok limit exceeded.
+	// This prevents cheating if a modified javascript client is being used.
+	// The commands that are allowed through are required to determine nusers_ok limit initially.
     if (conn->type == STREAM_EXT) {
         ext_users_t *extu = &ext_users[chan];
         if (extu && !extu->nusers_ok) {
@@ -244,10 +247,10 @@ bool rx_common_cmd(int stream_type, conn_t *conn, char *cmd, bool *keep_alive)
                 !kiwi_str_begins_with(cmd, "SET ext_blur") &&
                 !kiwi_str_begins_with(cmd, "SET ext_switch_to_client") &&
                 !kiwi_str_begins_with(cmd, "SET ext_is_locked_status")) {
-	            cprintf(conn, RED "EXT !nusers_ok <%s>" NONL, cmd);
+	            //cprintf(conn, RED "EXT !nusers_ok <%s>" NONL, cmd);
                 return true;	// fake that we accepted command so it won't be further processed
 	        } else {
-	            cprintf(conn, YELLOW "EXT !nusers_ok <%s>" NONL, cmd);
+	            //cprintf(conn, YELLOW "EXT !nusers_ok <%s>" NONL, cmd);
 	        }
         }
     }

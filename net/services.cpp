@@ -127,6 +127,7 @@ static void get_TZ(void *param)
 			goto retry;
 		}
 	
+	    //real_printf(kstr_sp(reply));
 		json_init(&cfg_tz, kstr_sp(reply), "cfg_tz");
 		kstr_free(reply);
 		err = false;

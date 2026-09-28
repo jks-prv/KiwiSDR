@@ -441,7 +441,7 @@ void extint_c2s(void *param)
                     for (i = 0; i < rx_chans; i++) {
                         ext_users_t *extu = &ext_users[i];
                         if (extu && extu->ext && strcmp(ext->cfg_prefix, extu->ext->name) == 0)
-                            users_cur++;    // count will include current request
+                            users_cur++;    // NB: count will include current request
                     }
                     
                     eusr->nusers_ok = (users_max == -1 || users_cur <= users_max);
