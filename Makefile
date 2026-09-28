@@ -320,7 +320,7 @@ endif
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 
     # runs only once per update of the .keyringN.dep filename
-    KEYRING := $(DIR_CFG)/.keyring5.dep
+    KEYRING := $(DIR_CFG)/.keyring6.dep
     $(KEYRING):
 	    @echo "KEYRING.."
         ifeq ($(DEBIAN_VERSION),8)
@@ -339,6 +339,11 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
 	        @echo "switch to using Debian 10 (Buster) archive repo"
 	        -cp /etc/apt/sources.list /etc/apt/sources.list.orig
 	        -cp unix_env/sources.D10.new.list /etc/apt/sources.list
+        endif
+        ifeq ($(DEBIAN_VERSION),11)
+	        @echo "switch to using Debian 11 (Bullseye) archive repo"
+	        -cp /etc/apt/sources.list /etc/apt/sources.list.orig
+	        -cp unix_env/sources.D11.new.list /etc/apt/sources.list
         endif
 	    -apt-get -y $(APT_GET_FORCE) update
 	    -apt-get -y $(APT_GET_FORCE) install debian-archive-keyring

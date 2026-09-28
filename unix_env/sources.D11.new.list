@@ -1,0 +1,20 @@
+# Debian 11 Bullseye (archived)
+
+deb http://archive.debian.org/debian bullseye main contrib non-free
+#deb-src http://deb.debian.org/debian bullseye main contrib non-free
+
+deb http://archive.debian.org/debian bullseye-updates main contrib non-free
+#deb-src http://deb.debian.org/debian bullseye-updates main contrib non-free
+
+# 9/27/2026 AI says bullseye-security not currently available on the debian archive servers
+#deb http://archive.debian.org/debian-security bullseye-security main contrib non-free
+#deb-src http://security.debian.org/debian-security bullseye-security main contrib non-free
+
+#Kernel source (repos.rcn-ee.com) : https://github.com/RobertCNelson/linux-stable-rcn-ee
+#
+#git clone https://github.com/RobertCNelson/linux-stable-rcn-ee
+#cd ./linux-stable-rcn-ee
+#git checkout `uname -r` -b tmp
+
+deb [arch=armhf signed-by=/usr/share/keyrings/rcn-ee-archive-keyring.gpg] http://repos.rcn-ee.com/debian/ bullseye main
+#deb-src [arch=armhf signed-by=/usr/share/keyrings/rcn-ee-archive-keyring.gpg] http://repos.rcn-ee.com/debian/ bullseye main
