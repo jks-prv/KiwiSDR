@@ -306,7 +306,7 @@ module receiver
     always @ (posedge cpu_clk)
     	if (set_wf_chan_C)  wf_channel_C  <= tos[L2WF:0];
     
-`ifdef USE_CICF_83
+`ifdef USE_CICF_SHARE
 
     // wf_channel2_C refers to WF_CICF_MEM
     reg [L2WF:0] wf_channel2_C;
@@ -378,8 +378,8 @@ module receiver
     for (i = 0; i < V_WF_CHANS; i = i+1)
         begin: wf_inst
 
-        `ifdef USE_CICF_83
-	        WATERFALL_SHARE_1CIC #(.IN_WIDTH(RX_IN_WIDTH)) waterfall_inst (
+        `ifdef USE_CICF_SHARE
+	        WATERFALL_SHARE_1CIC #(.BUFSIZE (i? WF_DDC_SM : WF_DDC_LG), .IN_WIDTH(RX_IN_WIDTH)) waterfall_inst (
                 .adc_clk			(adc_clk),
                 .adc_data			(i? wf_data : wf_gen_data),
                 
@@ -433,7 +433,7 @@ module receiver
         end
     endgenerate
     
-    `ifdef USE_CICF_83
+    `ifdef USE_CICF_SHARE
         WF_CICF_MEM #(.WIDTH(WFO_BITS)) wf_cicf_mem_inst (
             .adc_clk			(adc_clk),
             

@@ -194,6 +194,7 @@ set files [ list \
                 "[file normalize ${origin_dir}/rx/waterfall_1cic.v]" \
                 "[file normalize ${origin_dir}/rx/wf_cicf_mem.v]" \
                 "[file normalize ${origin_dir}/rx/wf_sampler_8k_32b.v]" \
+                "[file normalize ${origin_dir}/rx/wf_sampler_4k_8k_32b.v]" \
                 "[file normalize ${origin_dir}/gps/gps.v]" \
                 "[file normalize ${origin_dir}/gps/sampler.v]" \
                 "[file normalize ${origin_dir}/gps/demod.v]" \
@@ -385,8 +386,8 @@ proc set_rx_cfg {proj rx_cfg mode_id} {
     # e_cpu assembler (asm.cpp). There is no reasonable way to generate "`define"
     # with any other mechanism.
     if { ${rx_cfg} == 83 } {
-        puts "`define USE_CICF_83"
-        puts $fdw "`define USE_CICF_83"
+        puts "`define USE_CICF_SHARE"
+        puts $fdw "`define USE_CICF_SHARE"
     }
     if { ${rx_cfg} != 14 } {
         puts "`define USE_WF"

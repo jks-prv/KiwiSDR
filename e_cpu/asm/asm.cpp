@@ -846,7 +846,7 @@ int main(int argc, char *argv[])
                 // make_proj.tcl batch script. There is no reasonable way to generate "`define"
                 // with any other mechanism.
                 if (p->val == 83)
-                    fprintf(cfp, "`define USE_CICF_83\n");
+                    fprintf(cfp, "`define USE_CICF_SHARE\n");
                 if (p->val != 14)
                     fprintf(cfp, "`define USE_WF\n");
             }

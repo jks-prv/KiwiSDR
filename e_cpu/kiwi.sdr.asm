@@ -199,7 +199,7 @@ CmdWFClrIntr:
 
 CmdGetWFSamples:
 				rdReg	HOST_RX				; wf_chan
-#if WF_CICF_83
+#if WF_CICF_SHARE
 				wrReg2	SET_REG | SET_WF_CHAN2
 #else
 				wrReg2	SET_REG | SET_WF_CHAN
@@ -258,7 +258,7 @@ CmdSetWFDecim:
 				ret
 
 CmdSetWFTap:
-#if WF_CICF_83
+#if WF_CICF_SHARE
 				rdReg	HOST_RX				; wf_chan
 				wrReg2	SET_REG | SET_WF_CHAN2
                 RdReg32	HOST_RX				; lparam
