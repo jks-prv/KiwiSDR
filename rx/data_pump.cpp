@@ -756,7 +756,7 @@ void data_pump_dump()
         WF_SHMEM->lock_seq_global, WF_SHMEM->wf_seq_global);
     for (int ddc = 0; ddc < wf_chans; ddc++) {
         lprintf("data_pump WF DDC%d locked=%d rx=%d use=%u\n",
-            ddc, WF_SHMEM->ddc[ddc].lock, WF_SHMEM->ddc[ddc].lock_rx, WF_SHMEM->ddc[ddc].use);
+            ddc, WF_SHMEM->ddc[ddc].lock, WF_SHMEM->ddc[ddc].lock_rx, WF_SHMEM->ddc[ddc].use_ct);
     }
     for (int ch = 0; ch < rx_chans; ch++) {
         wf_inst_t *wf = &WF_SHMEM->wf_inst[ch];

@@ -335,8 +335,8 @@ module KiwiSDR
         .adc_count_C    (adc_count),
         
 		.cpu_clk	    (cpu_clk),
-        .rx_ser		    (ser[1]),        
-        .wf_ser		    (ser[2]),        
+        .rx_ser		    (ser[1]),
+        .wf_ser		    (ser[2]),
         .tos		    (tos),
         .op_11          (op[10:0]),        
         .rdReg          (rdReg),

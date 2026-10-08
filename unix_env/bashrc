@@ -299,7 +299,7 @@ alias lr="function _lr () { /bin/ls \$COLOR -laRh \$* ; } ; _lr"
 alias lt="function _lt () { /bin/ls \$COLOR -lath \$* ; } ; _lt"
 alias ldt="function _ldt () { /bin/ls \$COLOR -ladth \$* ; } ; _ldt"
 
-# grep
+#grep
 sp="[[:space:]]"
 # to grep with embedded spaces on Debian now need:
 #   g 'text1[[:space:]]text2'
@@ -310,6 +310,7 @@ d_gr_exclude="--exclude-dir .git --exclude-dir .svn --exclude-dir ./web/pkgs_map
 alias grep="grep \$COLOR"
 alias gr="grep -i \$COLOR"
 alias grs="grep \$COLOR"
+alias grv="grep -v \$COLOR"
 alias grctx="grep -i -B3 -A3 \$COLOR"
 alias nogrep="echo ${no_grep}"
 alias g="function _g () { grep -riI ${d_gr_exclude} --exclude \*.min.\*  --exclude \*\ copy.\* \$* . ; } ; _g"

@@ -116,8 +116,6 @@ module FIR_IQ_WF
             end else if (state == STATE_IDLE && next_state == STATE_LATCH_INPUT_I) begin
                 // latch input
                 bufI <= {bufI[WF_NTAPS-2:0], in_data};
-                // jksx duplicate bufI input to Q
-                //bufQ <= {bufI[WF_NTAPS-2:0], in_data};
                 rd_data_i <= 0;
                 rd_data_q <= 1;     // rd_data_q increments read address so set only once
             end else if (state == STATE_LATCH_INPUT_I && next_state == STATE_LATCH_INPUT_Q) begin
@@ -141,8 +139,6 @@ module FIR_IQ_WF
                     `ifdef USE_INDATA
                         out_data <= bufQ[0];
                     `else
-                        //jksx USE Q = ~I
-                        //out_data <= ~accI[ACCOUT -:WIDTH];
                         out_data <= accQ[ACCOUT -:WIDTH];
                     `endif
                     wr_en <= 1;
