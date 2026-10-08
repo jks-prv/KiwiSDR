@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2015-2025 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2015-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -26,6 +26,8 @@ Boston, MA  02110-1301, USA.
 #define CYAN    "\e[30m\e[106m"     // black on cyan
 #define BLUE    "\e[97m\e[104m"     // white on blue
 #define MAGENTA "\e[97m\e[105m"     // white on magenta
+#define ORANGE  "\e[48;5;214m"      // Mac Terminal.app color
+#define LTBLUE  "\e[48;5;195m"
 #define GREY    "\e[30m\e[47m"      // black on grey
 #define NORM    "\e[0m"
 #define NONL    " \e[0m\n"
