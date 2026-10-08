@@ -20,7 +20,7 @@ Boston, MA  02110-1301, USA.
 `timescale 1ns / 100ps
 
 module WATERFALL_SHARE_1CIC
-    #(parameter IN_WIDTH = "required")
+    #(parameter BUFSIZE = "required", parameter IN_WIDTH = "required")
     (
         input  wire		   adc_clk,
         input  wire signed [IN_WIDTH-1:0] adc_data,
@@ -132,10 +132,9 @@ module WATERFALL_SHARE_1CIC
     end
 `endif
 
-    WF_SAMPLER_8K_32B wf_samp(
+    WF_SAMPLER_4K_8K_32B #(.BUFSIZE(BUFSIZE)) wf_samp(
         .wr_clk			(adc_clk),
         .wr_rst			(reset_wr_A),
-        .wr_continuous  (1'b0),
         .wr				(wf_cic_avail),
 `ifdef TEST_DATA
         .wr_i			({ch, 2'b00, test_data}),
@@ -150,10 +149,8 @@ module WATERFALL_SHARE_1CIC
         
         .rd_clk			(adc_clk),
         .rd_rst			(reset_rd_A),
-        .rd_sync        (1'b0),
         .rd_i			(rd_i_A),
         .rd_q			(rd_q_A),
-        .rd_offset      (12'b0),
         // o
         .rd_iq			(wf_dout_A)
     );

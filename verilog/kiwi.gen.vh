@@ -17,7 +17,8 @@
 	localparam WF_NTAPS = 65;    // DEFp 0x41
 `define DEF_WF_NTAPS 1
 `define USE_SBAS 1    // DEFh 0x1
-`define WF_CICF_83 1    // DEFh 0x1
+`define WF_CICF_SHARE 1    // DEFh 0x1
+`define WF_DDC_4k 1    // DEFh 0x1
 `define USE_LOGGER 1    // DEFh 0x1
 `define USE_CPU_CTR 1    // DEFh 0x1
 `define USE_GEN 1    // DEFh 0x1
@@ -148,6 +149,10 @@
 `define DEF_WF1_STAGES 1
 	localparam WF2_STAGES = 5;    // DEFp 0x5
 `define DEF_WF2_STAGES 1
+	localparam WF_DDC_SM = 4096;    // DEFp 0x1000
+`define DEF_WF_DDC_SM 1
+	localparam WF_DDC_LG = 8192;    // DEFp 0x2000
+`define DEF_WF_DDC_LG 1
 	localparam WF1_BITS = 24;    // DEFp 0x18
 `define DEF_WF1_BITS 1
 	localparam WF2_BITS = 24;    // DEFp 0x18
