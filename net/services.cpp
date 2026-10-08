@@ -1169,4 +1169,7 @@ void services_start()
 
     reg_kiwisdr_com_tid = CreateTask(reg_public, 0, SERVICES_PRIORITY);
     CreateTask(file_GET, FILE_DOWNLOAD_RELOAD, SERVICES_PRIORITY);
+    
+    // call package init routines
+    pkgs_init();
 }

@@ -31,6 +31,8 @@ bool wakeup_reg_kiwisdr_com(wakeup_reg_e wakeup_reg);
 void my_kiwi_register(bool reg = true, int root_pwd_unset = 0, int debian_pwd_default = 0);
 void file_GET(void *param);
 
+void pkgs_init();
+
 // net.proxy_status
 #define PR_REG_OK           0
 #define PR_NEW_ACCT_OK      1

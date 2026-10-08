@@ -164,8 +164,7 @@ else
     OBJ_DIR_DEFAULT = $(OBJ_DIR_O3)
 endif
 
-PKGS = 
-PKGS_O3 = pkgs/utf8 pkgs/mongoose pkgs/jsmn pkgs/sha256 pkgs/TNT_JAMA pkgs/ant_switch
+PKGS = pkgs/utf8 pkgs/mongoose pkgs/jsmn pkgs/sha256 pkgs/TNT_JAMA pkgs/ant_switch
 
 # Each extension can have an optional Makefile:
 # The extension can opt-out of being included via EXT_SKIP (e.g. BBAI only, not Debian 7 etc.)
@@ -210,6 +209,7 @@ INT_EXTS = $(subst /,,$(subst extensions/,,$(wildcard $(INT_EXT_DIRS))))
 EXTS = $(INT_EXTS) $(PVT_EXTS)
 
 # package-specific makefiles
+-include pkgs/Makefile
 -include $(wildcard pkgs/*/Makefile.inc)
 
 ifeq ($(OTHER_DIR),)
@@ -221,7 +221,7 @@ else
 endif
 
 _DIR_PLATFORMS = $(addprefix platform/, $(PLATFORMS))
-_DIRS_O3 += . $(PKGS_O3) platform platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
+_DIRS_O3 += . $(PKGS) platform platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
     $(RX) $(GPS) dev ui cfg dx support net web arch/$(ARCH)
 
 ifeq ($(OPT),0)
@@ -519,6 +519,8 @@ BIN_DEPS := $(BIT_FILES)
 DEVEL_DEPS = $(OBJ_DIR_DEFAULT)/web_devel.o $(KEEP_DIR)/edata_always.o $(KEEP_DIR)/edata_always2.o
 EMBED_DEPS = $(OBJ_DIR_DEFAULT)/web_embed.o $(OBJ_DIR)/edata_embed.o $(KEEP_DIR)/edata_always.o $(KEEP_DIR)/edata_always2.o
 EXTS_DEPS = $(OBJ_DIR)/ext_init.o
+PKGS_DEPS = $(OBJ_DIR)/pkgs_init.o
+GEN_DEPS = $(EXTS_DEPS) $(PKGS_DEPS)
 
 # these MUST be run by single-threaded make before use of -j in sub makes
 GEN_ASM = $(GEN_DIR)/kiwi.gen.h verilog/kiwi.gen.vh
@@ -1020,6 +1022,7 @@ ALL_OBJECTS = $(OBJECTS) $(O3_OBJECTS) $(KEEP_OBJECTS)
 -include $(DEVEL_DEPS:.o=.d)
 -include $(EMBED_DEPS:.o=.d)
 -include $(EXTS_DEPS:.o=.d)
+-include $(PKGS_DEPS:.o=.d)
 
 
 #
@@ -1034,27 +1037,27 @@ ALL_OBJECTS = $(OBJECTS) $(O3_OBJECTS) $(KEEP_OBJECTS)
 # Previously doing a "make install" on the development machine made no sense and was flagged as an error.
 #
 
-$(BUILD_DIR)/kiwi.bin: $(OBJ_DIR) $(OBJ_DIR_O3) $(KEEP_DIR) $(ALL_OBJECTS) $(BIN_DEPS) $(DEVEL_DEPS) $(EXTS_DEPS)
+$(BUILD_DIR)/kiwi.bin: $(OBJ_DIR) $(OBJ_DIR_O3) $(KEEP_DIR) $(ALL_OBJECTS) $(BIN_DEPS) $(DEVEL_DEPS) $(GEN_DEPS)
 ifneq ($(SAN),1)
     ifeq ($(KIWI_SKIP_LINK),true)
 	    @echo "DEVSYS: SKIP OF kiwi.bin LINK STEP"
 	    touch $@
     else
-	    @echo $(CPP) $(LDFLAGS) "..." $(DEVEL_DEPS) $(EXTS_DEPS) $(LIBS) -o $(BUILD_OBJ)
-	    @$(CPP) $(LDFLAGS) $(ALL_OBJECTS) $(DEVEL_DEPS) $(EXTS_DEPS) $(LIBS) -o $(BUILD_OBJ)
+	    @echo $(CPP) $(LDFLAGS) "..." $(DEVEL_DEPS) $(GEN_DEPS) $(LIBS) -o $(BUILD_OBJ)
+	    @$(CPP) $(LDFLAGS) $(ALL_OBJECTS) $(DEVEL_DEPS) $(GEN_DEPS) $(LIBS) -o $(BUILD_OBJ)
     endif
 else
 	@echo loader skipped for static analysis
 endif
 
-$(BUILD_DIR)/kiwid.bin: $(FOPTIM_DEP) $(OTHER_DEP) $(OBJ_DIR) $(OBJ_DIR_O3) $(KEEP_DIR) $(ALL_OBJECTS) $(BIN_DEPS) $(EMBED_DEPS) $(EXTS_DEPS)
+$(BUILD_DIR)/kiwid.bin: $(FOPTIM_DEP) $(OTHER_DEP) $(OBJ_DIR) $(OBJ_DIR_O3) $(KEEP_DIR) $(ALL_OBJECTS) $(BIN_DEPS) $(EMBED_DEPS) $(GEN_DEPS)
 ifneq ($(SAN),1)
     ifeq ($(KIWI_SKIP_LINK),true)
 	    @echo "DEVSYS: SKIP OF kiwid.bin LINK STEP"
 	    touch $@
     else
-	    @echo $(CPP) $(LDFLAGS) "..." $(EMBED_DEPS) $(EXTS_DEPS) $(LIBS) -o $@
-	    @$(CPP) $(LDFLAGS) $(ALL_OBJECTS) $(EMBED_DEPS) $(EXTS_DEPS) $(LIBS) -o $@
+	    @echo $(CPP) $(LDFLAGS) "..." $(EMBED_DEPS) $(GEN_DEPS) $(LIBS) -o $@
+	    @$(CPP) $(LDFLAGS) $(ALL_OBJECTS) $(EMBED_DEPS) $(GEN_DEPS) $(LIBS) -o $@
     endif
 else
 	@echo loader skipped for static analysis
@@ -1098,6 +1101,10 @@ $(KEEP_DIR)/edata_always2.o: $(EDATA_ALWAYS2)
 	$(POST_PROCESS_DEPS)
 
 $(OBJ_DIR)/ext_init.o: $(GEN_DIR)/ext_init.cpp
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(POST_PROCESS_DEPS)
+
+$(OBJ_DIR)/pkgs_init.o: $(GEN_DIR)/pkgs_init.cpp
 	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
