@@ -6,8 +6,7 @@ deb http://archive.debian.org/debian bullseye main contrib non-free
 deb http://archive.debian.org/debian bullseye-updates main contrib non-free
 #deb-src http://deb.debian.org/debian bullseye-updates main contrib non-free
 
-# 9/27/2026 AI says bullseye-security not currently available on the debian archive servers
-#deb http://archive.debian.org/debian-security bullseye-security main contrib non-free
+deb http://archive.debian.org/debian-security bullseye-security main contrib non-free
 #deb-src http://security.debian.org/debian-security bullseye-security main contrib non-free
 
 #Kernel source (repos.rcn-ee.com) : https://github.com/RobertCNelson/linux-stable-rcn-ee
