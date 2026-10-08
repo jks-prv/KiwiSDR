@@ -117,6 +117,15 @@ Boston, MA  02110-1301, USA.
     #else
         #define wfp7(fmt, ...)
     #endif
+    
+    //#if 1       // ddc assignment
+    #if 0
+        #define wfp8(fmt, ...) \
+            real_printf(fmt, ## __VA_ARGS__); fflush(stdout)
+            //printf(fmt "\n", ## __VA_ARGS__);
+    #else
+        #define wfp8(fmt, ...)
+    #endif
 #else
     #define wfd(x)
     #define wfp(fmt, ...)
@@ -126,6 +135,7 @@ Boston, MA  02110-1301, USA.
     #define wfp5(fmt, ...)
     #define wfp6(fmt, ...)
     #define wfp7(fmt, ...)
+    #define wfp8(fmt, ...)
 #endif
 
 
@@ -289,9 +299,10 @@ struct wf_inst_t {
 
 struct ddc_inst_t {
     bool lock;
-    int lock_rx;        // which rx has the lock 
     u1_t last_user;
-    u4_t use;
+    u2_t bufsize;
+    int lock_rx;        // which rx has the lock 
+    u4_t use_ct;
     u4_t wf_seq;
 };
 

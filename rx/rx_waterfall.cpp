@@ -127,15 +127,28 @@ void c2s_waterfall_once()
     WF_SHMEM->hw_dft_plan_8k = fftwf_plan_dft_1d(WF_NFFT_MAX, fft->hw_c_sampsL, fft->hw_fftL, FFTW_FORWARD, plan);
     if (bg) printf("WF: ...FFTW_MEASURE\n");
 
-    #ifdef VAR_TAPS
-        if (kiwi.hw && kiwi.firmware_sel == FW_SEL_SDR_RX8_WF3_SHARE) {
-            wfp(GREEN "TAP %d|%d" NONL, WF_NTAPS, TAP_NHZ);
-            for (int i = 0; i < TAP_NHZ; i++) {
-                spi_set(CmdSetWFTap, 0, (i << 24) | cicf_taps[i]);
-                TaskSleepReasonUsec("CmdSetWFTap", 1000);
-            }
+    if (kiwi.wf_share) {
+        for (int ddc = 0; ddc < wf_chans; ddc++) {
+            ddc_inst_t *ddcp = &WF_SHMEM->ddc[ddc];
+            ddcp->lock_rx = -1;
+            
+            #ifdef WF_DDC_4k
+                ddcp->bufsize = ddc? WF_NFFT : WF_NFFT_MAX;     // typ: ddc0 8k, ddc[12] 4k
+            #else
+                ddcp->bufsize = WF_NFFT_MAX;
+            #endif
         }
-    #endif
+    
+        #ifdef VAR_TAPS
+            if (kiwi.hw) {
+                wfp(GREEN "TAP %d|%d" NONL, WF_NTAPS, TAP_NHZ);
+                for (int i = 0; i < TAP_NHZ; i++) {
+                    spi_set(CmdSetWFTap, 0, (i << 24) | cicf_taps[i]);
+                    TaskSleepReasonUsec("CmdSetWFTap", 1000);
+                }
+            }
+        #endif
+    }
 }
 
 void c2s_waterfall_init()
@@ -682,28 +695,30 @@ void sample_wf(int rx_chan)
             int ddc;
             for (ddc = 0; ddc < wf_chans; ddc++) {
                 ddc_inst_t *ddcp = &WF_SHMEM->ddc[ddc];
-                if (ddcp->lock == false) {
+                if (ddcp->lock == false && ddcp->bufsize >= wf->nfft) {
+                    //wfp8(GREY "ddc%d-%d%srx%d" GREY "-%d" NORM, ddc, ddcp->bufsize, COLORS[rx_chan], rx_chan, wf->nfft);
                     ddcp->lock = true;
                     ddcp->lock_rx = rx_chan;
                     ddcp->wf_seq = wf->wf_seq;
-                    ddcp->use++;
+                    ddcp->use_ct++;
                     wf->ddc_chan = wf->last_ddc = ddc;
                     wf->lock_seq = WF_SHMEM->lock_seq_global++;     // prevent wf->lock_seq from staying old
                     evShare(EC_SNAPSHOT, EV_WF, rx_chan, "WF-share", evprintf("wf%d got DDC%d", rx_chan, ddc));
                     break;
                 } else {
                     int rx = ddcp->lock_rx;
-	                wf_inst_t *wf_lock = &WF_SHMEM->wf_inst[rx];
-	                
-	                // Need to detect via a sequence number check when a wf task went away without
-	                // releasing the lock, but was then replaced by another wf task.
-	                if (!rx_channels[rx].busy || ddcp->wf_seq != wf_lock->wf_seq) {
+                    if (rx == -1) continue;
+                    wf_inst_t *wf_lock = &WF_SHMEM->wf_inst[rx];
+                    
+                    // Need to detect via a sequence number check when a wf task went away without
+                    // releasing the lock, but was then replaced by another wf task.
+                    if (!rx_channels[rx].busy || ddcp->wf_seq != wf_lock->wf_seq) {
                         ddcp->lock = false;
                         printf(RED "WF busted DDC%d lock because rx%d went away" NONL, ddc, rx);
                         ddc = -1;
                         evShare(EC_SNAPSHOT, EV_WF, rx_chan, "WF-share", evprintf("wf%d busted DDC%d lock because rx%d went away", rx_chan, ddc, rx));
                         break;
-	                }
+                    }
                 }
             }
             if (ddc == -1) continue;        // busted lock
@@ -741,7 +756,8 @@ void sample_wf(int rx_chan)
         //wfp("%sL%d%s ", COLORS[wf->ddc_chan], rx_chan, NORM);
         //wfp("L%d ", wf->ddc_chan);
         //wfp("%s%d%s", COLORS[rx_chan], rx_chan, NORM);
-        //wfp3("%s%d%d%s", COLORS[rx_chan], rx_chan, wf->ddc_chan, NORM);
+        //wfp8("%s%d%d%s", COLORS[rx_chan], rx_chan, wf->ddc_chan, NORM);
+        wfp8("%s%d%s", COLORS[rx_chan], wf->ddc_chan, NORM);
         //wfp("%s%d%dD%d%s ", COLORS[wf->ddc_chan], rx_chan, wf->ddc_chan, wf->decim, NORM);
         
         static int loop, trig;
