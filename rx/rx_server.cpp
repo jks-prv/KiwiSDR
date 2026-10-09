@@ -816,13 +816,13 @@ retry:
 	    if (c->other == NULL) {
 	        printf("NEW EXT, DID NOT FIND OTHER SND CONN! (NULL) type=%d(%s) ip=%s:%d:%016llx\n",
 	            st->type, st->uri, ip_forwarded, mc->remote_port, tstamp);
-            dump();
+            //dump();
 	        return NULL;
 	    }
 	    if (c->other->rx_channel == -1) {
 	        printf("NEW EXT, DID NOT FIND OTHER SND CONN! (rx_channel == -1) type=%d(%s) ip=%s:%d:%016llx\n",
 	            st->type, st->uri, ip_forwarded, mc->remote_port, tstamp);
-            dump();
+            //dump();
 	        return NULL;
 	    }
 	    c->rx_channel = c->other->rx_channel;
