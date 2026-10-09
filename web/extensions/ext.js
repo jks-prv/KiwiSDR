@@ -3,6 +3,7 @@
 var extint = {
    ws: null,
    extname: null,
+   map_overlay_init: false,
    
    first_ext_load: true,
    ext_is_tuning: false,
@@ -177,6 +178,7 @@ function ext_set_data_left(el_id, dataW, opt)
       //console.log({ t:el_id, wiw:window.innerWidth, dataW:dataW, timeW:kiwi.time_display_width, left:left });
       el.style.left = px(left);
       swipe_touch_hint_left(left);
+      kiwi_map_scroll_event(left);     // set bounds of id-ext-data-map-overlay
    }
 }
 
@@ -187,6 +189,13 @@ function ext_set_data_width(width, opt)
    if (!width) width = px(kiwi.NOM_WIDTH_EXT);     // revert to default
    if (opt.timeW) width += kiwi.time_display_width + 16;
    if (el) el.style.minWidth = px(width);
+   
+   // need to initialize bounds of id-ext-data-map-overlay
+   if (!extint.map_overlay_init) {
+      ext_environment_changed({resize:1, passband_screen_location:1});
+      //console.error('ext_set_data_width map_overlay_init => ext_environment_changed '+ ext_get_name());
+      extint.map_overlay_init = true;
+   }
 }
 
 function ext_set_data_height(height)
@@ -229,7 +238,8 @@ function ext_set_controls_width_height(width, height)
             // if ext control panel is going to scroll show touch hint overlay
             //console.error({t:'ext_set_controls_width_height', width:width, iwidth:kiwi.IWIDTH_MAIN_CPANEL});
             if (width > kiwi.IWIDTH_MAIN_CPANEL) {
-               swipe_touch_hint('id-control-ext-overlay', 'Use one finger<br>to scroll left/right', {immediate:1});
+               swipe_touch_hint('id-control-ext-overlay', 'Use one finger<br>to scroll left/right',
+                  {immediate:1 /*, testing:1 */});
             }
          }
          
@@ -832,6 +842,7 @@ MBP 15"		1440  900	L
 M1  16"		1496        L
 */
 
+// #mobile
 var mobile = {
 };
 
@@ -1186,9 +1197,9 @@ function extint_help_click_now()
 	extint.help_displayed = w3_call(extint.current_ext_name +'_help', true);
 }
 
-function extint_environment_changed(changed)
+function ext_environment_changed(changed)
 {
-   // have to wait a bit since extint_environment_changed({freq:1}) is called before
+   // have to wait a bit since ext_environment_changed({freq:1}) is called before
    // e.g. ext_get_freq_kHz() has been updated with latest value
    //
    // Possible values of "changed":
@@ -1196,7 +1207,7 @@ function extint_environment_changed(changed)
    
    setTimeout(
       function() {
-         //console.log({ t:'extint_environment_changed', current_ext_name:extint.current_ext_name });
+         //console.log({ t:'ext_environment_changed', current_ext_name:extint.current_ext_name });
          //console.log(changed);
          if (extint.current_ext_name) {
             w3_call(extint.current_ext_name +'_environment_changed', changed);
@@ -1208,7 +1219,7 @@ function extint_environment_changed(changed)
          // former extensions
          noise_blank_environment_changed(changed);
          noise_filter_environment_changed(changed);
-
+         
          // for benefit of programs like CATSync that use injected javascript to catch events
          w3_call('injection_environment_changed', changed);
       }, 100
@@ -1322,6 +1333,7 @@ function extint_focus(is_locked)
    // dynamically load extension (if necessary) before calling <ext>_main()
    var ext_name = extint.current_ext_name;
 	console.log('extint_focus: loading '+ ext_name +'.js');
+   extint.map_overlay_init = false;
 	
 	if (is_locked && !extint.no_lockout.includes(ext_name)) {
 	   var s =
@@ -1397,12 +1409,17 @@ function extint_select(value)
 	   setTimeout(extint_select, 1000, value);
 	   return;
 	}
-	w3_select_value(el, value);
+   var iframe_names = kiwi_array_iter_dup(extint.iframe_names, function(el) { return el.toLowerCase(); });
+   var iframe_enable = ext_get_cfg_param('iframe.enable');
 	var menu = el.childNodes;
 	var name = menu[value+1].innerHTML.toLowerCase();
 	//console.log('extint_select val='+ value +' name='+ name);
-	var idx;
+	var idx = -1;
    extint_enum_names(function(i, value, id, id_en) {
+      var enable = iframe_names.includes(id_en)? iframe_enable : ext_get_cfg_param(id_en +'.enable');
+      //console.log('extint_select id_en='+ id_en +' en='+ enable);
+      if (enable == null || ext_auth() == kiwi.AUTH_LOCAL) enable = true;   // enable if no cfg param or local connection
+      if (!enable) return;
 	   //console.log('extint_select CONSIDER id='+ id +' name='+ name +' id_en='+ id_en +' i='+ i +' value='+ value);
       //if (id.toLowerCase().includes(name)) {
       if (name.startsWith(id.toLowerCase())) {
@@ -1412,6 +1429,7 @@ function extint_select(value)
    });
    
    // handle former extensions now contained in main control panel
+   var ok = true;
    if (name == 'ant_switch') {
       ant_switch_focus();
       ant_switch_view();
@@ -1420,28 +1438,34 @@ function extint_select(value)
       if (extint.former_exts.includes(name)) {
          w3_call(name +'_view');
       } else {
-         extint_blur_prev(0);
-         w3_call(extint.hide_func);
-         
-         // remap the iframe virtual menu name
-         var ext_name = extint.ext_names[idx];
-         if (extint.iframe_names.includes(ext_name)) {
-            console.log('REMAP '+ ext_name +' => iframe');
-            ext_name = 'iframe';
-         }
-         extint.current_ext_name = ext_name;
-         //console.error(ext_name);
-
-         if (extint.first_ext_load) {
-            extint_connect_server();
-            extint.first_ext_load = false;
-            //console.error('first_ext_load');
+         if (idx == -1) {
+            ok = false;
+            console.error('extint_select NOT ENABLED '+ name);
          } else {
-            ext_send('SET ext_is_locked_status');     // request is_locked status
-            //console.error('SET ext_is_locked_status');
+            extint_blur_prev(0);
+            w3_call(extint.hide_func);
+            
+            // remap the iframe virtual menu name
+            var ext_name = extint.ext_names[idx];
+            if (extint.iframe_names.includes(ext_name)) {
+               console.log('REMAP '+ ext_name +' => iframe');
+               ext_name = 'iframe';
+            }
+            extint.current_ext_name = ext_name;
+            //console.error(ext_name);
+   
+            if (extint.first_ext_load) {
+               extint_connect_server();
+               extint.first_ext_load = false;
+               //console.error('first_ext_load');
+            } else {
+               ext_send('SET ext_is_locked_status');     // request is_locked status
+               //console.error('SET ext_is_locked_status');
+            }
          }
       }
    }
+   if (ok) 	w3_select_value(el, value);
 }
 
 function extint_list_json(param)
@@ -1483,9 +1507,11 @@ function extint_enum_names(func)
 
       // workaround mistake that stored config enable ids don't match ext names
       var id_en = id.toLowerCase();
-      if (id_en == 'cw_decoder') id_en = 'cw';
-      if (id_en == 'drm') id_en = 'DRM';
-      if (id_en == 's_meter') id_en = 'S_meter';
+      if (id_en == 'cw_decoder') id_en = 'cw'; else
+      if (id_en == 'cw_skimmer') id_en = 'cws'; else
+      if (id_en == 'drm') id_en = 'DRM'; else
+      if (id_en == 'ibp_scan') id_en = 'ibp'; else
+      if (id_en == 's_meter') id_en = 'S_meter'; else
       if (id_en == 'wspr') id_en = 'WSPR';
       
       func(i, value, id, id_en);
@@ -1526,7 +1552,7 @@ function extint_select_build_menu()
 	if (extint.ext_names && isArray(extint.ext_names)) {
 	   extint_enum_names(function(i, value, id, id_en) {
          var enable = iframe_names.includes(id_en)? iframe_enable : ext_get_cfg_param(id_en +'.enable');
-         //console.log('extint_select_menu id_en='+ id_en +' en='+ enable);
+         //console.log('extint_select_build_menu id_en='+ id_en +' en='+ enable);
          if (enable == null || ext_auth() == kiwi.AUTH_LOCAL) enable = true;   // enable if no cfg param or local connection
          if (id == 'DRM') kiwi.DRM_enable = enable;
          
@@ -1557,13 +1583,16 @@ function extint_open(name, delay)
    var extname = ext_get_name();
    if (extname && extname.toLowerCase().includes(name)) {
       console.log('EXT_OPEN '+ extname +' p='+ extint.param);
-      extint_environment_changed( { ext_open:1 } );
+      ext_environment_changed( { ext_open:1 } );
       return;
    }
    
+   var iframe_names = kiwi_array_iter_dup(extint.iframe_names, function(el) { return el.toLowerCase(); });
+   var iframe_enable = ext_get_cfg_param('iframe.enable');
    var found = 0;
    extint_enum_names(function(i, value, id, id_en) {
-      var enable = ext_get_cfg_param(id_en +'.enable');
+      var enable = iframe_names.includes(id_en)? iframe_enable : ext_get_cfg_param(id_en +'.enable');
+      //console.log('extint_open '+ id_en +'.enable='+ enable);
       if (enable == null || ext_auth() == kiwi.AUTH_LOCAL) enable = true;   // enable if no cfg param or local connection
       var off = kiwi_isMobile()? 1:0;     // account for (cancel) menu item
 

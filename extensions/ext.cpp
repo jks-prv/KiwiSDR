@@ -397,11 +397,16 @@ void extint_c2s(void *param)
 
             i = sscanf(cmd, "SET ext_switch_to_client=%32ms first_time=%d rx_chan=%d", &client_m, &first_time, &ignored_rx_chan);
             if (i == 3) {
+                bool not_enabled = false;
                 for (i=0; i < n_exts; i++) {
                     ext = ext_list[i];
                     if (strcmp(client_m, ext->name) == 0) {
-                        //printf("ext_switch_to_client: found func %p CONN-%02d(%p) for ext %s RX%d\n",
-                        //    ext->receive_msgs, conn_ext->self_idx, conn_ext, client_m, rx_channel);
+                        //printf("ext_switch_to_client: found func %p CONN-%02d(%p) for ext %s RX%d prefix %s\n",
+                        //    ext->receive_msgs, conn_ext->self_idx, conn_ext, client_m, rx_channel, ext->cfg_prefix);
+                        if (!cfg_true(stprintf("%s.enable", ext->cfg_prefix))) {
+                            not_enabled = true;
+                            break;
+                        }
                         rx_channel = conn_ext->rx_channel;
                         if (rx_channel < 0 || rx_channel >= rx_chans) {
                             printf("extint_c2s: FAIL rx_channel=%d rx_chans=%d\n", rx_channel, rx_chans);
@@ -430,6 +435,9 @@ void extint_c2s(void *param)
                 if (i == n_exts) {
                     printf("EXT ext_switch_to_client UNKNOWN EXT: <%s>\n", client_m);
                     //panic("ext_switch_to_client: unknown ext");
+                } else
+                if (not_enabled) {
+                    printf("EXT NOT ENABLED: <%s>\n", client_m);
                 } else {
                     ext_send_msg(conn_ext->rx_channel, false, "MSG EXT-STOP-FLUSH-INPUT");
 
