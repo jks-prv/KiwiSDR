@@ -24,7 +24,7 @@
 
 // for compatibility with antenna switch extension
 // i.e. let Beagle drive these, not FPGA
-`define P8_ARE_INPUTS
+`define ANTSW_BEAGLE_GPIO
 
 module KiwiSDR
     #(parameter _ADC_BITS = 14)
@@ -62,7 +62,7 @@ module KiwiSDR
         output wire SND_INTR,   // P924, GPIO 0_15, ctrl[CTRL_SND_INTR]
         output wire WF_INTR,    // P926, GPIO 0_14, ctrl[CTRL_WF_INTR]
 
-    `ifdef P8_ARE_INPUTS
+    `ifdef ANTSW_BEAGLE_GPIO
         input  wire P826,		// outside pin row
         input  wire P819,
         input  wire P817,
@@ -122,7 +122,7 @@ module KiwiSDR
     // P8: 26 24 22 20 18 16 14 12 10 08 06 04 02   pcb top, outside row
     //     b9          b3 b2 b1 b0
     
-`ifdef P8_ARE_INPUTS
+`ifdef ANTSW_BEAGLE_GPIO
 `else
     wire [9:0] P8;
     
@@ -242,7 +242,7 @@ module KiwiSDR
 	assign P9[0] = ctrl[CTRL_UNUSED_OUT];
 	assign P9[1] = ctrl[CTRL_UNUSED_OUT];
 
-`ifdef P8_ARE_INPUTS
+`ifdef ANTSW_BEAGLE_GPIO
 `else
 	assign P8[0] = ctrl[CTRL_UNUSED_OUT];
 	assign P8[1] = ctrl[CTRL_UNUSED_OUT];
@@ -264,7 +264,7 @@ module KiwiSDR
 `ifdef USE_OTHER
         | unused_inputs_other
 `else
-`ifdef P8_ARE_INPUTS
+`ifdef ANTSW_BEAGLE_GPIO
         | P811 | P812 | P813 | P814 | P815 | P816 | P817 | P818 | P819 | P826
 `endif
 `ifdef USE_GPS
