@@ -60,7 +60,7 @@ var devl = {
 
 function ext_switch_to_client(ext_name, first_time, recv_func)
 {
-	//console.log('SET ext_switch_to_client='+ ext_name +' first_time='+ first_time +' rx_chan='+ rx_chan);
+	console.error('SET ext_switch_to_client='+ ext_name +' first_time='+ first_time +' rx_chan='+ rx_chan);
 	recv_websocket(extint.ws, recv_func);		// change recv callback with each ext activation
 	ext_send('SET ext_switch_to_client='+ ext_name +' first_time='+ (first_time? 1:0) +' rx_chan='+ rx_chan);
    w3_call(ext_name +'_focus');
@@ -1281,7 +1281,8 @@ function extint_msg_cb(param, ws)
 		   var nusers_ok = +ap[0];
 		   var users_cur = +ap[1];
 		   var users_max = +ap[2];
-		   //console.error('ext_client_users nusers_ok='+ nusers_ok +' users_cur='+ users_cur +' users_max='+ users_max);
+		   var local     = +ap[3];
+		   console.error('ext_client_users nusers_ok='+ nusers_ok +' users_cur='+ users_cur +' users_max='+ users_max +' local='+ local);
 			extint_users(nusers_ok, users_cur, users_max);
 			break;
 		
@@ -1373,7 +1374,7 @@ function extint_focus(is_locked)
 
 function extint_users(nusers_ok, users_cur, users_max)
 {
-   //console.info('=== nusers_ok? '+ TF(nusers_ok) +' ================================================');
+   //console.error('=== FORCING nusers_ok? TRUE TO TEST BYPASS PROTECTION'); extint.nusers_ok = true; return;
    extint.nusers_ok = nusers_ok;
    if (!nusers_ok) {
       var s;

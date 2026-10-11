@@ -765,17 +765,26 @@ void show_conn(const char *prefix, u4_t printf_type, conn_t *cd)
         return;
     }
     
+    bool chan_ok = (cd->rx_channel != -1);
     char *type_s = (cd->type == STREAM_ADMIN)? (char *) "ADM" : stnprintf(0, "%s", rx_conn_type(cd));
-    char *rx_s = (cd->rx_channel == -1)? (char *) "" : stnprintf(1, "rx%d", cd->rx_channel);
+    char *rx_s = chan_ok? stnprintf(1, "rx%d", cd->rx_channel) : (char *) "";
     char *other_s = cd->other? stnprintf(2, " +CONN-%02d", cd->other-conns) : (char *) "";
-    char *ext_s = (cd->type == STREAM_EXT)? (cd->ext? stnprintf(3, " %s", cd->ext->name) : (char *) " (ext name?)") : (char *) "";
+
+    char *ext_s = (char *) "";
+    bool ext_blocked = false;
+    if (cd->type == STREAM_EXT) {
+        ext_users_t *extu = chan_ok? &ext_users[cd->rx_channel] : NULL;
+        if (extu) ext_blocked = !extu->nusers_ok;
+        if (cd->ext && extu && extu->nusers_ok)
+            ext_s = stnprintf(3, " %s", cd->ext->name);
+    }
     
     lfprintf(printf_type,
         "%sCONN-%02d %p %3s %-3s %s%s%s%s%s%s%s%s%s isPwd%d tle%d%d sv=%02d KA=%02d/60 KC=%05d mc=%9p %s%s:%d:%016llx%s%s%s%s\n",
         prefix, cd->self_idx, cd, type_s, rx_s,
         cd->auth? "*":"_", cd->auth_kiwi? "K":"_", cd->already_admin? "X":(cd->auth_admin?"A":"_"),
         cd->isMaster? "M":"_", cd->arun_preempt? "P":(cd->internal_connection? "I":(cd->ext_api? "E":"_")), cd->ext_api_determined? "D":"_",
-        cd->isLocal? "L":(cd->force_notLocal? "F":"_"), cd->auth_prot? "P":"_", cd->awaitingPassword? "A":(cd->kick? "K":"_"),
+        cd->isLocal? "L":(cd->force_notLocal? "F":"_"), cd->auth_prot? "P":"_", cd->awaitingPassword? "A":(cd->kick? "K":(ext_blocked?"B":"_")),
         cd->isPassword, cd->tlimit_exempt, cd->tlimit_exempt_by_pwd, cd->served,
         cd->keep_alive, cd->keepalive_count, cd->mc, cd->debug? stprintf("dbg=%d ", cd->debug):"",
         cd->remote_ip, cd->remote_port, cd->tstamp,
@@ -809,7 +818,7 @@ void dump_direct()
         if (cd->valid) nconn++;
     }
     lprintf("\n");
-    lprintf("CONNS: used %d/%d is_locked=%d  ______ => *auth, Kiwi, Admin/X-already, Master, Internal/Preempt/ExtAPI, DetAPI, Local/ForceNotLocal, ProtAuth, Kicked/AwaitPwd\n",
+    lprintf("CONNS: used %d/%d is_locked=%d  ______ => *auth, Kiwi, Admin/X-already, Master, Internal/Preempt/ExtAPI, DetAPI, Local/ForceNotLocal, ProtAuth, Kicked/AwaitPwd/ExtBlocked\n",
         nconn, N_CONNS, is_locked);
 
     for (cd = conns, i=0; cd < &conns[N_CONNS]; cd++, i++) {
@@ -1094,7 +1103,8 @@ char *rx_users(bool isAdmin)
                 
                 bool show = show_geo || c->internal_connection;
                 char *geo = show? (c->geo? kiwi_str_encode(c->geo) : NULL) : NULL;
-                char *ext_name = ext_users[i].ext? kiwi_str_encode((char *) ext_users[i].ext->name) : NULL;
+                ext_users_t *extu = &ext_users[i];
+                char *ext_name = (extu->nusers_ok && extu->ext)? kiwi_str_encode((char *) extu->ext->name) : NULL;
                 const char *ip = isAdmin? c->remote_ip : "";
                 asprintf(&sb2, "%s{\"i\":%d,\"n\":\"%s\",\"g\":\"%s\",\"f\":%d,"
                     "\"m\":\"%s\",\"z\":%d,"

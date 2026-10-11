@@ -374,7 +374,7 @@ void extint_c2s(void *param)
 	while (TRUE) {
 		int rx_channel, ignored_rx_chan;
 		ext_t *ext = NULL;
-		ext_users_t *eusr;
+		ext_users_t *extu = NULL;
 	
         if (nb) web_to_app_done(conn_ext, nb);
         n = web_to_app(conn_ext, &nb);
@@ -397,37 +397,32 @@ void extint_c2s(void *param)
 
             i = sscanf(cmd, "SET ext_switch_to_client=%32ms first_time=%d rx_chan=%d", &client_m, &first_time, &ignored_rx_chan);
             if (i == 3) {
-                bool not_enabled = false;
                 for (i=0; i < n_exts; i++) {
                     ext = ext_list[i];
                     if (strcmp(client_m, ext->name) == 0) {
                         //printf("ext_switch_to_client: found func %p CONN-%02d(%p) for ext %s RX%d prefix %s\n",
                         //    ext->receive_msgs, conn_ext->self_idx, conn_ext, client_m, rx_channel, ext->cfg_prefix);
-                        if (!cfg_true(stprintf("%s.enable", ext->cfg_prefix))) {
-                            not_enabled = true;
-                            break;
-                        }
                         rx_channel = conn_ext->rx_channel;
                         if (rx_channel < 0 || rx_channel >= rx_chans) {
                             printf("extint_c2s: FAIL rx_channel=%d rx_chans=%d\n", rx_channel, rx_chans);
                             panic("extint_c2s");
-                        } else {
-                            eusr = &ext_users[rx_channel];
-                            eusr->valid = TRUE;
-                            eusr->ext = ext;
-                            eusr->conn_ext = conn_ext;
-                            conn_ext->ext = ext;
-                            TaskNameSet(ext->name);
-                            u4_t flags = TaskFlags();
-                            TaskSetFlags(flags | CTF_RX_CHANNEL | (conn_ext->rx_channel & CTF_CHANNEL));
+                        }
+                        extu = &ext_users[rx_channel];
+                        extu->valid = TRUE;
+                        extu->nusers_ok = FALSE;
+                        extu->ext = ext;
+                        extu->conn_ext = conn_ext;
+                        conn_ext->ext = ext;
+                        TaskNameSet(ext->name);
+                        u4_t flags = TaskFlags();
+                        TaskSetFlags(flags | CTF_RX_CHANNEL | (conn_ext->rx_channel & CTF_CHANNEL));
 
-                            // point STREAM_SOUND conn at ext_t so it has access to the ext->name after ext conn_t is gone
-                            // point rx_channels[].ext at ext_t so it has access to ext->flags for EXT_FLAGS_HEAVY checking
-                            conn_t *c_snd = rx_channels[rx_channel].conn;
-                            if (c_snd && c_snd->valid && c_snd->type == STREAM_SOUND) {
-                                c_snd->ext = ext;
-                                rx_channels[rx_channel].ext = ext;
-                            }
+                        // point STREAM_SOUND conn at ext_t so it has access to the ext->name after ext conn_t is gone
+                        // point rx_channels[].ext at ext_t so it has access to ext->flags for EXT_FLAGS_HEAVY checking
+                        conn_t *c_snd = rx_channels[rx_channel].conn;
+                        if (c_snd && c_snd->valid && c_snd->type == STREAM_SOUND) {
+                            c_snd->ext = ext;
+                            rx_channels[rx_channel].ext = ext;
                         }
                         break;
                     }
@@ -435,31 +430,36 @@ void extint_c2s(void *param)
                 if (i == n_exts) {
                     printf("EXT ext_switch_to_client UNKNOWN EXT: <%s>\n", client_m);
                     //panic("ext_switch_to_client: unknown ext");
-                } else
-                if (not_enabled) {
-                    printf("EXT NOT ENABLED: <%s>\n", client_m);
                 } else {
                     ext_send_msg(conn_ext->rx_channel, false, "MSG EXT-STOP-FLUSH-INPUT");
 
+                    bool enabled = cfg_true(stprintf("%s.enable", ext->cfg_prefix));
                     int users_max = cfg_int_(stprintf("%s.users_m", ext->cfg_prefix));
                     if (users_max == 1) users_max = -1;     // no limit;
                     if (users_max > 1) users_max--;
                     
                     int users_cur = 0;
                     for (i = 0; i < rx_chans; i++) {
-                        ext_users_t *extu = &ext_users[i];
-                        if (extu && extu->ext && strcmp(ext->cfg_prefix, extu->ext->name) == 0)
-                            users_cur++;    // NB: count will include current request
+                        ext_users_t *_extu = &ext_users[i];
+                        if (_extu && _extu->ext) {
+                            if (strcmp(ext->cfg_prefix, _extu->ext->cfg_prefix) == 0) {
+                                users_cur++;    // NB: count will include current request
+                            }
+                            //rcprintf(conn_ext->rx_channel, YELLOW "EXT %d %s %s <> %s %s" NONL,
+                            //    users_cur, ext->cfg_prefix, ext->name, _extu->ext->cfg_prefix, _extu->ext->name);
+                        }
                     }
                     
-                    eusr->nusers_ok = (users_max == -1 || users_cur <= users_max);
-                    send_msg(conn_ext, false, "MSG ext_client_users=%d,%d,%d", eusr->nusers_ok, users_cur, users_max);
-                    //rcprintf(conn_ext->rx_channel, "%sEXT ext_client_users %s nusers_ok=%d users_cur=%d users_max=%d" NONL,
-                    //    eusr->nusers_ok? GREEN : RED, ext->cfg_prefix, eusr->nusers_ok, users_cur, users_max);
+                    bool local = conn_ext->isLocal;
+                    extu->nusers_ok = (local || (enabled && (users_max == -1 || users_cur <= users_max)));
+                    send_msg(conn_ext, false, "MSG ext_client_users=%d,%d,%d,%d", extu->nusers_ok, users_cur, users_max, local);
+                    if (!extu->nusers_ok)
+                        rcprintf(conn_ext->rx_channel, "%sEXT ext_client_users %s nusers_ok=%d users_cur=%d users_max=%d local=%d" NONL,
+                            extu->nusers_ok? GREEN : RED, ext->cfg_prefix, extu->nusers_ok, users_cur, users_max, local);
 
                     // Automatically let extension server-side know the connection has been established and
                     // our stream thread is running. Only called ONCE per client session.
-                    if (first_time) {
+                    if (first_time && extu->nusers_ok) {
                         SAN_NULL_PTR_CK(ext, ext->receive_msgs((char *) "SET ext_server_init", rx_channel));
                     }
                 }
