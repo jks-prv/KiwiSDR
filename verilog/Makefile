@@ -186,6 +186,9 @@ sum:
 lt:
 	ls -lt $(V_SRC_DIR)
 
+mu:
+	-more -f ../$(V_PROJ).runs/impl_1/utilization_routed.rpt
+
 ts:
 	-tail -f $(V_PROJ)/$(V_PROJ).runs/synth_1/runme.log
 

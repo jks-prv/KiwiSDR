@@ -237,7 +237,7 @@ module WF_CICF_MEM
 
 	ipcore_bram_2k_16b iq_out_samp (
 		.clka	(adc_clk),      .clkb	(cpu_clk),
-		.wea	(wr_en),
+		.wea	(wr_en),        .enb    (1'b1),
 		.addra	(wr_addr),      .addrb	(rd_a),
 		.dina	(dina),         .doutb	(wf_dout_C)
 	);

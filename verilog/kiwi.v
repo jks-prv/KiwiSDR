@@ -95,14 +95,29 @@ module KiwiSDR
     initial $display("#################### kiwi.v RX_CFG=%d MODE_ID=%s ####################", RX_CFG, MODE_ID);
 
     //////////////////////////////////////////////////////////////////////////
-    // debug
+    // db = debug(1)
+    // a[9:0] = ant switch P8 GPIO(10)
+    // FP = FPGA(2)
+    // GP = GPIO(2)
+    // SP = SPI(5)
+    // EE = EEPROM(2)
+    // sy = system(3)
+    // JT = JTAG(4)
+    // pw = power(8)
+    // xx = no connection(15)
     //////////////////////////////////////////////////////////////////////////
     
     // P9: 25 23 21 19 17 15 13 11 09 07 05 03 01   pcb top, outside row
-    //                    b2 b1 b0
+    //     xx sy SP EE SP db GP GP xx pw pw pw pw
     //
     // P9: 26 24 22 20 18 16 14 12 10 08 06 04 02   pcb top, inside row
-    //     b3
+    //     sy sy SP EE SP SP FP FP xx pw pw pw pw
+    
+    // P8: 25 23 21 19 17 15 13 11 09 07 05 03 01   pcb top, inside row
+    //     xx xx xx a8 a6 a4 a2 a0 JT JT xx xx xx
+    //
+    // P8: 26 24 22 20 18 16 14 12 10 08 06 04 02   pcb top, outside row
+    //     a9 xx xx xx a7 a5 a3 a1 JT JT xx xx xx
     
     wire [1:0] P9;
     
