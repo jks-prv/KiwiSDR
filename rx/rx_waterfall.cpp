@@ -274,6 +274,8 @@ void c2s_waterfall_stop_data(int rx_chan)
     if (CICF_BUSY == 1) {
         printf(RED "c2s_waterfall_stop_data rx%d RELEASE cicf_busy" NONL, rx_chan);
         CICF_BUSY = 0;
+    } else {
+        //printf(LTBLUE "c2s_waterfall_stop_data rx%d RELEASE" NONL, rx_chan);
     }
 }
 
@@ -705,7 +707,8 @@ void sample_wf(int rx_chan)
                     wf->lock_seq = WF_SHMEM->lock_seq_global++;     // prevent wf->lock_seq from staying old
                     evShare(EC_SNAPSHOT, EV_WF, rx_chan, "WF-share", evprintf("wf%d got DDC%d", rx_chan, ddc));
                     break;
-                } else {
+                } else
+                if (ddcp->lock) {   // DDC locked -- check it for problems
                     int rx = ddcp->lock_rx;
                     if (rx == -1) continue;
                     wf_inst_t *wf_lock = &WF_SHMEM->wf_inst[rx];
@@ -714,12 +717,14 @@ void sample_wf(int rx_chan)
                     // releasing the lock, but was then replaced by another wf task.
                     if (!rx_channels[rx].busy || ddcp->wf_seq != wf_lock->wf_seq) {
                         ddcp->lock = false;
-                        printf(RED "WF busted DDC%d lock because rx%d went away" NONL, ddc, rx);
+                        ddcp->lock_rx = -1;
+                        printf(RED "WF busted DDC%d lock because rx%d went away (busy=%d seq=%d/%d)" NONL,
+                            ddc, rx, rx_channels[rx].busy, ddcp->wf_seq, wf_lock->wf_seq);
                         ddc = -1;
                         evShare(EC_SNAPSHOT, EV_WF, rx_chan, "WF-share", evprintf("wf%d busted DDC%d lock because rx%d went away", rx_chan, ddc, rx));
                         break;
                     }
-                }
+                }   // else: !ddcp->lock but DDC too small, so skip it
             }
             if (ddc == -1) continue;        // busted lock
             if (ddc < wf_chans) {
@@ -849,7 +854,7 @@ void sample_wf(int rx_chan)
         wfp4(MAGENTA "WU%d-%d|%d " NORM, rx_chan, wf->wf_sleep_seq, wf->wf_intr_seq);
         evShare(EC_SNAPSHOT, EV_WF, rx_chan, "WF-share", evprintf("wf%d ..DDC filled in %d us", rx_chan, timer_us() - ddc_fill_usec));
         if (wf->conn->stop_data) {
-            WF_SHMEM->ddc[wf->ddc_chan].lock = false;    // release lock
+            WF_SHMEM->ddc[wf->ddc_chan].lock = false;    // release DDC lock
             c2s_wf_stop(RED, "wake_buf_full", wf->conn, rx_chan, wf->ddc_chan, true);
             // shouldn't return
         }
