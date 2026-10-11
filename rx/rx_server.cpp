@@ -826,6 +826,7 @@ retry:
 	        return NULL;
 	    }
 	    c->rx_channel = c->other->rx_channel;
+	    if (cother->force_notLocal) c->force_notLocal = true;
 	}
   
 	c->mc = mc;
