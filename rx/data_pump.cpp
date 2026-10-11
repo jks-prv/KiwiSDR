@@ -32,6 +32,7 @@ Boston, MA  02110-1301, USA.
 #include "data_pump.h"
 #include "fpga.h"
 #include "fastfir.h"
+#include "printf.h"
 #include "ansi.h"
 
 #include <string.h>
@@ -744,27 +745,31 @@ void data_pump_startup()
 void data_pump_dump()
 {
     // SND
-    rx_dpump_t *rx = &rx_dpump[RX_CHAN0];
     int n_dpbuf = kiwi.isWB? N_WB_DPBUF : N_DPBUF;
-    
-    u4_t diff = (rx->wr_pos >= rx->rd_pos)? (rx->wr_pos - rx->rd_pos) : (n_dpbuf - rx->rd_pos + rx->wr_pos);
-    lprintf("data_pump SND RX_CHAN0 isWB=%d n_dpbuf=%d rd|wr_pos=%d|%d|%d \n",
-        kiwi.isWB, n_dpbuf, rx->rd_pos, rx->wr_pos, diff);
+    for (int ch = 0; ch < rx_chans; ch++) {
+        rx_dpump_t *rx = &rx_dpump[ch];
+        if (rx_channels[ch].data_enabled) {
+            u4_t diff = (rx->wr_pos >= rx->rd_pos)? (rx->wr_pos - rx->rd_pos) : (n_dpbuf - rx->rd_pos + rx->wr_pos);
+            lprintf("data_pump SND rx%d en=1 isWB=%d n_dpbuf=%d rd|wr_pos=%d|%d|%d\n",
+                ch, kiwi.isWB, n_dpbuf, rx->rd_pos, rx->wr_pos, diff);
+        }
+    }
     
     // WF
-    lprintf("data_pump WF lock_seq_global=%u wf_seq_global=%u\n",
+    lprintf("data_pump WF INFO lock_seq_global=%u wf_seq_global=%u\n",
         WF_SHMEM->lock_seq_global, WF_SHMEM->wf_seq_global);
     for (int ddc = 0; ddc < wf_chans; ddc++) {
-        lprintf("data_pump WF DDC%d locked=%d rx=%d use=%u\n",
-            ddc, WF_SHMEM->ddc[ddc].lock, WF_SHMEM->ddc[ddc].lock_rx, WF_SHMEM->ddc[ddc].use_ct);
+        ddc_inst_t *ddcp = &WF_SHMEM->ddc[ddc];
+        lprintf("data_pump WF DDC%d locked=%d rx=%s use=%u\n", ddc, ddcp->lock,
+            (ddcp->lock_rx == -1)? " " : stprintf("%d", ddcp->lock_rx), ddcp->use_ct);
     }
     for (int ch = 0; ch < rx_chans; ch++) {
         wf_inst_t *wf = &WF_SHMEM->wf_inst[ch];
-        if (rx_channels[ch].busy)
-            lprintf("data_pump WF rx%d en=1 ddc=%d last_ddc=%d num_wakeups=%u lock_wait=%d lock_seq=%u wf_seq=%u wake_buf_full=%d\n",
-                ch, wf->ddc_chan, wf->last_ddc, wf->num_wakeups, wf->lock_wait, wf->lock_seq, wf->wf_seq, wf->wake_buf_full);
-        else
-            lprintf("data_pump WF rx%d en=0\n", ch);
+        if (rx_channels[ch].busy) {
+            lprintf("data_pump WF rx%d en=1 z%d ddc=%s last_ddc=%d num_wakeups=%u lock_wait=%d lock_seq=%u wf_seq=%u wake_buf_full=%d\n",
+                ch, wf->zoom, (wf->ddc_chan == -1)? " " : stprintf("%d", wf->ddc_chan),
+                wf->last_ddc, wf->num_wakeups, wf->lock_wait, wf->lock_seq, wf->wf_seq, wf->wake_buf_full);
+        }
     }
 }
 
