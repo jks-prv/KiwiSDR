@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+concurrency:
+  # Repeated pushes to a PR will cancel all previous still running builds of the
+  # PR (for faster feedback), while multiple merges to master will not cancel.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: bbg-bbb-release-debian11-armv7
+            docker_platform: linux/arm/v7
+            make_vars: BBG_BBB=true BYAI= BBAI_64= BBAI= RPI=
+          - name: bbai64-release-debian11-arm64
+            docker_platform: linux/arm64
+            make_vars: BBAI_64=true BYAI= BBG_BBB= BBAI= RPI=
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        run: |
+          make docker-setup-qemu
+
+      - name: Cache ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/kiwisdr-ccache
+          key: ccache-${{ runner.os }}-${{ matrix.name }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.name }}-
+            ccache-${{ runner.os }}-
+
+      - name: Build
+        run: |
+          make docker-build \
+            DOCKER_PLATFORM="${{ matrix.docker_platform }}" \
+            DOCKER_MAKE_VARS="${{ matrix.make_vars }}"
+
+      - name: Upload binary distro artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.name }}-binary-distro
+          path: ci-artifacts/
+          if-no-files-found: error
+          retention-days: 7
