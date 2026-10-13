@@ -2,9 +2,11 @@ set_property IOSTANDARD LVCMOS33 [get_ports ADC_CLKIN]
 set_property IOSTANDARD LVCMOS33 [get_ports ADC_CLKEN]
 set_property IOSTANDARD LVCMOS33 [get_ports ADC_STENL]
 set_property IOSTANDARD LVCMOS33 [get_ports ADC_STSIG]
+
 set_property IOSTANDARD LVCMOS33 [get_ports DA_DALE]
 set_property IOSTANDARD LVCMOS33 [get_ports DA_DACLK]
 set_property IOSTANDARD LVCMOS33 [get_ports DA_DADAT]
+
 set_property IOSTANDARD LVCMOS33 [get_ports GPS_TCXO]
 set_property IOSTANDARD LVCMOS33 [get_ports GPS_ISGN]
 set_property IOSTANDARD LVCMOS33 [get_ports GPS_IMAG]
@@ -13,11 +15,13 @@ set_property IOSTANDARD LVCMOS33 [get_ports GPS_QMAG]
 set_property IOSTANDARD LVCMOS33 [get_ports GPS_GSCS]
 set_property IOSTANDARD LVCMOS33 [get_ports GPS_GSCLK]
 set_property IOSTANDARD LVCMOS33 [get_ports GPS_GSDAT]
+
 set_property IOSTANDARD LVCMOS33 [get_ports BBB_SCLK]
 set_property IOSTANDARD LVCMOS33 [get_ports {BBB_CS_N[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {BBB_CS_N[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports BBB_MISO]
 set_property IOSTANDARD LVCMOS33 [get_ports BBB_MOSI]
+
 set_property IOSTANDARD LVCMOS33 [get_ports ADC_OVFL]
 set_property IOSTANDARD LVCMOS33 [get_ports {ADC_DATA[13]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {ADC_DATA[12]}]
@@ -33,44 +37,52 @@ set_property IOSTANDARD LVCMOS33 [get_ports {ADC_DATA[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {ADC_DATA[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {ADC_DATA[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {ADC_DATA[0]}]
-set_property IOSTANDARD LVCMOS33 [get_ports WF_INTR]
-set_property IOSTANDARD LVCMOS33 [get_ports SND_INTR]
+
 set_property IOSTANDARD LVCMOS33 [get_ports CMD_READY]
+set_property IOSTANDARD LVCMOS33 [get_ports SND_INTR]
+set_property IOSTANDARD LVCMOS33 [get_ports WF_INTR]
+
 set_property IOSTANDARD LVCMOS33 [get_ports P915]
-set_property IOSTANDARD LVCMOS33 [get_ports P913]
-set_property IOSTANDARD LVCMOS33 [get_ports P911]
-set_property IOSTANDARD LVCMOS33 [get_ports P826]
-set_property IOSTANDARD LVCMOS33 [get_ports P819]
-set_property IOSTANDARD LVCMOS33 [get_ports P817]
-set_property IOSTANDARD LVCMOS33 [get_ports P818]
-set_property IOSTANDARD LVCMOS33 [get_ports P815]
-set_property IOSTANDARD LVCMOS33 [get_ports P816]
-set_property IOSTANDARD LVCMOS33 [get_ports P813]
-set_property IOSTANDARD LVCMOS33 [get_ports P814]
+set_property IOSTANDARD LVCMOS33 [get_ports P924]
+set_property IOSTANDARD LVCMOS33 [get_ports P926]
+
 set_property IOSTANDARD LVCMOS33 [get_ports P811]
 set_property IOSTANDARD LVCMOS33 [get_ports P812]
+set_property IOSTANDARD LVCMOS33 [get_ports P813]
+set_property IOSTANDARD LVCMOS33 [get_ports P814]
+set_property IOSTANDARD LVCMOS33 [get_ports P815]
+set_property IOSTANDARD LVCMOS33 [get_ports P816]
+set_property IOSTANDARD LVCMOS33 [get_ports P817]
+set_property IOSTANDARD LVCMOS33 [get_ports P818]
+set_property IOSTANDARD LVCMOS33 [get_ports P819]
+set_property IOSTANDARD LVCMOS33 [get_ports P826]
+
 set_property IOSTANDARD LVCMOS33 [get_ports EWP]
 
 set_property PACKAGE_PIN E12 [get_ports ADC_CLKIN]
-set_property PACKAGE_PIN A8 [get_ports ADC_CLKEN]
-set_property PACKAGE_PIN A2 [get_ports ADC_STENL]
-set_property PACKAGE_PIN A3 [get_ports ADC_STSIG]
-set_property PACKAGE_PIN A7 [get_ports DA_DALE]
-set_property PACKAGE_PIN A5 [get_ports DA_DACLK]
-set_property PACKAGE_PIN A4 [get_ports DA_DADAT]
-set_property PACKAGE_PIN D4 [get_ports GPS_TCXO]
-set_property PACKAGE_PIN B1 [get_ports GPS_ISGN]
-set_property PACKAGE_PIN B2 [get_ports GPS_IMAG]
-set_property PACKAGE_PIN E1 [get_ports GPS_QSGN]
-set_property PACKAGE_PIN D1 [get_ports GPS_QMAG]
-set_property PACKAGE_PIN C1 [get_ports GPS_GSCS]
-set_property PACKAGE_PIN G2 [get_ports GPS_GSCLK]
-set_property PACKAGE_PIN G1 [get_ports GPS_GSDAT]
+set_property PACKAGE_PIN A8  [get_ports ADC_CLKEN]
+set_property PACKAGE_PIN A2  [get_ports ADC_STENL]
+set_property PACKAGE_PIN A3  [get_ports ADC_STSIG]
+
+set_property PACKAGE_PIN A7  [get_ports DA_DALE]
+set_property PACKAGE_PIN A5  [get_ports DA_DACLK]
+set_property PACKAGE_PIN A4  [get_ports DA_DADAT]
+
+set_property PACKAGE_PIN D4  [get_ports GPS_TCXO]
+set_property PACKAGE_PIN B1  [get_ports GPS_ISGN]
+set_property PACKAGE_PIN B2  [get_ports GPS_IMAG]
+set_property PACKAGE_PIN E1  [get_ports GPS_QSGN]
+set_property PACKAGE_PIN D1  [get_ports GPS_QMAG]
+set_property PACKAGE_PIN C1  [get_ports GPS_GSCS]
+set_property PACKAGE_PIN G2  [get_ports GPS_GSCLK]
+set_property PACKAGE_PIN G1  [get_ports GPS_GSDAT]
+
 set_property PACKAGE_PIN D13 [get_ports BBB_SCLK]
 set_property PACKAGE_PIN P16 [get_ports {BBB_CS_N[1]}]
 set_property PACKAGE_PIN N16 [get_ports {BBB_CS_N[0]}]
 set_property PACKAGE_PIN M15 [get_ports BBB_MISO]
 set_property PACKAGE_PIN J14 [get_ports BBB_MOSI]
+
 set_property PACKAGE_PIN F15 [get_ports ADC_OVFL]
 set_property PACKAGE_PIN E16 [get_ports {ADC_DATA[13]}]
 set_property PACKAGE_PIN E15 [get_ports {ADC_DATA[12]}]
@@ -86,23 +98,27 @@ set_property PACKAGE_PIN C13 [get_ports {ADC_DATA[3]}]
 set_property PACKAGE_PIN A13 [get_ports {ADC_DATA[2]}]
 set_property PACKAGE_PIN B12 [get_ports {ADC_DATA[1]}]
 set_property PACKAGE_PIN A12 [get_ports {ADC_DATA[0]}]
-set_property PACKAGE_PIN K16 [get_ports WF_INTR]
-set_property PACKAGE_PIN K15 [get_ports SND_INTR]
-set_property PACKAGE_PIN M16 [get_ports CMD_READY]
-set_property PACKAGE_PIN P15 [get_ports P915]
-set_property PACKAGE_PIN R16 [get_ports P913]
-set_property PACKAGE_PIN R15 [get_ports P911]
-set_property PACKAGE_PIN L5 [get_ports P826]	; # G129
-set_property PACKAGE_PIN L4 [get_ports P819]	; # G022
-set_property PACKAGE_PIN M2 [get_ports P817]	; # G027
-set_property PACKAGE_PIN M1 [get_ports P818]	; # G201
-set_property PACKAGE_PIN N2 [get_ports P815]	; # G115
-set_property PACKAGE_PIN N1 [get_ports P816]	; # G114
-set_property PACKAGE_PIN N3 [get_ports P813]	; # G023
-set_property PACKAGE_PIN P1 [get_ports P814]	; # G026
-set_property PACKAGE_PIN R1 [get_ports P811]	; # G113
-set_property PACKAGE_PIN R2 [get_ports P812]	; # G112
-set_property PACKAGE_PIN H1 [get_ports EWP]
+
+set_property PACKAGE_PIN M16 [get_ports CMD_READY]  ; # P923 G117
+set_property PACKAGE_PIN R15 [get_ports SND_INTR]   ; # P911 G030
+set_property PACKAGE_PIN R16 [get_ports WF_INTR]    ; # P913 G031
+
+set_property PACKAGE_PIN P15 [get_ports P915]       ; # G100, G200
+set_property PACKAGE_PIN K15 [get_ports P924]       ; # G015
+set_property PACKAGE_PIN K16 [get_ports P926]       ; # G014
+
+set_property PACKAGE_PIN R1  [get_ports P811]	    ; # G113
+set_property PACKAGE_PIN R2  [get_ports P812]	    ; # G112
+set_property PACKAGE_PIN N3  [get_ports P813]	    ; # G023
+set_property PACKAGE_PIN P1  [get_ports P814]	    ; # G026
+set_property PACKAGE_PIN N2  [get_ports P815]	    ; # G115
+set_property PACKAGE_PIN N1  [get_ports P816]	    ; # G114
+set_property PACKAGE_PIN M2  [get_ports P817]	    ; # G027
+set_property PACKAGE_PIN M1  [get_ports P818]	    ; # G201
+set_property PACKAGE_PIN L4  [get_ports P819]	    ; # G022
+set_property PACKAGE_PIN L5  [get_ports P826]	    ; # G129
+
+set_property PACKAGE_PIN H1  [get_ports EWP]
 
 # outputs
 set_property DRIVE 4 [all_outputs]

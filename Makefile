@@ -208,6 +208,9 @@ PVT_EXTS := $(subst ant_switch,,$(PVT_EXTS_))
 INT_EXTS = $(subst /,,$(subst extensions/,,$(wildcard $(INT_EXT_DIRS))))
 EXTS = $(INT_EXTS) $(PVT_EXTS)
 
+# dev-specific makefiles
+-include $(wildcard dev/*/Makefile)
+
 # package-specific makefiles
 -include pkgs/Makefile
 -include $(wildcard pkgs/*/Makefile.inc)
@@ -221,7 +224,7 @@ else
 endif
 
 _DIR_PLATFORMS = $(addprefix platform/, $(PLATFORMS))
-_DIRS_O3 += . $(PKGS) platform platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
+_DIRS_O3 += . $(DEVS) $(PKGS) platform platform/common $(_DIR_PLATFORMS) $(EXT_DIRS) $(EXT_SUBDIRS) \
     $(RX) $(GPS) dev ui cfg dx support net web arch/$(ARCH)
 
 ifeq ($(OPT),0)
@@ -236,11 +239,11 @@ else
 endif
 
 VPATH = $(DIRS) $(DIRS_O3) $(EXT_SUBDIRS_KEEP)
-I += -I$(GEN_DIR) $(addprefix -I,$(DIRS)) $(addprefix -I,$(DIRS_O3)) $(addprefix -I,$(OTHER_INC)) $(addprefix -I,$(EXT_SUBDIRS_KEEP)) -I/usr/local/include $(EXT_I)
+I += -I$(GEN_DIR) $(addprefix -I,$(DIRS)) $(addprefix -I,$(DIRS_O3)) $(addprefix -I,$(OTHER_INC)) $(addprefix -I,$(EXT_SUBDIRS_KEEP)) -I/usr/local/include $(DEV_I) $(EXT_I)
 H = $(wildcard $(addsuffix /*.h,$(DIRS))) $(wildcard $(addsuffix /*.h,$(DIRS_O3)))
-CPP_F = $(wildcard $(addsuffix /*.cpp,$(DIRS))) $(wildcard $(addsuffix /*.c,$(DIRS)))
-CPP_F_O3 = $(wildcard $(addsuffix /*.cpp,$(DIRS_O3))) $(wildcard $(addsuffix /*.c,$(DIRS_O3)))
-CFILES_KEEP = $(wildcard $(addsuffix /*.cpp,$(EXT_SUBDIRS_KEEP)))
+CPP_F := $(wildcard $(addsuffix /*.cpp,$(DIRS))) $(wildcard $(addsuffix /*.c,$(DIRS)))
+CPP_F_O3 := $(wildcard $(addsuffix /*.cpp,$(DIRS_O3))) $(wildcard $(addsuffix /*.c,$(DIRS_O3)))
+CFILES_KEEP := $(wildcard $(addsuffix /*.cpp,$(EXT_SUBDIRS_KEEP)))
 
 # remove generated files
 CFILES = $(subst web/web.cpp,,$(CPP_F))
@@ -275,7 +278,7 @@ else
 	# host machine, only build the FPGA-using version
 	LIBS += -lfftw3f -lutil
 	LIBS_DEP += /usr/lib/$(LIB_ARCH)/libfftw3f.a
-	CMD_DEPS = $(CMD_DEPS_DEBIAN) /usr/sbin/avahi-autoipd /usr/bin/upnpc /usr/bin/dig /usr/bin/pgmtoppm /sbin/ethtool /usr/bin/sshpass
+	CMD_DEPS += $(CMD_DEPS_DEBIAN) /usr/sbin/avahi-autoipd /usr/bin/upnpc /usr/bin/dig /usr/bin/pgmtoppm /sbin/ethtool /usr/bin/sshpass
 	CMD_DEPS += /usr/bin/killall /usr/bin/dtc /usr/bin/curl /usr/bin/wget /usr/bin/htop /usr/bin/colordiff /usr/bin/file /bin/nc /usr/bin/lftp
 	DIR_CFG = /root/kiwi.config
 	CFG_PREFIX =
@@ -1913,7 +1916,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
     # selectively transfer files to the target so everything isn't compiled each time
     GET_TOOLS_EXCLUDE_RSYNC := true
     -include tools/Makefile
-    EXCLUDE_RSYNC = ".DS_Store" ".git" "obj" "/obj_O3" "/obj_keep" "*.dSYM" "*.bin.h" "kiwid.aout" "e_cpu/a" "*.aout.h" "kiwi.gen.h" \
+    EXCLUDE_RSYNC += ".DS_Store" ".git" "obj" "/obj_O3" "/obj_keep" "*.dSYM" "*.bin.h" "kiwid.aout" "e_cpu/a" "*.aout.h" "kiwi.gen.h" \
         "verilog/kiwi.gen.vh" "web/edata*" "node_modules" "morse-pro-compiled.js" "Makefile.1"
     RSYNC_ARGS = -av --delete $(addprefix --exclude , $(EXCLUDE_RSYNC)) \
         $(addprefix --exclude , $(EXT_EXCLUDE_RSYNC)) $(addprefix --exclude , $(TOOLS_EXCLUDE_RSYNC)) \

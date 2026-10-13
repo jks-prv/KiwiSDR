@@ -54,13 +54,13 @@ module KiwiSDR
         input  wire BBB_MOSI,       // P918
         output wire BBB_MISO,       // P921
     
-        output wire P911,       // P911, GPIO 0_30, unused debug out
-        output wire P913,       // P913, GPIO 0_31, unused debug out
-    
-        input  wire P915,       // P915, GPIO 1_0-2_0, unused debug in
         output wire CMD_READY,  // P923, GPIO 1_17, ctrl[CTRL_CMD_READY]
-        output wire SND_INTR,   // P924, GPIO 0_15, ctrl[CTRL_SND_INTR]
-        output wire WF_INTR,    // P926, GPIO 0_14, ctrl[CTRL_WF_INTR]
+        output wire SND_INTR,   // P911, GPIO 0_30, ctrl[CTRL_SND_INTR]
+        output wire WF_INTR,    // P913, GPIO 0_31, ctrl[CTRL_WF_INTR]
+
+        input  wire P915,       // P915, GPIO 1_0-2_0, unused debug in
+        output wire P924,       // P924, GPIO 0_15, unused debug out
+        output wire P926,       // P926, GPIO 0_14, unused debug out
 
     `ifdef ANTSW_BEAGLE_GPIO
         input  wire P826,		// outside pin row
@@ -95,10 +95,9 @@ module KiwiSDR
     initial $display("#################### kiwi.v RX_CFG=%d MODE_ID=%s ####################", RX_CFG, MODE_ID);
 
     //////////////////////////////////////////////////////////////////////////
-    // db = debug(1)
     // a[9:0] = ant switch P8 GPIO(10)
     // FP = FPGA(2)
-    // GP = GPIO(2)
+    // GP = GPIO(3)
     // SP = SPI(5)
     // EE = EEPROM(2)
     // sy = system(3)
@@ -108,10 +107,10 @@ module KiwiSDR
     //////////////////////////////////////////////////////////////////////////
     
     // P9: 25 23 21 19 17 15 13 11 09 07 05 03 01   pcb top, outside row
-    //     xx sy SP EE SP db GP GP xx pw pw pw pw
+    //     xx sy SP EE SP GP sy sy xx pw pw pw pw
     //
     // P9: 26 24 22 20 18 16 14 12 10 08 06 04 02   pcb top, inside row
-    //     sy sy SP EE SP SP FP FP xx pw pw pw pw
+    //     GP GP SP EE SP SP FP FP xx pw pw pw pw
     
     // P8: 25 23 21 19 17 15 13 11 09 07 05 03 01   pcb top, inside row
     //     xx xx xx a8 a6 a4 a2 a0 JT JT xx xx xx
@@ -123,12 +122,12 @@ module KiwiSDR
     
 `ifdef USE_WB
     wire awb_debug, rx_avail_wb_A, rx_avail_A;
-    assign P911 = awb_debug;
-    assign P913 = rx_avail_wb_A;
+    assign P924 = awb_debug;
+    assign P926 = rx_avail_wb_A;
     //assign P926 = rx_avail_A;
 `else
-    assign P911 = P9[0];    // P911
-    assign P913 = P9[1];    // P913
+    assign P924 = P9[0];    // P924
+    assign P926 = P9[1];    // P926
 `endif
 
     // P8: 25 23 21 19 17 15 13 11 09 07 05 03 01   pcb top, inside row

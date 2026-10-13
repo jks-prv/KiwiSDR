@@ -14,6 +14,7 @@ DEBIAN := 0
 NOT_DEBIAN := 1
 DEVSYS := 2
 IS_DEVSYS :=
+WAS_INCLUDED := true
 
 # double check for RPI
 ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))

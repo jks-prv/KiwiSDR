@@ -541,6 +541,10 @@ if [[ "x${BBG_BBB}" == "xtrue" || "x${BBGE}" == "xtrue" ]] ; then
     #alias pmux="more /sys/kernel/debug/pinctrl/44e10800.pinmux/pinmux-pins"
     alias idt="echo BBG/BBGE/BBB; echo gpio: pmux cdsdt"
     alias mdt="make install_arm"
+    
+    # PRU tools
+    export PRU_SSP=/usr/lib/ti/pru-software-support-package
+    export PRU_CGT=/usr/share/ti/cgt-pru
 fi
 
 alias cddt="cd ${d_dt}"
