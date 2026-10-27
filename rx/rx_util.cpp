@@ -117,7 +117,9 @@ void rx_set_freq(double freq_with_offset_kHz, double foff_kHz)
 
 void rx_set_freq_offset_kHz(double foff_kHz)
 {
-    if (freq.offset_kHz != foff_kHz) {
+    static bool init;
+    if (!init || freq.offset_kHz != foff_kHz) {
+        init = true;
         //printf(YELLOW "FOFF foff_kHz %.2f => %.2f, offset_Hz=%lld" NONL, freq.offset_kHz, foff_kHz, freq.offset_Hz);
         freq.isOffset = (foff_kHz != 0);
         freq.offset_kHz = foff_kHz;
