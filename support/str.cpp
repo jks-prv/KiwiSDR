@@ -215,11 +215,11 @@ char *kstr_sp_less_trailing_nl(char *s_kstr_cstr)
 }
 
 // wrap a malloc()'d C-string in a kstr object so it is auto-freed later on
-char *kstr_wrap(char *s_malloced)
+char *kstr_wrap(char *s_kstr_cstr_malloced)
 {
-	if (s_malloced == NULL) return NULL;
-	kdebug(!kstr_obj(s_malloced));
-	return kstr_malloc(KSTR_EXT_MALLOC, s_malloced, 0);
+	if (s_kstr_cstr_malloced == NULL) return NULL;
+	if (kstr_obj(s_kstr_cstr_malloced)) return s_kstr_cstr_malloced;    // already a kstr
+	return kstr_malloc(KSTR_EXT_MALLOC, s_kstr_cstr_malloced, 0);
 }
 
 // Only frees a kstr object, will not free a malloc()'d C-string unless kstr_wrap()'d.
@@ -1190,7 +1190,7 @@ void str_hash_init(const char *id, str_hash_t *hashp, str_hashes_t *hashes, bool
 {
     int i, hash_len, cidx;
     u4_t maxval;
-    bool okay;
+    bool okay = false;
     
     if (hashp->init) return;
     hashp->init = true;
