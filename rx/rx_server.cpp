@@ -81,7 +81,6 @@ rx_stream_t rx_streams[] = {
 	{ STREAM_MONITOR,   "MON",		&c2s_mon,	    &c2s_mon_setup,         NULL,                    TASK_MED_PRIORITY },
 
 	// AJAX requests
-	{ AJAX_DISCOVERY,	"DIS" },
 	{ AJAX_PHOTO,		"PIX" },
 	{ AJAX_DX,		    "DX" },
 	{ AJAX_STATUS,		"status" },
@@ -347,7 +346,7 @@ conn_t *rx_server_websocket(websocket_mode_e mode, struct mg_connection *mc, u4_
 	} else
     // kiwiclient / kiwirecorder
     if (sscanf(uri_ts, "%lld/%256m[^\?]", &tstamp, &uri_m) == 2) {
-        type_m = strdup("krec");
+        type_m = kiwi_istrdup("krec");
         isWebSocket = true;
         isKrec = true;
     } else {

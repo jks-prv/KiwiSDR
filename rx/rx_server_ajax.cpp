@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2017 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 #include "config.h"
@@ -56,15 +56,19 @@ Boston, MA  02110-1301, USA.
 
 // process non-websocket connections
 // check_ip_blacklist() done by caller
-char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data)
+char *rx_server_ajax(struct mg_connection *mc, char *ip_unforwarded, char *ip_forwarded, const char **ajax_mime_type, void *ev_data)
 {
 	int i, j, n;
-	char *sb, *sb2, *sb3;
+	char *sb = (char *) -1, *sb2, *sb3;
 	rx_stream_t *st;
 	char *uri = (char *) mc->uri;
-	char *ip_unforwarded = ip_remote(mc);
-	bool isLocalIP = isLocal_ip(ip_unforwarded);
+	bool isJSON = false;
+	*ajax_mime_type = NULL;
 	
+	bool isLocalIP = isLocal_ip(ip_unforwarded);
+    //printf("rx_server_ajax: ip_unforwarded=%s ip_forwarded=%s isLocalIP=%d %s\n",
+    //    ip_unforwarded, ip_forwarded, isLocalIP, mc->uri);
+
 	if (*uri == '/') uri++;
 	int sl = strlen(uri);
 	if (sl >= 2 && uri[sl-1] == '/') uri[sl-1] = '\0';      // remove trailing '/'
@@ -81,7 +85,6 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 		&& st->type != AJAX_VERSION
 		&& st->type != AJAX_STATUS
 		&& st->type != AJAX_USERS
-		&& st->type != AJAX_DISCOVERY
 		)
 			return NULL;
 
@@ -101,6 +104,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 	case AJAX_VERSION:
 		asprintf(&sb, "{\"maj\":%d,\"min\":%d,\"ts\":%lld,\"sp\":%d}",
 		    version_maj, version_min, rx_conn_tstamp(), admcfg_true("admin_save_pwd"));
+		isJSON = true;
 		break;
 
 	// SECURITY:
@@ -116,7 +120,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 		const char *data = NULL;
 		int key_cmp, data_len = 0, rc = 0;
 		
-		printf("PHOTO UPLOAD REQUESTED from %s\n", ip_unforwarded);
+		printf("PHOTO UPLOAD REQUESTED from %s|%s\n", ip_unforwarded, ip_forwarded);
 		//printf("PHOTO UPLOAD REQUESTED key=%s ckey=%s\n", mc->query, current_authkey);
 		
 		if (isLocalIP) {
@@ -182,6 +186,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data
 		    kiwi_asfree(vname); kiwi_asfree(fname);
 		#endif
 		asprintf(&sb, "{\"r\":%d}", rc);
+		isJSON = true;
 		break;
 	}
 
@@ -448,9 +453,10 @@ fail:
         }
 
         line++;     // make 1-based
-		printf("DX UPLOAD: \"%s\" \"%s\" data_len=%d %s %s rc=%d line=%d nfields=%d\n",
-		    vname, fname, data_len, ip_unforwarded, rc? "ERROR" : "OK", rc, line, n);
+		printf("DX UPLOAD: \"%s\" \"%s\" data_len=%d %s|%s %s rc=%d line=%d nfields=%d\n",
+		    vname, fname, data_len, ip_unforwarded, ip_forwarded, rc? "ERROR" : "OK", rc, line, n);
 		asprintf(&sb, "{\"rc\":%d, \"line\":%d, \"nfields\":%d}", rc, line, n);
+		isJSON = true;
         #ifdef MONGOOSE_NEW_API
 		    kiwi_asfree(vname); kiwi_asfree(fname);
 		#endif
@@ -460,25 +466,15 @@ fail:
 
 	// SECURITY:
 	//	Delivery restricted to the local network.
-	//	Used by kiwisdr.com/scan -- the KiwiSDR auto-discovery scanner.
-	case AJAX_DISCOVERY:
-		if (!isLocalIP) return (char *) -1;
-		asprintf(&sb, "%d %s %s %d %d %s",
-			kiwi.serno, net.ip_pub, net.ip_pvt, net.port, net.nm_bits, net.mac);
-		printf("/DIS REQUESTED from %s: <%s>\n", ip_unforwarded, sb);
-		break;
-
-	// SECURITY:
-	//	Delivery restricted to the local network.
 	//	Returns JSON
 	case AJAX_USERS:
 		if (!isLocalIP) {
-			printf("/users NON_LOCAL FETCH ATTEMPT from %s\n", ip_unforwarded);
-			return (char *) -1;
+			printf("/users NON_LOCAL FETCH ATTEMPT from %s|%s\n", ip_unforwarded, ip_forwarded);
+			break;
 		}
 		sb = rx_users(IS_ADMIN);
-		printf("/users REQUESTED from %s\n", ip_unforwarded);
-		return sb;		// NB: return here because sb is already a kstr_t (don't want to do kstr_wrap() below)
+		isJSON = true;
+		printf("/users REQUESTED from %s|%s\n", ip_unforwarded, ip_forwarded);
 		break;
 
 	// SECURITY:
@@ -498,22 +494,21 @@ fail:
                     asprintf(&sb, "/snr: measuring..\n");
                 }
             } else {
-                asprintf(&sb, "/snr: NON_LOCAL MEASURE ATTEMPT from %s\n", ip_unforwarded);
+                asprintf(&sb, "/snr: NON_LOCAL MEASURE ATTEMPT from %s|%s\n", ip_unforwarded, ip_forwarded);
             }
             printf("%s", sb);
             break;
         }
         
     	bool need_comma1 = false;
-    	char *sb = (char *) "[", *sb2;
+    	sb = (char *) "[";
 		for (i = 0; i < SNR_MEAS_MAX; i++) {
             SNR_meas_t *meas = &SNR_meas_data[i];
             if (!(meas->flags & SNR_F_VALID)) continue;
-            asprintf(&sb2, "%s{\"ts\":\"%s\",\"seq\":%u,\"utc\":%d,\"imin\":%d,\"ant\":%d,\"snr\":[",
+            sb = kstr_asprintf(sb, "%s{\"ts\":\"%s\",\"seq\":%u,\"utc\":%d,\"imin\":%d,\"ant\":%d,\"snr\":[",
 				need_comma1? ",\n\n":"", var_ctime_static(&meas->tstamp), meas->seq, (meas->flags & SNR_F_TLOCAL)? 0:1,
 				snr_meas_interval_min, meas->flags & SNR_F_ANT);
         	need_comma1 = true;
-        	sb = kstr_cat(sb, kstr_wrap(sb2));
         	
         	bool ham = cfg_true("snr_meas_ham");
         	bool need_comma2 = false;
@@ -521,18 +516,17 @@ fail:
 			    if (!ham && j == SNR_BAND_HAM_LF) break;
         		SNR_data_t *data = &meas->data[j];
         		if (data->fkHz_lo == 0 && data->fkHz_hi == 0) continue;
-				asprintf(&sb2, "%s\n{\"lo\":%.0f,\"hi\":%.0f,\"min\":%d,\"max\":%d,\"p50\":%d,\"p95\":%d,\"snr\":%d}",
+				sb = kstr_asprintf(sb, "%s\n{\"lo\":%.0f,\"hi\":%.0f,\"min\":%d,\"max\":%d,\"p50\":%d,\"p95\":%d,\"snr\":%d}",
 					need_comma2? ",":"", data->fkHz_lo, data->fkHz_hi,
 					-(data->min), -(data->max), -(data->pct_50), -(data->pct_95), data->snr);
         		need_comma2 = true;
-				sb = kstr_cat(sb, kstr_wrap(sb2));
 			}
     		sb = kstr_cat(sb, "]}");
 		}
 		
     	sb = kstr_cat(sb, "]\n");
-		printf("/snr REQUESTED from %s\n", ip_forwarded);
-		return sb;		// NB: return here because sb is already a kstr_t (don't want to do kstr_wrap() below)
+		isJSON = true;
+		printf("/snr REQUESTED from %s|%s\n", ip_unforwarded, ip_forwarded);
 		break;
 	}
 
@@ -547,10 +541,10 @@ fail:
         static u4_t adc_level;
         
 		if (!isLocalIP) {
-			printf("/adc NON_LOCAL FETCH ATTEMPT from %s\n", ip_unforwarded);
-			return (char *) -1;
+			printf("/adc NON_LOCAL FETCH ATTEMPT from %s|%s\n", ip_unforwarded, ip_forwarded);
+			break;
 		}
-		//printf("/adc REQUESTED from %s\n", ip_unforwarded);
+		//printf("/adc REQUESTED from %s|%s\n", ip_unforwarded, ip_forwarded);
 		
 		if (!kiwi.hw) {
             asprintf(&sb, "/adc: no kiwi hardware detected\n");
@@ -577,6 +571,7 @@ fail:
         u4_t _adc_level = (adc_level == COUNT_ADC_OVFL)? 0 : adc_level;
 		asprintf(&sb, "{ \"adc_level_dec\":%u, \"adc_level_hex\":\"0x%x\", \"adc_count\":%u, \"ver_maj\":%d, \"ver_min\":%d }\n",
 		    _adc_level, _adc_level, adc_count, version_maj, version_min);
+		isJSON = true;
 		break;
 	}
 
@@ -585,10 +580,10 @@ fail:
 	//	Returns JSON
 	case AJAX_ADC_OV: {
 		if (!isLocalIP) {
-			printf("/adc_ov NON_LOCAL FETCH ATTEMPT from %s\n", ip_unforwarded);
-			return (char *) -1;
+			printf("/adc_ov NON_LOCAL FETCH ATTEMPT from %s|%s\n", ip_unforwarded, ip_forwarded);
+			break;
 		}
-		//printf("/adc_ov REQUESTED from %s\n", ip_unforwarded);
+		//printf("/adc_ov REQUESTED from %s|%s\n", ip_unforwarded, ip_forwarded);
 		
 		int count = dpump.rx_adc_ovfl_cnt;
 		if (kiwi_nonEmptyStr(mc->query)) {
@@ -601,7 +596,8 @@ fail:
 		    }
 		}
         sb = kstr_asprintf(NULL, "{\"adc_ov\":%u}\n", count);
-        return sb;		// NB: return here because sb is already a kstr_t (don't want to do kstr_wrap() below)
+		isJSON = true;
+        break;
     }
     
 	// SECURITY:
@@ -682,10 +678,10 @@ fail:
 	//	Returns JSON
 	case AJAX_GPS: {
 		if (!isLocalIP) {
-			printf("/gps NON_LOCAL FETCH ATTEMPT from %s\n", ip_unforwarded);
-			return (char *) -1;
+			printf("/gps NON_LOCAL FETCH ATTEMPT from %s|%s\n", ip_unforwarded, ip_forwarded);
+			break;
 		}
-		//printf("/gps REQUESTED from %s\n", ip_unforwarded);
+		//printf("/gps REQUESTED from %s|%s\n", ip_unforwarded, ip_forwarded);
 		
 		if (kiwi_nonEmptyStr(mc->query)) {
 		    int ch;
@@ -702,6 +698,7 @@ fail:
 		            gps.IQ_data_ch_ajax = 0;
                     gps.IQ_seq_ajax_r = gps.IQ_seq_ajax_w;
 		        }
+		        isJSON = true;
 		    } else {
                 asprintf(&sb, "/gps: \"%s\" unrecognized, \"iq=<ch>\" is the only recognized option\n", mc->query);
                 printf("%s", sb);
@@ -709,8 +706,9 @@ fail:
 		    }
 		} else {
             sb = gps_update_data();
+		    isJSON = true;
 		}
-        return sb;      // NB: return here because sb is already a kstr_t (don't want to do kstr_wrap() below)
+		break;
     }
     
 	// SECURITY:
@@ -909,16 +907,17 @@ fail:
 		cfg_string_free(s6);
 		cfg_string_free(s7);
 
-		//printf("STATUS REQUESTED from %s: <%s>\n", ip_forwarded, sb);
+		//printf("STATUS REQUESTED from %s|%s\n", ip_unforwarded, ip_forwarded);
 		break;
 	}
 
 	default:
 		return NULL;
-		break;
 	}
 
-	sb = kstr_wrap(sb);
-	//printf("AJAX: RTN <%s>\n", kstr_sp(sb));
-	return sb;		// NB: sb is kiwi_ifree()'d by caller
+    if (sb == (char *) -1) return sb;
+    if (isJSON) *ajax_mime_type = "application/json";
+	sb = kstr_wrap(sb);     // doesn't wrap if initial sb already a kstr
+	//printf("AJAX: RTN %p <%s>\n", sb, kstr_sp(sb));
+	return sb;		// NB: sb is kstr_free()'d by caller
 }

@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #include "kiwi.h"
 #include "types.h"
@@ -1046,6 +1046,7 @@ int web_request(struct mg_connection *mc, int ev)
     // try as AJAX request
     char *ajax_data;
     bool isAJAX = false, free_ajax_data = false;
+    const char *ajax_mime_type;
     if (!edata_data) {
     
         // don't try AJAX during the MG_EV_CACHE_INFO pass
@@ -1058,7 +1059,8 @@ int web_request(struct mg_connection *mc, int ev)
             return MG_FALSE;
         }
         //printf("rx_server_ajax: %s\n", mc->uri);
-        ajax_data = rx_server_ajax(mc, ip_forwarded);   // mc->uri is o_uri without "openwebrx" prefix
+        // mc->uri is o_uri without "openwebrx" prefix
+        ajax_data = rx_server_ajax(mc, ip_unforwarded, ip_forwarded, &ajax_mime_type);
         
         // ajax_data can be: NULL, -1 or char *
         if (ajax_data) {
@@ -1175,8 +1177,9 @@ int web_request(struct mg_connection *mc, int ev)
 
     if (!(isAJAX && ev == MG_EV_CACHE_INFO)) {		// don't print for isAJAX + MG_EV_CACHE_INFO nop case
         web_printf_all("%-16s %s:%05d size=%6d dirty=%d mtime=[%s] %s %s %s%s\n", (ev == MG_EV_CACHE_INFO)? "MG_EV_CACHE_INFO" : "MG_EV_HTTP_MSG",
-            ip_forwarded, mc->remote_port,
-            cache->st.st_size, dirty, var_ctime_static(&mtime), isAJAX? mc->uri : uri, mg_get_mime_type(isAJAX? mc->uri : uri, "text/plain"),
+            ip_forwarded, mc->remote_port, cache->st.st_size, dirty, var_ctime_static(&mtime),
+            isAJAX? mc->uri : uri, mg_get_mime_type(isAJAX? mc->uri : uri, "text/plain"),
+            isAJAX? mc->uri : uri, ajax_mime_type? ajax_mime_type : (mg_get_mime_type(isAJAX? mc->uri : uri, "text/plain")),
             (mc->query != NULL)? "qs:" : "", (mc->query != NULL)? mc->query : "");
     }
 
@@ -1196,7 +1199,7 @@ int web_request(struct mg_connection *mc, int ev)
         // NB: prevent AJAX responses from getting cached by not sending standard headers which include etag etc!
         if (isAJAX) {
             //printf("AJAX: %s %s\n", mc->uri, uri);
-            mg_http_send_header(mc, "Content-Type", "text/plain");
+            mg_http_send_header(mc, "Content-Type", ajax_mime_type? ajax_mime_type : "text/plain");
             
             // needed by, e.g., auto-discovery port scanner
             // SECURITY FIXME: can we detect a special request header in the pre-flight and return this selectively?

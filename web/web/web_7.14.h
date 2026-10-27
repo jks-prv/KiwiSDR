@@ -15,7 +15,7 @@ Boston, MA  02110-1301, USA.
 --------------------------------------------------------------------------------
 */
 
-// Copyright (c) 2014-2024 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2014-2026 John Seamons, ZL4VO/KF6VO
 
 #pragma once
 
@@ -123,7 +123,7 @@ void web_to_app_done(conn_t *c, nbuf_t *nb);
 
 // server to client
 void app_to_web(conn_t *c, char *s, int sl);
-char *rx_server_ajax(struct mg_connection *mc, char *ip_forwarded, void *ev_data);
+char *rx_server_ajax(struct mg_connection *mc, char *ip_unforwarded, char *ip_forwarded, const char **ajax_mime_type, void *ev_data);
 int websocket_request(struct mg_connection *mc, int ev, void *ev_data);
 int web_request(struct mg_connection *mc, int ev, void *ev_data);
 
