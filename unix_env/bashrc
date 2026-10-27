@@ -386,7 +386,7 @@ alias scen="function _sys () { systemctl --lines=100 enable \${*}.service ; } ; 
 alias sa="service --status-all"
 
 # packages
-alias pk="echo pk: s=search_available ls=list_installed ver,vers,sh,pol=versions i=install rm=remove ar=autoremove; echo pk: ch=allow-rel-info-chg up=update upp=single_pkg ug,ugn=dist-upgrade; echo pk: c=clean sz=sizes f,f2=which_pkg_has_file fu=file_update fi=files_installed co=cape_overlays"
+alias pk="echo pk: s=search_available ls=list_installed ver,vers,sh,pol=versions i=install re=reinstall rm=remove ar=autoremove; echo pk: ch=allow-rel-info-chg up=update upp=single_pkg ug,ugn=dist-upgrade; echo pk: c=clean sz=sizes f,f2=which_pkg_has_file fu=file_update fi=files_installed co=cape_overlays"
 alias pks="echo available pkgs:; apt-cache search"
 alias pkls="echo installed pkgs:; dpkg -l | gr"
 alias pksh="apt show"

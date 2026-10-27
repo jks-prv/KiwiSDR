@@ -1,3 +1,6 @@
+
+# SPI version
+
 set_property IOSTANDARD LVCMOS33 [get_ports ADC_CLKIN]
 set_property IOSTANDARD LVCMOS33 [get_ports ADC_CLKEN]
 set_property IOSTANDARD LVCMOS33 [get_ports ADC_STENL]
