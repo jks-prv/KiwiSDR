@@ -2,7 +2,7 @@
 
 */
 
-// Copyright (c) 2019 John Seamons, ZL4VO/KF6VO
+// Copyright (c) 2019-2026 John Seamons, ZL4VO/KF6VO
 
 #include "types.h"
 
@@ -41,10 +41,12 @@ char *new_ext(char *fn, const char *ext1, const char *ext2)
     int ext1_sl = strlen(ext1);
     int ext2_sl = strlen(ext2);
     char *bf = (char *) malloc(basename_sl + ext1_sl + ext2_sl + SPACE_FOR_NULL);
-    strncpy(bf, fn, basename_sl);
-    if (ext1_sl) strncpy(bf + basename_sl, ext1, ext1_sl);
-    if (ext2_sl) strncpy(bf + basename_sl + ext1_sl, ext2, ext2_sl);
-    bf[basename_sl + ext1_sl + ext2_sl] = '\0';
+    if (bf != NULL) {
+        strncpy(bf, fn, basename_sl);
+        if (ext1_sl) strncpy(bf + basename_sl, ext1, ext1_sl);
+        if (ext2_sl) strncpy(bf + basename_sl + ext1_sl, ext2, ext2_sl);
+        bf[basename_sl + ext1_sl + ext2_sl] = '\0';
+    }
     return bf;
 }
 
@@ -70,7 +72,7 @@ static char *files[NFILES][NTYPES];
 
 #define MTU 1500
 
-void minify(const char *ext_s, u4_t mflags, const char *svc, const char *ext, char *fn)
+void minify(const char *ext_s, u4_t mflags, const char *svc, const char *ext, char *fn, char *key)
 {
     char *cmd;
     int err;
@@ -138,10 +140,10 @@ void minify(const char *ext_s, u4_t mflags, const char *svc, const char *ext, ch
             } else
             if (mflags & (MF_JS|MF_CSS)) {
                 asprintf(&cmd, "echo '\n\n/* %s (%s = %.24s) */' >%s; "
-                    "curl -Ls -X POST --http1.0 --data \'type=%s\' --data \'fn=%s\' --data-urlencode \'input@%s\' %s >>%s; "
+                    "curl -Ls -X POST --http1.0 --data \'type=%s\' --data \'fn=%s\' --data \'key=%s\' --data-urlencode \'input@%s\' %s >>%s; "
                     "echo '\n\n' >>%s",
                     fn_min, fn, ctime(&sb_fn.st_mtime), fn_min,
-                    (mflags & MF_JS)? "js" : "css", fn, fn, svc, fn_min,
+                    (mflags & MF_JS)? "js" : "css", fn, key, fn, svc, fn_min,
                     fn_min);
             } else {
                 //asprintf(&cmd, "curl -Ls -X POST --form \'input=@%s;type=image/%s\' %s >%s",
@@ -265,6 +267,8 @@ int main(int argc, char *argv[])
     bool list = (flags & MF_LIST);
     int nfiles = argc;
     if (nfiles == 0) return 0;
+    char *key = getenv("FILE_OPTIM_KEY");
+    if (key == NULL) panic("missing env FILE_OPTIM_KEY");
     
     // if not limited then select all
     if (!(flags & (MF_JS|MF_CSS|MF_HTML|MF_PNG|MF_JPG)))
@@ -291,21 +295,21 @@ int main(int argc, char *argv[])
     // minify and (potentially) gzip them, but don't merge them.
     if (flags & MF_JS) for (i=0; i < fidx[F_JS]; i++) {
         //minify("js ", MF_JS|mflags, "www.toptal.com/developers/javascript-minifier/api/raw", ".js", files[i][F_JS]);
-        minify("js ", MF_JS|mflags, "kiwisdr.com/php/update.php", ".js", files[i][F_JS]);
+        minify("js ", MF_JS|mflags, "kiwisdr.com/php/update.php", ".js", files[i][F_JS], key);
     }
     if (flags & MF_CSS) for (i=0; i < fidx[F_CSS]; i++) {
         //minify("css", MF_CSS|mflags, "www.toptal.com/developers/cssminifier/raw", ".css", files[i][F_CSS]);
-        minify("css", MF_CSS|mflags, "kiwisdr.com/php/update.php", ".css", files[i][F_CSS]);
+        minify("css", MF_CSS|mflags, "kiwisdr.com/php/update.php", ".css", files[i][F_CSS], key);
     }
     if (flags & MF_HTML) for (i=0; i < fidx[F_HTML]; i++) {
         //minify("html", MF_HTML|mflags, "www.toptal.com/developers/html-minifier/raw", ".html", files[i][F_HTML]);
-        minify("html", MF_HTML|mflags, "kiwisdr.com/php/update.php", ".html", files[i][F_HTML]);
+        minify("html", MF_HTML|mflags, "kiwisdr.com/php/update.php", ".html", files[i][F_HTML], key);
     }
     if (flags & MF_PNG) for (i=0; i < fidx[F_PNG]; i++) {
-        minify("png", MF_PNG|mflags, "www.toptal.com/developers/pngcrush/crush", ".png", files[i][F_PNG]);
+        minify("png", MF_PNG|mflags, "www.toptal.com/developers/pngcrush/crush", ".png", files[i][F_PNG], key);
     }
     if (flags & MF_JPG) for (i=0; i < fidx[F_JPG]; i++) {
-        minify("jpg", MF_JPG|mflags, "www.toptal.com/developers/jpgoptimiser/optimise", ".jpg", files[i][F_JPG]);
+        minify("jpg", MF_JPG|mflags, "www.toptal.com/developers/jpgoptimiser/optimise", ".jpg", files[i][F_JPG], key);
     }
     
     return 0;
