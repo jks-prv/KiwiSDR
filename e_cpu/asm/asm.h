@@ -188,7 +188,7 @@ int exp_macro(tokens_t **dp, tokens_t **to);
 
 
 void sys_panic(const char *str);
-void panic(const char *str, tokens_t *t = NULL);
+void asm_panic(const char *str, tokens_t *t = NULL);
 void _syntax(int cond, tokens_t *tp, const char *fmt, ...);
 void _note(const char *color, tokens_t *tp, const char *fmt, ...);
 void _assert(int cond, const char *str, const char *file, int line);

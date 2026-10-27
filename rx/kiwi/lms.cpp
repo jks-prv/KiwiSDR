@@ -82,8 +82,8 @@ int CLMS::Initialize(nr_type_e nr_type, TYPEREAL nr_param[NOISE_PARAMS])
 
 void CLMS::ProcessFilter(int ilen, TYPEMONO16* ibuf, TYPEMONO16* obuf)
 {
-    //printf("LMS run %s dlen=%d beta=%.6f decay=%.6f\n", (m_nr_type == NR_AUTONOTCH)? "autonotch" : "denoise", \
-        m_dlen, m_beta, m_decay);
+    //printf("LMS run %s dlen=%d beta=%.6f decay=%.6f\n", (m_nr_type == NR_AUTONOTCH)? "autonotch" : "denoise",
+    //    m_dlen, m_beta, m_decay);
 
     int i;
     

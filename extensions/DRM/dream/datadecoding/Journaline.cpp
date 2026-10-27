@@ -80,6 +80,7 @@ void CJournaline::ResetOpenJournalineDecoder()
 void CJournaline::AddFile(const std::string filename)
 {
 	FILE *f = fopen(filename.c_str(), "rb");
+	if (f == NULL) return;
 	bool err=false;
 	showDdNewsSvcDecInfo=1;
 	showDdNewsSvcDecErr=1;

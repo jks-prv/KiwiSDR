@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
             case '1': write_code_coe=1; break;
             case '2': write_data_coe=1; break;
             case '3': write_symtab_file=1; break;
-            default: printf("unknown arg \"%s\"\n", argv[i]); panic("args"); break;
+            default: printf("unknown arg \"%s\"\n", argv[i]); asm_panic("args"); break;
         }
 	
 	if (!test) {
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 			        continue;
 			    }
 				ifn++; lineno[ifn] = 0; ifl++;
-				if (ifn >= NIFILES_NEST) panic("too many nested include files");
+				if (ifn >= NIFILES_NEST) asm_panic("too many nested include files");
 				fn = ifiles[ifn]; strcpy(fn, basename); strcpy(ifiles_list[ifl], basename);
                 snprintf(fullpath, sizeof(fullpath), "%s%s", other_dir? other_dir : "", fn);
                 printf("#include file: %s\n", fullpath);
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 	
 			if (sscanf(cp, "#include %s", basename) == 1) {
 				ifn++; lineno[ifn] = 0; ifl++;
-				if (ifn >= NIFILES_NEST) panic("too many nested include files");
+				if (ifn >= NIFILES_NEST) asm_panic("too many nested include files");
 				fn = ifiles[ifn]; strcpy(fn, basename); strcpy(ifiles_list[ifl], basename);
 				printf("#include file: %s\n", fn);
 				if ((ifp[ifn] = fopen(fn, "r")) == NULL) {
@@ -327,7 +327,7 @@ int main(int argc, char *argv[])
 	ep0 = tp; pass1 = ep0;
 	if (debug) dump_tokens("pass0", pass0, ep0);
 	if (debug) printf("\ntokenize pass 0: %d strings %ld tokens\n\n", num_strings(), (long) (ep0-tokens));
-	if (parse_errors) panic("parse errors");
+	if (parse_errors) asm_panic("parse errors");
 
 
 	// pass 1: MACRO
@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
 		// remove #if / #endif
 		if (tp->ttype == TT_PRE && tp->num == PP_IF) {
 			ifdef_lvl++;
-			if (ifdef_lvl >= NIFDEF_NEST) panic("too many nested #if");
+			if (ifdef_lvl >= NIFDEF_NEST) asm_panic("too many nested #if");
 			lock = 0;
 
 			// skip in this level if skipping in previous level
@@ -442,7 +442,7 @@ int main(int argc, char *argv[])
 
 		if (tp->ttype == TT_PRE && tp->num == PP_ENDIF) {
 			ifdef_lvl--;
-			if (ifdef_lvl < 0) panic("unbalanced #if/#endif");
+			if (ifdef_lvl < 0) asm_panic("unbalanced #if/#endif");
 			lock = 0;
 			if (debug) printf("ENDIF\n");
 			tp += 2; continue;
@@ -621,7 +621,7 @@ int main(int argc, char *argv[])
 						continue;
 					}
 					tp+=2;	// also skip \n
-					if (limit-- == 0) panic("FACTOR never converged");
+					if (limit-- == 0) asm_panic("FACTOR never converged");
 				}
 			}
 			syntax(tp->ttype == TT_PRE && tp->num == PP_ENDF, tp, "expecting FACTOR END");
@@ -1041,7 +1041,7 @@ int main(int argc, char *argv[])
                     }
                 } else
                 if (tp->num == 8) {
-                    if (val) panic("u64 non-zero decl initializer not supported yet");
+                    if (val) asm_panic("u64 non-zero decl initializer not supported yet");
                     val = 0;
                     if (debug || show_bin) printf("%08x|%08x", /* val >> 32 */ 0, val & 0xffffffff);
                     write(bfd, &val, 4);
@@ -1051,7 +1051,7 @@ int main(int argc, char *argv[])
                         code_comma = ',';
                     }
                 } else {
-                    panic("illegal decl size");
+                    asm_panic("illegal decl size");
                 }
                 a += tp->num;
                 if (debug || show_bin) printf("\n");
@@ -1165,7 +1165,7 @@ int main(int argc, char *argv[])
                 }
                 if (!dp->str) {
                     printf("oc=0x%04x\n", oc);
-                    panic("stats opcode");
+                    asm_panic("stats opcode");
                 }
 			}
 			
@@ -1250,11 +1250,11 @@ int main(int argc, char *argv[])
 	
 	if (write_symtab_file) fclose(sfp);
 
-	if (error || global_error) panic("errors detected");
+	if (error || global_error) asm_panic("errors detected");
 
 	printf("used %d/%d CPU RAM (%d insns remaining)\n", a/2, CPU_RAM_SIZE, CPU_RAM_SIZE - a/2);
 	
-	if (bad) panic("============ generated code compare errors ============\n");
+	if (bad) asm_panic("============ generated code compare errors ============\n");
 	printf("\n");
 
 	if (stats) {

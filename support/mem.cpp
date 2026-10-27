@@ -32,42 +32,70 @@ static void mt_gdb(const char *s)
 }
 
 #ifdef MALLOC_INTERCEPT_PRINTF
+    void *kiwi_imalloc(const char *from, size_t size)
+    {
+        void *ptr = malloc(size);
+        //           kiwi_irealloc ______ _
+        real_printf("kiwi_imalloc  %6d %04x %s\n",
+            size, FROM_VOID_PARAM(ptr) & 0xffff, from);
+        return ptr;
+    }
+    
+    void *kiwi_icalloc(const char *from, size_t nel, size_t size)
+    {
+        void *ptr = calloc(nel, size);
+        //           kiwi_irealloc ______ _
+        real_printf("kiwi_icalloc  %6d %04x %s\n",
+            nel * size, FROM_VOID_PARAM(ptr) & 0xffff, from);
+        return ptr;
+    }
+    
+    void *kiwi_irealloc(const char *from, void *ptr, size_t size)
+    {
+        void *ptr2 = realloc(ptr, size);
+        //           kiwi_irealloc ______ _
+        real_printf("kiwi_irealloc %6d %04x => %04x %s %d\n",
+            size, FROM_VOID_PARAM(ptr) & 0xffff, FROM_VOID_PARAM(ptr2), from);
+        return ptr2;
+    }
+    
+    void kiwi_ifree(const char *from, void *ptr)
+    {
+        //           kiwi_irealloc ______ _
+        real_printf("kiwi_ifree           %04x %s\n",
+            FROM_VOID_PARAM(ptr) & 0xffff, from);
+        free(ptr);
+    }
+#endif
 
-void *kiwi_imalloc(const char *from, size_t size)
-{
-    void *ptr = malloc(size);
-    //           kiwi_irealloc ______ _
-    real_printf("kiwi_imalloc  %6d %04x %s\n",
-        size, FROM_VOID_PARAM(ptr) & 0xffff, from);
-    return ptr;
-}
-
-void *kiwi_icalloc(const char *from, size_t nel, size_t size)
-{
-    void *ptr = calloc(nel, size);
-    //           kiwi_irealloc ______ _
-    real_printf("kiwi_icalloc  %6d %04x %s\n",
-        nel * size, FROM_VOID_PARAM(ptr) & 0xffff, from);
-    return ptr;
-}
-
-void *kiwi_irealloc(const char *from, void *ptr, size_t size)
-{
-    void *ptr2 = realloc(ptr, size);
-    //           kiwi_irealloc ______ _
-    real_printf("kiwi_irealloc %6d %04x => %04x %s %d\n",
-        size, FROM_VOID_PARAM(ptr) & 0xffff, FROM_VOID_PARAM(ptr2), from);
-    return ptr2;
-}
-
-void kiwi_ifree(const char *from, void *ptr)
-{
-    //           kiwi_irealloc ______ _
-    real_printf("kiwi_ifree           %04x %s\n",
-        FROM_VOID_PARAM(ptr) & 0xffff, from);
-    free(ptr);
-}
-
+#ifdef CPPCHECK
+    void *kiwi_cppcheck_imalloc(size_t size)
+    {
+        void *ptr = malloc(size);
+        if (ptr == NULL) { panic("malloc"); }
+        return ptr;
+    }
+    
+    void *kiwi_cppcheck_icalloc(size_t nel, size_t size)
+    {
+        void *ptr = calloc(nel, size);
+        if (ptr == NULL) { panic("calloc"); }
+        return ptr;
+    }
+    
+    void *kiwi_cppcheck_irealloc(void *ptr, size_t size)
+    {
+        void *ptr2 = realloc(ptr, size);
+        if (ptr2 == NULL) { panic("realloc"); }
+        return ptr2;
+    }
+    
+    char *kiwi_cppcheck_strdup(const char *s)
+    {
+        char *ptr = strdup(s);
+        if (ptr == NULL) { panic("strdup"); }
+        return ptr;
+    }
 #endif
 
 #ifdef MALLOC_DEBUG
@@ -192,13 +220,17 @@ void *kiwi_malloc(const char *from, size_t size)
         kmprintf(("kiwi_malloc-1 \"%s\" size=%d\n", from, size));
     #endif
 	void *ptr = malloc(size);
-	memset(ptr, 0, size);
-    #ifdef MALLOC_DEBUG
-        int i = mt_enter(from, ptr, size);
-        kmprintf(("kiwi_malloc-2 \"%s\" #%d size=%d %p (total #%d|hi:%d|%s)\n",
-            from, i, size, ptr, mem.nmt, mem.hiwat, toUnits(mem.size)));
-    #endif
-	return ptr;
+	if (ptr == NULL) {
+	    mt_gdb("kiwi_malloc");
+	} else {
+        memset(ptr, 0, size);
+        #ifdef MALLOC_DEBUG
+            int i = mt_enter(from, ptr, size);
+            kmprintf(("kiwi_malloc-2 \"%s\" #%d size=%d %p (total #%d|hi:%d|%s)\n",
+                from, i, size, ptr, mem.nmt, mem.hiwat, toUnits(mem.size)));
+        #endif
+    }
+    return ptr;
 }
 
 #ifdef MALLOC_DEBUG

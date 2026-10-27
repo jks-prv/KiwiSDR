@@ -94,6 +94,7 @@ static int32_t out_file_open(out_file_ctx_t *self) {
 		snprintf(filename, sizeof(filename), "%s%s%s", self->filename_prefix, suffix, self->extension);
 	} else {
 		filename = strdup(self->filename_prefix);
+		if (filename == NULL) return -1;
 	}
 
 	if((self->fh = fopen(filename, "a+")) == NULL) {

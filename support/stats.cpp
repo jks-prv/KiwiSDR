@@ -160,7 +160,7 @@ static void webserver_collect_print_stats(int print)
 		int ncpu;
 		char *cpu_ptr = kstr_sp(reply);
 		for (ncpu = 0; ncpu < NCPU; ncpu++) {
-			char buf[10];
+			CPPCHECK_STATIC char buf[10];
 			kiwi_snprintf_buf(buf, "cpu%d", ncpu);
 			cpu_ptr = strstr(cpu_ptr, buf);
 			if (cpu_ptr == nullptr)
@@ -627,7 +627,7 @@ kstr_t *user_list()
     int idx, j;
 
     kstr_t *sb = NULL;
-    user_log_t *ul;
+    user_log_t *ul = NULL;
     bool comma = false;
 
     ul_prf("START idx=%d\n", user_tx_idx);

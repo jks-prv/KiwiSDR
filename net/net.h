@@ -202,7 +202,8 @@ bool find_local_IPs(int retry);
 void inet4_h2d(u4_t inet4, u1_t *ap, u1_t *bp, u1_t *cp, u1_t *dp);
 char *inet4_h2s(u4_t inet4, int port = -1, int which = 0);
 bool is_inet4_map_6(u1_t *a);
-int inet_nm_bits(int family, void *netmask);
+int inet4_nm_bits(u4_t nm);
+int inet6_nm_bits(u1_t *nm);
 bool isLocal_ip(char *ip, bool *is_loopback = NULL, u4_t *ipv4 = NULL, bool *error = NULL, bool *kiwisdr_com = NULL);
 
 int DNS_lookup(const char *domain_name, ip_lookup_t *r_ips, const char *ip_backup = NULL);

@@ -544,6 +544,7 @@ make_all: $(BUILD_DIR)/kiwi.bin
 ################################
 # BINARY_DISTRO
 ################################
+
 DEBMM := D$(DEBIAN_VERSION).$(DEBIAN_VERSION_MIN)
 ifeq ($(DEBIAN_VERSION),8)
     MINR := $(shell [ $(DEBIAN_VERSION_MIN) -ge 5 ] && [ $(DEBIAN_VERSION_MIN) -le 11 ] && echo true)
@@ -652,6 +653,9 @@ build_makefile_inc:
 #
 	@echo $(APPEND_MF_INC)
 	@echo $(CFLAGS) $(APPEND_MF_INC)
+#
+	@echo $(APPEND_MF_INC)
+	@echo $(CPP_FLAGS) $(APPEND_MF_INC)
 #
 	@echo $(APPEND_MF_INC)
 	@echo $(EXT_DEFINES) $(APPEND_MF_INC)
@@ -906,6 +910,7 @@ make_vars: check_detect
 	@echo CMD_DEPS = $(CMD_DEPS)
 	@echo OPT = $(OPT)
 	@echo CFLAGS = $(CFLAGS)
+	@echo CFLAGS2 = $(CFLAGS2)
 	@echo CPP_FLAGS = $(CPP_FLAGS)
 	@echo
 	@echo DEPS = $(OBJECTS:.o=.d)
@@ -1000,6 +1005,23 @@ build_log blog:
 
 
 ################################
+# cppcheck: static analyzer
+# cppcheck.sourceforge.io/manual.pdf
+################################
+
+CHK_OPTS := --cppcheck-build-dir=cppcheck --check-level=exhaustive
+#CHK_OPTS += --enable=all
+CHK_EARLY := --include=types.h --include=config.h --include=support/printf.h --include=ansi.h \
+    --include=net/ip_blacklist.h --include=support/debug.h --include=pkgs/mongoose/mongoose/mongoose_7.14.h
+CHK_EXCLUDE := 
+CHK_DEFS = -DCPPCHECK_FORCE -DCPPCHECK -D__GNUC__ -UMG_ENABLE_LINES $(CPP_FLAGS) $(EXT_DEFINES) $(INT_FLAGS)
+
+chk:
+	mkdir -p cppcheck
+	-cppcheck $(CHK_OPTS) $(CHK_EARLY) $(CHK_EXCLUDE) $(CHK_DEFS) .
+
+
+################################
 # general build rules
 ################################
 
@@ -1084,31 +1106,31 @@ OPTS_VIS_UNOPT = $(strip $(V) $(DEBUG) $(XC) $(VIS_UNOPT))
 OPTS_VIS_OPT = $(strip $(V) $(DEBUG) $(XC) $(VIS_OPT))
 
 $(OBJ_DIR_DEFAULT)/web_devel.o: web/web.cpp config.h
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -DEDATA_DEVEL -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -DEDATA_DEVEL -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(OBJ_DIR_DEFAULT)/web_embed.o: web/web.cpp config.h
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -DEDATA_EMBED -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -DEDATA_EMBED -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(OBJ_DIR)/edata_embed.o: $(EDATA_EMBED)
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(KEEP_DIR)/edata_always.o: $(EDATA_ALWAYS)
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(KEEP_DIR)/edata_always2.o: $(EDATA_ALWAYS2)
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(OBJ_DIR)/ext_init.o: $(GEN_DIR)/ext_init.cpp
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(OBJ_DIR)/pkgs_init.o: $(GEN_DIR)/pkgs_init.cpp
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 
@@ -1134,16 +1156,16 @@ $(OBJ_DIR_O3)/%.o: %.c $(SRC_DEPS)
 
 $(OBJ_DIR_O3)/search.o: search.cpp $(SRC_DEPS)
     ifeq ($(ASM_OUT),1)
-	    $(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CPP_FLAGS) -S -o $(subst .o,.S,$@) $<
+	    $(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CFLAGS2) -S -o $(subst .o,.S,$@) $<
     endif
-	$(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(OBJ_DIR_O3)/simd.o: simd.cpp $(SRC_DEPS)
     ifeq ($(ASM_OUT),1)
-	    $(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CPP_FLAGS) -S -o $(subst .o,.S,$@) $<
+	    $(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CFLAGS2) -S -o $(subst .o,.S,$@) $<
     endif
-	$(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_OPT) $(CFLAGS_UNSAFE_OPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 
@@ -1151,20 +1173,20 @@ $(OBJ_DIR_O3)/simd.o: simd.cpp $(SRC_DEPS)
 
 $(OBJ_DIR)/%.o: %.cpp $(SRC_DEPS)
     ifeq ($(ASM_OUT),1)
-	    $(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CPP_FLAGS) -S -o $(subst .o,.S,$@) $<
+	    $(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CFLAGS2) -S -o $(subst .o,.S,$@) $<
     endif
-	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_UNOPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(KEEP_DIR)/%.o: %.cpp $(SRC_DEPS)
-	$(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 $(OBJ_DIR_O3)/%.o: %.cpp $(SRC_DEPS)
     ifeq ($(ASM_OUT),1)
-	    $(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CPP_FLAGS) -S -o $(subst .o,.S,$@) $<
+	    $(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CFLAGS2) -S -o $(subst .o,.S,$@) $<
     endif
-	$(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CPP_FLAGS) -c -o $@ $<
+	$(CPP) $(OPTS_VIS_OPT) @$(MF_INC) $(CFLAGS2) -c -o $@ $<
 	$(POST_PROCESS_DEPS)
 
 

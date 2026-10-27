@@ -89,9 +89,9 @@ static void sync_and_demodulate(wspr_t *w,
         for(lag=lagmin; lag<=lagmax; lag=lag+lagstep) {
             ss=0.0;
             totp=0.0;
+            float fplast=0.0;
             for (i=0; i<NSYM_162; i++) {
                 fp = f0 + (drift1/2.0)*((float)i-FHSYM_81)/FHSYM_81;
-                float fplast;   // init first time through by i == 0
                 if( i==0 || (fp != fplast) ) {  // only calculate sin/cos if necessary
                     dphi0=TWOPIDT*(fp-DF15);
                     cdphi0=cos(dphi0);

@@ -10,6 +10,7 @@
  */
 
 #include "jelinek.h"
+#include "mem.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +61,7 @@ int jelinek(
     unsigned int low_bucket = nbuckets-1; //will be set on first run-through
     unsigned int high_bucket = 0;
     unsigned int *buckets, bucket = 0;
-    buckets = (unsigned int *) malloc(nbuckets*sizeof(unsigned int));
+    buckets = (unsigned int *) kiwi_imalloc("jelinek", nbuckets*sizeof(unsigned int));
     memset(buckets,0,nbuckets*sizeof(unsigned int));
     unsigned int ptr = 1;
     unsigned int stackptr = 1; //pointer values of 0 are reserved (they mean that a bucket is empty)

@@ -25,28 +25,31 @@ int main()
 {
     FILE *fo;
     fo = fopen("dx_huge.json", "w");
-    if (!fo) sys_panic("fo");
-    fprintf(fo, "{\"dx\":[\n");
-    bool first = true;
+    if (fo == NULL) {
+        sys_panic("fo");
+    } else {
+        fprintf(fo, "{\"dx\":[\n");
+        bool first = true;
+        
+        int i;
+        float f;
+        int start_f = 5, end_i = 9999, step_f = 3;
+        //int start_f = 10000, end_i = 255, step_f = 1;
     
-    int i;
-    float f;
-    int start_f = 5, end_i = 9999, step_f = 3;
-    //int start_f = 10000, end_i = 255, step_f = 1;
-
-    for (i = 0, f = start_f; i < end_i; i++, f += step_f) {
-        bool last = (i == (end_i - 1));
-        if (i & 1)
-            fprintf(fo, "[%.2f,\"AM\",\"%.2f %s\",\"%s\",{\"WL\":1, \"b0\":2300, \"e0\":0200}]%s\n",
-                f, f, IDENT, NOTES, !last? ",":"");
-        else
-            fprintf(fo, "[%.2f,\"AM\",\"%.2f %s\",\"%s\",{\"WL\":1}]%s\n",
-                f, f, IDENT, NOTES, !last? ",":"");
-        first = false;
+        for (i = 0, f = start_f; i < end_i; i++, f += step_f) {
+            bool last = (i == (end_i - 1));
+            if (i & 1)
+                fprintf(fo, "[%.2f,\"AM\",\"%.2f %s\",\"%s\",{\"WL\":1, \"b0\":2300, \"e0\":0200}]%s\n",
+                    f, f, IDENT, NOTES, !last? ",":"");
+            else
+                fprintf(fo, "[%.2f,\"AM\",\"%.2f %s\",\"%s\",{\"WL\":1}]%s\n",
+                    f, f, IDENT, NOTES, !last? ",":"");
+            first = false;
+        }
+        
+        fprintf(fo, "]}\n");
+    
+        fclose(fo);
     }
-    
-    fprintf(fo, "]}\n");
-
-    fclose(fo);
 	return 0;
 }

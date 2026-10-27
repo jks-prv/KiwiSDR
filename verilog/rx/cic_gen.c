@@ -178,7 +178,7 @@ void cic_gen(char *fn, int options, int N, int R, int Bin, int Bout)
 	int hj_comb[MAX_N] = {2, 6, 20, 70, 252, 924, 3432};		// pre-computed, see Rick's paper
 	assert(MAX_N <= ARRAY_LEN(hj_comb));
 
-	double Fj_for_many_combs[MAX_N];
+	double Fj_for_many_combs[MAX_N+1];
 	for (s = 1; s <= MAX_N; s++) {
 		Fj_for_many_combs[s] = sqrt(hj_comb[s-ONE_BASED_INDEXING]);
 	}
@@ -491,7 +491,7 @@ int main (int argc, char *argv[])
 }
 
 
-#if 0
+/*
 
 %  Computes CIC decimation filter accumulator register  
 %  truncation in each filter stage based on Hogenauer's  
@@ -656,4 +656,4 @@ for Stage = 1:2*N+1
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#endif
+*/

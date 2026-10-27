@@ -39,6 +39,7 @@ void logStatus(char *format, ...) {
     va_start(args, format);
 
 	vsnprintf(s, sizeof(s), format, args);
+	va_end(args);
 	CLogPrinter::GetInstance()->LogStatus(s);
 } 
 
@@ -48,6 +49,7 @@ void logWarning(char *format, ...) {
     va_start(args, format);
 
 	vsnprintf(s, sizeof(s), format, args);
+	va_end(args);
 	CLogPrinter::GetInstance()->LogWarning(s);
 } 
 
@@ -57,6 +59,7 @@ void logError(char *format, ...) {
     va_start(args, format);
 
 	vsnprintf(s, sizeof(s), format, args);
+	va_end(args);
 	CLogPrinter::GetInstance()->LogWarning(s);
 } 
 
@@ -117,6 +120,7 @@ void CChainingLogPrinter::SetNextInstance(CLogPrinter *pInstance)
 CFileLogPrinter::CFileLogPrinter()
 {
 	mpLogFile = fopen("DebugLog.txt", "a");
+	if (mpLogFile == NULL) return;
 	fprintf(mpLogFile, "Start of logfile\n");
 	fflush(mpLogFile);
 }
@@ -124,18 +128,21 @@ CFileLogPrinter::CFileLogPrinter()
 
 void CFileLogPrinter::LogStatusSpecific(char *s)
 {
+	if (mpLogFile == NULL) return;
 	fprintf(mpLogFile, "STATUS: %s\n",s);
 	fflush(mpLogFile);
 }
 
 void CFileLogPrinter::LogWarningSpecific(char *s)
 {
+	if (mpLogFile == NULL) return;
 	fprintf(mpLogFile, "WARNING: %s\n",s);
 	fflush(mpLogFile);
 }
 
 void CFileLogPrinter::LogErrorSpecific(char *s)
 {
+	if (mpLogFile == NULL) return;
 	fprintf(mpLogFile, "ERROR: %s\n",s);
 	fflush(mpLogFile);
 }

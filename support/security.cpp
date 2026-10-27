@@ -164,7 +164,7 @@ char *kiwi_crypt_generate(const char *key, int seq)
     salt[N_SALT] = '\0';
     
     printf("kiwi_crypt_generate: salt=<%s>\n", salt);
-    char *salt_s, *encr;
+    char *salt_s, *encr = NULL;
     asprintf(&salt_s, "$%s$%s$", HASH_FUNC_SHA_512, salt);
     #ifdef HOST
         #ifdef USE_CRYPT
@@ -191,7 +191,7 @@ bool kiwi_crypt_validate(const char *key, char *salt, char *hash_o)
     int n;
     if (key == NULL) key = "";
 
-    char *salt_s, *encrypted;
+    char *salt_s, *encrypted = NULL;
     asprintf(&salt_s, "$%s$%s$", HASH_FUNC_SHA_512, salt);
     #ifdef HOST
         #ifdef USE_CRYPT

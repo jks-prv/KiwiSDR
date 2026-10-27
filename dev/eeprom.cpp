@@ -159,13 +159,14 @@ int eeprom_check(model_e *model, bool *old_model_fmt)
 	memset(e, 0, sizeof(eeprom_t));
 	if ((n = fread(e, 1, sizeof(eeprom_t), fp)) < 0) {
 		mlprintf("EEPROM check: read %s\n", strerror(errno));
+	    fclose(fp);
 		return -1;
 	}
+	fclose(fp);
 	if (n < sizeof(eeprom_t)) {
 		mlprintf("EEPROM check: WARNING short read %d\n", n);
 		return -1;
 	}
-	fclose(fp);
 	
 	u4_t header = FLIP32(e->header);
 	if (header != EE_HEADER) {

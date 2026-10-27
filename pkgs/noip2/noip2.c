@@ -1559,9 +1559,10 @@ int parse_config()
         free(request);
         free(new_config);
         exit(0);
+    } else {
+        if (new_config->count == 0)
+            return BADCONFIG5;
     }
-    if (new_config->count == 0)
-        return BADCONFIG5;
     return SUCCESS;
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -2602,6 +2603,7 @@ void autoconf()
     }
     SkipHeaders();
     GetNextLine(line);
+    external_ip[0] = '\0';
     p = line;
     if ((*p >= '0') && (*p <= '9')) {   // extract IP address
         if (!validate_IP_addr(line, external_ip)) {

@@ -17,9 +17,11 @@ int pthr_mutex_init(const char *id, pthr_mutex_t *mutex, const pthr_mutexattr_t 
     (void) mutexattr;
     mutex->id = id;
     mutex->lock = malloc(sizeof(lock_t));
-    lock_initS((lock_t *) mutex->lock, id);
-    lock_register((lock_t *) mutex->lock);
-    pthr_printf("M-%04x INIT %s %s\n", M_PTR, mutex->id, Task_s(-1));
+    if (mutex->lock != NULL) {
+        lock_initS((lock_t *) mutex->lock, id);
+        lock_register((lock_t *) mutex->lock);
+        pthr_printf("M-%04x INIT %s %s\n", M_PTR, mutex->id, Task_s(-1));
+    }
     return 0;
 }
 
@@ -125,11 +127,13 @@ int pthr_create(const char *id,
     pthr_printf("pthr_create: %s (%p,%p)\n", id, start_routine, arg);
     
     args_t *args = (args_t *) malloc(sizeof(args_t));
-    args->rx_chan = hfdl->rx_chan;
-    args->id = id;
-    args->func = (funcP_t) start_routine;
-    args->arg = arg;
-    CreateTaskSF((funcP_t) pthr_bootstrap, id, args, EXT_PRIORITY, 0, 0);
+    if (args != NULL) {
+        args->rx_chan = hfdl->rx_chan;
+        args->id = id;
+        args->func = (funcP_t) start_routine;
+        args->arg = arg;
+        CreateTaskSF((funcP_t) pthr_bootstrap, id, args, EXT_PRIORITY, 0, 0);
+    }
     return 0;
 }
 

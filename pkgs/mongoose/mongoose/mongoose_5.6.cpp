@@ -5581,8 +5581,10 @@ const char *mg_get_option(const struct mg_server *server, const char *name) {
 
 struct mg_server *mg_create_server(void *server_data, mg_handler_t handler) {
   struct mg_server *server = (struct mg_server *) NS_CALLOC(1, sizeof(*server));
-  ns_mgr_init(&server->ns_mgr, server_data);
-  set_default_option_values(server->config_options);
-  server->event_handler = handler;
+  if (server != NULL) {
+      ns_mgr_init(&server->ns_mgr, server_data);
+      set_default_option_values(server->config_options);
+      server->event_handler = handler;
+  }
   return server;
 }

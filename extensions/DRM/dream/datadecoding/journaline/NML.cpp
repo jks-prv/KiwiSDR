@@ -651,6 +651,8 @@ void NML::SetErrorDump(NewsObjectId_t oid,
   {
     NML::Item_t item;
     item.text = *lines_i;
+    item.link_id = 0;
+    item.link_id_available = false;
     _news.item.push_back(item);
   }
 }

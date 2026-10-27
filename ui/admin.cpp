@@ -1062,7 +1062,7 @@ void c2s_admin(void *param)
             char *ip_m = NULL;
             i = sscanf(cmd, "SET network_ip_blacklist=%64ms", &ip_m);
             if (i == 1) {
-                ipbl_dbg(real_printf("%d ", ct++); fflush(stdout));
+                ipbl_dbg(real_printf("%d ", ct++); fflush(stdout););
                 kiwi_str_decode_inplace(ip_m);
                 //ipbl_prf("ip_blacklist %s\n", ip_m);
                 rv = ip_blacklist_add_iptables(ip_m);

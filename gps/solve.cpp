@@ -605,8 +605,8 @@ void SolveTask(void *param) {
                 SPI_MISO *rx = &SPI_SHMEM->gps_iqdata_miso;
                 spi_get(CmdIQLogGet, rx, S2B(GPS_IQ_SAMPS_W));
                 memcpy(data, rx->word, S2B(GPS_IQ_SAMPS_W));
-               // printf("gps.IQ_data %d rx->word %d S2B(GPS_IQ_SAMPS_W) %d\n", \
-                    sizeof(gps.IQ_data), sizeof(rx->word), S2B(GPS_IQ_SAMPS_W));
+               // printf("gps.IQ_data %d rx->word %d S2B(GPS_IQ_SAMPS_W) %d\n",
+               //     sizeof(gps.IQ_data), sizeof(rx->word), S2B(GPS_IQ_SAMPS_W));
                 if (ajax) {
                     gps.IQ_data_ch_ajax = -1;
                     gps.IQ_seq_ajax_w++;

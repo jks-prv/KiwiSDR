@@ -38,7 +38,8 @@ VIS_UNOPT =
 # can't be := because BUILD_DIR not defined yet
 BUILD_OBJ = $(BUILD_DIR)/kiwi.bin
 
-CFLAGS += -g -pipe -MMD -DCOMPILE_HOST=STRINGIFY\($(COMPILE_HOST)\)
+CFLAGS += -g -pipe -MMD
+CPP_FLAGS += -DCOMPILE_HOST=STRINGIFY\($(COMPILE_HOST)\)
 
 #CFLAGS_UNSAFE_OPT := -fcx-limited-range -funsafe-math-optimizations
 CFLAGS_UNSAFE_OPT := -funsafe-math-optimizations
@@ -77,12 +78,12 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
 
         CC = clang
         CPP = clang++
-        CPP_FLAGS += -std=gnu++11
+        CFLAGS2 += -std=gnu++11
         CFLAGS += --target=armv7a-linux-gnueabihf
         CFLAGS += --sysroot=$(KIWI_XC_REMOTE_FS)
         CFLAGS += -I$(KIWI_XC_REMOTE_FS)/usr/include/c++/4.9
         CFLAGS += -I$(KIWI_XC_REMOTE_FS)/usr/include/arm-linux-gnueabihf/c++/4.9
-        CFLAGS += -DHOST
+        CPP_FLAGS += -DHOST
         VIS_OPT = -Ofast
         KIWI_XC_LD ?= lld
         LDFLAGS += -fuse-ld=$(KIWI_XC_LD)
@@ -95,7 +96,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
         # make the compiles fast on dev system (but don't do this with cross-compiling case above)
         DEVSYS_BUT_NOT_XC = true
         OPT = 0
-        CFLAGS += -DDEVSYS
+        CPP_FLAGS += -DDEVSYS
         
         # platform choice when building on development machine
         #BYAI := true
@@ -113,7 +114,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
         ifeq ($(UNAME),Darwin)
             CC = clang
             CPP = clang++
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
         else
             # try clang on your development system (if you have it) -- it's better
             #CC = clang
@@ -127,7 +128,7 @@ endif
 
 # Debian target
 ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
-    CFLAGS += -DHOST
+    CPP_FLAGS += -DHOST
 
     BYAI := $(shell test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleY-AI" && echo true)
     BBAI_64 := $(shell test -e /proc/device-tree && cat /proc/device-tree/model | grep -q -s "BeagleBone AI-64" && echo true)
@@ -147,8 +148,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
         CPP = clang++
         VIS_OPT = -Ofast
         # needed for iq_display.cpp et al
-        CPP_FLAGS += -std=gnu++11
-        CPP_FLAGS += -Wno-fortify-source
+        CFLAGS2 += -std=gnu++11
+        CFLAGS += -Wno-fortify-source
         CMD_DEPS_DEBIAN := /usr/bin/clang
     else ifeq ($(BBAI_64),true)
         ifeq ($(DEBIAN_VERSION),11)
@@ -156,7 +157,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CPP = clang++-11
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
             CMD_DEPS_DEBIAN := /usr/bin/clang-11
         else
             # Debian 12+
@@ -164,8 +165,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CPP = clang++
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
-            CPP_FLAGS += -Wno-fortify-source
+            CFLAGS2 += -std=gnu++11
+            CFLAGS += -Wno-fortify-source
             CMD_DEPS_DEBIAN := /usr/bin/clang
         endif
     else ifeq ($(BBAI),true)
@@ -174,14 +175,14 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CPP = clang++-7
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
             CMD_DEPS_DEBIAN := /usr/bin/clang-7
         else ifeq ($(DEBIAN_VERSION),9)
             CC = clang-7
             CPP = clang++-7
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
             CMD_DEPS_DEBIAN := /usr/bin/clang-7
         else
             # Debian 12+
@@ -189,8 +190,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CPP = clang++
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
-            CPP_FLAGS += -Wno-fortify-source
+            CFLAGS2 += -std=gnu++11
+            CFLAGS += -Wno-fortify-source
             CMD_DEPS_DEBIAN := /usr/bin/clang
         endif
     else ifeq ($(RPI),true)
@@ -199,7 +200,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
         CPP = clang++-11
         VIS_OPT = -Ofast
         # needed for iq_display.cpp et al
-        CPP_FLAGS += -std=gnu++11
+        CFLAGS2 += -std=gnu++11
         APT_GET_FORCE = --no-install-recommends --force-yes
     else ifeq ($(BBG_BBB),true)
         ifeq ($(DEBIAN_VERSION),11)
@@ -207,7 +208,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CPP = clang++-11
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
             CMD_DEPS_DEBIAN := /usr/bin/clang-11
         else ifeq ($(DEBIAN_VERSION),10)
             CC = clang-8
@@ -217,7 +218,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CMD_DEPS_DEBIAN := /usr/bin/clang-8
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
         else ifeq ($(DEBIAN_VERSION),9)
             # some people upgraded to D9 on their BBG/BBB based Kiwis and the
             # v1.800 install of lftp breaks which clang is used without adding this case
@@ -228,7 +229,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CMD_DEPS_DEBIAN := /usr/bin/clang-6.0
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
             APT_GET_FORCE = --force-yes
         else ifeq ($(DEBIAN_VERSION),8)
             CC = clang-6.0
@@ -238,7 +239,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CMD_DEPS_DEBIAN := /usr/bin/clang-6.0
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
+            CFLAGS2 += -std=gnu++11
             APT_GET_FORCE = --force-yes
         else
             # Debian 12+
@@ -246,8 +247,8 @@ ifeq ($(DEBIAN_DEVSYS),$(DEBIAN))
             CPP = clang++
             VIS_OPT = -Ofast
             # needed for iq_display.cpp et al
-            CPP_FLAGS += -std=gnu++11
-            CPP_FLAGS += -Wno-fortify-source
+            CFLAGS2 += -std=gnu++11
+            CFLAGS += -Wno-fortify-source
             CMD_DEPS_DEBIAN := /usr/bin/clang
         endif
     endif
@@ -287,7 +288,7 @@ else ifeq ($(BBAI_64),true)
     PLAT := BBAI_64
     PLAT_BACKUP := bbai64
     BINARY_INSTALL := true
-    CFLAGS += -DMULTI_CORE
+    CPP_FLAGS += -DMULTI_CORE
     FP_FLAGS += -mtune=cortex-a72 -mcpu=cortex-a72
     #FP_FLAGS += -mfpu=neon-vfpv4 -mfloat-abi=hard
     ARCH_DIR = arm64
@@ -299,7 +300,7 @@ else ifeq ($(BBAI),true)
     PLAT := BBAI
     PLAT_BACKUP := bbai
     BINARY_INSTALL := true
-    CFLAGS += -DMULTI_CORE
+    CPP_FLAGS += -DMULTI_CORE
     FP_FLAGS += -mtune=cortex-a15 -mcpu=cortex-a15
     FP_FLAGS += -mfpu=neon-vfpv4 -mfloat-abi=hard
     ARCH_DIR = arm32
@@ -310,7 +311,7 @@ else ifeq ($(RPI),true)
     PLATFORMS := raspberrypi
     PLAT := RPI
     PLAT_BACKUP := rpi
-    CFLAGS += -DMULTI_CORE
+    CPP_FLAGS += -DMULTI_CORE
     FP_FLAGS += -mtune=cortex-a53 -mcpu=cortex-a53
     FP_FLAGS += -mfpu=neon -mfloat-abi=hard
     ARCH_DIR = arm32
@@ -379,14 +380,15 @@ endif
 # build on devsys or target with "make SAN=1" using alias "msan"
 # uses -O0 for speedup when used on target (clang on Debian seems to catch more errors than on MacOS)
 ifeq ($(SAN),1)
-    CPP_FLAGS += -O0 -Werror --analyze -DKIWI_STATIC_ANALYSIS
+    CFLAGS += -O0 -Werror --analyze
+    CPP_FLAGS += -DKIWI_STATIC_ANALYSIS
     OPT = 0
     VIS_OPT =
 endif
 
 
 ifeq ($(GDB),1)
-    CPP_FLAGS += -O0
+    CFLAGS += -O0
     OPT = 0
     VIS_OPT =
 endif

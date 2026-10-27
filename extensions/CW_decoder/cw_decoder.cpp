@@ -34,9 +34,9 @@ typedef struct {
 	bool test;
     int nsamps;
     s2_t *s2p;
-} cw_decoder_t;
+} cw_deco_t;
 
-static cw_decoder_t cw_decoder[MAX_RX_CHANS];
+static cw_deco_t cw_decoder[MAX_RX_CHANS];
 
 typedef struct {
     s2_t *s2p_start, *s2p_end;
@@ -47,7 +47,7 @@ static cw_conf_t cw_conf;
 
 static void cw_file_data(int rx_chan, int chan, int nsamps, TYPEMONO16 *samps, int freqHz)
 {
-    cw_decoder_t *e = &cw_decoder[rx_chan];
+    cw_deco_t *e = &cw_decoder[rx_chan];
 
     if (!e->test) return;
     /*
@@ -83,7 +83,7 @@ void cw_task(void *param)
 		
 		int rx_chan = (int) FROM_VOID_PARAM(TaskSleepReason("wait for wakeup"));
 
-	    cw_decoder_t *e = &cw_decoder[rx_chan];
+	    cw_deco_t *e = &cw_decoder[rx_chan];
         rx_dpump_t *rx = &rx_dpump[rx_chan];
 
 		while (e->rd_pos != rx->real_wr_pos) {
@@ -109,7 +109,7 @@ void cw_task(void *param)
 
 void cw_close(int rx_chan)
 {
-	cw_decoder_t *e = &cw_decoder[rx_chan];
+	cw_deco_t *e = &cw_decoder[rx_chan];
     printf("CW: close task_created=%d\n", e->task_created);
     ext_unregister_receive_real_samps_task(rx_chan);
     //ext_unregister_receive_real_samps(rx_chan);
@@ -123,7 +123,7 @@ void cw_close(int rx_chan)
 
 bool cw_decoder_msgs(char *msg, int rx_chan)
 {
-	cw_decoder_t *e = &cw_decoder[rx_chan];
+	cw_deco_t *e = &cw_decoder[rx_chan];
     e->rx_chan = rx_chan;	// remember our receiver channel number
 	int n;
 	

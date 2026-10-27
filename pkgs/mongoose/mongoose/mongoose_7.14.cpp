@@ -20,7 +20,7 @@
 #include "mongoose.h"
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/base64.c"
+//#line 1 "src/base64.c"
 #endif
 
 
@@ -117,7 +117,7 @@ fail:
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/device_ch32v307.c"
+//#line 1 "src/device_ch32v307.c"
 #endif
 
 
@@ -199,7 +199,7 @@ bool mg_flash_write(void *addr, const void *buf, size_t len) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/device_dummy.c"
+//#line 1 "src/device_dummy.c"
 #endif
 
 
@@ -235,7 +235,7 @@ void mg_device_reset(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/device_flash.c"
+//#line 1 "src/device_flash.c"
 #endif
 
 
@@ -411,7 +411,7 @@ bool mg_flash_load(void *sector, uint32_t key, void *buf, size_t len) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/device_imxrt.c"
+//#line 1 "src/device_imxrt.c"
 #endif
 
 
@@ -754,7 +754,7 @@ MG_IRAM void mg_device_reset(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/device_stm32h5.c"
+//#line 1 "src/device_stm32h5.c"
 #endif
 
 
@@ -899,7 +899,7 @@ void mg_device_reset(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/device_stm32h7.c"
+//#line 1 "src/device_stm32h7.c"
 #endif
 
 
@@ -1058,7 +1058,7 @@ MG_IRAM void mg_device_reset(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/dns.c"
+//#line 1 "src/dns.c"
 #endif
 
 
@@ -1329,7 +1329,7 @@ void mg_resolve(struct mg_connection *c, const char *url) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/event.c"
+//#line 1 "src/event.c"
 #endif
 
 
@@ -1367,7 +1367,7 @@ void mg_error(struct mg_connection *c, const char *fmt, ...) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/fmt.c"
+//#line 1 "src/fmt.c"
 #endif
 
 
@@ -1594,7 +1594,7 @@ size_t mg_vxprintf(void (*out)(char, void *), void *param, const char *fmt,
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/fs.c"
+//#line 1 "src/fs.c"
 #endif
 
 
@@ -1689,7 +1689,7 @@ bool mg_fs_ls(struct mg_fs *fs, const char *path, char *buf, size_t len) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/fs_fat.c"
+//#line 1 "src/fs_fat.c"
 #endif
 
 
@@ -1821,7 +1821,7 @@ struct mg_fs mg_fs_fat = {ff_stat,  ff_list, ff_open,   ff_close,  ff_read,
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/fs_packed.c"
+//#line 1 "src/fs_packed.c"
 #endif
 
 
@@ -1836,7 +1836,8 @@ struct packed_file {
 #if MG_ENABLE_PACKED_FS
 #else
 const char *mg_unpack(const char *path, size_t *size, time_t *mtime) {
-  *size = 0, *mtime = 0;
+  *size = 0;
+  if (mtime) *mtime = 0;
   (void) path;
   return NULL;
 }
@@ -1947,7 +1948,7 @@ struct mg_fs mg_fs_packed = {
     packed_write, packed_seek, packed_rename, packed_remove, packed_mkdir};
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/fs_posix.c"
+//#line 1 "src/fs_posix.c"
 #endif
 
 
@@ -2213,7 +2214,7 @@ struct mg_fs mg_fs_posix = {p_stat,  p_list, p_open,   p_close,  p_read,
                             p_write, p_seek, p_rename, p_remove, p_mkdir};
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/http.c"
+//#line 1 "src/http.c"
 #endif
 
 
@@ -3356,7 +3357,7 @@ struct mg_connection *mg_http_listen(struct mg_mgr *mgr, const char *url,
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/iobuf.c"
+//#line 1 "src/iobuf.c"
 #endif
 
 
@@ -3427,7 +3428,7 @@ void mg_iobuf_free(struct mg_iobuf *io) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/json.c"
+//#line 1 "src/json.c"
 #endif
 
 
@@ -3797,7 +3798,7 @@ long mg_json_get_long(struct mg_str json, const char *path, long dflt) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/log.c"
+//#line 1 "src/log.c"
 #endif
 
 
@@ -3883,7 +3884,7 @@ void mg_hexdump(const void *buf, size_t len) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/md5.c"
+//#line 1 "src/md5.c"
 #endif
 
 
@@ -4089,7 +4090,7 @@ void mg_md5_final(mg_md5_ctx *ctx, unsigned char digest[16]) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/mqtt.c"
+//#line 1 "src/mqtt.c"
 #endif
 
 
@@ -4637,7 +4638,7 @@ struct mg_connection *mg_mqtt_listen(struct mg_mgr *mgr, const char *url,
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/net.c"
+//#line 1 "src/net.c"
 #endif
 
 
@@ -4919,7 +4920,7 @@ void mg_mgr_init(struct mg_mgr *mgr) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/net_builtin.c"
+//#line 1 "src/net_builtin.c"
 #endif
 
 
@@ -6066,7 +6067,7 @@ bool mg_send(struct mg_connection *c, const void *buf, size_t len) {
 #endif  // MG_ENABLE_TCPIP
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/ota_dummy.c"
+//#line 1 "src/ota_dummy.c"
 #endif
 
 
@@ -6110,7 +6111,7 @@ MG_IRAM void mg_ota_boot(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/ota_esp32.c"
+//#line 1 "src/ota_esp32.c"
 #endif
 
 
@@ -6166,7 +6167,7 @@ bool mg_ota_end(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/ota_flash.c"
+//#line 1 "src/ota_flash.c"
 #endif
 
 
@@ -6369,7 +6370,7 @@ MG_IRAM void mg_ota_boot(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/printf.c"
+//#line 1 "src/printf.c"
 #endif
 
 
@@ -6562,7 +6563,7 @@ size_t mg_print_esc(void (*out)(char, void *), void *arg, va_list *ap) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/queue.c"
+//#line 1 "src/queue.c"
 #endif
 
 
@@ -6650,7 +6651,7 @@ void mg_queue_del(struct mg_queue *q, size_t len) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/rpc.c"
+//#line 1 "src/rpc.c"
 #endif
 
 
@@ -6758,7 +6759,7 @@ void mg_rpc_list(struct mg_rpc_req *r) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/sha1.c"
+//#line 1 "src/sha1.c"
 #endif
 /* Copyright(c) By Steve Reid <steve@edmweb.com> */
 /* 100% Public Domain */
@@ -6970,7 +6971,7 @@ void mg_sha1_final(unsigned char digest[20], mg_sha1_ctx *context) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/sha256.c"
+//#line 1 "src/sha256.c"
 #endif
 // https://github.com/B-Con/crypto-algorithms
 // Author:     Brad Conte (brad AT bradconte.com)
@@ -7141,7 +7142,7 @@ void mg_hmac_sha256(uint8_t dst[32], uint8_t *key, size_t keysz, uint8_t *data,
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/sntp.c"
+//#line 1 "src/sntp.c"
 #endif
 
 
@@ -7224,7 +7225,7 @@ struct mg_connection *mg_sntp_connect(struct mg_mgr *mgr, const char *url,
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/sock.c"
+//#line 1 "src/sock.c"
 #endif
 
 
@@ -7945,7 +7946,7 @@ void mg_mgr_poll(struct mg_mgr *mgr, int ms) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/ssi.c"
+//#line 1 "src/ssi.c"
 #endif
 
 
@@ -8047,7 +8048,7 @@ void mg_http_serve_ssi(struct mg_connection *c, const char *root,
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/str.c"
+//#line 1 "src/str.c"
 #endif
 
 
@@ -8218,7 +8219,7 @@ bool mg_str_to_num(struct mg_str str, int base, void *val, size_t val_len) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/timer.c"
+//#line 1 "src/timer.c"
 #endif
 
 
@@ -8262,7 +8263,7 @@ void mg_timer_poll(struct mg_timer **head, uint64_t now_ms) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/tls_aes128.c"
+//#line 1 "src/tls_aes128.c"
 #endif
 /******************************************************************************
  *
@@ -9394,7 +9395,7 @@ int mg_aes_gcm_decrypt(unsigned char *output, const unsigned char *input,
 // End of aes128 PD
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/tls_builtin.c"
+//#line 1 "src/tls_builtin.c"
 #endif
 
 
@@ -10787,7 +10788,7 @@ void mg_tls_ctx_free(struct mg_mgr *mgr) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/tls_dummy.c"
+//#line 1 "src/tls_dummy.c"
 #endif
 
 
@@ -10821,7 +10822,7 @@ void mg_tls_ctx_free(struct mg_mgr *mgr) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/tls_mbed.c"
+//#line 1 "src/tls_mbed.c"
 #endif
 
 
@@ -11056,7 +11057,7 @@ void mg_tls_ctx_free(struct mg_mgr *mgr) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/tls_openssl.c"
+//#line 1 "src/tls_openssl.c"
 #endif
 
 
@@ -11322,7 +11323,7 @@ void mg_tls_ctx_free(struct mg_mgr *mgr) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/tls_uecc.c"
+//#line 1 "src/tls_uecc.c"
 #endif
 /* Copyright 2014, Kenneth MacKay. Licensed under the BSD 2-clause license. */
 
@@ -14295,6 +14296,9 @@ int mg_uecc_sign_deterministic(const uint8_t *private_key,
                                const uint8_t *message_hash, unsigned hash_size,
                                const MG_UECC_HashContext *hash_context,
                                uint8_t *signature, MG_UECC_Curve curve) {
+#ifdef CPPCHECK
+    #undef K
+#endif
   uint8_t *K = hash_context->tmp;
   uint8_t *V = K + hash_context->result_size;
   wordcount_t num_bytes = curve->num_bytes;
@@ -14551,7 +14555,7 @@ void mg_uecc_point_mult(mg_uecc_word_t *result, const mg_uecc_word_t *point,
 // End of uecc BSD-2
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/tls_x25519.c"
+//#line 1 "src/tls_x25519.c"
 #endif
 /**
  * Adapted from STROBE: https://strobe.sourceforge.io/
@@ -14812,7 +14816,7 @@ int mg_tls_x25519(uint8_t out[X25519_BYTES], const uint8_t scalar[X25519_BYTES],
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/url.c"
+//#line 1 "src/url.c"
 #endif
 
 
@@ -14901,7 +14905,7 @@ struct mg_str mg_url_pass(const char *url) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/util.c"
+//#line 1 "src/util.c"
 #endif
 
 
@@ -15073,7 +15077,7 @@ uint64_t mg_millis(void) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/ws.c"
+//#line 1 "src/ws.c"
 #endif
 
 
@@ -15374,7 +15378,7 @@ size_t mg_ws_wrap(struct mg_connection *c, size_t len, int op) {
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/cmsis.c"
+//#line 1 "src/drivers/cmsis.c"
 #endif
 // https://arm-software.github.io/CMSIS_5/Driver/html/index.html
 
@@ -15492,7 +15496,7 @@ static size_t cmsis_rx(void *buf, size_t buflen, struct mg_tcpip_if *ifp) {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/imxrt.c"
+//#line 1 "src/drivers/imxrt.c"
 #endif
 
 
@@ -15689,7 +15693,7 @@ struct mg_tcpip_driver mg_tcpip_driver_imxrt = {mg_tcpip_driver_imxrt_init,
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/phy.c"
+//#line 1 "src/drivers/phy.c"
 #endif
 
 
@@ -15823,7 +15827,7 @@ bool mg_phy_up(struct mg_phy *phy, uint8_t phy_addr, bool *full_duplex,
 }
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/ra.c"
+//#line 1 "src/drivers/ra.c"
 #endif
 
 
@@ -16077,7 +16081,7 @@ struct mg_tcpip_driver mg_tcpip_driver_ra = {mg_tcpip_driver_ra_init,
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/same54.c"
+//#line 1 "src/drivers/same54.c"
 #endif
 
 
@@ -16296,7 +16300,7 @@ struct mg_tcpip_driver mg_tcpip_driver_same54 = {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/stm32f.c"
+//#line 1 "src/drivers/stm32f.c"
 #endif
 
 
@@ -16533,7 +16537,7 @@ struct mg_tcpip_driver mg_tcpip_driver_stm32f = {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/stm32h.c"
+//#line 1 "src/drivers/stm32h.c"
 #endif
 
 
@@ -16816,7 +16820,7 @@ struct mg_tcpip_driver mg_tcpip_driver_stm32h = {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/tm4c.c"
+//#line 1 "src/drivers/tm4c.c"
 #endif
 
 
@@ -17071,7 +17075,7 @@ struct mg_tcpip_driver mg_tcpip_driver_tm4c = {mg_tcpip_driver_tm4c_init,
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/w5500.c"
+//#line 1 "src/drivers/w5500.c"
 #endif
 
 
@@ -17167,7 +17171,7 @@ struct mg_tcpip_driver mg_tcpip_driver_w5500 = {w5500_init, w5500_tx, w5500_rx,
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/xmc.c"
+//#line 1 "src/drivers/xmc.c"
 #endif
 
 
@@ -17395,7 +17399,7 @@ struct mg_tcpip_driver mg_tcpip_driver_xmc = {
 #endif
 
 #ifdef MG_ENABLE_LINES
-#line 1 "src/drivers/xmc7.c"
+//#line 1 "src/drivers/xmc7.c"
 #endif
 
 

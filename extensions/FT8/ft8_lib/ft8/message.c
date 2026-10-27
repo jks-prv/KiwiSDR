@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
 
 #define LOG_LEVEL LOG_WARN
 #include "debug_ft8.h"
@@ -455,7 +457,7 @@ ftx_message_rc_t ftx_message_decode_nonstd(const ftx_message_t* msg, ftx_callsig
     icq = ((msg->payload[9] >> 6) & 0x01u);
 
     uint8_t i3 = FTX_MSG_I3(msg);
-    LOG(LOG_DEBUG, "decode_nonstd() h12=%04x n58=%016" __UINT64_FMTx__ " iflip=%d nrpt=%d icq=%d i3=%d\n", h12, n58, iflip, nrpt, icq, i3);
+    LOG(LOG_DEBUG, "decode_nonstd() h12=%04x n58=%016" PRIx64 " iflip=%d nrpt=%d icq=%d i3=%d\n", h12, n58, iflip, nrpt, icq, i3);
 
     // Decode one of the calls from 58 bit encoded string
     char call_decoded[32];
@@ -1009,7 +1011,7 @@ static bool pack58(const ftx_callsign_hash_interface_t* hash_if, const char* cal
         return false;
 
     *n58 = result;
-    LOG(LOG_DEBUG, "pack58('%s')=%016" __UINT64_FMTx__ "\n", callsign, *n58);
+    LOG(LOG_DEBUG, "pack58('%s')=%016" PRIx64 "\n", callsign, *n58);
     return true;
 }
 
@@ -1029,7 +1031,7 @@ static bool unpack58(uint64_t n58, const ftx_callsign_hash_interface_t* hash_if,
     // The decoded string will be right-aligned, so trim all whitespace (also from back just in case)
     trim_copy(callsign, c11);
 
-    LOG(LOG_DEBUG, "unpack58(%016" __UINT64_FMTx__ ")=%s\n", n58_backup, callsign);
+    LOG(LOG_DEBUG, "unpack58(%016" PRIx64 ")=%s\n", n58_backup, callsign);
 
     // Save the decoded call in a hash table for later
     if (strlen(callsign) >= 3)

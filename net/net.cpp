@@ -120,7 +120,7 @@ bool find_local_IPs(int retry)
                 sin = (struct sockaddr_in *) (ifa->ifa_netmask);
                 net.netmask4 = INET4_NTOH(* (u4_t *) &sin->sin_addr);
                 net_dprintf("IF IPv4 0x%08x /%d 0x%08x %s\n", net.ip4_pvt,
-                    inet_nm_bits(AF_INET, &net.netmask4), net.netmask4, net.ip4_if_name);
+                    inet4_nm_bits(net.netmask4), net.netmask4, net.ip4_if_name);
             
                 // FIXME: if ip4LL, because a DHCP server wasn't responding, need to periodically reprobe
                 // for when it comes back online
@@ -150,7 +150,7 @@ bool find_local_IPs(int retry)
                     salen = sizeof(struct sockaddr_in);
                     net.netmask4_6 = INET4_NTOH(* (u4_t *) &m[12]);
                     net_dprintf("IF IPv4_6 0x%08x /%d 0x%08x %s\n", net.ip4_6_pvt,
-                        inet_nm_bits(AF_INET, &net.netmask4_6), net.netmask4_6, net.ip4_6_if_name);
+                        inet4_nm_bits(net.netmask4_6), net.netmask4_6, net.ip4_6_if_name);
                     net.ip4_6_valid = true;
                 } else {
                     multiple = true;
@@ -165,7 +165,7 @@ bool find_local_IPs(int retry)
                         ip_pvt = net.ip6LL_pvt_s;
                         salen = sizeof(struct sockaddr_in6);
                         memcpy(net.netmask6LL, m, sizeof(net.netmask6LL));
-                        net_dprintf("IF IPv6 LINK-LOCAL /%d %s\n", inet_nm_bits(AF_INET6, &net.netmask6LL), net.ip6LL_if_name);
+                        net_dprintf("IF IPv6 LINK-LOCAL /%d %s\n", inet6_nm_bits(net.netmask6LL), net.ip6LL_if_name);
                         net.ip6LL_valid = true;
                     } else {
                         multiple = true;
@@ -182,7 +182,7 @@ bool find_local_IPs(int retry)
                     ip_pvt = net.ip6_pvt_s[i];
                     salen = sizeof(struct sockaddr_in6);
                     memcpy(net.netmask6[i], m, sizeof(net.netmask6[0]));
-                    net_dprintf("IF IPv6 #%d /%d %s ", i, inet_nm_bits(AF_INET6, net.netmask6[i]), net.ip6_if_name);
+                    net_dprintf("IF IPv6 #%d /%d %s ", i, inet6_nm_bits(net.netmask6[i]), net.ip6_if_name);
 		            for (j=0; j < 16; j++) net_dprintf2("%02x:", net.ip6_pvt[i][j]);
 		            net_dprintf2("\n");
     
@@ -211,19 +211,19 @@ bool find_local_IPs(int retry)
         net.ip4_valid, net.ip4_6_valid, net.ip6_valid, net.ip6LL_valid);
 
 	if (net.ip4_valid) {
-		net.nm_bits4 = inet_nm_bits(AF_INET, &net.netmask4);
+		net.nm_bits4 = inet4_nm_bits(net.netmask4);
 		net_printf("private IPv4 <%s> 0x%08x /%d 0x%08x %s\n", net.ip4_pvt_s, net.ip4_pvt,
 			net.nm_bits4, net.netmask4, net.ip4_if_name);
 	}
 
 	if (net.ip4_6_valid) {
-		net.nm_bits4_6 = inet_nm_bits(AF_INET, &net.netmask4_6);
+		net.nm_bits4_6 = inet4_nm_bits(net.netmask4_6);
 		net_printf("private IPv4_6 <%s> 0x%08x /%d 0x%08x %s\n", net.ip4_6_pvt_s, net.ip4_6_pvt,
 			net.nm_bits4_6, net.netmask4_6, net.ip4_6_if_name);
 	}
 
 	for (i = 0; i < net.ip6_valid; i++) {
-		net.nm_bits6[i] = inet_nm_bits(AF_INET6, net.netmask6[i]);
+		net.nm_bits6[i] = inet6_nm_bits(net.netmask6[i]);
 		net_printf("private IPv6 #%d <%s> ", i, net.ip6_pvt_s[i]);
 		for (j=0; j < 16; j++) lprintf("%02x:", net.ip6_pvt[i][j]);
 		lprintf(" /%d ", net.nm_bits6[i]);
@@ -232,7 +232,7 @@ bool find_local_IPs(int retry)
 	}
 
 	if (net.ip6LL_valid) {
-		net.nm_bits6LL = inet_nm_bits(AF_INET6, &net.netmask6LL);
+		net.nm_bits6LL = inet6_nm_bits(net.netmask6LL);
 		net_printf("private IPv6 LINK-LOCAL <%s> /%d ", net.ip6LL_pvt_s, net.nm_bits6LL);
 		for (i=0; i < 16; i++) lprintf("%02x:", net.netmask6LL[i]);
 		lprintf(" %s\n", net.ip6LL_if_name);
@@ -394,7 +394,7 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
                     continue;
                 }
 
-                nm_bits = inet_nm_bits(AF_INET, &netmask);
+                nm_bits = inet4_nm_bits(netmask);
                 ipv4_test = true;
             } else
 
@@ -423,7 +423,7 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
                         continue;
                     }
                     
-                    nm_bits = inet_nm_bits(AF_INET, &netmask);
+                    nm_bits = inet4_nm_bits(netmask);
                     ipv4_test = true;
                 } else {
                     if (net.ip6_valid) {
@@ -432,7 +432,7 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
                         ip_server6 = net.ip6_pvt[ip6_n];
                         ip_server_s = net.ip6_pvt_s[ip6_n];
                         netmask6 = net.netmask6[ip6_n];
-                        nm_bits = inet_nm_bits(AF_INET6, netmask6);
+                        nm_bits = inet6_nm_bits(netmask6);
                         have_server_local = true;
                         ip6_n++;
                         if (ip6_n >= net.ip6_valid) ip6_n = 0;
@@ -443,7 +443,7 @@ isLocal_t isLocal_if_ip(conn_t *conn, char *remote_ip_s, const char *log_prefix)
                         ip_server6 = net.ip6LL_pvt;
                         ip_server_s = net.ip6LL_pvt_s;
                         netmask6 = net.netmask6LL;
-                        nm_bits = inet_nm_bits(AF_INET6, netmask6);
+                        nm_bits = inet6_nm_bits(netmask6);
                         have_server_local = true;
                     } else {
                         if (log_prefix) clprintf(conn, "%s isLocal_if_ip: IPv6 client, but no server IPv6\n", log_prefix);
@@ -649,41 +649,36 @@ void ip_test_parse_strict()
 }
 #endif
 
-int inet_nm_bits(int family, void *netmask)
+int inet4_nm_bits(u4_t nm)
 {
-	int i, b, nm_bits;
+	int i;
 
-	if (family == AF_INET) {
-		u4_t nm = * (u4_t *) netmask;
-		for (i=0; i < 32; i++) {
-			if (nm & (1 << i))
-				break;
-		}
-		nm_bits = 32 - i;
-	} else
+    for (i=0; i < 32; i++) {
+        if (nm & (1 << i))
+            break;
+    }
+    return 32 - i;
+}
 
-	if (family == AF_INET6) {
-		for (b = 15; b >= 0; b--) {
-			u1_t nm = ((u1_t *) netmask)[b];
-			if (nm) {
-				for (i=0; i < 8; i++) {
-					if (nm & (1 << i))
-						break;
-				}
-				if (i < 8)
-					break;
-			} else
-				continue;
-		}
+int inet6_nm_bits(u1_t *nm)
+{
+	int i, b;
 
-		if (b > 0)
-			nm_bits = 128 - ((15-b)*8 + i);
-		else
-			nm_bits = 0;
-	} else
-		panic("inet_nm_bits");
+    for (b = 15; b >= 0; b--) {
+        u1_t nm_ = nm[b];
+        if (nm_) {
+            for (i=0; i < 8; i++) {
+                if (nm_ & (1 << i))
+                    break;
+            }
+            if (i < 8)
+                break;
+        } else
+            continue;
+    }
 
-	return nm_bits;
+    if (b > 0) return (128 - ((15-b)*8 + i));
+    return 0;
 }
 
 bool isLocal_ip(char *ip_str, bool *is_loopback, u4_t *ipv4, bool *error, bool *kiwisdr_com)

@@ -1018,7 +1018,7 @@ void ChanTask(void *param) { // one thread per channel
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 int ChanReset(int sat, int codegen_init) {  // called from search thread before sampling
-    int ch, nbusy, cur_QZSS;
+    int ch, nbusy = 0, cur_QZSS = 0;
     
     bool QZSS_JA = (gps.acq_QZSS && gps.QZSS_prio);
 

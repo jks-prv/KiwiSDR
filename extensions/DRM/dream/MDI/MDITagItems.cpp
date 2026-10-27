@@ -1322,7 +1322,7 @@ CTagItemGeneratorPilots::GenTag(CParameter & Parameter)
 		}
 
 		// Calculate the exponent for the block
-		_REAL rExponent = Ceil(Log(rMax) / Log(_REAL(2.0)));
+		_REAL rExponent = rMax? (Ceil(Log(rMax) / Log(_REAL(2.0)))) : 0.0;
 		_REAL rScale = 32767 * pow(_REAL(2.0), -rExponent);
 
 		// Put to the tag

@@ -95,9 +95,12 @@ void *create_viterbi27(int len){
 		set_viterbi27_polynomial(polys);
 	}
 	struct v27 *vp = calloc(1, sizeof(struct v27));
-	vp->decisions = calloc(len + 6, sizeof(decision_t));
-	init_viterbi27(vp,0);
-
+	if (vp != NULL) {
+	    vp->decisions = calloc(len + 6, sizeof(decision_t));
+	    if (vp->decisions != NULL) {
+	        init_viterbi27(vp,0);
+	    }
+	}
 	return vp;
 }
 

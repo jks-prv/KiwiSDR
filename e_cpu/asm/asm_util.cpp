@@ -82,7 +82,7 @@ static void _panic(char *str, tokens_t *t = NULL)
 	exit(-1);
 }
 
-void panic(const char *str, tokens_t *t)
+void asm_panic(const char *str, tokens_t *t)
 {
     _panic((char *) str, t);
 }
@@ -142,7 +142,7 @@ void _assert(int cond, const char *str, const char *file, int line)
 {
 	if(!(cond)) {
 		printf("assert \"%s\" failed at %s:%d\n", str, file, line);
-		panic("assert");
+		asm_panic("assert");
 	}
 }
 
@@ -574,5 +574,3 @@ int exp_macro(tokens_t **dp, tokens_t **to)
 	
 	return 0;
 }
-
-

@@ -73,11 +73,24 @@ extern mem_t mem;
     #define kiwi_icalloc(from, nel, size) kiwi_calloc(from, nel, size)
     #define kiwi_irealloc(from, ptr, size) kiwi_realloc(from, ptr, size)
     #define kiwi_ifree(ptr, from) kiwi_free(from, ptr)
+	#define kiwi_istrdup(s) strdup(s)
+#elif defined(CPPCHECK)
+    void *kiwi_cppcheck_imalloc(size_t size);
+    void *kiwi_cppcheck_icalloc(size_t nel, size_t size);
+    void *kiwi_cppcheck_irealloc(void *ptr, size_t size);
+	char *kiwi_cppcheck_strdup(const char *s);
+
+    #define kiwi_imalloc(from, size) kiwi_cppcheck_malloc(size)
+    #define kiwi_icalloc(from, nel, size) kiwi_cppcheck_calloc(nel, size)
+    #define kiwi_irealloc(from, ptr, size) kiwi_cppcheck_realloc(ptr, size)
+    #define kiwi_ifree(ptr, from) free(ptr)
+	#define kiwi_istrdup(s) kiwi_cppcheck_strdup(s)
 #else
     #define kiwi_imalloc(from, size) malloc(size)
     #define kiwi_icalloc(from, nel, size) calloc(nel, size)
     #define kiwi_irealloc(from, ptr, size) realloc(ptr, size)
     #define kiwi_ifree(ptr, from) free(ptr)
+	#define kiwi_istrdup(s) strdup(s)
 #endif
 
 void kiwi_str_redup(char **ptr, const char *from, const char *s);
