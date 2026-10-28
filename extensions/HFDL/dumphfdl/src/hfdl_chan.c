@@ -456,7 +456,7 @@ struct block *hfdl_channel_create(int32_t sample_rate, int32_t pre_decimation_ra
 	c->resamp_rate = (float)(HFDL_SYMBOL_RATE * SPS) / ((float)sample_rate / (float)pre_decimation_rate);
 	c->resampler = msresamp_crcf_create(c->resamp_rate, 60.0f);
 	c->resampler_delay = (int32_t)ceilf(msresamp_crcf_get_delay(c->resampler));
-    debug_print("hfdl_channel_create: re_srate=%f srate=%d pre_decim_rate=%d cf=%d f=%d\n",
+    debug_print(D_DSP, "hfdl_channel_create: re_srate=%f srate=%d pre_decim_rate=%d cf=%d f=%d\n",
         c->resamp_rate, sample_rate, pre_decimation_rate, centerfreq, frequency);
 
 	c->chan_freq = frequency;
@@ -465,7 +465,7 @@ struct block *hfdl_channel_create(int32_t sample_rate, int32_t pre_decimation_ra
 			centerfreq, frequency, freq_shift);
 
 	c->channelizer = fft_channelizer_create(pre_decimation_rate, transition_bw, freq_shift);
-    debug_print("fft_channelizer_create: transition_bw=%f freq_shift: (%d - (%d - %d)) / %d = %d/%d = %f\n",
+    debug_print(D_DSP, "fft_channelizer_create: transition_bw=%f freq_shift: (%d - (%d - %d)) / %d = %d/%d = %f\n",
         transition_bw, centerfreq, frequency, HFDL_SSB_CARRIER_OFFSET_HZ, sample_rate,
     centerfreq - (frequency + HFDL_SSB_CARRIER_OFFSET_HZ), sample_rate, freq_shift);
 	if(c->channelizer == NULL) {

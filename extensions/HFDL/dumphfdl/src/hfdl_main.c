@@ -684,7 +684,7 @@ int32_t dumphfdl_main(int32_t argc, char **argv, int rx_chan, int outputBlockSiz
 	float fftfilt_transition_bw = compute_filter_relative_transition_bw(input_cfg->sample_rate, HFDL_CHANNEL_TRANSITION_BW_HZ);
 	debug_print(D_DSP, "fft_decimation_rate: %d sample_rate_post_fft: %d transition_bw: %.f\n",
 			fft_decimation_rate, sample_rate_post_fft, fftfilt_transition_bw);
-    debug_print("fft_decimation_rate=%d sample_rate_post_fft=%f\n",
+    debug_print(D_DSP, "fft_decimation_rate=%d sample_rate_post_fft=%f\n",
         fft_decimation_rate, roundf((float)input_cfg->sample_rate / (float)fft_decimation_rate));
 
 	struct block *fft = fft_create(fft_decimation_rate, fftfilt_transition_bw);
