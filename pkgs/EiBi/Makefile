@@ -1,7 +1,7 @@
 
 # See HOWTO.update.database.txt
 
-ABYY := a26
+ABYY := b26
 
 include ../../Makefile.comp.inc
 
@@ -29,8 +29,9 @@ $(PROG): $(PROG).o
 fetch all:
 	wget -O /tmp/eibi http://eibispace.de/dx/README.TXT       && iconv -f ISO-8859-1 -t UTF-8 /tmp/eibi > README.txt
 	wget -O /tmp/eibi http://eibispace.de/dx/sked-$(ABYY).csv && iconv -f ISO-8859-1 -t UTF-8 /tmp/eibi > eibi.csv
-	@echo "VERIFY: There should be matches for Rádio Clube do Pará below"
 	@grep 'Rádio Clube do Pará' eibi.csv
+	@printf "VERIFY: There should be matches for Rádio Clube do Pará above  ok?"
+	@read not_used
 	cat eibi.csv ALE.kiwi.csv > sked-current.csv.tmp
 	sort -t ';' -s -n -k 1 sked-current.csv.tmp > sked-current.csv
 	cp ../../dx/EiBi.h EiBi.h.prev
@@ -40,8 +41,9 @@ fetch all:
 # always writes file ../../dx/EiBi.h
 run: $(PROG)
 	./$(PROG) $(ABYY)
-	@echo "VERIFY: There should be matches for Rádio Clube do Pará below"
 	@grep 'Rádio Clube do Pará' ../../dx/EiBi.h
+	@printf "VERIFY: There should be matches for Rádio Clube do Pará above  ok?"
+	@read not_used
 	wc ../../dx/EiBi.h EiBi.h.prev
 
 diff:
