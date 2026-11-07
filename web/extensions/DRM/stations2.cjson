@@ -1,0 +1,13 @@
+[
+// This file is used if kiwisdr.com cannot be contacted
+//
+// Double-slash comment sequence MUST start in column one!
+
+  {
+  "SW": null,
+      "<= Click here instead. Cannot download latest schedule.": ["https://www.drmrx.org/drm-broadcasts-bargraph-display/",10000,"0:1","24:0"]
+  },
+    
+// end marker
+    {}
+]
