@@ -3,6 +3,7 @@
 #include "types.h"
 #include "ansi.h"
 #include "printf.h"
+#include "mem.h"
 #include "str.h"
 #include "misc.h"
 #include "timer.h"
@@ -152,6 +153,7 @@ typedef struct {
 	bool task_created;
 	tid_t tid;
 
+    int last_hour;
     char *upload_url;
     u4_t pending_uploads[MAX_RX_CHANS];
     u4_t num_uploads[MAX_RX_CHANS];     // running total number of uploads created per channel
@@ -395,6 +397,17 @@ void PSKReporter_reset(int rx_chan)
     //printf("PSKReporter RESET\n");
 }
 
+static void PSKReporter_DNS()
+{
+    #define BACKUP_PSKREPORTER_PUBLIC_IP "135.148.69.75"
+    static ip_lookup_t ips_pskreporter;
+    DNS_lookup("report.pskreporter.info", &ips_pskreporter, BACKUP_PSKREPORTER_PUBLIC_IP);
+    u1_t a,b,c,d;
+    inet4_h2d(ips_pskreporter.ip[0], &a,&b,&c,&d);
+    kiwi_asfree(pr_conf.upload_url);
+    asprintf(&pr_conf.upload_url, "udp://%d.%d.%d.%d:%d", a,b,c,d, PR_UPLOAD_PORT);
+}
+
 static void PSKreport(void *param)      // task
 {
     pr_conf_t *pr = &pr_conf;
@@ -405,6 +418,7 @@ static void PSKreport(void *param)      // task
     pr->send_info_desc_interval = 60;
     s4_t delta_msec = 0;
     
+    PSKReporter_DNS();
     void *udp = udp_connect(pr->upload_url);
 
 	while (1) {
@@ -416,6 +430,15 @@ static void PSKreport(void *param)      // task
 	    
 		u64_t sleep_msec = SEC_TO_MSEC(MINUTES_TO_SEC(PR_UPLOAD_MINUTES)) + delta_msec;
 		TaskSleepMsec(sleep_msec);
+		
+		// resolve DNS once an hour
+		int hour;
+		utc_hour_min_sec(&hour);
+		if ((hour+1) != pr->last_hour) {
+            PSKReporter_DNS();
+            udp = udp_connect(pr->upload_url);
+		    pr->last_hour = hour+1;
+		}
 		
 		// Randomize next upload time +/- 8192 msec
 		delta_msec = timer_us() & 0x1fff;
@@ -476,16 +499,6 @@ static void PSKreport(void *param)      // task
 	}
 }
 
-static void PSKReporter_init()
-{
-    #define BACKUP_PSKREPORTER_PUBLIC_IP "74.116.41.13"
-    static ip_lookup_t ips_pskreporter;
-    DNS_lookup("report.pskreporter.info", &ips_pskreporter, BACKUP_PSKREPORTER_PUBLIC_IP);
-    u1_t a,b,c,d;
-    inet4_h2d(ips_pskreporter.ip[0], &a,&b,&c,&d);
-    asprintf(&pr_conf.upload_url, "udp://%d.%d.%d.%d:%d", a,b,c,d, PR_UPLOAD_PORT);
-}
-
 int PSKReporter_setup(int rx_chan)
 {
     pr_conf_t *pr = &pr_conf;
@@ -493,8 +506,6 @@ int PSKReporter_setup(int rx_chan)
     // only launch once
     #ifdef PR_USE_CALLSIGN_HASHTABLE
         if (!pr->task_created) {
-            PSKReporter_init();
-            
             bool no_call_or_grid = true;
             const char *rcall = cfg_string("ft8.callsign", NULL, CFG_OPTIONAL);
             const char *rgrid = cfg_string("ft8.grid", NULL, CFG_OPTIONAL);
