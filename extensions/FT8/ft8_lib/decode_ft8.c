@@ -329,7 +329,7 @@ static void decode(int rx_chan, const monitor_t* mon, int _freqHz)
                         // n=3: "call_to call_de grid4"  "{<...> DE QRZ CQ CQ_nnn CQ_ABCD} call_de grid4"
                         // n=4: "CQ DX call_de grid4"
                         // n=4: "call_to call_de R grid4"
-                        const char *call = NULL, *grid = NULL;
+                        const char *call = "", *grid = "";
                         need_free = true;
                         for (n = 0; n < 4; n++) f[n] = NULL;
                         n = sscanf(text, "%ms %ms %ms %ms", &f[0], &f[1], &f[2], &f[3]);

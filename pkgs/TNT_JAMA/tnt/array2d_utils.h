@@ -21,6 +21,12 @@
 #ifndef TNT_ARRAY2D_UTILS_H
 #define TNT_ARRAY2D_UTILS_H
 
+#ifdef KIWISDR
+ #undef B
+ #undef K
+ #undef M
+#endif
+
 #include <cstdlib>
 #include <cassert>
 

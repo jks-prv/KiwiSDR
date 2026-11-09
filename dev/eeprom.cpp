@@ -100,8 +100,10 @@ retry:
         goto retry;
 	}
 	
-	if (action == EE_SERNO_READ)
+	if (action == EE_SERNO_READ) {
+	    fclose(fp);
 		return serno;
+	}
 	
 	if (action == EE_SERNO_WRITE)
 		next_serno = serno = set_serno;
@@ -112,6 +114,7 @@ retry:
 	rewind(fp);
 	if ((n = fprintf(fp, "%d\n", next_serno)) <= 0) {
 		mlprintf("EEPROM next: write %s\n", strerror(errno));
+	    fclose(fp);
 		return -1;
 	}
 	fclose(fp);

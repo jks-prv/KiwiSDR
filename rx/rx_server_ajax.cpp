@@ -203,7 +203,7 @@ char *rx_server_ajax(struct mg_connection *mc, char *ip_unforwarded, char *ip_fo
 	case AJAX_DX: {
 		char *vname = NULL, *fname = NULL, *key_cmp2 = NULL;
 		const char *data = NULL;
-		int type, idx, rc = 0, line = 0, status, data_len;
+		int type, idx = 0, rc = 0, line = 0, status, data_len;
 		bool keep_masked = false, merge_files = false;
         char **s_a = NULL;
         int s_size = 0;

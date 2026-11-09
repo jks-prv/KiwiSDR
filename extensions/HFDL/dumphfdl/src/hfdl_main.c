@@ -234,6 +234,7 @@ static bool check_frequency_span(int32_t *freqs, int32_t cnt, int32_t centerfreq
 static bool compute_centerfreq(int32_t *freqs, int32_t cnt, int32_t *result) {
 	ASSERT(result);
 	ASSERT(cnt > 0);
+	if (cnt < 1) return false;
 	int32_t freq_min, freq_max;
 	freq_min = freq_max = freqs[0];
 	for(int32_t i = 0; i < cnt; i++) {
