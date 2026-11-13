@@ -6,14 +6,14 @@ var nt = {
    first_time: true,
    test_location: false,
    
-   //dataH: 300,
-   dataH: 445,
+   //dataH: 445,
+   dataH: 345,    //jksxx
    dataW: 1024,
    dataW2: 130 + 1024,
    dataT: 130 + 1024 + 16 + 250,    // including lhs, spacer + options
+   splitH: 100,
    ctrlW: 550,
    ctrlH: 175,
-   splitH: 100,
    lhs: 130,
    x: 0,
    last_y: [],
@@ -251,17 +251,17 @@ function navtex_controls_setup()
       });
    }
 
-   var wh = 'width:'+ px(nt.dataW2) +'; height:'+ px(nt.dataH) +';';
+   var wh = '|width:'+ px(nt.dataW) +'; height:'+ px(nt.dataH) +';';
    var cbox = 'w3-label-inline w3-label-not-bold';
 
    var data_html =
       time_display_html('navtex') +
       
-      w3_div('id-navtex-data w3-display-container|left:0px; '+ wh,
+      w3_div('id-navtex-data w3-display-container'+ wh,
 
          // re w3-hide: for map to initialize properly it must be initially selected, then it will be hidden if
          // the 'map' URL param was not given.
-         '<canvas id="id-navtex-canvas" width='+ dq(nt.lhs) +' height='+ dq(nt.dataH) +' style="left:0; position:absolute"></canvas>',
+         '<canvas id="id-navtex-canvas" width='+ dq(nt.lhs) +' height='+ dq(nt.dataH) +' style="position:absolute"></canvas>',
          w3_div(sprintf('id-navtex-msgs w3-hide|width:%dpx; left:%dpx; z-index:1; overflow:hidden; position:absolute;', nt.dataW, nt.lhs),
             w3_div(sprintf('id-navtex-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|width:%dpx; position:absolute; overflow-x:hidden;', nt.dataW),
                '<pre><code id="id-navtex-console-msgs"></code></pre>'
@@ -485,13 +485,12 @@ function navtex_crosshairs(vis)
    ct.clearRect(0,0, window.innerWidth,24);
    
    if (vis && ext_get_zoom() >= 10) {
-      var f = ext_get_freq();
-      if (nt.mode == 'usb') f += nt.cf;
+      var f_Hz = ext_get_freq() + nt.cf;
       var f_range = get_visible_freq_range();
       //console.log(f_range);
-      var Lpx = scale_px_from_freq(f - nt.shift/2, f_range);
-      var Rpx = scale_px_from_freq(f + nt.shift/2, f_range);
-      //console.log('NAVTEX crosshairs f='+ f +' Lpx='+ Lpx +' Rpx='+ Rpx);
+      var Lpx = scale_px_from_freq(f_Hz - nt.shift/2, f_range);
+      var Rpx = scale_px_from_freq(f_Hz + nt.shift/2, f_range);
+      //console.log('NAVTEX crosshairs f_Hz='+ f_Hz +' Lpx='+ Lpx +' Rpx='+ Rpx);
       var d = 3;
       for (var i = 0; i < 6; i++) {
          var y = i*d;
@@ -536,7 +535,7 @@ function navtex_pre_select_cb(path, idx, first)
 	   if (option.value != idx || option.disabled) return;
 	   found = true;
 
-      nt.mode = 'cw';
+      nt.selcall = false;
       if (nt.menu_s[menu_n].includes('DSC')) {
          nt.cf = nt.cf_dsc;
          nt.type = nt.TYPE_DSC;
@@ -545,7 +544,7 @@ function navtex_pre_select_cb(path, idx, first)
          nt.inverted = 1;
       } else
       if (nt.menu_s[menu_n].includes('Selcall')) {
-         nt.mode = 'usb';
+         nt.selcall = true;
          nt.cf = header.includes('Beacons')? nt.cf_selcall_low : nt.cf_selcall;
          nt.type = nt.TYPE_SELCALL;
          nt.framing = '7/3';
@@ -562,7 +561,10 @@ function navtex_pre_select_cb(path, idx, first)
       nt.freq_s = option.innerHTML;
       console.log('navtex_pre_select_cb opt.val='+ option.value +' freq_s='+ nt.freq_s);
       nt.freq = parseFloat(nt.freq_s);
-      ext_tune(nt.freq, nt.mode, nt.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, navtex_auto_zoom(nt.shift));
+      
+      // menu is pbc (except Selcall), but freq is always carrier/dial
+      if (!nt.selcall) nt.freq -= nt.cf/1e3;
+      ext_tune(nt.freq, 'usb', nt.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, navtex_auto_zoom(nt.shift));
       navtex_setup();
 
       var pb_half = nt.shift/2 + nt.pb_skirt_width;
@@ -570,7 +572,7 @@ function navtex_pre_select_cb(path, idx, first)
       ext_set_passband(nt.cf - pb_half, nt.cf + pb_half);
 
       // set again to get correct freq given new passband
-      ext_tune(nt.freq, nt.mode, nt.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, navtex_auto_zoom(nt.shift));
+      ext_tune(nt.freq, 'usb', nt.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, navtex_auto_zoom(nt.shift));
 
       // if called directly instead of from menu callback, select menu item
       console.log('navtex_pre_select_cb path='+ path +' idx='+ idx);
@@ -641,7 +643,7 @@ function NAVTEX_environment_changed(changed)
       // remove menu selection if freq/mode changed by action outside of extension
       // but allow for +/- 1 kHz fine tuning
       var delta_fkHz = Math.abs(nt.freq - dsp_freq);
-      if (delta_fkHz > 1 || mode != ((nt.type == nt.TYPE_SELCALL)? 'usb' : 'cw')) {
+      if (delta_fkHz > 1 || mode != 'usb') {
          navtex_clear_menus();
          var el = w3_el('id-navtex-station');
          if (el) el.innerHTML = '&nbsp;';
@@ -743,6 +745,21 @@ function navtex_show_cb(path, idx, first)
 	   w3_scrollDown('id-navtex-console-msg');
 	if (idx != nt.SHOW_MSGS)
       navtex_output("\nMap only displays Selcall beacon locations (e.g. not DSC)\n");
+   
+   NAVTEX_environment_changed({resize:1, passband_screen_location:1});
+}
+
+function NAVTEX_get_map_info()
+{
+   var mi = {
+      map: (nt.show != nt.SHOW_MSGS)? 1:0,
+      mapW: nt.dataW,
+      mapH: (nt.show == nt.SHOW_MSGS)? 0 :
+            ((nt.show == nt.SHOW_MAP)? nt.dataH : (nt.dataH - nt.splitH)),
+      split: nt.show == nt.SHOW_SPLIT,
+      left: nt.lhs
+   };
+   return mi;
 }
 
 function navtex_day_night_visible_cb(path, checked, first)

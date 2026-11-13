@@ -5,6 +5,8 @@ var fsk = {
    first_time: true,
    
    dataH: 300,
+   dataW: 1024,
+   dataT: 150 + 1024,               // including lhs
    ctrlW: 560,
    ctrlW_bold: 595,
    ctrlW_wide: 675,
@@ -12,7 +14,6 @@ var fsk = {
    ctrlH_custom: 225,
 
    lhs: 150,
-   tw: 1024,
    x: 0,
    last_y: [],
    
@@ -27,6 +28,7 @@ var fsk = {
    auto_zoom: 1,
    
    freq: 0,
+   default_cf: 1000,
    cf: 1000,
    preset_i: 0,
    shift: 170,
@@ -154,7 +156,7 @@ function fsk_scope_reset_display()
 {
    var ct = fsk.canvas.ctx;
    ct.fillStyle = 'black';
-   ct.fillRect(fsk.lhs,0, fsk.tw,fsk.th);
+   ct.fillRect(fsk.lhs,0, fsk.dataW,fsk.dataH);
 }
 
 function fsk_scope(dv, edge, bit)
@@ -212,7 +214,7 @@ function fsk_scope(dv, edge, bit)
       } else {
          // clear text area
          ct.fillStyle = 'black';
-         ct.fillRect(fsk.lhs,h*3/4, fsk.tw,16);
+         ct.fillRect(fsk.lhs,h*3/4, fsk.dataW,16);
       }
    }
 }
@@ -240,18 +242,18 @@ function fsk_framing_reset_display()
    fsk.fr_os = '';
    
    ct.fillStyle = 'lightGray';
-   ct.fillRect(fsk.lhs,0, fsk.tw,fsk.th);
+   ct.fillRect(fsk.lhs,0, fsk.dataW,fsk.dataH);
    
    if (fsk.fr_bpd) {
       ct.fillStyle = 'red';
       var y, yo = 0;
       if (fsk.encoder.start_bit) {
-         y = fsk.th - (fsk.fr_bitn - 1*fsk.baud_mult) * fsk.fr_yi - fsk.fr_s;
-         ct.fillRect(fsk.lhs,y, fsk.tw,fsk.fr_s);
+         y = fsk.dataH - (fsk.fr_bitn - 1*fsk.baud_mult) * fsk.fr_yi - fsk.fr_s;
+         ct.fillRect(fsk.lhs,y, fsk.dataW,fsk.fr_s);
          yo = 1;
       }
-      y = fsk.th - (fsk.fr_bitn - ((fsk.fr_bpd + yo) * fsk.baud_mult)) * fsk.fr_yi - fsk.fr_s;
-      ct.fillRect(fsk.lhs,y, fsk.tw,fsk.fr_s);
+      y = fsk.dataH - (fsk.fr_bitn - ((fsk.fr_bpd + yo) * fsk.baud_mult)) * fsk.fr_yi - fsk.fr_s;
+      ct.fillRect(fsk.lhs,y, fsk.dataW,fsk.fr_s);
    }
 }
 
@@ -269,7 +271,7 @@ function fsk_framing_proc(bit)
 {
    var ct = fsk.canvas.ctx;
    var yi = fsk.fr_yi;
-   fsk.fr_y = fsk.th - fsk.fr_bitn * yi;
+   fsk.fr_y = fsk.dataH - fsk.fr_bitn * yi;
    
    if (fsk.fr_bpd) {
       var c;
@@ -303,7 +305,7 @@ function fsk_framing_proc(bit)
          var code = fsk.fr_code;
          //if (fsk.fr_xi < 4) console.log(fsk.fr_xi +' DONE code=0x'+ code.toString(16));
          ct.fillStyle = 'black';
-         var y = fsk.th - fsk.fr_bpw * yi;
+         var y = fsk.dataH - fsk.fr_bpw * yi;
          var yo = 8;
          
          if (fsk.is_7_3) {
@@ -356,7 +358,7 @@ function fsk_framing_proc(bit)
       fsk.fr_bitn = fsk.fr_bpw;
       fsk.fr_x += fsk.fr_w + fsk.fr_s;
       fsk.fr_xi++;
-      if (fsk.fr_x >= fsk.lhs + fsk.tw - fsk.fr_w - fsk.fr_s) {
+      if (fsk.fr_x >= fsk.lhs + fsk.dataW - fsk.fr_w - fsk.fr_s) {
          fsk.fr_sample = 0;
       }
    }
@@ -372,7 +374,7 @@ function fsk_phase()
 
 function fsk_baud_error_init()
 {
-   var hh = fsk.th/2;
+   var hh = fsk.dataH/2;
    var cv = fsk.canvas;
    var ct = fsk.canvas.ctx;
 
@@ -390,17 +392,17 @@ function fsk_baud_error(err, periods, scale)
    var max = 8;
    if (err > max) err = max;
    if (err < -max) err = -max;
-   var h = Math.round(fsk.th*0.4/2 * err/max);
+   var h = Math.round(fsk.dataH * 0.4/2 * err/max);
    //console.log('err='+ err +' h='+ h);
 
    var bw = 20;
    var bx = fsk.lhs - bw*2;
-   var hh = fsk.th/2;
+   var hh = fsk.dataH/2;
    var cv = fsk.canvas;
    var ct = fsk.canvas.ctx;
    
    ct.fillStyle = 'black';
-   ct.fillRect(bx,0, bw,fsk.th);
+   ct.fillRect(bx,0, bw,fsk.dataH);
 
    if (h > 0) {
       ct.fillStyle = 'lime';
@@ -437,7 +439,7 @@ function fsk_output_char(s)
    fsk.console_status_msg_p.s = rv.chars;
    fsk.log_txt += rv.log;
    //console.log(fsk.console_status_msg_p);
-   kiwi_output_msg('id-fsk-console-msgs', 'id-fsk-console-msg', fsk.console_status_msg_p);
+   kiwi_output_msg('id-fsk-console-msgs', 'id-fsk-msgs', fsk.console_status_msg_p);
 }
 
 function fsk_audio_data_cb(samps, nsamps)
@@ -447,7 +449,6 @@ function fsk_audio_data_cb(samps, nsamps)
 
 function fsk_controls_setup()
 {
-   fsk.th = fsk.dataH;
 	fsk.saved_setup = ext_save_setup();
 	
 	fsk.jnx = new JNX();
@@ -538,9 +539,9 @@ function fsk_controls_setup()
    var data_html =
       time_display_html('fsk') +
       
-      w3_div('id-fsk-data|width:'+ px(fsk.lhs+1024) +'; height:'+ px(fsk.dataH) +'; overflow:hidden; position:relative; background-color:black;',
-         '<canvas id="id-fsk-canvas" width='+ dq(fsk.lhs+1024) +' height='+ dq(fsk.dataH) +' style="left:0; position:absolute"></canvas>',
-			w3_div('id-fsk-console-msg w3-text-output w3-scroll-down w3-small w3-text-black|left:'+ px(fsk.lhs) +'; width:1024px; position:relative; overflow-x:hidden;',
+      w3_div(sprintf('id-fsk-data w3-display-container|width:%dpx; height:%dpx; overflow:hidden; position:relative; background-color:black;', fsk.dataT, fsk.dataH),
+         sprintf('<canvas id="id-fsk-canvas" width="%d" height="%d" style="position:absolute"></canvas>', fsk.dataT, fsk.dataH),
+			w3_div(sprintf('id-fsk-msgs w3-text-output w3-scroll-down w3-small w3-text-black|width:%dpx; left:%dpx; position:relative; overflow-x:hidden;', fsk.dataW, fsk.lhs),
 			   '<pre><code id="id-fsk-console-msgs"></code></pre>'
 			)
       );
@@ -654,6 +655,7 @@ function fsk_controls_setup()
 	fsk_baud_error_init();
 
    ext_set_data_height(fsk.dataH);
+   ext_set_data_width(fsk.dataT);
 	
 	// our sample file is 12k only
 	if (ext_nom_sample_rate() != 12000)
@@ -738,14 +740,19 @@ function fsk_setup()
    fsk.is_7_3 = (fsk.framing == '7/3');
    fsk.encoder = fsk.jnx.get_encoding_obj();
 
-   ext_tune(fsk.freq, 'cw', fsk.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, fsk_auto_zoom(fsk.shift));
-   var pb_half = Math.max(fsk.shift, fsk.baud) /2;
-   var pb_edge = Math.round(((pb_half * 0.2) + 10) / 10) * 10;
-   pb_half += pb_edge;
+   ext_tune(fsk.freq, 'usb', fsk.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, fsk_auto_zoom(fsk.shift));
+   var sig_half = Math.max(fsk.shift, fsk.baud) /2;
+   var pb_pct = 0.4;
+   var pb_edge = Math.round(((sig_half * pb_pct) + 10) / 10) * 10;
+   var pb_half = sig_half + pb_edge;
+   //console.info({t:'FSK pb', shift:fsk.shift, baud:fsk.baud,
+   //   sig_half:sig_half, pct:pb_pct, pb_half:pb_half,
+   //   sigL:fsk.cf - sig_half, sigH:fsk.cf + sig_half, pbL:fsk.cf - pb_half, pbH:fsk.cf + pb_half});
+      
    ext_set_passband(fsk.cf - pb_half, fsk.cf + pb_half);
    
    // set again to get correct freq given new passband
-   ext_tune(fsk.freq, 'cw', fsk.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, fsk_auto_zoom(fsk.shift));
+   ext_tune(fsk.freq, 'usb', fsk.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, fsk_auto_zoom(fsk.shift));
    
    // set matching entries in menus
    var shift = fsk.shift_custom? 'custom' : fsk.shift;
@@ -820,12 +827,12 @@ function fsk_crosshairs(vis)
    ct.clearRect(0,0, window.innerWidth,24);
    
    if (vis && ext_get_zoom() >= 10) {
-      var f = ext_get_freq();
+      var f_Hz = ext_get_freq() + fsk.cf;
       var f_range = get_visible_freq_range();
       //console.log(f_range);
-      var Lpx = scale_px_from_freq(f - fsk.shift/2, f_range);
-      var Rpx = scale_px_from_freq(f + fsk.shift/2, f_range);
-      //console.log('FSK crosshairs f='+ f +' Lpx='+ Lpx +' Rpx='+ Rpx);
+      var Lpx = scale_px_from_freq(f_Hz - fsk.shift/2, f_range);
+      var Rpx = scale_px_from_freq(f_Hz + fsk.shift/2, f_range);
+      //console.log('FSK crosshairs f_Hz='+ f_Hz +' Lpx='+ Lpx +' Rpx='+ Rpx);
       var d = 3;
       for (var i = 0; i < 6; i++) {
          var y = i*d;
@@ -875,8 +882,9 @@ function fsk_pre_select_cb(path, idx, first)
       } else {
          fsk.test_mode = false;
          fsk.framing = o.fr;
+         fsk.cf = o.hasOwnProperty('cf')? o.cf : fsk.default_cf;
          fsk.freq = parseFloat(o.f) + ((fsk.framing == 'CHU')? fsk.CHU_offset : 0);
-         fsk.cf = o.hasOwnProperty('cf')? o.cf : 1000;
+         fsk.freq -= fsk.cf/1e3;    // menu is pbc, but freq is always carrier/dial
          fsk.shift = o.s;
          fsk.baud = o.b;
          fsk.shift_custom = fsk.baud_custom = false;
@@ -884,7 +892,7 @@ function fsk_pre_select_cb(path, idx, first)
          fsk.encoding = o.e;
    
          // set freq here because fsk_setup() recalls current freq in case it has been manually tuned
-         ext_tune(fsk.freq, 'cw', fsk.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, fsk_auto_zoom(fsk.shift));
+         ext_tune(fsk.freq, 'usb', fsk.auto_zoom? ext_zoom.ABS : ext_zoom.CUR, fsk_auto_zoom(fsk.shift));
          fsk_setup();
    
          // if called directly instead of from menu callback, select menu item
@@ -916,14 +924,19 @@ function FSK_environment_changed(changed)
 
    // reset all frequency menus when frequency etc. is changed by some other means (direct entry, WF click, etc.)
    // but not for changed.zoom, changed.resize etc.
-   if (!changed.freq && !changed.mode) return;
-   var dsp_freq = ext_get_freq()/1e3;
-   var mode = ext_get_mode();
-   //console.log('FSK ENV fsk.freq='+ fsk.freq +' dsp_freq='+ dsp_freq +' mode='+ mode);
-   if (fsk.freq != dsp_freq || mode != 'cw') {
-      fsk_clear_menus();
-      fsk.menu_sel = '';
-      w3_el('id-fsk-station').innerHTML = '&nbsp;';
+   if (changed.freq || changed.mode) {
+      var dsp_freq = ext_get_freq()/1e3;
+      var mode = ext_get_mode();
+      //console.log('FSK ENV fsk.freq='+ fsk.freq +' dsp_freq='+ dsp_freq +' mode='+ mode);
+      if (fsk.freq != dsp_freq || mode != 'usb') {
+         fsk_clear_menus();
+         fsk.menu_sel = '';
+         w3_el('id-fsk-station').innerHTML = '&nbsp;';
+      }
+   }
+
+   if (changed.resize) {
+      ext_set_data_left('id-fsk-data', fsk.dataT);
    }
 }
 
@@ -1059,7 +1072,7 @@ function fsk_mode_cb(path, idx, first)
    fsk.jnx.set_output_bit_cb(fsk.show_framing? fsk_framing : null);
 
    w3_show_hide_inline('id-fsk-decode', fsk.decode);
-   w3_show_hide_inline('id-fsk-console-msg', fsk.decode);
+   w3_show_hide_inline('id-fsk-msgs', fsk.decode);
    w3_show_hide_inline('id-fsk-scope', fsk.scope);
    w3_show_hide_inline('id-fsk-framing', fsk.show_framing);
 }
