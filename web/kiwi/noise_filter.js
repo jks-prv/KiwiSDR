@@ -318,6 +318,9 @@ function nr_algo_cb(path, idx, first, from)
    noise_filter_send(noise_filter.NR_AUTONOTCH);
    noise_filter_controls_refresh();
    
+   if (!noise_filter.no_clr_autonotch_button)
+      toggle_or_set_autonotch(toggle_e.SET, 0);    // clear autonotch button
+   
    // bring filter controls into view if menu is anything except "off"
    if (idx > 0 && from == 'm')
       w3_el('id-nfilter-more').scrollIntoView({behavior:'smooth'});
@@ -344,9 +347,11 @@ function noise_filter_cb(path, checked, first)
 function noise_filter_autonotch(val, init)
 {
    if (init && !val) return;     // don't override defaults
-   noise_filter_cb('noise_filter.denoise', 0);
-   noise_filter_cb('noise_filter.autonotch', val);
-   nr_algo_cb('nr_algo', val? noise_filter.NR_ORIG : noise_filter.NR_OFF);
+   noise_filter.no_clr_autonotch_button = true;
+      noise_filter_cb('noise_filter.denoise', 0);
+      noise_filter_cb('noise_filter.autonotch', val);
+      nr_algo_cb('nr_algo', val? noise_filter.NR_ORIG : noise_filter.NR_OFF);
+   noise_filter.no_clr_autonotch_button = false;
 }
 
 
