@@ -284,7 +284,7 @@ void nr_spectral_process(int rx_chan, int nsamps, TYPEMONO16 *inputsamples, TYPE
             for (int bindx = VAD_low + NN / 2; bindx < VAD_high - NN / 2; bindx++) {
                 assert_array_dim(bindx, FFT_HALF);
                 s->NR_Nest[bindx] = 0.0;
-                for (int m = bindx - NN / 2; m <= bindx + NN / 2; m++) {
+                for (int m = MAX(0, bindx - NN / 2); m <= bindx + NN / 2; m++) {
                     assert_array_dim(m, FFT_HALF);
                     s->NR_Nest[bindx] += s->NR_G[m];
                 }
@@ -303,10 +303,10 @@ void nr_spectral_process(int rx_chan, int nsamps, TYPEMONO16 *inputsamples, TYPE
             }
 
             // upper edge - only going NN steps backward and taking the average
-            for (int bindx = VAD_high - NN; bindx < VAD_high; bindx++) {
+            for (int bindx = MAX(0, VAD_high - NN); bindx < VAD_high; bindx++) {
                 assert_array_dim(bindx, FFT_HALF);
                 s->NR_Nest[bindx] = 0.0;
-                for (int m = bindx; m > (bindx - NN); m--) {
+                for (int m = bindx; m > MAX(0, (bindx - NN)); m--) {
                     assert_array_dim(m, FFT_HALF);
                     s->NR_Nest[bindx] += s->NR_G[m];
                 }
