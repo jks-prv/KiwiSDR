@@ -417,13 +417,13 @@ alias pkco="apt-get upgrade bb-cape-overlays"
 #alias pkuug="apt-get -y ${APT_GET_FORCE} upgrade"
 #alias pkfug="apt-get full-upgrade"
 if [ "x${DEBIAN_8}" == "xtrue" ] ; then
-    alias pkupp="cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get install --only-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
-    alias pkug="cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get ${APT_GET_FORCE} dist-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
-    alias pkugn="cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get --dry-run ${APT_GET_FORCE} dist-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
+    alias pkupp="pkup; cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get install --only-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
+    alias pkug="pkup; cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get ${APT_GET_FORCE} dist-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
+    alias pkugn="pkup; cp /etc/apt/sources.D8.upgrade.list /etc/apt/sources.list; apt-get --dry-run ${APT_GET_FORCE} dist-upgrade; cp /etc/apt/sources.D8.new.list /etc/apt/sources.list"
 else
-    alias pkupp="apt-get install --only-upgrade"
-    alias pkug="apt-get dist-upgrade"
-    alias pkugn="apt-get --dry-run dist-upgrade"
+    alias pkupp="pkup; apt-get install --only-upgrade"
+    alias pkug="pkup; apt-get dist-upgrade"
+    alias pkugn="pkup; apt-get --dry-run dist-upgrade"
 fi
 
 

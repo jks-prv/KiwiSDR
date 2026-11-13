@@ -2132,7 +2132,7 @@ function w3_do_when_cond(cond_func, func, arg, poll_ms)
 {
    poll_ms = isNumberElse(poll_ms, 100);
    if (!cond_func(arg)) {
-      setTimeout(function () {
+      setTimeout(function() {
          w3_do_when_cond(cond_func, func, arg, poll_ms);
       }, poll_ms);
    } else {

@@ -1844,7 +1844,7 @@ function freedv_edit_known_location_cb(path, val, first)
    freedv_update_link();
 }
 
-function freedv_host_click_status_cb(obj, field_idx)
+function freedv_host_click_status_cb(obj, field_idx, responseURL)
 {
    console.log('freedv_host_click_status_cb field_idx='+ field_idx);
    var err, create_mkr = false, log = false;
@@ -1941,7 +1941,11 @@ function freedv_host_click_status_cb(obj, field_idx)
                //console.log(h);
             }
 
-            //if (f.host) console.log(f.host);
+            if (f.host) {
+               //console.info('responseURL='+ responseURL);
+               f.host.responseURL = responseURL;
+               //console.log(f.host);
+            }
             freedv_rebuild_hosts();
             freedv_update_link();
             //if (log) console.log(f);

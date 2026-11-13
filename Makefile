@@ -1009,16 +1009,20 @@ build_log blog:
 # cppcheck.sourceforge.io/manual.pdf
 ################################
 
-CHK_OPTS := --cppcheck-build-dir=cppcheck --check-level=exhaustive
-#CHK_OPTS += --enable=all
+CHK_OPTS := --quiet
+#CHK_OPTS := --quiet --enable=all --suppress=variableScope
+#CHK_OPTS := --check-config
+
+CHK_DIR := --cppcheck-build-dir=$(BUILD_DIR)/cppcheck
 CHK_EARLY := --include=types.h --include=config.h --include=support/printf.h --include=ansi.h \
     --include=net/ip_blacklist.h --include=support/debug.h --include=pkgs/mongoose/mongoose/mongoose_7.14.h
-CHK_EXCLUDE := 
+CHK_INC := $(subst -I,-I ,$(I))
+CHK_EXCLUDE := -i pkgs/jsmn/example/jsondump.c -i extensions/DRM -i extensions/HFDL -i pkgs/mongoose -i rx/CMSIS -i tools
 CHK_DEFS = -DCPPCHECK_FORCE -DCPPCHECK -D__GNUC__ -UMG_ENABLE_LINES $(CPP_FLAGS) $(EXT_DEFINES) $(INT_FLAGS)
 
 chk:
-	mkdir -p cppcheck
-	-cppcheck $(CHK_OPTS) $(CHK_EARLY) $(CHK_EXCLUDE) $(CHK_DEFS) .
+	mkdir -p $(BUILD_DIR)/cppcheck
+	-/usr/bin/cppcheck $(CHK_DIR) $(CHK_OPTS) $(CHK_EARLY) $(CHK_EXCLUDE) $(CHK_DEFS) $(CHK_INC) .
 
 
 ################################
@@ -1940,7 +1944,7 @@ ifeq ($(DEBIAN_DEVSYS),$(DEVSYS))
     -include tools/Makefile
     EXCLUDE_RSYNC += ".DS_Store" ".git" "obj" "/obj_O3" "/obj_keep" "*.dSYM" "*.bin.h" "kiwid.aout" "e_cpu/a" "*.aout.h" "kiwi.gen.h" \
         "verilog/kiwi.gen.vh" "web/edata*" "node_modules" "morse-pro-compiled.js" "Makefile.1"
-    RSYNC_ARGS = -av --delete $(addprefix --exclude , $(EXCLUDE_RSYNC)) \
+    RSYNC_ARGS = -av --delete --chown=root:root $(addprefix --exclude , $(EXCLUDE_RSYNC)) \
         $(addprefix --exclude , $(EXT_EXCLUDE_RSYNC)) $(addprefix --exclude , $(TOOLS_EXCLUDE_RSYNC)) \
         $(RSYNC_SRC) $(RSYNC_USER)@$(HOST):$(RSYNC_DST)
     RSYNC_ARGS_DRYRUN = -n $(RSYNC_ARGS)

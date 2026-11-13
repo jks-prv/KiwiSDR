@@ -1714,7 +1714,7 @@ function FFT_environment_changed(changed)
       var width = fft.integ_w + peaks_w + kiwi.time_display_width;
       ext_set_data_width(width);
       var left = Math.max(0, (window.innerWidth - width) / 2);
-      console.log('FFT peaks resize left='+ left);
+      //console.log('FFT peaks resize left='+ left);
       el.style.left = px(left);
    }
 }
