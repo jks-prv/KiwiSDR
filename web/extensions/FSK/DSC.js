@@ -354,7 +354,8 @@ DSC.prototype.process_msg = function(show_errs) {
          //       123 45 67 89
          if (isMID1) {
             var mid_s = _12 + _34[0];
-            s = w3_link('w3-esc-html w3-link-darker-color', 'www.marinetraffic.com/en/ais/details/ships/mmsi:'+ mmsi_s, mmsi_s) +'[Flag: '+ mid(mid_s) +']';
+            //s = w3_link('w3-esc-html w3-link-darker-color', 'www.marinetraffic.com/en/ais/details/ships/mmsi:'+ mmsi_s, mmsi_s) +'[Flag: '+ mid(mid_s) +']';
+            s = w3_link('w3-esc-html w3-link-darker-color', 'www.vesselfinder.com/vessels/details/'+ mmsi_s, mmsi_s) +'[Flag: '+ mid(mid_s) +']';
          } else
       
          // coast station: 00 MID xx xx
